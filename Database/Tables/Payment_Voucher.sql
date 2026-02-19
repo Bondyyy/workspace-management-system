@@ -17,16 +17,13 @@ CREATE TABLE Vouchers (
 -- 2. Bảng Payments 
 CREATE TABLE Payments (
     payment_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    
     booking_id NUMBER, -- nếu đây là giao dịch cọc online
     session_id NUMBER, -- nếu đây là giao dịch thanh toán lúc check-out
     order_id NUMBER,   -- Nếu khách vãng lai chỉ mua ly nước mang đi, không ngồi lại
-    
     payment_method VARCHAR2(50) NOT NULL, -- CASH, CREDIT_CARD, VNPAY, MOMO
     amount NUMBER(15, 2) NOT NULL,
     status VARCHAR2(20) DEFAULT 'PENDING', -- PENDING, SUCCESS, FAILED, REFUNDED
     transaction_reference VARCHAR2(255),   -- Mã giao dịch trả về từ cổng thanh toán
-    
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     note VARCHAR2(255)
 );
