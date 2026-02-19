@@ -19,7 +19,7 @@ CREATE TABLE Permissions (
 CREATE TABLE RolePermissions (
     role_id NUMBER NOT NULL,
     permission_id NUMBER NOT NULL,
-    PRIMARY KEY (role_id, permission_id),
+    PRIMARY KEY (role_id, permission_id)
 );
 
 -- 4. Bảng Users 
@@ -34,7 +34,7 @@ CREATE TABLE Users (
     status VARCHAR2(20) DEFAULT 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP, 
+    deleted_at TIMESTAMP
 );
 
 -- 5. Bảng Customers
@@ -64,3 +64,7 @@ CREATE TABLE Employees (
     base_salary NUMBER(15, 2),
     CONSTRAINT fk_employee_user FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
+
+ALTER TABLE Users ADD CONSTRAINT chk_user_status CHECK (status IN ('ACTIVE', 'INACTIVE', 'BANNED'));
+ALTER TABLE Employees ADD CONSTRAINT chk_emp_job_status CHECK (job_status IN ('ACTIVE', 'RESIGNED', 'ON_LEAVE'));
+ALTER TABLE Customers ADD CONSTRAINT chk_cust_loyalty_points CHECK (loyalty_points >= 0);

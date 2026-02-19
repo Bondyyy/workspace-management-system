@@ -52,3 +52,9 @@ CREATE TABLE SessionOrderDetails (
     subtotal NUMBER(15, 2) NOT NULL,   -- quantity * unit_price
     note VARCHAR2(255)               
 );
+
+ALTER TABLE Sessions ADD CONSTRAINT chk_session_status CHECK (status IN ('ACTIVE', 'COMPLETED', 'CANCELLED'));
+ALTER TABLE Sessions ADD CONSTRAINT chk_session_time CHECK (checkout_time >= checkin_time);
+ALTER TABLE SessionExtensions ADD CONSTRAINT chk_ext_time CHECK (end_time > start_time);
+ALTER TABLE SessionOrders ADD CONSTRAINT chk_order_status CHECK (order_status IN ('PENDING', 'PREPARING', 'SERVED', 'CANCELLED'));
+ALTER TABLE SessionOrderDetails ADD CONSTRAINT chk_order_quantity CHECK (quantity > 0);
