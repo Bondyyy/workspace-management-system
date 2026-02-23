@@ -11,11 +11,12 @@ ALTER TABLE Branches ADD CONSTRAINT fk_branches_manager FOREIGN KEY (manager_id)
 ALTER TABLE Spaces ADD CONSTRAINT fk_spaces_branches FOREIGN KEY (branch_id) REFERENCES Branches(branch_id);
 ALTER TABLE Spaces ADD CONSTRAINT fk_spaces_types FOREIGN KEY (type_id) REFERENCES SpaceTypes(type_id);
 
--- Booking Online
+-- Booking 
 ALTER TABLE Bookings ADD CONSTRAINT fk_bookings_customers FOREIGN KEY (customer_id) REFERENCES Customers(customer_id);
 ALTER TABLE Bookings ADD CONSTRAINT fk_bookings_vouchers FOREIGN KEY (voucher_id) REFERENCES Vouchers(voucher_id);
 ALTER TABLE BookingDetails ADD CONSTRAINT fk_bkdetail_bookings FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id) ON DELETE CASCADE;
 ALTER TABLE BookingDetails ADD CONSTRAINT fk_bkdetail_spaces FOREIGN KEY (space_id) REFERENCES Spaces(space_id);
+ALTER TABLE Bookings ADD CONSTRAINT fk_bookings_staff FOREIGN KEY (created_by_staff_id) REFERENCES Employees(employee_id);
 
 -- Sessions
 ALTER TABLE Sessions ADD CONSTRAINT fk_sessions_customers FOREIGN KEY (customer_id) REFERENCES Customers(customer_id);

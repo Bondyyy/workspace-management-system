@@ -66,5 +66,5 @@ CREATE TABLE Employees (
 );
 
 ALTER TABLE Users ADD CONSTRAINT chk_user_status CHECK (status IN ('ACTIVE', 'INACTIVE', 'BANNED'));
-ALTER TABLE Employees ADD CONSTRAINT chk_emp_job_status CHECK (job_status IN ('ACTIVE', 'RESIGNED', 'ON_LEAVE'));
-ALTER TABLE Customers ADD CONSTRAINT chk_cust_loyalty_points CHECK (loyalty_points >= 0);
+ALTER TABLE Employees ADD CONSTRAINT chk_emp_status CHECK (job_status IN ('ACTIVE', 'RESIGNED', 'ON_LEAVE'));
+ALTER TABLE Customers ADD CONSTRAINT chk_cust_points CHECK (loyalty_points >= 0);

@@ -31,3 +31,15 @@ CREATE TABLE BookingDetails (
 ALTER TABLE Bookings ADD CONSTRAINT chk_booking_status CHECK (status IN ('PENDING', 'BOOKED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
 ALTER TABLE Bookings ADD CONSTRAINT chk_booking_payment_status CHECK (payment_status IN ('UNPAID', 'PARTIAL', 'PAID'));
 ALTER TABLE BookingDetails ADD CONSTRAINT chk_bkdetail_expected_end_time CHECK (expected_end_time > expected_start_time);
+
+--Offline
+ALTER TABLE Bookings ADD booking_channel VARCHAR2(20) DEFAULT 'ONLINE';
+ALTER TABLE Bookings ADD CONSTRAINT chk_booking_channel CHECK (booking_channel IN ('ONLINE', 'OFFLINE'));
+
+-- Thêm thông tin cho khách vãng lai nếu customer_id bị NULL
+ALTER TABLE Bookings ADD guest_name VARCHAR2(100);
+ALTER TABLE Bookings ADD guest_phone VARCHAR2(20);
+
+-- Thêm ID nhân viên để biết ai là người tạo booking này tại quầy (dành cho OFFLINE)
+ALTER TABLE Bookings ADD created_by_staff_id NUMBER;
+

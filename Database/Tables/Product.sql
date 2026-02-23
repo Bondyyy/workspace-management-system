@@ -1,0 +1,24 @@
+-- 1. Bảng Categories
+CREATE TABLE Categories (
+    category_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR2(100) NOT NULL UNIQUE,
+    description VARCHAR2(255),
+    is_active NUMBER(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Bảng Products
+CREATE TABLE Products (
+    product_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    category_id NUMBER NOT NULL,
+    name VARCHAR2(100) NOT NULL,
+    price NUMBER(15, 2) NOT NULL,
+    img_url VARCHAR2(500),
+    status VARCHAR2(20) DEFAULT 'AVAILABLE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE Products ADD CONSTRAINT chk_product_status CHECK (status IN ('AVAILABLE', 'OUT_OF_STOCK', 'DISCONTINUED'));
+
+ALTER TABLE Products ADD CONSTRAINT chk_product_price CHECK (price >= 0);

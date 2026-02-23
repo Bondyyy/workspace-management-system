@@ -27,3 +27,20 @@ CREATE TABLE Payments (
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     note VARCHAR2(255)
 );
+
+-- Bảng MembershipTiers 
+CREATE TABLE MembershipTiers (
+    tier_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    tier_name VARCHAR2(50) NOT NULL UNIQUE,  
+    min_points NUMBER DEFAULT 0 NOT NULL,   
+    discount_percent NUMBER(5, 2) DEFAULT 0, 
+    description VARCHAR2(255),              
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE Payments ADD CONSTRAINT chk_payment_method CHECK (payment_method IN ('CASH', 'CREDIT_CARD', 'VNPAY', 'MOMO'));
+ALTER TABLE Payments ADD CONSTRAINT chk_payment_status CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'));
+ALTER TABLE Payments ADD CONSTRAINT chk_payment_amount CHECK (amount > 0);
+ALTER TABLE Vouchers ADD CONSTRAINT chk_voucher_type CHECK (discount_type IN ('PERCENT', 'FIXED'));
+ALTER TABLE Vouchers ADD CONSTRAINT chk_voucher_value CHECK (discount_value > 0);
