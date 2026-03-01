@@ -1,10 +1,13 @@
 -- Identities group
+ALTER TABLE Permissions ADD CONSTRAINT fk_perm_function FOREIGN KEY (function_id) REFERENCES Functions(function_id);
 ALTER TABLE RolePermissions ADD CONSTRAINT fk_rp_role FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE CASCADE;
 ALTER TABLE RolePermissions ADD CONSTRAINT fk_rp_perm FOREIGN KEY (permission_id) REFERENCES Permissions(permission_id) ON DELETE CASCADE;
-ALTER TABLE Users ADD CONSTRAINT fk_users_roles FOREIGN KEY (role_id) REFERENCES Roles(role_id);
+ALTER TABLE UserRoles ADD CONSTRAINT fk_ur_user FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE;
+ALTER TABLE UserRoles ADD CONSTRAINT fk_ur_role FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE CASCADE;
 ALTER TABLE Customers ADD CONSTRAINT fk_customers_users FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE;
+ALTER TABLE Customers ADD CONSTRAINT fk_customers_tier FOREIGN KEY (membership_tier_id) REFERENCES MembershipTiers(tier_id);
 ALTER TABLE Employees ADD CONSTRAINT fk_employees_users FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE;
-
+ALTER TABLE Employees ADD CONSTRAINT fk_employees_branch FOREIGN KEY (branch_id) REFERENCES Branches(branch_id);
 
 -- Space Management
 ALTER TABLE Branches ADD CONSTRAINT fk_branches_manager FOREIGN KEY (manager_id) REFERENCES Employees(employee_id) ON DELETE SET NULL;
@@ -33,7 +36,6 @@ ALTER TABLE SessionOrders ADD CONSTRAINT fk_orders_staff FOREIGN KEY (staff_id) 
 
 ALTER TABLE SessionOrderDetails ADD CONSTRAINT fk_orderdetails_orders FOREIGN KEY (order_id) REFERENCES SessionOrders(order_id) ON DELETE CASCADE;
 ALTER TABLE SessionOrderDetails ADD CONSTRAINT fk_orderdetails_products FOREIGN KEY (product_id) REFERENCES Products(product_id);
-
 
 -- Payments & Vouchers
 ALTER TABLE Payments ADD CONSTRAINT fk_payments_bookings FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id);
