@@ -1,68 +1,50 @@
-# 🏢 Hệ thống Quản lý Không gian Làm việc & Học tập 
+# 🏢 Hệ thống Quản lý Không gian Làm việc & Học tập (Workspace Management System)
 
 ## 📖 Giới thiệu 
 Dự án này cung cấp giải pháp phần mềm toàn diện cho việc quản lý và vận hành chuỗi không gian làm việc/học tập. Hệ thống giải quyết trọn vẹn bài toán vận hành Online to Offline, từ khâu khách hàng đặt chỗ trực tuyến/tại quầy, quản lý thời gian sử dụng thực tế, gọi món F&B, cho đến thanh toán tổng hợp, áp dụng khuyến mãi thành viên và dọn dẹp không gian.
 
 ---
 
-## ⚙️ Quy trình Vận hành Cốt lõi
-Hệ thống xoay quanh 4 quy trình vận hành chính, được ánh xạ trực tiếp vào cơ sở dữ liệu:
+## 🗄 Sơ đồ Thực thể Liên kết (ERD)
+Sơ đồ dưới đây mô tả kiến trúc cơ sở dữ liệu cốt lõi của toàn bộ hệ thống. 
 
-### 1. Quản lý Đặt chỗ (Online & Offline)
-* **Tìm kiếm:** Khách hàng truy cập nền tảng Online hoặc Lễ tân tra cứu trên phần mềm nội bộ để lọc các không gian (`Spaces`) dựa trên chi nhánh (`Branches`), loại bàn (`SpaceTypes`) và trạng thái `AVAILABLE`.
-* **Tạo phiếu đặt:** Hệ thống hỗ trợ 2 luồng đặt chỗ được phân loại qua `booking_channel`:
-  * **ONLINE:** Khách thành viên tự đặt qua App/Web. Giao dịch cọc được ghi nhận, trạng thái không gian chuyển sang `BOOKED` và hệ thống cấp một `qr_code` duy nhất.
-  * **OFFLINE:** Lễ tân thao tác đặt chỗ trước cho khách ngay tại quầy. Hệ thống hỗ trợ lưu thông tin cho cả Thành viên (`customer_id`) lẫn Khách vãng lai (`guest_name`, `guest_phone`), đồng thời lưu vết nhân viên tạo phiếu (`created_by_staff_id`).
-* **Snapshot Giá:** Giá trị thuê tại thời điểm đặt luôn được snapshot vào `price_at_booking` trong `BookingDetails` để tránh rủi ro thay đổi giá trong tương lai.
-
-### 2. Check-in và Khởi tạo Phiên làm việc 
-* **Đối soát (Có đặt trước):** Khách xuất trình `qr_code` (Online) hoặc thông tin cá nhân (Offline). Hệ thống giải mã và đối chiếu với bảng `Bookings` để xác nhận.
-* **Khách Walk-in (Vào ngồi ngay):** Lễ tân trực tiếp xếp bàn cho khách đến nhánh mà không cần qua bước đặt trước.
-* **Mở phiên (Session):** Hệ thống tạo một `Sessions` mới, ghi nhận `checkin_time` và nhân viên hỗ trợ (`check_in_staff_id`). Với khách vãng lai, thông tin có thể được linh hoạt ẩn danh hoặc lưu dưới dạng `guest_name`.
-* **Cập nhật trạng thái:** Trạng thái bàn/phòng trong `Spaces` chính thức chuyển sang `OCCUPIED`. Mọi chi phí từ lúc này sẽ được cộng dồn vào Session ID.
-
-### 3. Sử dụng Dịch vụ (F&B) và Gia hạn Giờ 
-* **Gọi món (F&B):** Khách quét QR tại bàn hoặc gọi tại quầy. Hệ thống tra cứu thực đơn từ `Products` và `Categories` (chỉ hiển thị món có status `AVAILABLE`). Đơn hàng được ghi nhận vào `SessionOrders` và `SessionOrderDetails` với trạng thái thanh toán tạm để `UNPAID`.
-* **Gia hạn giờ (Extension):** Nếu khách muốn ngồi lâu hơn dự kiến, thông tin gia hạn được ghi vào `SessionExtensions` với khoảng thời gian gia hạn và tính toán trước `cost_incurred` (phí phát sinh).
-
-### 4. Check-out và Thanh toán Tổng hợp
-* **Đóng phiên (Close Session):** Hệ thống ghi nhận `checkout_time` trong bảng `Sessions`.
-* **Tổng hợp hóa đơn:** Hệ thống tự động tính toán tổng chi phí dựa trên: Tiền thuê gốc (`Sessions`) + Phí gia hạn (`SessionExtensions`) + Chi phí F&B (`SessionOrders`).
-* **Áp dụng Khuyến mãi & Hạng thành viên:** * Kiểm tra và trừ tiền cọc (`deposit_amount`) nếu có.
-  * Nếu khách dùng Voucher, hệ thống kiểm tra điều kiện trong bảng `Vouchers`.
-  * Nếu khách là Thành viên, hệ thống kiểm tra `MembershipTiers` để áp dụng phần trăm giảm giá (`discount_percent`) tự động dựa trên cấp bậc.
-* **Thanh toán & Thu hồi không gian:** Giao dịch thanh toán (Tiền mặt, VNPay, MoMo...) được lưu vào `Payments`. Bàn làm việc trong bảng `Spaces` lập tức chuyển sang trạng thái `CLEANING` chờ nhân viên dọn dẹp trước khi quay về `AVAILABLE`.
+<div align="center">
+  <a href="ERD.png" target="_blank">
+    <img src="ERD.png" alt="Database Entity Relationship Diagram" width="100%" style="cursor: zoom-in;">
+  </a>
+  <br>
+  <i>(Click trực tiếp vào ảnh để mở chế độ toàn màn hình và phóng to chi tiết)</i>
+</div>
 
 ---
 
-## 🗄 Kiến trúc Cơ sở Dữ liệu 
+## ⚙️ Kiến trúc Cơ sở Dữ liệu & Quy trình Vận hành
+Hệ thống xoay quanh 6 phân hệ cốt lõi được ánh xạ chặt chẽ vào cơ sở dữ liệu, kết hợp với các luồng tự động hóa (Database Automation) để tối ưu vận hành:
 
-### 1. Phân hệ Danh tính & Phân quyền (Identities)
-* `Roles`, `Permissions`, `RolePermissions`: Cấu trúc phân quyền Role-Based Access Control tiêu chuẩn.
-* `Users`: Thông tin tài khoản trung tâm.
-* `Employees`, `Customers`: Mở rộng thông tin dựa trên quan hệ 1-1 với `Users` (Mô hình Table-Per-Type). Bảng `Customers` tích hợp quản lý điểm thưởng (`loyalty_points`) và liên kết Hạng thành viên.
+### 1. Phân hệ Quản lý Đặt chỗ (Booking Management)
+* **Luồng Đặt chỗ Đa kênh:** Hỗ trợ lưu trữ thông tin cho cả luồng `ONLINE` (Khách tự đặt qua App) và `OFFLINE` (Lễ tân thao tác tại quầy). Hỗ trợ lưu thông tin cho Khách thành viên lẫn Khách vãng lai.
+* **Snapshot Giá:** Giá trị thuê tại thời điểm đặt luôn được snapshot vào `price_at_booking` trong `BookingDetails` để tránh rủi ro biến động giá trong tương lai.
+* **Tự động hóa Giữ chỗ:** Khi đơn đặt chỗ chuyển sang trạng thái `BOOKED`, hệ thống tự động khóa trạng thái vật lý của không gian (`Spaces`) sang `BOOKED` để ngăn trùng lịch. Nếu đơn bị `CANCELLED`, hệ thống lập tức nhả không gian về `AVAILABLE`.
 
-### 2. Phân hệ Quản lý Không gian (Space Management)
-* `Branches`: Quản lý các chi nhánh vật lý.
-* `SpaceTypes`: Cấu hình danh mục hạng phòng/bàn, sức chứa và đơn giá.
-* `Spaces`: Thực thể định danh từng vị trí ngồi, quản lý `current_status` (AVAILABLE, BOOKED, OCCUPIED, CLEANING) và QR Token check-in.
+### 2. Phân hệ Phiên làm việc & Trạng thái Không gian (Sessions & Spaces)
+Đây là phân hệ tách bạch hoàn toàn dữ liệu giao dịch tĩnh (Booking) và vòng đời sử dụng thực tế (Session).
+* **Check-in:** Lễ tân tạo `Sessions` mới. Ngay lập tức, không gian chuyển sang `OCCUPIED` (Có người ngồi). Đồng thời, đơn Booking gốc sẽ được đồng bộ ngược thành `ACTIVE` và ghi nhận `check_in_time`.
+* **Check-out:** Khi ghi nhận `checkout_time`, không gian tự động chuyển sang trạng thái chờ dọn dẹp (`CLEANING`). Đơn đặt chỗ hoàn tất với trạng thái `COMPLETED`, và trạng thái của chính Session đó cũng tự động được đóng lại (`COMPLETED`).
 
-### 3. Phân hệ Đặt chỗ (Booking)
-* `Bookings`: Quản lý giao dịch đặt trước. Đã được nâng cấp để hỗ trợ đa kênh (`booking_channel`: ONLINE/OFFLINE) và quản lý linh hoạt thông tin Khách vãng lai (Guest).
-* `BookingDetails`: Quản lý chi tiết từng vị trí không gian được đặt trong một Booking (Hỗ trợ đặt nhiều không gian cùng lúc).
+### 3. Phân hệ F&B và Gia hạn (Services & Extensions)
+* **Tính toán Order Tự động:** Khi khách hàng gọi thêm món, thay đổi số lượng hoặc hủy món trong `SessionOrderDetails`, hệ thống tự động tính thành tiền (`subtotal = quantity * unit_price`) và tự động dùng thuật toán delta (cộng/trừ chênh lệch) để cập nhật tổng hóa đơn (`total_price`) vào `SessionOrders` mà không làm nghẽn hệ thống.
+* **Quản lý Gia hạn:** Mọi chi phí phát sinh khi khách ngồi lố giờ được ghi log chi tiết trong `SessionExtensions`.
 
-### 4. Phân hệ Phiên làm việc (Sessions)
-* `Sessions`: Theo dõi dòng thời gian thực tế của khách từ lúc check-in đến check-out tại không gian. Hỗ trợ khách vãng lai (Walk-in Guests).
-* `SessionExtensions`: Quản lý lịch sử yêu cầu gia hạn giờ.
-* `SessionOrders` & `SessionOrderDetails`: Quản lý danh sách dịch vụ F&B, thiết bị thuê phát sinh trong phiên.
+### 4. Phân hệ Thanh toán & Khuyến mãi (Payment, Loyalty & Vouchers)
+* **Tính toán Chiết khấu Đa tầng:** Hàm `fn_CalculateDiscountAmount` xử lý logic phức tạp để tổng hợp mức giảm giá từ cả Hạng Thành Viên (`MembershipTiers`) lẫn Mã giảm giá (`Vouchers` - dạng `%` hoặc tiền cố định), có tính toán chặn trần `max_discount`.
+* **Cập nhật Điểm & Thăng hạng Tự động:** Ngay khi một giao dịch trong `Payments` chuyển trạng thái `SUCCESS`:
+  * Hệ thống tự động tính toán và cộng dồn điểm thưởng (`loyalty_points`) dựa trên số tiền chi tiêu.
+  * Quét bảng `MembershipTiers` để tự động nâng hạng thành viên nếu đủ điều kiện.
+  * Tự động quét các InvoiceLines thuộc giao dịch để truy xuất và cộng dồn lượt sử dụng (`used_count`) vào đúng mã Voucher đã dùng nhằm ngăn chặn vượt quá `usage_limit`.
 
-### 5. Phân hệ Sản phẩm & Tiện ích (Products)
-* `Categories`: Nhóm danh mục sản phẩm.
-* `Products`: Quản lý danh mục món ăn, thức uống, thiết bị cho thuê kèm mức giá và trạng thái khả dụng.
+### 5. Phân hệ Danh tính & Phân quyền (Identities & Roles)
+* Thiết kế theo cấu trúc phân quyền Role-Based Access Control (RBAC) với các bảng `Roles`, `Permissions`, `RolePermissions`.
+* Tách biệt dữ liệu `Users` cốt lõi với thông tin mở rộng của `Employees` và `Customers` theo mô hình Table-Per-Type.
 
-### 6. Phân hệ Thanh toán & Khuyến mãi (Payment & Sale)
-* `MembershipTiers`: Cấu hình các hạng thành viên (Đồng, Bạc, Vàng...) và mức ưu đãi phần trăm tương ứng.
-* `Vouchers`: Cấu hình các chiến dịch mã giảm giá (Theo % hoặc số tiền cố định, giới hạn lượt dùng).
-* `Payments`: Bảng lưu vết lịch sử giao dịch. Hỗ trợ thanh toán linh hoạt cho cả Booking (Tiền cọc Online/Offline) và Session (Hóa đơn Check-out cuối cùng).
-
----
+### 6. Khả năng Audit & Data Pipeline Ready
+* Toàn bộ các bảng dữ liệu có tính chất giao dịch (Bookings, Sessions, Invoices,...) đều được gắn Trigger tự động cập nhật `updated_at = CURRENT_TIMESTAMP` trước mỗi lệnh UPDATE. Kiến trúc này giúp cơ sở dữ liệu luôn sẵn sàng cho các tiến trình trích xuất dữ liệu gia tăng (Incremental ETL) trong các bài toán Data Warehouse và Big Data.
