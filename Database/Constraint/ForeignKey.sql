@@ -14,12 +14,16 @@ ALTER TABLE Branches ADD CONSTRAINT fk_branches_manager FOREIGN KEY (manager_id)
 ALTER TABLE Spaces ADD CONSTRAINT fk_spaces_branches FOREIGN KEY (branch_id) REFERENCES Branches(branch_id);
 ALTER TABLE Spaces ADD CONSTRAINT fk_spaces_types FOREIGN KEY (type_id) REFERENCES SpaceTypes(type_id);
 
--- Booking 
+-- Booking
+ALTER TABLE Invoices ADD CONSTRAINT fk_invoices_customers FOREIGN KEY (customer_id) REFERENCES Customers(customer_id);
+ALTER TABLE Invoices ADD CONSTRAINT fk_invoices_staff FOREIGN KEY (staff_id) REFERENCES Employees(employee_id);
+ALTER TABLE InvoiceLines ADD CONSTRAINT fk_invoicelines_invoices FOREIGN KEY (invoice_id) REFERENCES Invoices(invoice_id) ON DELETE CASCADE;
 ALTER TABLE Bookings ADD CONSTRAINT fk_bookings_customers FOREIGN KEY (customer_id) REFERENCES Customers(customer_id);
 ALTER TABLE Bookings ADD CONSTRAINT fk_bookings_vouchers FOREIGN KEY (voucher_id) REFERENCES Vouchers(voucher_id);
 ALTER TABLE BookingDetails ADD CONSTRAINT fk_bkdetail_bookings FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id) ON DELETE CASCADE;
 ALTER TABLE BookingDetails ADD CONSTRAINT fk_bkdetail_spaces FOREIGN KEY (space_id) REFERENCES Spaces(space_id);
 ALTER TABLE Bookings ADD CONSTRAINT fk_bookings_staff FOREIGN KEY (created_by_staff_id) REFERENCES Employees(employee_id);
+
 
 -- Sessions
 ALTER TABLE Sessions ADD CONSTRAINT fk_sessions_customers FOREIGN KEY (customer_id) REFERENCES Customers(customer_id);
@@ -38,9 +42,10 @@ ALTER TABLE SessionOrderDetails ADD CONSTRAINT fk_orderdetails_orders FOREIGN KE
 ALTER TABLE SessionOrderDetails ADD CONSTRAINT fk_orderdetails_products FOREIGN KEY (product_id) REFERENCES Products(product_id);
 
 -- Payments & Vouchers
-ALTER TABLE Payments ADD CONSTRAINT fk_payments_bookings FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id);
-ALTER TABLE Payments ADD CONSTRAINT fk_payments_sessions FOREIGN KEY (session_id) REFERENCES Sessions(session_id);
-ALTER TABLE Payments ADD CONSTRAINT fk_payments_orders FOREIGN KEY (order_id) REFERENCES SessionOrders(order_id);
+ALTER TABLE Payments ADD CONSTRAINT fk_payments_invoices FOREIGN KEY (invoice_id) REFERENCES Invoices(invoice_id);
+ALTER TABLE Invoices ADD CONSTRAINT fk_invoices_customers FOREIGN KEY (customer_id) REFERENCES Customers(customer_id);
+ALTER TABLE Invoices ADD CONSTRAINT fk_invoices_staff FOREIGN KEY (staff_id) REFERENCES Employees(employee_id);
+ALTER TABLE InvoiceLines ADD CONSTRAINT fk_invoicelines_invoices FOREIGN KEY (invoice_id) REFERENCES Invoices(invoice_id) ON DELETE CASCADE;
 
 -- Product
 ALTER TABLE Products ADD CONSTRAINT fk_products_categories FOREIGN KEY (category_id) REFERENCES Categories(category_id);

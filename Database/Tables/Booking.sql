@@ -17,6 +17,7 @@ CREATE TABLE Bookings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 -- 2. Bảng BookingDetails
 CREATE TABLE BookingDetails (
     detail_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
