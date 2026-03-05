@@ -1,6 +1,12 @@
 -- Booking Constraints 
 ALTER TABLE Bookings 
 ADD CONSTRAINT chk_booking_status CHECK (status IN ('PENDING', 'BOOKED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
+-- PENDING (Đang chờ): Đơn đặt chỗ vừa được tạo ra nhưng chưa hoàn tất thủ tục
+-- BOOKED (Đã đặt trước): Giao dịch đặt chỗ và đặt cọc đã thành công, hệ thống cấp mã qr_code
+-- ACTIVE (Đang hoạt động): Khách đã mang mã QR đến quầy để Check-in
+-- COMPLETED (Đã hoàn tất): Khách hàng đã Check-out
+-- CANCELLED (Đã hủy): Đơn đặt chỗ bị hủy do khách hàng không đến
+
 ALTER TABLE Bookings 
 ADD CONSTRAINT chk_booking_payment_status CHECK (payment_status IN ('UNPAID', 'PARTIAL', 'PAID'));
 ALTER TABLE Bookings 

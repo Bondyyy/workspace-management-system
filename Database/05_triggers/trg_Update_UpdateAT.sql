@@ -1,0 +1,61 @@
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Bookings
+BEFORE UPDATE ON Bookings
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Sessions
+BEFORE UPDATE ON Sessions
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_SOrders
+BEFORE UPDATE ON SessionOrders
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_SExtensions
+BEFORE UPDATE ON SessionExtensions
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Spaces
+BEFORE UPDATE ON Spaces
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Users
+BEFORE UPDATE ON Users
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Customers
+BEFORE UPDATE ON Customers
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Invoices
+BEFORE UPDATE ON Invoices
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
