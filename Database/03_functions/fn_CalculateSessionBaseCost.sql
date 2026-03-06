@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION fn_CalculateSessionBaseCost (
-    p_session_id IN NUMBER
+    p_session_id IN NUMBER 
 ) RETURN NUMBER
 IS
     v_checkin_time TIMESTAMP;
