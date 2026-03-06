@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION fn_CheckSpaceAvailable (
+CREATE OR REPLACE FUNCTION fn_CheckSpaceAvailable ( 
     p_space_id IN NUMBER,
     p_start_time IN TIMESTAMP,
     p_end_time IN TIMESTAMP
