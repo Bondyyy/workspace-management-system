@@ -12,6 +12,8 @@ ALTER TABLE Vouchers
 ADD CONSTRAINT chk_voucher_type CHECK (discount_type IN ('PERCENT', 'FIXED'));
 ALTER TABLE Vouchers 
 ADD CONSTRAINT chk_voucher_value CHECK (discount_value > 0);
+ALTER TABLE MembershipTiers
+ADD CONSTRAINT chk_membership_tiers_tiersname CHECK (tier_name IN ('BRONZE','SILVER','GOLD','DIAMOND'))
 
 ALTER TABLE Payments 
 ADD CONSTRAINT fk_payments_invoices 
