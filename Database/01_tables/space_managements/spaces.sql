@@ -1,6 +1,6 @@
 CREATE TABLE Spaces (
     space_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name VARCHAR2(100) NOT NULL,
+    name VARCHAR2(100) NOT NULL, --tên không gian, ví dụ phòng họp 1,...
     branch_id NUMBER NOT NULL,
     type_id NUMBER NOT NULL,   
     current_status VARCHAR2(20) DEFAULT 'AVAILABLE', 
