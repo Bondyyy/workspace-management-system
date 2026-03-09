@@ -1,7 +1,7 @@
 CREATE TABLE Sessions (
     session_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     customer_id NUMBER,       -- Có thể NULL nếu khách vãng lai chưa kịp đăng ký
-    booking_id NUMBER,        -- Có thể NULL nếu là khách vãng lai
+    booking_id NUMBER,        -- Có thể NULL nếu chưa đặt trước
     space_id NUMBER NOT NULL,
     checkin_time TIMESTAMP NOT NULL,
     checkout_time TIMESTAMP,  -- Sẽ NULL cho đến khi khách check-out
