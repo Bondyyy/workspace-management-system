@@ -44,7 +44,7 @@ BEGIN
     IF p_voucher_id IS NOT NULL THEN
         BEGIN
             SELECT discount_type, discount_value, min_order_value, max_discount,
-                   usage_limit, used_count, expiry_date, start_date, is_active
+                   usage_limit, used_count, expiry_date, effective_date, is_active
             INTO v_v_type, v_v_value, v_v_min_order, v_v_max_discount,
                  v_v_usage_limit, v_v_used_count, v_v_expiry, v_v_start, v_v_active
             FROM Vouchers

@@ -10,6 +10,7 @@ BEGIN
     IF p_start_time >= p_end_time THEN
         RETURN 0;
     END IF;
+
     -- 5 phút dọn lại chỗ
     IF p_start_time <= SYSTIMESTAMP + INTERVAL '5' MINUTE THEN
         SELECT current_status INTO v_current_status
@@ -35,13 +36,14 @@ BEGIN
         RETURN 0;
     END IF;
 
-    -- Nếu có khách đang ngồi và họ vừa xin Lễ tân gia hạn
+    -- Kiểm tra khách đang ngồi và vừa xin Lễ tân gia hạn (ĐÃ SỬA LẠI JOIN)
     SELECT COUNT(*)
     INTO v_count
     FROM Sessions s
+    JOIN SessionDetails sd ON s.session_id = sd.session_id
     JOIN SessionExtensions ext ON s.session_id = ext.session_id
-    WHERE s.space_id = p_space_id
-      AND s.status = 'ACTIVE'
+    WHERE sd.space_id = p_space_id
+      AND sd.status = 'ACTIVE'
       AND p_start_time < ext.end_time
       AND p_end_time > ext.start_time;
 
