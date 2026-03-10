@@ -8,16 +8,24 @@ ALTER TABLE SessionOrders
 ADD CONSTRAINT chk_order_status CHECK (order_status IN ('PENDING', 'PREPARING', 'SERVED', 'CANCELLED'));
 ALTER TABLE SessionOrderDetails 
 ADD CONSTRAINT chk_order_quantity CHECK (quantity > 0);
+ALTER TABLE SessionDetails
+ADD CONSTRAINT chk_sessiondetail_status CHECK (status IN ('ACTIVE', 'COMPLETED', 'CANCELLED'));
+ALTER TABLE SessionDetails
+ADD CONSTRAINT chk_sessiondetail_time CHECK (checkout_time >= checkin_time);
 
+
+ALTER TABLE SessionDetails
+ADD CONSTRAINT fk_sessiondetails_sessions
+FOREIGN KEY (session_id) REFERENCES Sessions(session_id) ON DELETE CASCADE;
+ALTER TABLE SessionDetails
+ADD CONSTRAINT fk_sessiondetails_spaces
+FOREIGN KEY (space_id) REFERENCES Spaces(space_id);
 ALTER TABLE Sessions 
 ADD CONSTRAINT fk_sessions_customers 
 FOREIGN KEY (customer_id) REFERENCES Customers(customer_id);
 ALTER TABLE Sessions 
 ADD CONSTRAINT fk_sessions_bookings 
 FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id);
-ALTER TABLE Sessions 
-ADD CONSTRAINT fk_sessions_spaces 
-FOREIGN KEY (space_id) REFERENCES Spaces(space_id);
 ALTER TABLE Sessions 
 ADD CONSTRAINT fk_sessions_staff_in 
 FOREIGN KEY (check_in_staff_id) REFERENCES Employees(employee_id);
