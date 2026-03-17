@@ -9,3 +9,6 @@ CREATE TABLE Roles (
     is_active     NUMBER(1) DEFAULT 1,
     is_deleted    NUMBER(1) DEFAULT 0 CHECK (is_deleted IN (0,1))
 );
+
+ALTER TABLE Roles 
+ADD CONSTRAINT chk_is_active CHECK (is_active IN (0, 1));
