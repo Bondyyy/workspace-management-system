@@ -1,0 +1,15 @@
+TAI SAO qr/ KHONG CO controller/ service/ rieng biet?
+======================================================
+Vi module QR nho, chi co 2 file:
+  QrCodeService.java   -> Logic sinh va xac thuc QR
+  QrScanController.java -> API endpoint de Le tan quet
+
+Neu tach ra controller/ va service/ thi tao 2 thu muc chi de chua 1 file moi thu muc
+-> Qua phuc tap cho module don gian.
+
+Nguyen tac: Chi tach tang khi module lon (3+ file moi tang).
+Module nho co the de phang (flat) cho gon.
+
+QrCodeService khong co Repository vi:
+  Ma QR duoc luu vao cot qr_code_hash trong bang BOOKINGS
+  -> BookingRepository da lo viec luu/doc, khong can repo rieng

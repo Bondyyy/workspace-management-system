@@ -1,1 +1,23 @@
+# Maven
+target/
+*.class
+
+# IntelliJ
 .idea/
+*.iml
+*.iws
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+
+# Config co password - KHONG COMMIT
+src/main/resources/application.properties
+src/main/resources/application-local.properties
+
+# Logs
+*.log
+logs/

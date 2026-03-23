@@ -1,0 +1,16 @@
+TAI SAO CO THU MUC java/ ?
+===========================
+Maven quy dinh: tat ca file .java PHAI nam trong src/main/java/
+Neu dat .java o noi khac -> Maven khong compile.
+
+Ben trong java/ la cay thu muc phan cap theo "package":
+  java/
+  └── com/
+      └── wms/
+          └── (cac module: auth, space, booking...)
+
+Moi thu muc = 1 package trong Java.
+Ten thu muc phai khop CHINH XAC voi khai bao package trong file:
+  Thu muc: java/com/wms/auth/controller/
+  File:    AuthController.java
+  Dong 1:  package com.wms.auth.controller;  <- phai khop 100%

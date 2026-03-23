@@ -1,0 +1,15 @@
+TAI SAO CO THU MUC test/ ?
+===========================
+Chua cac file Unit Test - kiem thu tung ham logic mot cach doc lap.
+
+Co cau truc package GIONG HET voi main/ (cung com/wms/...):
+  main/java/com/wms/invoice/service/InvoiceService.java   <- code that
+  test/java/com/wms/invoice/InvoiceServiceTest.java       <- test cho no
+
+Ly do:
+  - Java cho phep class test truy cap cac thanh phan cung package
+  - De tim file test tuong ung voi file code that
+  - Maven chay lenh "mvn test" se tu tim tat ca file *Test.java trong thu muc nay
+
+Theo yeu cau SOW: PHAI viet test cho InvoiceService, BookingService, SessionService
+(do day la cac module tinh tien - sai 1 dong la sai toan bo hoa don)

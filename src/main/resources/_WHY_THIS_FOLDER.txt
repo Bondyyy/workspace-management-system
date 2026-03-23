@@ -1,0 +1,16 @@
+TAI SAO CO THU MUC resources/ ?
+=================================
+Chua tat ca file KHONG PHAI Java ma ung dung can khi chay:
+
+application.properties          <- Cau hinh chinh: Oracle URL, JWT secret, port...
+application.example.properties  <- Ban mau COMMIT len Git (khong co password that)
+application.properties          <- Ban that voi password - PHAI GITIGNORE, khong commit
+
+Ly do tach thanh 2 file:
+  - application.example.properties: Commit len GitHub de ca nhom tham khao
+  - application.properties: Moi nguoi tu tao tren may minh, dien password Oracle cua minh
+    -> Neu commit file nay len GitHub la lo password toan bo nhom!
+
+Cac file khac co the them vao resources/ sau nay:
+  logback.xml     -> Cau hinh ghi log
+  messages.properties -> Cac thong bao loi (neu can da ngon ngu)

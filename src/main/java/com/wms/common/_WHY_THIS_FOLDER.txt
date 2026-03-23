@@ -1,0 +1,33 @@
+TAI SAO CO thu muc common/ ?
+=============================
+Chua cac class DUNG CHUNG cho tat ca module khac.
+
+Neu khong co common/:
+  Moi module tu dinh nghia ApiResponse rieng -> 10 module = 10 ban ApiResponse khac nhau
+  -> FE khong biet response format nao la chuan
+  -> Sua format phai sua 10 cho
+
+Voi common/:
+  Dinh nghia 1 lan -> tat ca module dung chung -> nhat quan
+
+NOI DUNG common/:
+  BaseEntity.java           -> Moi bang Oracle deu co created_at va updated_at
+                               Thay vi viet 2 truong nay o 10 entity -> viet 1 lan o day
+                               Tat ca Entity chi can: extends BaseEntity
+
+  ApiResponse.java          -> Khung tra loi chuan cho moi API
+                               { success, message, data, timestamp }
+                               FE chi can hoc 1 format nay cho toan bo he thong
+
+  GlobalExceptionHandler.java -> Bat loi tap trung
+                               Neu khong co: moi Controller tu xu ly loi rieng -> loan
+                               Voi cai nay: loi xay ra o dau cung duoc xu ly giong nhau
+
+  enums/                    -> Cac gia tri co dinh (khong doi)
+                               SpaceStatus: AVAILABLE/BOOKED/OCCUPIED/CLEANING
+                               Dung enum thay vi String de tranh loi chinh ta:
+                               "AVAILBLE" (sai) -> khong compile duoc, phat hien ngay
+
+LUU Y QUAN TRONG:
+  common/ PHAI duoc tao truoc tat ca module khac
+  Vi auth/, space/, booking/... deu phu thuoc vao BaseEntity va ApiResponse
