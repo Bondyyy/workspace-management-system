@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.VBox?>
+<!-- TODO: Thiet ke giao dien Admin bang Scene Builder -->
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.wms.controller.AdminController">
+</VBox>

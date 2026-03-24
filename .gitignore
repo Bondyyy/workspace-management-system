@@ -1,23 +1,20 @@
-# Maven
-target/
-*.class
+# NetBeans build output
+build/
+dist/
+nbproject/private/
+nbbuild/
 
 # IntelliJ
 .idea/
 *.iml
-*.iws
+out/
 
-# NetBeans
-nbproject/private/
-build/
-nbbuild/
-dist/
-nbdist/
+# Config co password Oracle - KHONG BAO GIO COMMIT
+resources/config.properties
+src/com/wms/config/config.properties
 
-# Config co password - KHONG COMMIT
-src/main/resources/application.properties
-src/main/resources/application-local.properties
-
-# Logs
+# Log files
 *.log
-logs/
+
+# Mac
+.DS_Store
