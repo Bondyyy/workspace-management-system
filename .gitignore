@@ -1,4 +1,7 @@
-# NetBeans build output
+# Maven build output
+target/
+
+# NetBeans
 build/
 dist/
 nbproject/private/
@@ -9,11 +12,10 @@ nbbuild/
 *.iml
 out/
 
-# Config co password Oracle - KHONG BAO GIO COMMIT
-resources/config.properties
-src/com/wms/config/config.properties
+# Config co Oracle password - KHONG BAO GIO COMMIT
+src/main/resources/config.properties
 
-# Log files
+# Log
 *.log
 
 # Mac
