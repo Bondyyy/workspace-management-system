@@ -27,13 +27,8 @@ BEGIN
         RETURNING loyalty_points INTO v_new_points;
 
         --3 TÌM HẠNG THÀNH VIÊN
-        SELECT tier_id INTO v_new_tier_id
-        FROM  (
-                SELECT tier_id FROM MembershipTiers
-                WHERE min_points <= v_new_points
-                ORDER BY min_points DESC
-        )
-        WHERE ROWNUM = 1;
+        v_new_tier_id := fn_GetCustomerTierByPoints(v_new_points);
+
         IF v_new_tier_id IS NOT NULL THEN
                 UPDATE Customers
                 SET membership_tier_id = v_new_tier_id

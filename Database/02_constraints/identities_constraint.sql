@@ -1,5 +1,5 @@
 ALTER TABLE Users 
-ADD CONSTRAINT chk_user_status CHECK (status IN ('ACTIVE', 'BANNED', 'LOCKED'));
+ADD CONSTRAINT chk_user_status CHECK (status IN ('ACTIVE', 'BANNED', 'LOCKED', 'INACTIVE'));
 ALTER TABLE Employees 
 ADD CONSTRAINT chk_emp_status CHECK (job_status IN ('ACTIVE', 'RESIGNED', 'ON_LEAVE'));
 ALTER TABLE Customers 

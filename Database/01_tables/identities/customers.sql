@@ -3,7 +3,7 @@ CREATE TABLE Customers (
     user_id           NUMBER(10) NOT NULL UNIQUE,  
     membership_tier_id NUMBER,                     
     
-    customer_code     VARCHAR2(50) UNIQUE,
+    customer_code     VARCHAR2(50) UNIQUE, -- Định dạng: KH-YYYYMMDD-0000001
     loyalty_points    NUMBER DEFAULT 0,
     lifetime_spending NUMBER(15, 2) DEFAULT 0,
     company_info      VARCHAR2(255),
@@ -12,3 +12,9 @@ CREATE TABLE Customers (
     updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_deleted        NUMBER(1) DEFAULT 0 CHECK (is_deleted IN (0,1))
 );
+
+CREATE SEQUENCE seq_customer_code
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE
+    NOCYCLE;

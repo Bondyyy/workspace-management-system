@@ -59,3 +59,75 @@ FOR EACH ROW
 BEGIN
     :NEW.updated_at := CURRENT_TIMESTAMP;
 END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Branches
+BEFORE UPDATE ON Branches
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Vouchers
+BEFORE UPDATE ON Vouchers
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Products
+BEFORE UPDATE ON Products
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Categories
+BEFORE UPDATE ON Categories
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_MemberTiers
+BEFORE UPDATE ON MembershipTiers
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_SpaceTypes
+BEFORE UPDATE ON SpaceTypes
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Employees
+BEFORE UPDATE ON Employees
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Roles
+BEFORE UPDATE ON Roles
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+
+
+CREATE OR REPLACE TRIGGER trg_Update_UpdatedAt_Permissions
+BEFORE UPDATE ON Permissions
+FOR EACH ROW
+BEGIN
+    :NEW.updated_at := CURRENT_TIMESTAMP;
+END;
+/
