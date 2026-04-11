@@ -17,6 +17,19 @@ BEGIN
         RETURN;
     END IF;
 
+    SELECT COUNT(*)
+    INTO v_active_booking
+    FROM Bookings
+    WHERE voucher_id = p_voucher_id
+      AND status NOT IN ('COMPLETED', 'CANCELLED');
+
+    IF v_active_booking > 0 THEN
+        p_result_code := 1;
+        p_result_msg := 'Không thể xóa: voucher đang được áp dụng trong '
+            || v_active_booking || ' đặt chỗ chưa hoàn tất.';
+        RETURN;
+    END IF;
+
     DELETE FROM Vouchers
     WHERE voucher_id = p_voucher_id;
 
