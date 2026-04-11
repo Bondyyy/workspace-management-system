@@ -33,3 +33,12 @@ ALTER TABLE BookingDetails
 ADD CONSTRAINT fk_bkdetail_spaces 
 FOREIGN KEY (space_id) REFERENCES Spaces(space_id);
 
+-- Đảm bảo tiền cọc, giảm giá và tổng tiền của Booking không bị âm
+ALTER TABLE Bookings 
+ADD CONSTRAINT chk_booking_amounts 
+CHECK (total_amount >= 0 AND discount_amount >= 0 AND deposit_amount >= 0 AND final_amount >= 0);
+
+-- Giá tiền không gian tại thời điểm đặt phải hợp lệ
+ALTER TABLE BookingDetails 
+ADD CONSTRAINT chk_bkdetail_price CHECK (price_at_booking >= 0);
+

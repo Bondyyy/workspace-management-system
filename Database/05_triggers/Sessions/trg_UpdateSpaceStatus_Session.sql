@@ -1,5 +1,5 @@
 CREATE OR REPLACE TRIGGER trg_UpdateSpaceStatus_Session
-AFTER INSERT OR UPDATE OF checkout_time ON Sessions
+AFTER INSERT OR UPDATE OF checkout_time ON SessionDetails -- Sửa từ Sessions thành SessionDetails
 FOR EACH ROW
 BEGIN
     IF INSERTING THEN
