@@ -1,22 +1,26 @@
 # Maven build output
 target/
+*.class
+*.jar
+*.war
 
 # NetBeans
+nbproject/private/
+nb-configuration.xml
 build/
 dist/
-nbproject/private/
-nbbuild/
 
-# IntelliJ
-.idea/
-*.iml
-out/
+# Cấu hình nhạy cảm (DB, credentials)
+*.properties
+!src/main/resources/application-example.properties
 
-# Config co Oracle password - KHONG BAO GIO COMMIT
-src/main/resources/config.properties
-
-# Log
-*.log
-
-# Mac
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+.env
+src/main/resources/config.properties

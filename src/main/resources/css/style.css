@@ -1,6 +1,0 @@
-/* WMS Global Style */
-.root { -fx-font-family: 'Segoe UI'; -fx-font-size: 14px; }
-.btn-primary { -fx-background-color: #2196F3; -fx-text-fill: white; -fx-background-radius: 6px; }
-.btn-danger  { -fx-background-color: #f44336; -fx-text-fill: white; -fx-background-radius: 6px; }
-.btn-success { -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-background-radius: 6px; }
-
