@@ -1,70 +1,65 @@
 package com.wms.config;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
-/**
- * Singleton quản lý kết nối Oracle Database.
- * Đọc thông tin từ file .env ở thư mục gốc project.
- * Cả nhóm dùng: DatabaseConnection.getInstance().getConnection()
- */
 public class DatabaseConnection {
 
     private static DatabaseConnection instance;
     private Connection connection;
 
-    // Constructor private — không ai new được, phải qua getInstance()
     private DatabaseConnection() {
-        try {
-            Dotenv dotenv = Dotenv.configure()
-                .directory(System.getProperty("user.dir"))
-                .ignoreIfMissing()
-                .load();
-
-            String url      = dotenv.get("DB_URL",      "jdbc:oracle:thin:@localhost:1521/FREEPDB1");
-            String username = dotenv.get("DB_USERNAME",  "system");
-            String password = dotenv.get("DB_PASSWORD",  "");
-
-            Class.forName("oracle.jdbc.OracleDriver");
-            this.connection = DriverManager.getConnection(url, username, password);
-
-            System.out.println("[DB] Kết nối Oracle thành công!");
-
-        } catch (ClassNotFoundException e) {
-            System.err.println("[DB] Không tìm thấy Oracle JDBC Driver!");
-            throw new RuntimeException("Oracle Driver không tồn tại", e);
-        } catch (SQLException e) {
-            System.err.println("[DB] Kết nối thất bại: " + e.getMessage());
-            throw new RuntimeException("Không thể kết nối Database", e);
-        }
+        this.connection = connect();
     }
 
-    /** Lấy instance duy nhất (thread-safe) */
     public static synchronized DatabaseConnection getInstance() {
-        if (instance == null || isConnectionClosed()) {
+        if (instance == null) {
             instance = new DatabaseConnection();
         }
         return instance;
     }
 
-    /** Trả về Connection để DAO dùng */
     public Connection getConnection() {
+        try {
+            if (connection == null || !connection.isValid(2)) {
+                System.out.println("[DB] Đang reconnect...");
+                connection = connect();
+            }
+        } catch (SQLException e) {
+            connection = connect();
+        }
         return connection;
     }
 
-    /** Kiểm tra connection còn sống không */
-    private static boolean isConnectionClosed() {
+    private Connection connect() {
+        Properties props = loadEnv();
+        String url      = props.getProperty("DB_URL");
+        String username = props.getProperty("DB_USERNAME");
+        String password = props.getProperty("DB_PASSWORD");
+
         try {
-            return instance == null 
-                || instance.connection == null 
-                || instance.connection.isClosed();
+            Connection conn = DriverManager.getConnection(url, username, password);
+            System.out.println("[DB] Kết nối Oracle thành công!");
+            return conn;
         } catch (SQLException e) {
-            return true;
+            throw new RuntimeException("[DB] Kết nối thất bại: " + e.getMessage(), e);
         }
     }
 
-    // KHÔNG gọi connection.close() trong DAO
-    // Singleton này sẽ giữ connection suốt vòng đời app
+    private Properties loadEnv() {
+        Properties props = new Properties();
+        String envPath = System.getProperty("user.dir") + "/.env";
+
+        try (FileInputStream fis = new FileInputStream(envPath)) {
+            props.load(fis);
+        } catch (IOException e) {
+            throw new RuntimeException("Không tìm thấy file .env tại: " + envPath, e);
+        }
+
+        return props;
+    }
 }
