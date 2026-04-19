@@ -29,3 +29,15 @@ FOREIGN KEY (staff_id) REFERENCES Employees(employee_id);
 ALTER TABLE InvoiceLines 
 ADD CONSTRAINT fk_invoicelines_invoices 
 FOREIGN KEY (invoice_id) REFERENCES Invoices(invoice_id) ON DELETE CASCADE;
+
+-- Bắt buộc nhập transaction_reference nếu chuyển khoản
+ALTER TABLE Payments 
+ADD CONSTRAINT chk_transaction_ref 
+CHECK (
+    (payment_method = 'CASH') OR 
+    (payment_method IN ('CREDIT_CARD', 'VNPAY', 'MOMO') AND transaction_reference IS NOT NULL)
+);
+
+-- Đảm bảo các khoản tiền trong hóa đơn không bị âm
+ALTER TABLE Invoices 
+ADD CONSTRAINT chk_invoice_amounts CHECK (sub_total >= 0 AND discount_amount >= 0 AND total_amount >= 0);

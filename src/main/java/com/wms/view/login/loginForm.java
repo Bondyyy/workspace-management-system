@@ -1,9 +1,11 @@
-
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.wms.view.login;
+import com.wms.view.register.registerForm;
+
+
 
 
 import com.wms.controller.LoginController;
@@ -34,69 +36,119 @@ public class loginForm extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
+        pnMain = new javax.swing.JPanel();
+        pnLeft = new javax.swing.JPanel();
+        lblLogoPlaceHolder = new javax.swing.JLabel();
+        lblSystemName1 = new javax.swing.JLabel();
+        lblSystemName2 = new javax.swing.JLabel();
+        pnRight = new javax.swing.JPanel();
+        lblLoginTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         txtUsername = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         txtPassword = new javax.swing.JPasswordField();
+        lblForgotPassword = new javax.swing.JLabel();
         btnLogin = new javax.swing.JButton();
+        lblNoAccount = new javax.swing.JLabel();
+        btnRegister = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Đăng nhập - Không gian làm việc và học tập");
+        setResizable(false);
 
-        jLabel1.setText("ĐĂNG NHẬP");
+        pnMain.setBackground(new java.awt.Color(255, 255, 255));
+        pnMain.setPreferredSize(new java.awt.Dimension(750, 450));
+        pnMain.setLayout(null);
 
+        pnLeft.setBackground(new java.awt.Color(0, 100, 200));
+        pnLeft.setLayout(null);
+
+        lblLogoPlaceHolder.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
+        lblLogoPlaceHolder.setForeground(new java.awt.Color(255, 255, 255));
+        lblLogoPlaceHolder.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblLogoPlaceHolder.setText("[Chèn Logo Của Nhóm Tại Đây]");
+        pnLeft.add(lblLogoPlaceHolder);
+        lblLogoPlaceHolder.setBounds(0, 120, 350, 60);
+
+        lblSystemName1.setFont(new java.awt.Font("Segoe UI", 1, 22)); // NOI18N
+        lblSystemName1.setForeground(new java.awt.Color(255, 255, 255));
+        lblSystemName1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSystemName1.setText("KHÔNG GIAN LÀM VIỆC");
+        pnLeft.add(lblSystemName1);
+        lblSystemName1.setBounds(0, 200, 350, 40);
+
+        lblSystemName2.setFont(new java.awt.Font("Segoe UI", 1, 22)); // NOI18N
+        lblSystemName2.setForeground(new java.awt.Color(255, 255, 255));
+        lblSystemName2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSystemName2.setText("VÀ HỌC TẬP");
+        pnLeft.add(lblSystemName2);
+        lblSystemName2.setBounds(0, 240, 350, 40);
+
+        pnMain.add(pnLeft);
+        pnLeft.setBounds(0, 0, 350, 450);
+
+        pnRight.setBackground(new java.awt.Color(255, 255, 255));
+        pnRight.setLayout(null);
+
+        lblLoginTitle.setFont(new java.awt.Font("Segoe UI", 1, 26)); // NOI18N
+        lblLoginTitle.setForeground(new java.awt.Color(0, 51, 153));
+        lblLoginTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblLoginTitle.setText("ĐĂNG NHẬP");
+        pnRight.add(lblLoginTitle);
+        lblLoginTitle.setBounds(0, 40, 400, 50);
+
+        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel2.setText("Tên đăng nhập");
+        pnRight.add(jLabel2);
+        jLabel2.setBounds(50, 110, 300, 20);
 
+        txtUsername.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtUsername);
+        txtUsername.setBounds(50, 130, 300, 40);
+
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel3.setText("Mật khẩu");
+        pnRight.add(jLabel3);
+        jLabel3.setBounds(50, 190, 300, 20);
 
-        txtPassword.setText("jPasswordField1");
+        txtPassword.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtPassword);
+        txtPassword.setBounds(50, 210, 300, 40);
 
+        lblForgotPassword.setFont(new java.awt.Font("Segoe UI", 2, 12)); // NOI18N
+        lblForgotPassword.setForeground(new java.awt.Color(255, 51, 51));
+        lblForgotPassword.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblForgotPassword.setText("Quên mật khẩu?");
+        pnRight.add(lblForgotPassword);
+        lblForgotPassword.setBounds(200, 260, 150, 16);
+
+        btnLogin.setBackground(new java.awt.Color(0, 100, 200));
+        btnLogin.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        btnLogin.setForeground(new java.awt.Color(255, 255, 255));
         btnLogin.setText("Đăng nhập");
         btnLogin.addActionListener(this::btnLoginActionPerformed);
+        pnRight.add(btnLogin);
+        btnLogin.setBounds(50, 300, 300, 45);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel1))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGap(65, 65, 65)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(btnLogin)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(txtUsername))))
-                .addGap(163, 163, 163))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(32, 32, 32)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtUsername, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel3)
-                    .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(38, 38, 38)
-                .addComponent(btnLogin)
-                .addGap(0, 113, Short.MAX_VALUE))
-        );
+        lblNoAccount.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        lblNoAccount.setText("Chưa có tài khoản?");
+        pnRight.add(lblNoAccount);
+        lblNoAccount.setBounds(50, 380, 150, 30);
+
+        btnRegister.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnRegister.setForeground(new java.awt.Color(255, 51, 51));
+        btnRegister.setText("Đăng ký");
+        btnRegister.addActionListener(this::btnRegisterActionPerformed);
+        pnRight.add(btnRegister);
+        btnRegister.setBounds(200, 380, 150, 30);
+
+        pnMain.add(pnRight);
+        pnRight.setBounds(350, 0, 390, 460);
+
+        getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
@@ -138,6 +190,19 @@ public class loginForm extends javax.swing.JFrame {
     }
     }//GEN-LAST:event_btnLoginActionPerformed
 
+    private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed
+        registerForm registerScreen = new registerForm();
+
+        // 2. Hiển thị màn hình Đăng ký lên
+        registerScreen.setVisible(true);
+
+        // 3. Cho màn hình Đăng ký hiển thị ở giữa trung tâm
+        registerScreen.setLocationRelativeTo(null);
+
+        // 4. Đóng (hủy) màn hình Đăng nhập hiện tại đi
+        this.dispose();
+    }//GEN-LAST:event_btnRegisterActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -165,9 +230,18 @@ public class loginForm extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLogin;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JButton btnRegister;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel lblForgotPassword;
+    private javax.swing.JLabel lblLoginTitle;
+    private javax.swing.JLabel lblLogoPlaceHolder;
+    private javax.swing.JLabel lblNoAccount;
+    private javax.swing.JLabel lblSystemName1;
+    private javax.swing.JLabel lblSystemName2;
+    private javax.swing.JPanel pnLeft;
+    private javax.swing.JPanel pnMain;
+    private javax.swing.JPanel pnRight;
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtUsername;
     // End of variables declaration//GEN-END:variables

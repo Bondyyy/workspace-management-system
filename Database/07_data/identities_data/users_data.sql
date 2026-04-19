@@ -7,6 +7,7 @@ VALUES ('tran_binh', 'hash_pass_002', 'binh.tran@yahoo.com', 'ACTIVE', 'Trần T
 INSERT INTO Users (username, password_hash, email, status, full_name, phone_number, gender, birthday, address)
 VALUES ('le_cuong', 'hash_pass_003', 'cuong.le@outlook.com', 'ACTIVE', 'Lê Minh Cường', '0923456789', 'Nam', TO_DATE('2000-01-15', 'YYYY-MM-DD'), 'Quận 7, TP.HCM');
 
+
 INSERT INTO Users (username, password_hash, email, status, full_name, phone_number, gender, birthday, address)
 VALUES ('pham_dung', 'hash_pass_004', 'dung.pham@company.vn', 'ACTIVE', 'Phạm Mỹ Dung', '0934567890', 'Nữ', TO_DATE('1990-12-25', 'YYYY-MM-DD'), 'Quận 3, TP.HCM');
 

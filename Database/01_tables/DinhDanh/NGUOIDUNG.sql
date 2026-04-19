@@ -1,0 +1,14 @@
+CREATE TABLE NGUOIDUNG (
+    MaND VARCHAR2(50) PRIMARY KEY,
+    TenND NVARCHAR2(100) NOT NULL,
+    TaiKhoan VARCHAR2(50) UNIQUE NOT NULL,
+    MatKhauMaHoa VARCHAR2(255) NOT NULL,
+    Email VARCHAR2(100) UNIQUE,
+    GioiTinh NVARCHAR2(10),
+    SDT VARCHAR2(15),
+    NgaySinh DATE,
+    TrangThaiND NUMBER(1) DEFAULT 1, -- Quy ước ví dụ: 1 = Đang hoạt động, 0 = Bị khóa
+    ThoiGianTao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CapNhatLanCuoi TIMESTAMP,
+    LanCuoiDangNhap TIMESTAMP
+);

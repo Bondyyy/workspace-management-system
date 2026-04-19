@@ -50,3 +50,7 @@ FOREIGN KEY (order_id) REFERENCES SessionOrders(order_id) ON DELETE CASCADE;
 ALTER TABLE SessionOrderDetails 
 ADD CONSTRAINT fk_orderdetails_products 
 FOREIGN KEY (product_id) REFERENCES Products(product_id);
+
+-- Đảm bảo giá giờ áp dụng thực tế khi check-in không bị âm
+ALTER TABLE SessionDetails 
+ADD CONSTRAINT chk_sessiondetail_rate CHECK (applied_hourly_rate >= 0);
