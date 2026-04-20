@@ -5,11 +5,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * Singleton quản lý kết nối Oracle Database.
- * Đọc thông tin từ file .env ở thư mục gốc project.
- * Cả nhóm dùng: DatabaseConnection.getInstance().getConnection()
- */
+
 public class DatabaseConnection {
 
     private static DatabaseConnection instance;
