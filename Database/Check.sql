@@ -29,6 +29,18 @@ ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_ThoiGianSD
 ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_TrangThai 
     CHECK (TrangThaiDatTruoc IN ('Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
 
+ALTER TABLE DATCHO 
+DROP CONSTRAINT CHK_DC_TrangThai;
+
+ALTER TABLE DATCHO 
+ADD CONSTRAINT CHK_DC_TrangThai 
+    CHECK (TrangThai IN (
+        N'Đang chờ thanh toán', 
+        N'Đã thanh toán thành công', 
+        N'Thanh toán không thành công', 
+        N'Đã sử dụng'
+    ));
+
 -- 5. Bảng PHIENLAMVIEC
 ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai 
     CHECK (TrangThaiPhien IN ('Đang hoạt đông', 'Đã đặt trước', 'Đã kết thúc'));
