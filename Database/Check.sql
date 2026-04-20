@@ -34,11 +34,11 @@ DROP CONSTRAINT CHK_DC_TrangThai;
 
 ALTER TABLE DATCHO 
 ADD CONSTRAINT CHK_DC_TrangThai 
-    CHECK (TrangThai IN (
-        N'Đang chờ thanh toán', 
-        N'Đã thanh toán thành công', 
-        N'Thanh toán không thành công', 
-        N'Đã sử dụng'
+    CHECK (TrangThaiDatTruoc IN (
+        'Đang chờ thanh toán', 
+        'Đã thanh toán thành công', 
+        'Thanh toán không thành công', 
+        'Đã sử dụng'
     ));
 
 -- 5. Bảng PHIENLAMVIEC
