@@ -60,7 +60,7 @@ ALTER TABLE CHITIETDICHVU ADD CONSTRAINT CHK_CTDV_SoLuong
 
 -- 7. Bảng KHONGGIAN & LOAIKHONGGIAN
 ALTER TABLE KHONGGIAN ADD CONSTRAINT CHK_KG_TrangThai 
-    CHECK (TrangThaiKG IN ('Trống', 'Hoạt động', 'Bảo trì', 'Dọn dẹp'));
+    CHECK (TrangThaiKG IN ('Trống', 'Đã đặt trước', 'Đang hoạt động', 'Bảo trì', 'Dọn dẹp'));
 
 ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_SucChua 
     CHECK (SucChua > 0);
