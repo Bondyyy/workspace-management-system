@@ -45,6 +45,12 @@ ADD CONSTRAINT CHK_DC_TrangThai
 ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai 
     CHECK (TrangThaiPhien IN ('Đang hoạt đông', 'Đã đặt trước', 'Đã kết thúc'));
 
+ALTER TABLE PHIENLAMVIEC 
+DROP CONSTRAINT CHK_PLV_TrangThai;
+
+ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai 
+    CHECK (TrangThaiPhien IN ('Đang hoạt động', 'Đã đặt trước', 'Đã kết thúc'));
+
 -- 6. Bảng DICHVU & CHITIETDICHVU
 ALTER TABLE DICHVU ADD CONSTRAINT CHK_DV_DonGia 
     CHECK (DonGia > 0);
