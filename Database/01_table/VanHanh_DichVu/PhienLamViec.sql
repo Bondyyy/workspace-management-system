@@ -1,0 +1,11 @@
+CREATE TABLE PHIENLAMVIEC (
+    MaPhien VARCHAR2(50) PRIMARY KEY,
+    ThoiGianBatDau TIMESTAMP,
+    ThoiGianDuKienKetThuc TIMESTAMP,
+    TrangThaiPhien VARCHAR2(50),
+    ThoiGianKetThuc TIMESTAMP,
+    CapNhatLanCuoi TIMESTAMP,
+    MaKG VARCHAR2(50),
+    MaKH VARCHAR2(50),
+    MaDatCho VARCHAR2(50)
+);

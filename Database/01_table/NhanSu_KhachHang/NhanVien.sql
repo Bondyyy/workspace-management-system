@@ -1,0 +1,13 @@
+CREATE TABLE NHANVIEN (
+    MaNV VARCHAR2(50) PRIMARY KEY,
+    LoaiNV VARCHAR2(50),
+    NgayVaoLam DATE,
+    TrangThaiLamViec VARCHAR2(50),
+    PhuCap NUMBER(18, 2),
+    TienThuong NUMBER(18, 2),
+    CaLamViec VARCHAR2(50),
+    LuongCoBan NUMBER(18, 2),
+    MaNQL VARCHAR2(50),
+    MaCN VARCHAR2(50),
+    MaND VARCHAR2(50), UNIQUE(MaND)
+);

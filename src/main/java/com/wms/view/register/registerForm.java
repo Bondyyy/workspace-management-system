@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.wms.view.register;
-import com.wms.view.login.loginForm;
+import com.wms.view.login.DangNhapBieuMau;
 
 
 /**
@@ -164,7 +164,7 @@ public class registerForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnRegisterActionPerformed
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-        loginForm login = new loginForm();    
+        DangNhapBieuMau login = new DangNhapBieuMau();    
         login.setVisible(true);
         // Cho màn hình Đăng ký hiển thị ở giữa trung tâm
         login.setLocationRelativeTo(null);

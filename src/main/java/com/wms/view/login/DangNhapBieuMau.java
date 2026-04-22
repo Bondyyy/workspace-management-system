@@ -8,22 +8,22 @@ import com.wms.view.register.registerForm;
 
 
 
-import com.wms.controller.LoginController;
-import com.wms.controller.LoginController.LoginResult;
+import com.wms.controller.DangNhapController;
+import com.wms.controller.DangNhapController.LoginResult;
 import javax.swing.JOptionPane;
 
 /**
  *
  * @author HuyLai
  */
-public class loginForm extends javax.swing.JFrame {
+public class DangNhapBieuMau extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(loginForm.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(DangNhapBieuMau.class.getName());
 
     /**
      * Creates new form loginForm
      */
-    public loginForm() {
+    public DangNhapBieuMau() {
         initComponents();
     }
 
@@ -160,7 +160,7 @@ public class loginForm extends javax.swing.JFrame {
         return;
     }
 
-    LoginController controller = new LoginController();
+    DangNhapController controller = new DangNhapController();
     LoginResult result = controller.login(username, password);
 
     switch (result) {
@@ -225,7 +225,7 @@ public class loginForm extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new loginForm().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new DangNhapBieuMau().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

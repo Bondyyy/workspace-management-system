@@ -1,66 +1,44 @@
 package com.wms.config;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Properties;
 import java.sql.SQLException;
 
-
 public class DatabaseConnection {
-
     private static DatabaseConnection instance;
-    private Connection connection;
+    private Connection conn;
 
-    // Constructor private — không ai new được, phải qua getInstance()
     private DatabaseConnection() {
-        try {
-            Dotenv dotenv = Dotenv.configure()
-                .directory(System.getProperty("user.dir"))
-                .ignoreIfMissing()
-                .load();
+        try (FileInputStream fs = new FileInputStream("db.properties")) {
+            Properties p = new Properties();
+            p.load(fs);
 
-            String url      = dotenv.get("DB_URL",      "jdbc:oracle:thin:@localhost:1521/FREEPDB1");
-            String username = dotenv.get("DB_USERNAME",  "system");
-            String password = dotenv.get("DB_PASSWORD",  "");
-
-            Class.forName("oracle.jdbc.OracleDriver");
-            this.connection = DriverManager.getConnection(url, username, password);
-
-            System.out.println("[DB] Kết nối Oracle thành công!");
-
-        } catch (ClassNotFoundException e) {
-            System.err.println("[DB] Không tìm thấy Oracle JDBC Driver!");
-            throw new RuntimeException("Oracle Driver không tồn tại", e);
-        } catch (SQLException e) {
-            System.err.println("[DB] Kết nối thất bại: " + e.getMessage());
-            throw new RuntimeException("Không thể kết nối Database", e);
+            this.conn = DriverManager.getConnection(
+                    p.getProperty("url"),
+                    p.getProperty("user"),
+                    p.getProperty("pass"));
+            
+            System.out.println("[DB] Kết nối thành công!");
+        } catch (Exception e) {
+            System.err.println("[DB] Lỗi kết nối: " + e.getMessage());
         }
     }
 
-    /** Lấy instance duy nhất (thread-safe) */
     public static synchronized DatabaseConnection getInstance() {
-        if (instance == null || isConnectionClosed()) {
+        try {
+            if (instance == null || instance.conn == null || instance.conn.isClosed()) {
+                instance = new DatabaseConnection();
+            }
+        } catch (SQLException e) {
+            System.err.println("[DB] Kết nối cũ lỗi, đang tạo lại...");
             instance = new DatabaseConnection();
         }
         return instance;
     }
 
-    /** Trả về Connection để DAO dùng */
     public Connection getConnection() {
-        return connection;
+        return conn;
     }
-
-    /** Kiểm tra connection còn sống không */
-    private static boolean isConnectionClosed() {
-        try {
-            return instance == null 
-                || instance.connection == null 
-                || instance.connection.isClosed();
-        } catch (SQLException e) {
-            return true;
-        }
-    }
-
-    // KHÔNG gọi connection.close() trong DAO
-    // Singleton này sẽ giữ connection suốt vòng đời app
 }
