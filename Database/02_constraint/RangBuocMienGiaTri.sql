@@ -26,8 +26,7 @@ ALTER TABLE HANGTHANHVIEN ADD CONSTRAINT CHK_HTV_TenHang
 ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_ThoiGianSD 
     CHECK (KhoangThoiGianSuDung >= 1);
 
-ALTER TABLE DATCHO 
-ADD CONSTRAINT CHK_DC_TrangThai 
+ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_TrangThai 
     CHECK (TrangThaiDatTruoc IN (
         'Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công', 'Đã sử dụng'));
 
@@ -80,7 +79,7 @@ ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_PTTT
     CHECK (PhuongThucThanhToan IN ('Chuyển khoản', 'Tiền mặt'));
 
 ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TrangThai 
-    CHECK (TrangThaiThanhToan IN ('Thành công', 'Không thành công'));
+    CHECK (TrangThaiThanhToan IN ('Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
 
 ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TongTien 
     CHECK (TongTien > 0);
