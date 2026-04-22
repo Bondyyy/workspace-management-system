@@ -2,8 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.wms.view.login;
-import com.wms.view.register.registerForm;
+package com.wms.view.DangNhap;
+import com.wms.view.DangKy.DangKyBieuMau;
 
 
 
@@ -191,7 +191,7 @@ public class DangNhapBieuMau extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed
-        registerForm registerScreen = new registerForm();
+        DangKyBieuMau registerScreen = new DangKyBieuMau();
 
         // 2. Hiển thị màn hình Đăng ký lên
         registerScreen.setVisible(true);

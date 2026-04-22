@@ -2,22 +2,22 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.wms.view.register;
-import com.wms.view.login.DangNhapBieuMau;
+package com.wms.view.DangKy;
+import com.wms.view.DangNhap.DangNhapBieuMau;
 
 
 /**
  *
  * @author Thinkapd T14s
  */
-public class registerForm extends javax.swing.JFrame {
+public class DangKyBieuMau extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(registerForm.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(DangKyBieuMau.class.getName());
 
     /**
      * Creates new form register
      */
-    public registerForm() {
+    public DangKyBieuMau() {
         initComponents();
     }
 
@@ -193,7 +193,7 @@ public class registerForm extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new registerForm().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new DangKyBieuMau().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
