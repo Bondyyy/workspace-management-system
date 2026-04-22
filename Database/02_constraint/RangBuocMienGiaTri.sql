@@ -26,28 +26,12 @@ ALTER TABLE HANGTHANHVIEN ADD CONSTRAINT CHK_HTV_TenHang
 ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_ThoiGianSD 
     CHECK (KhoangThoiGianSuDung >= 1);
 
-ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_TrangThai 
-    CHECK (TrangThaiDatTruoc IN ('Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
-
-ALTER TABLE DATCHO 
-DROP CONSTRAINT CHK_DC_TrangThai;
-
 ALTER TABLE DATCHO 
 ADD CONSTRAINT CHK_DC_TrangThai 
     CHECK (TrangThaiDatTruoc IN (
-        'Đang chờ thanh toán', 
-        'Đã thanh toán thành công', 
-        'Thanh toán không thành công', 
-        'Đã sử dụng'
-    ));
+        'Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công', 'Đã sử dụng'));
 
 -- 5. Bảng PHIENLAMVIEC
-ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai 
-    CHECK (TrangThaiPhien IN ('Đang hoạt đông', 'Đã đặt trước', 'Đã kết thúc'));
-
-ALTER TABLE PHIENLAMVIEC 
-DROP CONSTRAINT CHK_PLV_TrangThai;
-
 ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai 
     CHECK (TrangThaiPhien IN ('Đang hoạt động', 'Đã đặt trước', 'Đã kết thúc'));
 
@@ -63,7 +47,7 @@ ALTER TABLE CHITIETDICHVU ADD CONSTRAINT CHK_CTDV_SoLuong
 
 -- 7. Bảng KHONGGIAN & LOAIKHONGGIAN
 ALTER TABLE KHONGGIAN ADD CONSTRAINT CHK_KG_TrangThai 
-    CHECK (TrangThaiKG IN ('Trống', 'Đã đặt trước', 'Đang hoạt động', 'Bảo trì', 'Dọn dẹp'));
+    CHECK (TrangThaiKG IN ('Trống', 'Đã đặt trước', 'Đang hoạt động', 'Bảo trì'));
 
 ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_SucChua 
     CHECK (SucChua > 0);
@@ -113,10 +97,3 @@ ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_ToiThieu
 
 ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_SLToiDa 
     CHECK (SLToiDa > 0);
-
-ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_ThoiGian 
-    CHECK (ThoiGianKetThuc IS NULL OR ThoiGianKetThuc > ThoiGianBatDau);
-
-ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_ThoiGian 
-    CHECK (NgayKetThucApDung > NgayBatDauApDung);
-
