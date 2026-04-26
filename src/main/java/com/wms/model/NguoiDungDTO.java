@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.sql.Date; 
 import java.util.List;
 
-public class NguoiDung {
+public class NguoiDungDTO {
     private String maND;
     private String tenTaiKhoan;
     private String matKhauMaHoa;
@@ -20,7 +20,7 @@ public class NguoiDung {
     
     private List<String> vaiTro;
 
-    public NguoiDung() {}
+    public NguoiDungDTO() {}
 
     public String getMaND() { return maND; }
     public void setMaND(String maND) { this.maND = maND; }

@@ -3,21 +3,25 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.wms.view.DangKy;
-import com.wms.view.DangNhap.DangNhapBieuMau;
+
+import com.wms.controller.DangKyController;
+import com.wms.service.NguoiDungService.ketQuaDangKy;
+import com.wms.view.DangNhap.DangNhapForm;
+import javax.swing.JOptionPane;
 
 
 /**
  *
  * @author Thinkapd T14s
  */
-public class DangKyBieuMau extends javax.swing.JFrame {
+public class DangKyForm extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(DangKyBieuMau.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(DangKyForm.class.getName());
 
     /**
      * Creates new form register
      */
-    public DangKyBieuMau() {
+    public DangKyForm() {
         initComponents();
     }
 
@@ -57,7 +61,7 @@ public class DangKyBieuMau extends javax.swing.JFrame {
         pnMain.setPreferredSize(new java.awt.Dimension(750, 450));
         pnMain.setLayout(null);
 
-        pnLeft.setBackground(new java.awt.Color(0, 100, 200));
+        pnLeft.setBackground(new java.awt.Color(235, 94, 141));
         pnLeft.setLayout(null);
 
         lblLogoPlaceHolder.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
@@ -88,7 +92,7 @@ public class DangKyBieuMau extends javax.swing.JFrame {
         pnRight.setLayout(null);
 
         lblRegisterTitle.setFont(new java.awt.Font("Segoe UI", 1, 26)); // NOI18N
-        lblRegisterTitle.setForeground(new java.awt.Color(0, 51, 153));
+        lblRegisterTitle.setForeground(new java.awt.Color(48, 30, 35));
         lblRegisterTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblRegisterTitle.setText("ĐĂNG KÝ");
         pnRight.add(lblRegisterTitle);
@@ -130,7 +134,7 @@ public class DangKyBieuMau extends javax.swing.JFrame {
         pnRight.add(txtPassword);
         txtPassword.setBounds(50, 275, 300, 35);
 
-        btnRegister.setBackground(new java.awt.Color(0, 100, 200));
+        btnRegister.setBackground(new java.awt.Color(235, 94, 141));
         btnRegister.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         btnRegister.setForeground(new java.awt.Color(255, 255, 255));
         btnRegister.setText("Đăng ký");
@@ -144,7 +148,7 @@ public class DangKyBieuMau extends javax.swing.JFrame {
         lblHasAccount.setBounds(50, 390, 150, 30);
 
         btnLogin.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnLogin.setForeground(new java.awt.Color(255, 51, 51));
+        btnLogin.setForeground(new java.awt.Color(235, 94, 141));
         btnLogin.setText("Đăng nhập");
         btnLogin.addActionListener(this::btnLoginActionPerformed);
         pnRight.add(btnLogin);
@@ -160,11 +164,38 @@ public class DangKyBieuMau extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed
+        String username = txtUsername.getText().trim();
+        String fullName = txtFullName.getText().trim();
+        String email = txtEmail.getText().trim();
+        String password = new String(txtPassword.getPassword());
 
+        if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin (Tên tài khoản, Email, Mật khẩu)!");
+            return;
+        }
+
+        DangKyController controller = new DangKyController();
+        ketQuaDangKy result = controller.dangKy(username, fullName, email, password);
+
+        switch (result) {
+            case THANH_CONG:
+                JOptionPane.showMessageDialog(this, "Đăng ký thành công! Vui lòng đăng nhập.");
+                btnLoginActionPerformed(null);
+                break;
+            case TAI_KHOAN_DA_TON_TAI:
+                JOptionPane.showMessageDialog(this, "Tên tài khoản đã tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                break;
+            case DU_LIEU_KHONG_HOP_LE:
+                JOptionPane.showMessageDialog(this, "Thông tin nhập không hợp lệ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                break;
+            case LOI_CSDL:
+                JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi kết nối CSDL!", "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+                break;
+        }
     }//GEN-LAST:event_btnRegisterActionPerformed
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-        DangNhapBieuMau login = new DangNhapBieuMau();    
+        DangNhapForm login = new DangNhapForm();    
         login.setVisible(true);
         // Cho màn hình Đăng ký hiển thị ở giữa trung tâm
         login.setLocationRelativeTo(null);
@@ -193,7 +224,7 @@ public class DangKyBieuMau extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new DangKyBieuMau().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new DangKyForm().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
