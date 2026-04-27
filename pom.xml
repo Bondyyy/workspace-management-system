@@ -28,8 +28,14 @@
         <artifactId>jbcrypt</artifactId>
         <version>0.4</version>
         </dependency>
+        
+        <dependency>
+        <groupId>org.swinglabs</groupId>
+        <artifactId>swing-layout</artifactId>
+        <version>1.0.3</version>
+        </dependency>
     </dependencies>
-
+        
     <build>
         <plugins>
             <!-- JUnit 5 runner -->

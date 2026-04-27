@@ -39,7 +39,7 @@ ALTER TABLE DICHVU ADD CONSTRAINT CHK_DV_DonGia
     CHECK (DonGia > 0);
 
 ALTER TABLE LOAIDICHVU ADD CONSTRAINT CHK_LDV_TrangThai
-    CHECK (TrangThaiKG IN ('Đang hoạt động', 'Tạm ngưng', 'Ngừng kinh doanh'));
+    CHECK (TrangThaiLDV IN ('Đang hoạt động', 'Tạm ngưng', 'Ngừng kinh doanh'));
 
 ALTER TABLE CHITIETDICHVU ADD CONSTRAINT CHK_CTDV_SoLuong 
     CHECK (SoLuong > 0);
