@@ -6,7 +6,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 
-// Giữ nguyên kế thừa từ JPanel để dễ dàng nhúng vào các Frame khác
 public class QuanLyPhienForm extends JPanel {
 
     private final Color COLOR_PINK = Color.decode("#e85588");
