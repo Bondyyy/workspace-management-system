@@ -1,10 +1,3 @@
--- =====================================================================
--- Trigger: TRG_CapNhatTrangThaiSauThanhToan
--- Mục đích: Tự động cập nhật trạng thái thanh toán thành công 
---           khi lễ tân xác nhận phương thức thanh toán
--- Thời điểm: BEFORE UPDATE OF PhuongThucThanhToan
--- =====================================================================
-
 CREATE OR REPLACE TRIGGER TRG_CapNhatTrangThaiSauThanhToan
 BEFORE UPDATE OF PhuongThucThanhToan ON HOADON
 FOR EACH ROW

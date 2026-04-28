@@ -1,9 +1,3 @@
--- =====================================================================
--- Trigger: TRG_TaoMaHoaDon
--- Mục đích: Tự động sinh mã hóa đơn (SoHD) khi tạo hóa đơn mới
--- Thời điểm: BEFORE INSERT
--- =====================================================================
-
 CREATE OR REPLACE TRIGGER TRG_TaoMaHoaDon
 BEFORE INSERT ON HOADON
 FOR EACH ROW

@@ -1,9 +1,3 @@
--- =====================================================================
--- Trigger: TRG_CapNhatHoaDonKhiKetThucPhien
--- Mục đích: Cập nhật lại tổng tiền và thành tiền khi kết thúc phiên
--- Thời điểm: AFTER UPDATE OF TrangThaiPhien ON PHIENLAMVIEC
--- =====================================================================
-
 CREATE OR REPLACE TRIGGER TRG_CapNhatHoaDonKhiKetThucPhien
 AFTER UPDATE OF TrangThaiPhien ON PHIENLAMVIEC
 FOR EACH ROW
