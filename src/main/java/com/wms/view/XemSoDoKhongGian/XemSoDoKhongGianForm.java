@@ -1,4 +1,4 @@
-package View;
+package com.wms.view.XemSoDoKhongGian;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -26,7 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-public class XemSoDoKhongGian extends JPanel {
+public class XemSoDoKhongGianForm extends JPanel {
 
     // === BẢNG MÀU CHÍNH - Tone hồng sang trọng ===
     private final Color mauNenChinh = Color.decode("#FAFAFA");        // Xám trắng
@@ -57,7 +57,7 @@ public class XemSoDoKhongGian extends JPanel {
     
     private JButton nutDangChon = null;
 
-    public XemSoDoKhongGian() {
+    public XemSoDoKhongGianForm() {
         khoiTaoThanhPhan();
     }
 
@@ -464,7 +464,7 @@ public class XemSoDoKhongGian extends JPanel {
         f.setSize(1600, 900);
         f.setLocationRelativeTo(null);
 
-        XemSoDoKhongGian view = new XemSoDoKhongGian();
+        XemSoDoKhongGianForm view = new XemSoDoKhongGianForm();
         List<ModelKhongGian> ds = new ArrayList<>();
         
         // === LỐI ĐI CHÍNH ===

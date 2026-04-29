@@ -1,4 +1,4 @@
-package View;
+package com.wms.view.XemChiNhanh;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -22,7 +22,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-public class XemChiNhanh extends JPanel {
+public class XemChiNhanhForm extends JPanel {
 
     // BẢNG MÀU CHÍNH - Tone hồng tinh tế & chuyên nghiệp
     private final Color mauNenChinh = Color.decode("#FAFAFA");        // Xám trắng
@@ -38,7 +38,7 @@ public class XemChiNhanh extends JPanel {
     private ModelChiNhanh chiNhanhDangChon = null;
     private JButton nutXacNhan;
 
-    public XemChiNhanh() {
+    public XemChiNhanhForm() {
         khoiTaoGiaoDien();
     }
 
@@ -116,7 +116,7 @@ public class XemChiNhanh extends JPanel {
         
         nut.addActionListener(e -> {
             if (chiNhanhDangChon != null) {
-                // TODO: Chuyển sang màn hình xem sơ đồ không gian
+                // TODO: Mở XemSoDoKhongGianForm dialog
                 System.out.println("Đã chọn chi nhánh: " + chiNhanhDangChon.getTenChiNhanh());
             }
         });
@@ -314,6 +314,10 @@ public class XemChiNhanh extends JPanel {
         spacer.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
         return spacer;
     }
+    
+    public ModelChiNhanh getChiNhanhDangChon() {
+        return chiNhanhDangChon;
+    }
 
     // === MODEL CLASS ===
     public static class ModelChiNhanh {
@@ -352,7 +356,7 @@ public class XemChiNhanh extends JPanel {
         frame.setSize(1100, 750);
         frame.setLocationRelativeTo(null);
 
-        XemChiNhanh view = new XemChiNhanh();
+        XemChiNhanhForm view = new XemChiNhanhForm();
         
         // Tạo dữ liệu mẫu
         List<ModelChiNhanh> danhSach = new ArrayList<>();
