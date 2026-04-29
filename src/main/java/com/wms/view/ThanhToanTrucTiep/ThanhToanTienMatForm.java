@@ -1,4 +1,4 @@
-package View;
+package com.wms.view.ThanhToanTrucTiep;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -15,6 +15,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -27,7 +28,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class ThanhToanTienMat extends JDialog {
+public class ThanhToanTienMatForm extends JDialog {
 
     // === BẢNG MÀU ===
     private final Color mauNenChinh = Color.decode("#FAFAFA");
@@ -47,7 +48,7 @@ public class ThanhToanTienMat extends JDialog {
     private NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
     private DecimalFormat formatSo = new DecimalFormat("#,###");
 
-    public ThanhToanTienMat(JFrame parent, double tongTien) {
+    public ThanhToanTienMatForm(JFrame parent, double tongTien) {
         super(parent, "Thanh Toán Tiền Mặt", true);
         this.tongTienHoaDon = tongTien;
         khoiTaoGiaoDien();
@@ -55,7 +56,8 @@ public class ThanhToanTienMat extends JDialog {
     }
 
     private void khoiTaoGiaoDien() {
-        this.setSize(550, 500);
+        this.setSize(560, 720);
+        this.setMinimumSize(new java.awt.Dimension(560, 720));
         this.setResizable(false);
         
         JPanel mainPanel = new JPanel(new BorderLayout(0, 25));
@@ -67,17 +69,18 @@ public class ThanhToanTienMat extends JDialog {
         panelHeader.setLayout(new BoxLayout(panelHeader, BoxLayout.Y_AXIS));
         panelHeader.setBackground(mauNenChinh);
         
-        JLabel lblIcon = new JLabel("💵", SwingConstants.CENTER);
-        lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 56));
-        lblIcon.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        panelHeader.add(lblIcon);
-        
         JLabel lblTieuDe = new JLabel("THANH TOÁN TIỀN MẶT", SwingConstants.CENTER);
-        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTieuDe.setForeground(mauHongChinh);
         lblTieuDe.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        lblTieuDe.setBorder(new EmptyBorder(15, 0, 0, 0));
         panelHeader.add(lblTieuDe);
+        
+        JLabel lblMoTa = new JLabel("Nhập số tiền khách hàng đưa", SwingConstants.CENTER);
+        lblMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblMoTa.setForeground(mauXamNhat);
+        lblMoTa.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        lblMoTa.setBorder(new EmptyBorder(10, 0, 0, 0));
+        panelHeader.add(lblMoTa);
         
         mainPanel.add(panelHeader, BorderLayout.NORTH);
 
@@ -89,15 +92,16 @@ public class ThanhToanTienMat extends JDialog {
             BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
             new EmptyBorder(25, 25, 25, 25)
         ));
+        panelContent.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
         // Tổng tiền hóa đơn
         JPanel panelTongTien = taoHangThongTin("Tổng tiền hóa đơn:", formatTien.format(tongTienHoaDon), mauHongChinh, 18);
         panelContent.add(panelTongTien);
-        panelContent.add(taoKhoangCach(20));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Đường phân cách
         panelContent.add(taoDuongPhanCach());
-        panelContent.add(taoKhoangCach(20));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Số tiền khách đưa
         JLabel lblNhap = new JLabel("Số tiền khách đưa:");
@@ -105,7 +109,7 @@ public class ThanhToanTienMat extends JDialog {
         lblNhap.setForeground(mauXamDam);
         lblNhap.setAlignmentX(JLabel.LEFT_ALIGNMENT);
         panelContent.add(lblNhap);
-        panelContent.add(taoKhoangCach(10));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 10)));
 
         txtSoTienKhachDua = new JTextField();
         txtSoTienKhachDua.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -125,22 +129,23 @@ public class ThanhToanTienMat extends JDialog {
         });
         
         panelContent.add(txtSoTienKhachDua);
-        panelContent.add(taoKhoangCach(20));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Gợi ý số tiền nhanh
+        JLabel lblGoiY = new JLabel("Gợi ý số tiền:");
+        lblGoiY.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblGoiY.setForeground(mauXamNhat);
+        lblGoiY.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+        panelContent.add(lblGoiY);
+        panelContent.add(Box.createRigidArea(new Dimension(0, 8)));
+        
         JPanel panelGoiY = new JPanel(new GridLayout(2, 3, 10, 10));
         panelGoiY.setBackground(Color.WHITE);
-        panelGoiY.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        panelGoiY.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        panelGoiY.setPreferredSize(new Dimension(Integer.MAX_VALUE, 110));
         panelGoiY.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         
-        double[] cacMenhGia = {
-            Math.ceil(tongTienHoaDon / 100000) * 100000, // Làm tròn lên hàng trăm nghìn
-            Math.ceil(tongTienHoaDon / 200000) * 200000, // Làm tròn lên 200k
-            Math.ceil(tongTienHoaDon / 500000) * 500000, // Làm tròn lên 500k
-            500000, 
-            1000000,
-            2000000
-        };
+        double[] cacMenhGia = {tongTienHoaDon};
         
         for (double menhGia : cacMenhGia) {
             if (menhGia >= tongTienHoaDon) {
@@ -150,17 +155,18 @@ public class ThanhToanTienMat extends JDialog {
         }
         
         panelContent.add(panelGoiY);
-        panelContent.add(taoKhoangCach(20));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Đường phân cách
         panelContent.add(taoDuongPhanCach());
-        panelContent.add(taoKhoangCach(20));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Tiền thừa
         JPanel panelTienThua = new JPanel(new BorderLayout());
         panelTienThua.setBackground(mauHongNhat);
         panelTienThua.setBorder(new EmptyBorder(15, 15, 15, 15));
-        panelTienThua.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        panelTienThua.setMaximumSize(new Dimension(Integer.MAX_VALUE, 75));
+        panelTienThua.setPreferredSize(new Dimension(Integer.MAX_VALUE, 75));
         panelTienThua.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         
         JLabel lblTextTienThua = new JLabel("Tiền thừa trả khách:");
@@ -317,15 +323,6 @@ public class ThanhToanTienMat extends JDialog {
         return sep;
     }
 
-    private JPanel taoKhoangCach(int height) {
-        JPanel spacer = new JPanel();
-        spacer.setOpaque(false);
-        spacer.setPreferredSize(new Dimension(0, height));
-        spacer.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
-        spacer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        return spacer;
-    }
-
     private void tinhTienThua() {
         try {
             String text = txtSoTienKhachDua.getText().trim().replaceAll("[^0-9]", "");
@@ -380,7 +377,7 @@ public class ThanhToanTienMat extends JDialog {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        ThanhToanTienMat dialog = new ThanhToanTienMat(frame, 725000);
+        ThanhToanTienMatForm dialog = new ThanhToanTienMatForm(frame, 775000);
         dialog.setVisible(true);
         
         System.out.println("Đã thanh toán: " + dialog.isDaThanhToan());

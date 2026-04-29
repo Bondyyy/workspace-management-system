@@ -1,4 +1,4 @@
-package View;
+package com.wms.view.ThanhToanTrucTiep;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -13,6 +13,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -22,7 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-public class ThanhToanChuyenKhoan extends JDialog {
+public class ThanhToanChuyenKhoanForm extends JDialog {
 
     // === BẢNG MÀU ===
     private final Color mauNenChinh = Color.decode("#FAFAFA");
@@ -37,7 +38,7 @@ public class ThanhToanChuyenKhoan extends JDialog {
     
     private NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
-    public ThanhToanChuyenKhoan(JFrame parent, double tongTien) {
+    public ThanhToanChuyenKhoanForm(JFrame parent, double tongTien) {
         super(parent, "Thanh Toán Chuyển Khoản", true);
         this.tongTienHoaDon = tongTien;
         khoiTaoGiaoDien();
@@ -45,7 +46,8 @@ public class ThanhToanChuyenKhoan extends JDialog {
     }
 
     private void khoiTaoGiaoDien() {
-        this.setSize(550, 700);
+        this.setSize(560, 780);
+        this.setMinimumSize(new java.awt.Dimension(560, 780));
         this.setResizable(false);
         
         JPanel mainPanel = new JPanel(new BorderLayout(0, 25));
@@ -57,23 +59,17 @@ public class ThanhToanChuyenKhoan extends JDialog {
         panelHeader.setLayout(new BoxLayout(panelHeader, BoxLayout.Y_AXIS));
         panelHeader.setBackground(mauNenChinh);
         
-        JLabel lblIcon = new JLabel("🏦", SwingConstants.CENTER);
-        lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 56));
-        lblIcon.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        panelHeader.add(lblIcon);
-        
         JLabel lblTieuDe = new JLabel("CHUYỂN KHOẢN NGÂN HÀNG", SwingConstants.CENTER);
-        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblTieuDe.setForeground(mauHongChinh);
         lblTieuDe.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        lblTieuDe.setBorder(new EmptyBorder(15, 0, 0, 0));
         panelHeader.add(lblTieuDe);
         
         JLabel lblMoTa = new JLabel("Quét mã QR để thanh toán", SwingConstants.CENTER);
         lblMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblMoTa.setForeground(mauXamNhat);
         lblMoTa.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        lblMoTa.setBorder(new EmptyBorder(8, 0, 0, 0));
+        lblMoTa.setBorder(new EmptyBorder(10, 0, 0, 0));
         panelHeader.add(lblMoTa);
         
         mainPanel.add(panelHeader, BorderLayout.NORTH);
@@ -84,8 +80,9 @@ public class ThanhToanChuyenKhoan extends JDialog {
         panelContent.setBackground(Color.WHITE);
         panelContent.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-            new EmptyBorder(25, 25, 25, 25)
+            new EmptyBorder(25, 30, 25, 30)
         ));
+        panelContent.setAlignmentX(JPanel.CENTER_ALIGNMENT);
 
         // Tổng tiền
         JPanel panelTongTien = new JPanel(new BorderLayout());
@@ -106,43 +103,48 @@ public class ThanhToanChuyenKhoan extends JDialog {
         panelTongTien.add(lblTongTien, BorderLayout.CENTER);
         
         panelContent.add(panelTongTien);
-        panelContent.add(taoKhoangCach(20));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Mã QR
         JPanel panelQR = new JPanel();
         panelQR.setLayout(new BoxLayout(panelQR, BoxLayout.Y_AXIS));
         panelQR.setBackground(Color.WHITE);
         panelQR.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+        panelQR.setMaximumSize(new Dimension(Integer.MAX_VALUE, 340));
         
-        // Khung QR
+        // Khung QR — căn giữa
+        JPanel wrapQR = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
+        wrapQR.setBackground(Color.WHITE);
         JPanel khungQR = taoKhungQR();
-        khungQR.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-        panelQR.add(khungQR);
-        panelQR.add(taoKhoangCach(15));
+        wrapQR.add(khungQR);
+        panelQR.add(wrapQR);
+        panelQR.add(Box.createRigidArea(new Dimension(0, 12)));
         
         JLabel lblHuongDan = new JLabel("Quét mã QR bằng ứng dụng ngân hàng", SwingConstants.CENTER);
         lblHuongDan.setFont(new Font("Segoe UI", Font.ITALIC, 13));
         lblHuongDan.setForeground(mauXamNhat);
         lblHuongDan.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        lblHuongDan.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         panelQR.add(lblHuongDan);
         
         panelContent.add(panelQR);
-        panelContent.add(taoKhoangCach(20));
+        panelContent.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Thông tin chuyển khoản
         JPanel panelThongTin = new JPanel();
         panelThongTin.setLayout(new BoxLayout(panelThongTin, BoxLayout.Y_AXIS));
         panelThongTin.setBackground(Color.decode("#E3F2FD"));
-        panelThongTin.setBorder(new EmptyBorder(15, 15, 15, 15));
-        panelThongTin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
-        panelThongTin.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        panelThongTin.setBorder(new EmptyBorder(15, 20, 15, 20));
+        panelThongTin.setMaximumSize(new Dimension(460, 170));
+        panelThongTin.setPreferredSize(new Dimension(460, 170));
+        panelThongTin.setAlignmentX(JPanel.CENTER_ALIGNMENT);
         
         panelThongTin.add(taoHangThongTin("Ngân hàng:", "VPBank"));
-        panelThongTin.add(taoKhoangCach(8));
+        panelThongTin.add(Box.createRigidArea(new Dimension(0, 8)));
         panelThongTin.add(taoHangThongTin("Số tài khoản:", "1234567890"));
-        panelThongTin.add(taoKhoangCach(8));
+        panelThongTin.add(Box.createRigidArea(new Dimension(0, 8)));
         panelThongTin.add(taoHangThongTin("Chủ tài khoản:", "UIT COWORKING SPACE"));
-        panelThongTin.add(taoKhoangCach(8));
+        panelThongTin.add(Box.createRigidArea(new Dimension(0, 8)));
         panelThongTin.add(taoHangThongTin("Nội dung:", "UIT CW " + System.currentTimeMillis() % 100000));
         
         panelContent.add(panelThongTin);
@@ -180,7 +182,7 @@ public class ThanhToanChuyenKhoan extends JDialog {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // Vẽ khung viền
+                // Vẽ khung viền bo góc
                 g2.setColor(new Color(220, 220, 220));
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
                 
@@ -192,30 +194,31 @@ public class ThanhToanChuyenKhoan extends JDialog {
             }
         };
         
-        panel.setPreferredSize(new Dimension(250, 250));
-        panel.setMaximumSize(new Dimension(250, 250));
+        panel.setPreferredSize(new Dimension(280, 280));
+        panel.setMaximumSize(new Dimension(280, 280));
         panel.setLayout(new BorderLayout());
         panel.setOpaque(false);
         
-        // Tạo QR code giả (grid pattern)
+        // Tạo QR code pattern
         JPanel qrGrid = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
                 
-                int cellSize = 10;
-                int gridSize = 20;
+                int cellSize = 8;
+                int gridSize = 25;
                 int offsetX = (getWidth() - gridSize * cellSize) / 2;
                 int offsetY = (getHeight() - gridSize * cellSize) / 2;
                 
                 // Pattern mẫu cho QR code
                 boolean[][] pattern = generateQRPattern(gridSize);
                 
+                g2.setColor(Color.BLACK);
                 for (int i = 0; i < gridSize; i++) {
                     for (int j = 0; j < gridSize; j++) {
                         if (pattern[i][j]) {
-                            g2.setColor(Color.BLACK);
                             g2.fillRect(offsetX + j * cellSize, offsetY + i * cellSize, cellSize, cellSize);
                         }
                     }
@@ -235,18 +238,27 @@ public class ThanhToanChuyenKhoan extends JDialog {
     private boolean[][] generateQRPattern(int size) {
         boolean[][] pattern = new boolean[size][size];
         
-        // Tạo pattern giả cho QR code
-        // 3 góc định vị
+        // Vẽ 3 góc định vị (Position Detection Patterns)
         drawPositionMarker(pattern, 0, 0);
         drawPositionMarker(pattern, 0, size - 7);
         drawPositionMarker(pattern, size - 7, 0);
         
-        // Random pattern ở giữa
+        // Timing patterns (dòng và cột dấu chấm)
+        for (int i = 8; i < size - 8; i++) {
+            pattern[6][i] = (i % 2 == 0);
+            pattern[i][6] = (i % 2 == 0);
+        }
+        
+        // Vùng dữ liệu giả (data modules)
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                if (!pattern[i][j]) {
-                    pattern[i][j] = (i * j + i + j) % 3 == 0;
-                }
+                // Bỏ qua các vùng đã vẽ
+                if (isInPositionMarker(i, j, size)) continue;
+                if (i == 6 || j == 6) continue; // Timing pattern
+                
+                // Tạo pattern ngẫu nhiên nhưng có cấu trúc
+                int seed = i * 31 + j * 17;
+                pattern[i][j] = ((seed % 3) == 0);
             }
         }
         
@@ -254,26 +266,43 @@ public class ThanhToanChuyenKhoan extends JDialog {
     }
 
     private void drawPositionMarker(boolean[][] pattern, int row, int col) {
-        // Khung ngoài
+        // Khung ngoài 7x7
         for (int i = 0; i < 7; i++) {
-            pattern[row][col + i] = true;
-            pattern[row + 6][col + i] = true;
-            pattern[row + i][col] = true;
-            pattern[row + i][col + 6] = true;
-        }
-        
-        // Ô giữa
-        for (int i = 2; i < 5; i++) {
-            for (int j = 2; j < 5; j++) {
-                pattern[row + i][col + j] = true;
+            if (row + i < pattern.length && col < pattern[0].length) {
+                pattern[row + i][col] = true;
+                pattern[row + i][col + 6] = true;
+            }
+            if (row < pattern.length && col + i < pattern[0].length) {
+                pattern[row][col + i] = true;
+                pattern[row + 6][col + i] = true;
             }
         }
+        
+        // Ô giữa 3x3
+        for (int i = 2; i < 5; i++) {
+            for (int j = 2; j < 5; j++) {
+                if (row + i < pattern.length && col + j < pattern[0].length) {
+                    pattern[row + i][col + j] = true;
+                }
+            }
+        }
+    }
+
+    private boolean isInPositionMarker(int i, int j, int size) {
+        // Góc trên trái
+        if (i < 8 && j < 8) return true;
+        // Góc trên phải
+        if (i < 8 && j >= size - 8) return true;
+        // Góc dưới trái
+        if (i >= size - 8 && j < 8) return true;
+        return false;
     }
 
     private JPanel taoHangThongTin(String label, String value) {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setBackground(Color.decode("#E3F2FD"));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+        panel.setPreferredSize(new Dimension(Integer.MAX_VALUE, 26));
         panel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         
         JLabel lblLabel = new JLabel(label);
@@ -340,15 +369,6 @@ public class ThanhToanChuyenKhoan extends JDialog {
         return btn;
     }
 
-    private JPanel taoKhoangCach(int height) {
-        JPanel spacer = new JPanel();
-        spacer.setOpaque(false);
-        spacer.setPreferredSize(new Dimension(0, height));
-        spacer.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
-        spacer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        return spacer;
-    }
-
     public boolean isDaThanhToan() {
         return daThanhToan;
     }
@@ -361,7 +381,7 @@ public class ThanhToanChuyenKhoan extends JDialog {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        ThanhToanChuyenKhoan dialog = new ThanhToanChuyenKhoan(frame, 725000);
+        ThanhToanChuyenKhoanForm dialog = new ThanhToanChuyenKhoanForm(frame, 775000);
         dialog.setVisible(true);
         
         System.out.println("Đã thanh toán: " + dialog.isDaThanhToan());

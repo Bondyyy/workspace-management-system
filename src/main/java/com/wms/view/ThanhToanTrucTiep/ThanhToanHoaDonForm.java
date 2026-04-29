@@ -1,4 +1,4 @@
-package View;
+package com.wms.view.ThanhToanTrucTiep;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -26,7 +27,7 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-public class ThanhToanHoaDon extends JPanel {
+public class ThanhToanHoaDonForm extends JPanel {
 
     // === BẢNG MÀU CHÍNH ===
     private final Color mauNenChinh = Color.decode("#FAFAFA");
@@ -38,7 +39,9 @@ public class ThanhToanHoaDon extends JPanel {
     
     private JPanel panelChiTietHD;
     private JLabel lblTongTien;
-    private JButton nutTienMat, nutChuyenKhoan, nutInHoaDon;
+    private JPanel containerTienMat, containerChuyenKhoan;
+    private JLabel checkTienMat, checkChuyenKhoan;
+    private JButton nutInHoaDon;
     
     private ModelHoaDon hoaDonHienTai;
     private boolean daDongTienMat = false;
@@ -46,7 +49,7 @@ public class ThanhToanHoaDon extends JPanel {
     
     private NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
-    public ThanhToanHoaDon() {
+    public ThanhToanHoaDonForm() {
         khoiTaoGiaoDien();
     }
 
@@ -133,37 +136,46 @@ public class ThanhToanHoaDon extends JPanel {
         panel.setBackground(mauNenChinh);
 
         // Tiêu đề
-        JPanel panelTieuDe = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panelTieuDe.setBackground(mauNenChinh);
         JLabel lblTieuDe = new JLabel("PHƯƠNG THỨC THANH TOÁN");
         lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTieuDe.setForeground(mauHongChinh);
-        panelTieuDe.add(lblTieuDe);
-        panel.add(panelTieuDe);
+        lblTieuDe.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+        panel.add(lblTieuDe);
         
-        panel.add(taoKhoangCach(15));
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // Nút Tiền mặt
-        nutTienMat = taoNutPhuongThuc("💵 TIỀN MẶT", "Thanh toán bằng tiền mặt tại quầy");
-        nutTienMat.addActionListener(e -> moManHinhTienMat());
-        panel.add(nutTienMat);
+        // Container Tiền mặt
+        containerTienMat = taoContainerPhuongThuc("", "TIỀN MẶT", "Thanh toán bằng tiền mặt tại quầy");
+        containerTienMat.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                moManHinhTienMat();
+            }
+        });
+        panel.add(containerTienMat);
         
-        panel.add(taoKhoangCach(15));
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // Nút Chuyển khoản
-        nutChuyenKhoan = taoNutPhuongThuc("🏦 CHUYỂN KHOẢN", "Chuyển khoản qua ngân hàng");
-        nutChuyenKhoan.addActionListener(e -> moManHinhChuyenKhoan());
-        panel.add(nutChuyenKhoan);
+        // Container Chuyển khoản
+        containerChuyenKhoan = taoContainerPhuongThuc("","CHUYỂN KHOẢN", "Chuyển khoản qua ngân hàng");
+        containerChuyenKhoan.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                moManHinhChuyenKhoan();
+            }
+        });
+        panel.add(containerChuyenKhoan);
         
-        panel.add(taoKhoangCach(30));
+        panel.add(Box.createRigidArea(new Dimension(0, 30)));
 
         // Đường phân cách
         JSeparator sep = new JSeparator();
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
         sep.setForeground(new Color(220, 220, 220));
+        sep.setAlignmentX(JSeparator.LEFT_ALIGNMENT);
         panel.add(sep);
         
-        panel.add(taoKhoangCach(20));
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Nút In hóa đơn
         nutInHoaDon = taoNutInHoaDon();
@@ -171,10 +183,13 @@ public class ThanhToanHoaDon extends JPanel {
         nutInHoaDon.addActionListener(e -> inHoaDon());
         panel.add(nutInHoaDon);
 
+        // Thêm glue để đẩy nội dung lên trên
+        panel.add(Box.createVerticalGlue());
+
         return panel;
     }
 
-    private JButton taoNutPhuongThuc(String text, String moTa) {
+    private JPanel taoContainerPhuongThuc(String emoji, String text, String moTa) {
         JPanel container = new JPanel(new BorderLayout(15, 0));
         container.setBackground(Color.WHITE);
         container.setBorder(BorderFactory.createCompoundBorder(
@@ -182,6 +197,7 @@ public class ThanhToanHoaDon extends JPanel {
             new EmptyBorder(20, 20, 20, 20)
         ));
         container.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        container.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         container.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Icon check (ẩn ban đầu)
@@ -190,36 +206,51 @@ public class ThanhToanHoaDon extends JPanel {
         lblCheck.setForeground(new Color(76, 175, 80));
         lblCheck.setVisible(false);
         container.add(lblCheck, BorderLayout.WEST);
+        
+        // Lưu reference
+        if ("💵".equals(emoji)) {
+            checkTienMat = lblCheck;
+        } else {
+            checkChuyenKhoan = lblCheck;
+        }
 
-        // Text
+        // Text panel
         JPanel panelText = new JPanel();
         panelText.setLayout(new BoxLayout(panelText, BoxLayout.Y_AXIS));
         panelText.setBackground(Color.WHITE);
         
-        JLabel lblText = new JLabel(text);
+        JLabel lblText = new JLabel(emoji + " " + text);
         lblText.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblText.setForeground(mauXamDam);
+        lblText.setAlignmentX(JLabel.LEFT_ALIGNMENT);
         panelText.add(lblText);
+        
+        panelText.add(Box.createRigidArea(new Dimension(0, 5)));
         
         JLabel lblMoTa = new JLabel(moTa);
         lblMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblMoTa.setForeground(mauXamNhat);
-        lblMoTa.setBorder(new EmptyBorder(5, 0, 0, 0));
+        lblMoTa.setAlignmentX(JLabel.LEFT_ALIGNMENT);
         panelText.add(lblMoTa);
         
         container.add(panelText, BorderLayout.CENTER);
 
-        // Lưu reference đến check icon
-        JButton btn = new JButton();
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setFocusPainted(false);
-        btn.setPreferredSize(new Dimension(0, 90));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-        btn.putClientProperty("container", container);
-        btn.putClientProperty("checkIcon", lblCheck);
-        
-        return btn;
+        // Hover effect
+        container.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                container.setBackground(mauXanhNhat);
+                panelText.setBackground(mauXanhNhat);
+            }
+            
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                container.setBackground(Color.WHITE);
+                panelText.setBackground(Color.WHITE);
+            }
+        });
+
+        return container;
     }
 
     private JButton taoNutInHoaDon() {
@@ -244,6 +275,7 @@ public class ThanhToanHoaDon extends JPanel {
         btn.setForeground(Color.WHITE);
         btn.setPreferredSize(new Dimension(0, 60));
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        btn.setAlignmentX(JButton.LEFT_ALIGNMENT);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
@@ -273,6 +305,7 @@ public class ThanhToanHoaDon extends JPanel {
         JLabel lblDichVu = new JLabel("DỊCH VỤ SỬ DỤNG");
         lblDichVu.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblDichVu.setForeground(mauHongChinh);
+        lblDichVu.setAlignmentX(JLabel.LEFT_ALIGNMENT);
         panelChiTietHD.add(lblDichVu);
         panelChiTietHD.add(taoKhoangCach(15));
 
@@ -310,6 +343,7 @@ public class ThanhToanHoaDon extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setBackground(Color.WHITE);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        panel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         
         JLabel lblLabel = new JLabel(label);
         lblLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -329,6 +363,7 @@ public class ThanhToanHoaDon extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 5));
         panel.setBackground(Color.WHITE);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        panel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         
         JPanel panelTrai = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         panelTrai.setBackground(Color.WHITE);
@@ -357,6 +392,7 @@ public class ThanhToanHoaDon extends JPanel {
     private JSeparator taoDuongPhanCach() {
         JSeparator sep = new JSeparator();
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        sep.setAlignmentX(JSeparator.LEFT_ALIGNMENT);
         sep.setForeground(new Color(230, 230, 230));
         return sep;
     }
@@ -366,12 +402,13 @@ public class ThanhToanHoaDon extends JPanel {
         spacer.setOpaque(false);
         spacer.setPreferredSize(new Dimension(0, height));
         spacer.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
+        spacer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         return spacer;
     }
 
     private void moManHinhTienMat() {
         JFrame parentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        ThanhToanTienMat dialog = new ThanhToanTienMat(parentFrame, hoaDonHienTai.getTongTien());
+        ThanhToanTienMatForm dialog = new ThanhToanTienMatForm(parentFrame, hoaDonHienTai.getTongTien());
         dialog.setVisible(true);
         
         if (dialog.isDaThanhToan()) {
@@ -382,7 +419,7 @@ public class ThanhToanHoaDon extends JPanel {
 
     private void moManHinhChuyenKhoan() {
         JFrame parentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        ThanhToanChuyenKhoan dialog = new ThanhToanChuyenKhoan(parentFrame, hoaDonHienTai.getTongTien());
+        ThanhToanChuyenKhoanForm dialog = new ThanhToanChuyenKhoanForm(parentFrame, hoaDonHienTai.getTongTien());
         dialog.setVisible(true);
         
         if (dialog.isDaThanhToan()) {
@@ -392,14 +429,12 @@ public class ThanhToanHoaDon extends JPanel {
     }
 
     private void capNhatTrangThaiThanhToan() {
-        if (daDongTienMat) {
-            JLabel check = (JLabel) nutTienMat.getClientProperty("checkIcon");
-            if (check != null) check.setVisible(true);
+        if (daDongTienMat && checkTienMat != null) {
+            checkTienMat.setVisible(true);
         }
         
-        if (daDongChuyenKhoan) {
-            JLabel check = (JLabel) nutChuyenKhoan.getClientProperty("checkIcon");
-            if (check != null) check.setVisible(true);
+        if (daDongChuyenKhoan && checkChuyenKhoan != null) {
+            checkChuyenKhoan.setVisible(true);
         }
         
         // Cho phép in hóa đơn khi đã thanh toán
@@ -482,7 +517,7 @@ public class ThanhToanHoaDon extends JPanel {
         frame.setSize(1300, 800);
         frame.setLocationRelativeTo(null);
 
-        ThanhToanHoaDon view = new ThanhToanHoaDon();
+        ThanhToanHoaDonForm view = new ThanhToanHoaDonForm();
         
         // Tạo hóa đơn mẫu
         ModelHoaDon hoaDon = new ModelHoaDon(
