@@ -1,9 +1,3 @@
--- =====================================================================
--- Trigger: TRG_KiemTraTruocXoaHoaDon
--- Mục đích: Ngăn chặn xóa hóa đơn đã thanh toán thành công
--- Thời điểm: BEFORE DELETE ON HOADON
--- =====================================================================
-
 CREATE OR REPLACE TRIGGER TRG_KiemTraTruocXoaHoaDon
 BEFORE DELETE ON HOADON
 FOR EACH ROW

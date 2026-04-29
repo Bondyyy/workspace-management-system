@@ -1,13 +1,3 @@
--- =====================================================================
--- Trigger: TRG_KiemTraPhieuGiamGia
--- Mục đích: Kiểm tra điều kiện áp dụng phiếu giảm giá
--- Điều kiện:
---   - Phiếu còn hiệu lực (trong khoảng ngày áp dụng)
---   - Giá trị hóa đơn >= GiaTriApDungToiThieu
---   - SLDaDung < SLToiDa
--- Thời điểm: BEFORE INSERT OR UPDATE OF MaPGG
--- =====================================================================
-
 CREATE OR REPLACE TRIGGER TRG_KiemTraPhieuGiamGia
 BEFORE INSERT OR UPDATE OF MaPGG ON HOADON
 FOR EACH ROW
