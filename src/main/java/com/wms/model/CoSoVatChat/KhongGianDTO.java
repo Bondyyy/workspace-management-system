@@ -7,6 +7,10 @@ public class KhongGianDTO {
     private String viTri;
     private String maLoaiKG;
     private String maCN;
+    private int toaDoX;
+    private int toaDoY;
+    private int chieuDai;
+    private int chieuRong;
 
     public KhongGianDTO() {}
 
@@ -56,6 +60,38 @@ public class KhongGianDTO {
 
     public void setMaCN(String maCN) {
         this.maCN = maCN;
+    }
+    
+    public int getToaDoX() {
+        return toaDoX;
+    }
+
+    public void setToaDoX(int toaDoX) {
+        this.toaDoX = toaDoX;
+    }
+
+    public int getToaDoY() {
+        return toaDoY;
+    }
+
+    public void setToaDoY(int toaDoY) {
+        this.toaDoY = toaDoY;
+    }
+
+    public int getChieuDai() {
+        return chieuDai;
+    }
+
+    public void setChieuDai(int chieuDai) {
+        this.chieuDai = chieuDai;
+    }
+
+    public int getChieuRong() {
+        return chieuRong;
+    }
+
+    public void setChieuRong(int chieuRong) {
+        this.chieuRong = chieuRong;
     }
 
 }

@@ -18,7 +18,11 @@ BEGIN
                KG.MaLoaiKG,
                LKG.TenLoaiKG,
                LKG.SucChua,
-               LKG.DonGiaTheoGio
+               LKG.DonGiaTheoGio,
+               KG.ToaDoX,
+               KG.ToaDoY,
+               KG.ChieuDai,
+               KG.ChieuRong
         FROM KHONGGIAN KG
         JOIN CHINHANH CN ON KG.MaCN = CN.MaCN
         JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG
@@ -27,7 +31,7 @@ BEGIN
           AND (p_TrangThaiKG IS NULL OR KG.TrangThaiKG = p_TrangThaiKG)
           AND (p_TuKhoa IS NULL
                OR UPPER(KG.TenKG) LIKE '%' || UPPER(p_TuKhoa) || '%')
-        ORDER BY CN.TenCN, KG.TenKG;
+        ORDER BY CN.TenCN, KG.ToaDoY, KG.ToaDoX, KG.TenKG;
 
     p_outMessage := 'Tra cứu không gian thành công!';
 

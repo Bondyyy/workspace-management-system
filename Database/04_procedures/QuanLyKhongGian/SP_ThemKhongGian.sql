@@ -4,6 +4,10 @@ CREATE OR REPLACE PROCEDURE SP_ThemKhongGian(
     p_ViTri IN VARCHAR2,
     p_MaLoaiKG IN VARCHAR2,
     p_MaCN IN VARCHAR2,
+    p_ToaDoX IN NUMBER DEFAULT 0,
+    p_ToaDoY IN NUMBER DEFAULT 0,
+    p_ChieuDai IN NUMBER DEFAULT 0,
+    p_ChieuRong IN NUMBER DEFAULT 0,
     p_outMessage OUT VARCHAR2
 ) AS
     v_Count NUMBER;
@@ -42,8 +46,8 @@ BEGIN
 
     v_MaQR := 'QR-' || p_MaKG || '-' || TO_CHAR(SYSTIMESTAMP, 'YYYYMMDDHH24MISSFF3');
 
-    INSERT INTO KHONGGIAN (MaKG, TenKG, TrangThaiKG, ViTri, MaLoaiKG, MaCN)
-    VALUES (p_MaKG, p_TenKG, 'Trống', p_ViTri, p_MaLoaiKG, p_MaCN);
+    INSERT INTO KHONGGIAN (MaKG, TenKG, TrangThaiKG, ViTri, MaLoaiKG, MaCN, ToaDoX, ToaDoY, ChieuDai, ChieuRong)
+    VALUES (p_MaKG, p_TenKG, 'Trống', p_ViTri, p_MaLoaiKG, p_MaCN, p_ToaDoX, p_ToaDoY, p_ChieuDai, p_ChieuRong);
 
     COMMIT;
     p_outMessage := 'Thêm không gian "' || p_TenKG || '" thành công! Mã QR: ' || v_MaQR;

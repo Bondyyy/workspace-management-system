@@ -108,10 +108,8 @@ public class NguoiDungDAO {
 
         boolean autoCommit = conn.getAutoCommit();
         try {
-            conn.setAutoCommit(false); // Bắt đầu transaction (Transaction: đảm bảo ghi cả 2 bảng thành công hoặc không
-                                       // ghi gì cả)
+            conn.setAutoCommit(false);
 
-            // 1. Insert vào NGUOIDUNG
             try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
                 ps.setString(1, maND);
                 ps.setString(2, user.getTenTaiKhoan());
@@ -120,12 +118,17 @@ public class NguoiDungDAO {
                 ps.executeUpdate();
             }
 
-            // 2. Insert vào KHACHHANG
             try (PreparedStatement psKH = conn.prepareStatement(sqlKH)) {
                 psKH.setString(1, java.util.UUID.randomUUID().toString()); // Sinh MaKH ngẫu nhiên
                 psKH.setString(2, hoTen);
                 psKH.setString(3, maND);
                 psKH.executeUpdate();
+            }
+
+            String sqlVaiTro = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, 'VT02')";
+            try (PreparedStatement psVT = conn.prepareStatement(sqlVaiTro)) {
+                psVT.setString(1, maND);
+                psVT.executeUpdate();
             }
 
             conn.commit();
