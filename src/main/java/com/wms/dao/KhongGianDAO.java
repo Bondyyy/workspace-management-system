@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.wms.dao;
 
 import com.wms.config.DatabaseConnection; 
@@ -11,6 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import com.wms.model.CoSoVatChat.KhongGianDTO;
+import java.sql.CallableStatement;
+import java.sql.ResultSetMetaData;
+import java.sql.Types;
 /**
  *
  * @author kyduy
@@ -123,11 +123,11 @@ public class KhongGianDAO {
         }
         return gioDongCuaDeFault;
     }
-    public List<KhongGianDTO> layTatCaKhongGian() {
+    public List<com.wms.model.CoSoVatChat.KhongGianDTO> layTatCaKhongGian() {
         return timKiem(null, null, null);
     }
 
-    public List<KhongGianDTO> timKiem(String tuKhoa, String maCN, String maLoaiKG) {
+    public List<com.wms.model.CoSoVatChat.KhongGianDTO> timKiem(String tuKhoa, String maCN, String maLoaiKG) {
         String sqlFull = buildQuery(true, tuKhoa, maCN, maLoaiKG);
         List<Object> params = buildParams(tuKhoa, maCN, maLoaiKG);
 
@@ -180,8 +180,8 @@ public class KhongGianDAO {
         return params;
     }
 
-    private List<KhongGianDTO> executeQuery(String sql, List<Object> params) throws SQLException {
-        List<KhongGianDTO> list = new ArrayList<>();
+    private List<com.wms.model.CoSoVatChat.KhongGianDTO> executeQuery(String sql, List<Object> params) throws SQLException {
+        List<com.wms.model.CoSoVatChat.KhongGianDTO> list = new ArrayList<>();
         try (PreparedStatement ps = getConn().prepareStatement(sql)) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -195,11 +195,11 @@ public class KhongGianDAO {
         return list;
     }
 
-    public List<KhongGianDTO> layTheoChiNhanh(String maCN) {
+    public List<com.wms.model.CoSoVatChat.KhongGianDTO> layTheoChiNhanh(String maCN) {
         return timKiem(null, maCN, null);
     }
 
-    public boolean them(KhongGianDTO dto) {
+    public boolean them(com.wms.model.CoSoVatChat.KhongGianDTO dto) {
         // 1. Sử dụng mã từ DTO nếu có, nếu không thì tự sinh
         if (dto.getMaKG() == null || dto.getMaKG().trim().isEmpty()) {
             dto.setMaKG(taoMaMoi());
@@ -222,7 +222,7 @@ public class KhongGianDAO {
         }
     }
 
-    public boolean capNhat(KhongGianDTO dto) {
+    public boolean capNhat(com.wms.model.CoSoVatChat.KhongGianDTO dto) {
         // Sử dụng Stored Procedure mới (10 tham số)
         String sql = "{call SP_CapNhatKhongGian(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement cs = getConn().prepareCall(sql)) {

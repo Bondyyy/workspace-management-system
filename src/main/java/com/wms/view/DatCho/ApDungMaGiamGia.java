@@ -107,7 +107,7 @@ public class ApDungMaGiamGia extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Mã đã hết hạn!");
             return;
         }
-        if (voucherHienTai.getSLDaDung() >= voucherHienTai.getSLToiDa()) {
+        if (voucherHienTai.getSlDaDung() >= voucherHienTai.getSlToiDa()) {
             JOptionPane.showMessageDialog(this, "Mã đã hết lượt dùng!");
             return;
         }

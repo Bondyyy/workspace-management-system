@@ -33,8 +33,8 @@ public class PhieuGiamGiaDAO {
                     dto.setNgayKetThucApDung(rs.getTimestamp("NgayKetThucApDung"));
                     
                     // Dùng đúng setter theo DTO
-                    dto.setSLDaDung(rs.getInt("SLDaDung")); 
-                    dto.setSLToiDa(rs.getInt("SLToiDa"));
+                    dto.setSlDaDung(rs.getInt("SLDaDung")); 
+                    dto.setSlToiDa(rs.getInt("SLToiDa"));
                     
                     return dto;
                 }
