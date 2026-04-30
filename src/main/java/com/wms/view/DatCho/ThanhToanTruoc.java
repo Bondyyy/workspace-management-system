@@ -1,24 +1,52 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.wms.view.DatCho;
 
+import com.wms.model.ThanhToan_KhuyenMai.HoaDonDTO;
+import com.wms.model.ThanhToan_KhuyenMai.PhieuGiamGiaDTO;
+import javax.swing.JOptionPane;
+
 /**
- *
- * @author kyduy
+ * Màn hình Thanh Toán Trước (JPanel)
+ * Chứa thông tin chi tiết hóa đơn và xử lý áp dụng mã giảm giá
  */
-public class ThanhToanTruoc extends javax.swing.JFrame {
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ThanhToanTruoc.class.getName());
+public class ThanhToanTruoc extends javax.swing.JPanel {
+
+    private HoaDonDTO hoaDonHienTai;
 
     /**
-     * Creates new form ThanhToanTruoc
+     * Hàm khởi tạo mặc định
      */
     public ThanhToanTruoc() {
+            initComponents();
+        capNhatHienThiTien();
+    }
+
+    /**
+     * Hàm khởi tạo nhận dữ liệu từ màn hình Chọn Không Gian
+     * @param htmlThongTinDatCho Chuỗi HTML hiển thị chi tiết đặt chỗ
+     * @param hoaDonDTO Đối tượng chứa thông tin hóa đơn và tổng tiền
+     */
+    public ThanhToanTruoc(String htmlThongTinDatCho, HoaDonDTO hoaDonDTO) {
         initComponents();
+        this.hoaDonHienTai = hoaDonDTO;
+
+        // Thiết lập hiển thị HTML cho khung chi tiết
         txtChiTietDatCho.setContentType("text/html");
-        txtChiTietDatCho.setText(htmlHoaDon);
+        if (htmlThongTinDatCho != null && !htmlThongTinDatCho.isEmpty()) {
+            txtChiTietDatCho.setText(htmlThongTinDatCho);
+        }
+        
+        // Hiển thị tổng tiền lên ô txtTongCong
+        capNhatHienThiTien();
+    }
+    
+    private void capNhatHienThiTien() {
+        if (hoaDonHienTai != null && hoaDonHienTai.getThanhTien() != null) {
+            java.text.DecimalFormat formatter = new java.text.DecimalFormat("###,###,###");
+            txtTongCong.setText(formatter.format(hoaDonHienTai.getThanhTien()) + " VNĐ");
+        } else if (hoaDonHienTai != null && hoaDonHienTai.getTongTien() != null) {
+            java.text.DecimalFormat formatter = new java.text.DecimalFormat("###,###,###");
+            txtTongCong.setText(formatter.format(hoaDonHienTai.getTongTien()) + " VNĐ");
+        }
     }
 
     /**
@@ -30,122 +58,163 @@ public class ThanhToanTruoc extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnMain = new javax.swing.JPanel();
-        lblHeader = new javax.swing.JLabel();
-        spInfo = new javax.swing.JScrollPane();
-        txtReviewInfo = new javax.swing.JTextArea();
-        lblTongTien = new javax.swing.JLabel();
-        txtMoneyDisplay = new javax.swing.JTextField();
+        lblTitle = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtChiTietDatCho = new javax.swing.JTextPane();
+        lblTongCong = new javax.swing.JLabel();
+        txtTongCong = new javax.swing.JTextField();
         btnMaGiamGia = new javax.swing.JButton();
-        btnPayFinish = new javax.swing.JButton();
-        btnBack = new javax.swing.JButton();
+        btnHoanTat = new javax.swing.JButton();
+        btnQuayLai = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Thanh Toán Hóa Đơn");
-        setResizable(false);
-        getContentPane().setLayout(null);
+        setBackground(new java.awt.Color(255, 255, 255));
+        setPreferredSize(new java.awt.Dimension(800, 600));
+        setLayout(null);
 
-        pnMain.setBackground(new java.awt.Color(255, 255, 255));
-        pnMain.setLayout(null);
+        lblTitle.setFont(new java.awt.Font("Arial", 1, 28)); // NOI18N
+        lblTitle.setForeground(new java.awt.Color(232, 85, 136));
+        lblTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblTitle.setText("CHI TIẾT THANH TOÁN ĐẶT TRƯỚC");
+        add(lblTitle);
+        lblTitle.setBounds(150, 20, 500, 40);
 
-        lblHeader.setFont(new java.awt.Font("Segoe UI", 1, 26)); // NOI18N
-        lblHeader.setForeground(new java.awt.Color(240, 123, 170));
-        lblHeader.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblHeader.setText("CHI TIẾT THANH TOÁN TRƯỚC");
-        pnMain.add(lblHeader);
-        lblHeader.setBounds(0, 20, 800, 36);
+        txtChiTietDatCho.setEditable(false);
+        txtChiTietDatCho.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Thông tin đặt chỗ", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 0, 12), new java.awt.Color(199, 61, 110))); // NOI18N
+        jScrollPane1.setViewportView(txtChiTietDatCho);
 
-        txtReviewInfo.setEditable(false);
-        txtReviewInfo.setColumns(20);
-        txtReviewInfo.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        txtReviewInfo.setRows(5);
-        txtReviewInfo.setText("Đang tải thông tin...");
-        txtReviewInfo.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Thông tin đặt chỗ", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 0, 12), new java.awt.Color(240, 123, 170))); // NOI18N
-        spInfo.setViewportView(txtReviewInfo);
+        add(jScrollPane1);
+        jScrollPane1.setBounds(40, 80, 400, 420);
 
-        pnMain.add(spInfo);
-        spInfo.setBounds(40, 80, 360, 420);
+        lblTongCong.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        lblTongCong.setText("Tổng cộng:");
+        add(lblTongCong);
+        lblTongCong.setBounds(470, 80, 150, 30);
 
-        lblTongTien.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        lblTongTien.setText("Tổng cộng:");
-        pnMain.add(lblTongTien);
-        lblTongTien.setBounds(440, 80, 320, 25);
-
-        txtMoneyDisplay.setEditable(false);
-        txtMoneyDisplay.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        txtMoneyDisplay.setForeground(new java.awt.Color(205, 92, 92));
-        txtMoneyDisplay.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
-        txtMoneyDisplay.setText("0 VNĐ");
-        pnMain.add(txtMoneyDisplay);
-        txtMoneyDisplay.setBounds(440, 110, 320, 50);
+        txtTongCong.setEditable(false);
+        txtTongCong.setBackground(new java.awt.Color(240, 240, 240));
+        txtTongCong.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
+        txtTongCong.setForeground(new java.awt.Color(199, 61, 110));
+        txtTongCong.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtTongCong.setText("0 VNĐ");
+        txtTongCong.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtTongCongActionPerformed(evt);
+            }
+        });
+        add(txtTongCong);
+        txtTongCong.setBounds(470, 120, 290, 40);
 
         btnMaGiamGia.setBackground(new java.awt.Color(255, 240, 245));
-        btnMaGiamGia.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnMaGiamGia.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnMaGiamGia.setText("Sử dụng mã giảm giá");
-        btnMaGiamGia.setActionCommand("Áp dụng mã giảm giá");
-        pnMain.add(btnMaGiamGia);
-        btnMaGiamGia.setBounds(440, 180, 320, 40);
+        btnMaGiamGia.setToolTipText("");
+        btnMaGiamGia.setBorderPainted(false);
+        btnMaGiamGia.setFocusPainted(false);
+        btnMaGiamGia.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnMaGiamGiaActionPerformed(evt);
+            }
+        });
+        add(btnMaGiamGia);
+        btnMaGiamGia.setBounds(470, 180, 290, 40);
 
-        btnPayFinish.setBackground(new java.awt.Color(240, 123, 170));
-        btnPayFinish.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        btnPayFinish.setForeground(new java.awt.Color(255, 255, 255));
-        btnPayFinish.setText("HOÀN TẤT THANH TOÁN");
-        pnMain.add(btnPayFinish);
-        btnPayFinish.setBounds(440, 440, 320, 60);
+        btnHoanTat.setBackground(new java.awt.Color(232, 85, 136));
+        btnHoanTat.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        btnHoanTat.setForeground(new java.awt.Color(255, 255, 255));
+        btnHoanTat.setText("HOÀN TẤT THANH TOÁN");
+        btnHoanTat.setBorderPainted(false);
+        btnHoanTat.setFocusPainted(false);
+        btnHoanTat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHoanTatActionPerformed(evt);
+            }
+        });
+        add(btnHoanTat);
+        btnHoanTat.setBounds(470, 510, 290, 50);
 
-        btnBack.setBackground(new java.awt.Color(178, 34, 34));
-        btnBack.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnBack.setForeground(new java.awt.Color(255, 255, 255));
-        btnBack.setText("Quay lại");
-        btnBack.addActionListener(this::btnBackActionPerformed);
-        pnMain.add(btnBack);
-        btnBack.setBounds(40, 520, 120, 30);
-
-        getContentPane().add(pnMain);
-        pnMain.setBounds(0, 0, 800, 600);
-
-        pack();
-        setLocationRelativeTo(null);
+        btnQuayLai.setBackground(new java.awt.Color(178, 34, 34));
+        btnQuayLai.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnQuayLai.setForeground(new java.awt.Color(255, 255, 255));
+        btnQuayLai.setText("Quay lại");
+        btnQuayLai.setBorderPainted(false);
+        btnQuayLai.setFocusPainted(false);
+        btnQuayLai.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnQuayLaiActionPerformed(evt);
+            }
+        });
+        add(btnQuayLai);
+        btnQuayLai.setBounds(40, 520, 130, 40);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
+    private void btnQuayLaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnQuayLaiActionPerformed
+        java.awt.Container khungChua = this.getParent(); 
+        if (khungChua != null) {
+            khungChua.removeAll();
+            ChonKhongGian pnlChon = new ChonKhongGian();
+            pnlChon.setSize(khungChua.getSize());
+            khungChua.add(pnlChon);
+            khungChua.revalidate(); 
+            khungChua.repaint();    
+        }
+    }//GEN-LAST:event_btnQuayLaiActionPerformed
+
+    private void btnMaGiamGiaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMaGiamGiaActionPerformed
+        if (hoaDonHienTai == null || hoaDonHienTai.getTongTien() == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn để áp dụng mã!");
+            return;
+        }
+
+        java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+        java.awt.Frame parentFrame = (window instanceof java.awt.Frame) ? (java.awt.Frame) window : null;
+
+        ApDungMaGiamGia dialog = new ApDungMaGiamGia(parentFrame, true, hoaDonHienTai.getTongTien());
+        dialog.setVisible(true); 
+
+        PhieuGiamGiaDTO voucher = dialog.getVoucherApDung();
+        if (voucher != null) {
+            hoaDonHienTai.setMaPGG(voucher.getMaPGG());
+            double tienPhaiTra = hoaDonHienTai.getTongTien() - voucher.getGiaTriGiamGia();
+            if (tienPhaiTra < 0) tienPhaiTra = 0;
+            hoaDonHienTai.setThanhTien(tienPhaiTra);
+
+            capNhatHienThiTien();
+            btnMaGiamGia.setEnabled(false);
+            btnMaGiamGia.setText("Đã áp mã: " + voucher.getMaPGG());
+        }
+    }//GEN-LAST:event_btnMaGiamGiaActionPerformed
+
+    private void btnHoanTatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHoanTatActionPerformed
+        if (hoaDonHienTai != null) {
+            JOptionPane.showMessageDialog(this, "Đang xử lý thanh toán hóa đơn: " + hoaDonHienTai.getMaHoaDon());
+            // Tại đây bạn sẽ gọi DAO để lưu trạng thái hóa đơn xuống DB
+        }
+    }//GEN-LAST:event_btnHoanTatActionPerformed
+
+    private void txtTongCongActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTongCongActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_btnBackActionPerformed
+    }//GEN-LAST:event_txtTongCongActionPerformed
 
     /**
-     * @param args the command line arguments
+     * Hàm main hỗ trợ chạy thử độc lập JPanel
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new ThanhToanTruoc().setVisible(true));
+    public static void main(String[] args) {
+        javax.swing.JFrame frame = new javax.swing.JFrame("Thanh Toán Trước Preview");
+        frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+        frame.add(new ThanhToanTruoc());
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnBack;
+    private javax.swing.JButton btnHoanTat;
     private javax.swing.JButton btnMaGiamGia;
-    private javax.swing.JButton btnPayFinish;
-    private javax.swing.JLabel lblHeader;
-    private javax.swing.JLabel lblTongTien;
-    private javax.swing.JPanel pnMain;
-    private javax.swing.JScrollPane spInfo;
-    private javax.swing.JTextField txtMoneyDisplay;
-    private javax.swing.JTextArea txtReviewInfo;
+    private javax.swing.JButton btnQuayLai;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblTitle;
+    private javax.swing.JLabel lblTongCong;
+    private javax.swing.JTextPane txtChiTietDatCho;
+    private javax.swing.JTextField txtTongCong;
     // End of variables declaration//GEN-END:variables
 }

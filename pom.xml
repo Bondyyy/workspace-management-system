@@ -32,8 +32,27 @@
         <artifactId>swing-layout</artifactId>
         <version>1.0.3</version>
         </dependency>
-    </dependencies>
         
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        
+        <!-- NetBeans AbsoluteLayout -->
+        <dependency>
+            <groupId>org.netbeans.external</groupId>
+            <artifactId>AbsoluteLayout</artifactId>
+            <version>RELEASE120</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <!-- JUnit 5 runner -->

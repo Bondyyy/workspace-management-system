@@ -18,7 +18,8 @@ public class QuanLyNhanVienForm extends JPanel {
 
     private JTable tableNhanVien;
     private DefaultTableModel tableModel;
-    private JButton btnTraCuu, btnSua, btnXoa, btnTaiLai;
+    // Thêm btnXemChiTiet vào khai báo
+    private JButton btnTraCuu, btnXemChiTiet, btnThem, btnSua; 
     private JTextField txtTimKiemMa;
 
     public QuanLyNhanVienForm() {
@@ -52,7 +53,7 @@ public class QuanLyNhanVienForm extends JPanel {
         JPanel pnlInput = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         pnlInput.setBackground(COLOR_PINK_BG);
         
-        txtTimKiemMa = new JTextField(15); // Nới rộng ô text một chút để nhập tên cho thoải mái
+        txtTimKiemMa = new JTextField(15);
         txtTimKiemMa.setFont(new Font("Arial", Font.PLAIN, 14));
         
         btnTraCuu = createStyledButton("Tìm kiếm", COLOR_PINK);
@@ -68,7 +69,6 @@ public class QuanLyNhanVienForm extends JPanel {
         this.add(pnlHeader, BorderLayout.NORTH);
 
         // --- PHẦN BẢNG DỮ LIỆU ---
-        // Cập nhật cấu trúc: Thêm "Chức Vụ"
         String[] columnNames = {"Mã NV", "Họ Tên", "Email", "Số Điện Thoại", "Chức Vụ", "Nhóm Quyền", "Trạng Thái"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
@@ -83,7 +83,6 @@ public class QuanLyNhanVienForm extends JPanel {
         tableNhanVien.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tableNhanVien.setGridColor(COLOR_PINK_BORDER);
 
-        // Chia lại độ rộng các cột cho 7 cột vừa vặn với 800px
         TableColumnModel columnModel = tableNhanVien.getColumnModel();
         columnModel.getColumn(0).setPreferredWidth(60);  // Mã NV
         columnModel.getColumn(1).setPreferredWidth(140); // Họ Tên
@@ -103,21 +102,23 @@ public class QuanLyNhanVienForm extends JPanel {
         scrollPane.setBorder(BorderFactory.createLineBorder(COLOR_PINK_BORDER, 2));
         this.add(scrollPane, BorderLayout.CENTER);
 
-        // --- PHẦN NÚT BẤM (Sửa và Xóa) ---
+        // --- PHẦN NÚT BẤM (Xem chi tiết, Thêm, Sửa) ---
         JPanel pnlActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         pnlActions.setBackground(COLOR_PINK_BG);
 
-        btnTaiLai = createStyledButton("Tải lại", Color.decode("#00003A"));
-        btnSua = createStyledButton("Sửa thông tin nhân viên", COLOR_PINK);
-        btnXoa = createStyledButton("Xóa nhân viên", Color.decode("#00003A"));
+        // Khởi tạo 3 nút
+        btnXemChiTiet = createStyledButton("Xem chi tiết", Color.decode("#00003A"));
+        btnThem = createStyledButton("Thêm nhân viên", Color.decode("#00003A"));
+        btnSua = createStyledButton("Sửa thông tin", Color.decode("#00003A"));
 
-        btnTaiLai.addActionListener(e -> loadData());
+        // Gán sự kiện cho các nút
+        btnXemChiTiet.addActionListener(e -> xemChiTietNhanVien());
+        btnThem.addActionListener(e -> themNhanVien());
         btnSua.addActionListener(e -> suaNhanVien());
-        btnXoa.addActionListener(e -> xoaNhanVien());
 
-        pnlActions.add(btnTaiLai);
+        pnlActions.add(btnXemChiTiet);
+        pnlActions.add(btnThem);
         pnlActions.add(btnSua);
-        pnlActions.add(btnXoa);
 
         this.add(pnlActions, BorderLayout.SOUTH);
     }
@@ -125,18 +126,14 @@ public class QuanLyNhanVienForm extends JPanel {
     private JButton createStyledButton(String text, Color bgColor) {
         JButton btn = new JButton(text);
         btn.setBackground(bgColor);
-        btn.setForeground((bgColor == COLOR_PINK_DARK || bgColor == Color.GRAY) ? Color.WHITE : COLOR_TEXT_NAVY);
+        btn.setForeground(Color.decode("#00003A")); // Đổi text thành màu trắng cho nền tối dễ nhìn
         btn.setFont(new Font("Arial", Font.BOLD, 14));
         btn.setFocusPainted(false);
         btn.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(bgColor.darker());
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(bgColor);
-            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(bgColor.darker()); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(bgColor); }
         });
         return btn;
     }
@@ -144,7 +141,6 @@ public class QuanLyNhanVienForm extends JPanel {
     private void loadData() {
         try {
             tableModel.setRowCount(0); 
-            // Giả lập dữ liệu: Tách biệt rõ Chức vụ (Lễ tân/Quản lý) và Nhóm Quyền trên hệ thống
             Object[][] mockData = {
                 {"NV001", "Nguyễn Văn A", "nva@wms.com", "0901234567", "Lễ tân", "Quản lý hội viên", "Còn làm việc"},
                 {"NV002", "Trần Thị B", "ttb@wms.com", "0907654321", "Quản lý", "Quản trị viên", "Còn làm việc"},
@@ -167,68 +163,82 @@ public class QuanLyNhanVienForm extends JPanel {
         JOptionPane.showMessageDialog(this, "Đang tra cứu nhân viên với từ khóa: " + tuKhoa);
     }
 
+    // --- HÀM XỬ LÝ XEM CHI TIẾT ---
+    private void xemChiTietNhanVien() {
+        int row = tableNhanVien.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần xem chi tiết trên bảng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Lấy thông tin cơ bản từ bảng để truyền sang form chi tiết
+        String maNV = (String) tableModel.getValueAt(row, 0);
+        String hoTen = (String) tableModel.getValueAt(row, 1);
+        String chucVu = (String) tableModel.getValueAt(row, 4);
+        String trangThai = (String) tableModel.getValueAt(row, 6);
+        
+        Container parent = this.getParent();
+        while (parent != null) {
+            if (parent.getLayout() instanceof CardLayout) {
+                for (Component comp : parent.getComponents()) {
+                    if (comp instanceof ChiTietNhanVienForm) {
+                        ((ChiTietNhanVienForm) comp).loadThongTinChiTiet(maNV, hoTen, trangThai, chucVu);
+                        break;
+                    }
+                }
+                CardLayout layout = (CardLayout) parent.getLayout();
+                layout.show(parent, "ChiTietNhanVien"); 
+                return; 
+            }
+            parent = parent.getParent(); 
+        }
+        JOptionPane.showMessageDialog(this, "Sẽ chuyển sang [Xem chi tiết nhân viên] của mã: " + maNV, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void themNhanVien() {
+        Container parent = this.getParent();
+        while (parent != null) {
+            if (parent.getLayout() instanceof CardLayout) {
+                CardLayout layout = (CardLayout) parent.getLayout();
+                layout.show(parent, "ThemNhanVien"); 
+                return; 
+            }
+            parent = parent.getParent(); 
+        }
+        JOptionPane.showMessageDialog(this, "Hệ thống sẽ chuyển sang màn hình [Thêm Nhân Viên]", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private void suaNhanVien() {
         int row = tableNhanVien.getSelectedRow();
-        
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, 
-                "Vui lòng chọn nhân viên cần sửa trên bảng!", 
-                "Thông báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần sửa trên bảng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         String maNV = (String) tableModel.getValueAt(row, 0);
         
-        // 3. Lấy Container cha (nơi setup CardLayout)
-        Container parentContainer = this.getParent();
-        
-        // 4. Kiểm tra và thực hiện chuyển trang
-        if (parentContainer != null && parentContainer.getLayout() instanceof CardLayout) {
-            
-            // Tìm form SuaNhanVienForm trong các component của parentContainer để truyền dữ liệu
-            for (Component comp : parentContainer.getComponents()) {
-                if (comp instanceof SuaNhanVienForm) {
-                    ((SuaNhanVienForm) comp).loadNhanVienData(maNV);
-                    break;
+        Container parent = this.getParent();
+        while (parent != null) {
+            if (parent.getLayout() instanceof CardLayout) {
+                for (Component comp : parent.getComponents()) {
+                    if (comp instanceof SuaNhanVienForm) {
+                        ((SuaNhanVienForm) comp).loadNhanVienData(maNV);
+                        break;
+                    }
                 }
+                CardLayout layout = (CardLayout) parent.getLayout();
+                layout.show(parent, "SuaNhanVien");
+                return;
             }
-            
-            CardLayout layout = (CardLayout) parentContainer.getLayout();
-            layout.show(parentContainer, "SuaNhanVien");
-            
-        } else {
-            // Trường hợp dự phòng khi bạn đang chạy file test (hàm main) độc lập, chưa nhúng vào CardLayout tổng
-            JOptionPane.showMessageDialog(this, 
-                "Đã bắt được sự kiện Sửa!\n(Hệ thống sẽ nạp dữ liệu của Mã NV [" + maNV + "] và chuyển sang [Sửa nhân viên] khi chạy trong MainLayout)", 
-                "Thông báo chuyển trang", JOptionPane.INFORMATION_MESSAGE);
+            parent = parent.getParent(); 
         }
+        JOptionPane.showMessageDialog(this, "Sẽ chuyển sang [Sửa nhân viên] của mã: " + maNV, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private void xoaNhanVien() {
-        int row = tableNhanVien.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        String maNV = (String) tableModel.getValueAt(row, 0);
-        int confirm = JOptionPane.showConfirmDialog(this, 
-                "Bạn có chắc chắn muốn xóa nhân viên " + maNV + " không?", 
-                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-        
-        if (confirm == JOptionPane.YES_OPTION) {
-            
-            JOptionPane.showMessageDialog(this, "Đã xóa nhân viên thành công.");
-        }
-    }
-
-    // --- MAIN TEST ---
     // --- MAIN TEST ---
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Test View - Quản lý nhân viên");
@@ -236,15 +246,16 @@ public class QuanLyNhanVienForm extends JPanel {
             frame.setSize(800, 600);
             frame.setLocationRelativeTo(null);
 
-            
             JPanel mainPanel = new JPanel(new CardLayout());
             
             mainPanel.add(new QuanLyNhanVienForm(), "QuanLyNhanVien");
-         
             mainPanel.add(new SuaNhanVienForm(), "SuaNhanVien"); 
+            mainPanel.add(new ThemNhanVienForm(), "ThemNhanVien"); 
+            
+            // Đã thêm ChiTietNhanVienForm vào CardLayout để test
+            mainPanel.add(new ChiTietNhanVienForm(), "ChiTietNhanVien"); 
 
             frame.add(mainPanel);
-
             frame.setVisible(true);
         });
     }

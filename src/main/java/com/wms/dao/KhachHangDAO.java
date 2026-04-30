@@ -1,7 +1,7 @@
 package com.wms.dao;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.HoiVienDTO;
+import com.wms.model.NhanSu_KhachHang.HoiVienDTO;
 
 import java.sql.*;
 import java.util.ArrayList;

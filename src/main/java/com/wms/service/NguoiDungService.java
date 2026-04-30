@@ -1,8 +1,10 @@
 package com.wms.service;
 
 import com.wms.dao.NguoiDungDAO;
-import com.wms.model.NguoiDungDTO;
+import com.wms.model.NhanSu_KhachHang.NguoiDungDTO;
 import com.wms.util.PasswordUtil;
+import com.wms.util.EmailUtil;
+
 
 import java.sql.SQLException;
 
@@ -62,9 +64,54 @@ public class NguoiDungService {
         THANH_CONG,
         TAI_KHOAN_DA_TON_TAI,
         DU_LIEU_KHONG_HOP_LE,
-        LOI_CSDL
+        LOI_CSDL,
+        YEU_CAU_OTP_THANH_CONG,
+        EMAIL_DA_TON_TAI,
+        LOI_GUI_MAIL,
     }
+    
+    public static class OtpResponse {
+        private final ketQuaDangKy result;
+        private final String otp;
 
+        public OtpResponse(ketQuaDangKy result, String otp) {
+            this.result = result;
+            this.otp = otp;
+        }
+
+        public ketQuaDangKy getResult() { return result; }
+        public String getOtp() { return otp; }
+    }
+    
+    public OtpResponse yeuCauOTP(String tenTaiKhoan, String email) {
+        if (tenTaiKhoan == null || tenTaiKhoan.trim().isEmpty() ||
+            email == null || email.trim().isEmpty()) {
+            return new OtpResponse(ketQuaDangKy.DU_LIEU_KHONG_HOP_LE, null);
+        }
+
+        try {
+            if (nguoiDungDAO.kiemTraTaiKhoanTonTai(tenTaiKhoan.trim())) {
+                return new OtpResponse(ketQuaDangKy.TAI_KHOAN_DA_TON_TAI, null);
+            }
+            if (nguoiDungDAO.kiemTraEmailTonTai(email.trim())) {
+                return new OtpResponse(ketQuaDangKy.EMAIL_DA_TON_TAI, null);
+            }
+
+            String otp = EmailUtil.generateRandomOTP();
+            boolean isSent = EmailUtil.sendOTP(email.trim(), otp);
+
+            if (isSent) {
+                return new OtpResponse(ketQuaDangKy.YEU_CAU_OTP_THANH_CONG, otp);
+            } else {
+                return new OtpResponse(ketQuaDangKy.LOI_GUI_MAIL, null);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[Service] Lỗi SQL khi yêu cầu OTP: " + e.getMessage());
+            return new OtpResponse(ketQuaDangKy.LOI_CSDL, null);
+        }
+    }
+    
     public ketQuaDangKy register(String tenTaiKhoan, String hoTen, String email, String matKhau) {
         if (tenTaiKhoan == null || tenTaiKhoan.trim().isEmpty() ||
             matKhau == null || matKhau.trim().isEmpty() ||
@@ -73,8 +120,11 @@ public class NguoiDungService {
         }
 
         try {
-            if (nguoiDungDAO.kiemTraTaiKhoanTonTai(tenTaiKhoan)) {
+            if (nguoiDungDAO.kiemTraTaiKhoanTonTai(tenTaiKhoan.trim())) {
                 return ketQuaDangKy.TAI_KHOAN_DA_TON_TAI;
+            }
+            if (nguoiDungDAO.kiemTraEmailTonTai(email.trim())) {
+                return ketQuaDangKy.EMAIL_DA_TON_TAI;
             }
 
             NguoiDungDTO newUser = new NguoiDungDTO();
@@ -88,7 +138,7 @@ public class NguoiDungService {
             return ketQuaDangKy.THANH_CONG;
 
         } catch (SQLException e) {
-            System.err.println("[Service] Lỗi SQL đăng ký: " + e.getMessage());
+            System.err.println("[Service] Lỗi SQL: " + e.getMessage());
             return ketQuaDangKy.LOI_CSDL;
         }
     }

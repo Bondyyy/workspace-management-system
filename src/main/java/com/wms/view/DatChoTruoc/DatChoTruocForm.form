@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
+<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
     <Property name="title" type="java.lang.String" value="&#x110;&#x1eb7;t ch&#x1ed7; tr&#x1b0;&#x1edb;c - Kh&#xf4;ng gian l&#xe0;m vi&#x1ec7;c v&#xe0; h&#x1ecd;c t&#x1ead;p"/>

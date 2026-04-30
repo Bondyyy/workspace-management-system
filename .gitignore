@@ -23,3 +23,6 @@ logs/
 .idea
 .env
 src/main/resources/config.properties
+/target (1)/
+
+.vscode/

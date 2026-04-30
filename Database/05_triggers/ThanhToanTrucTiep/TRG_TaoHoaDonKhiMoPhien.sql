@@ -1,9 +1,3 @@
--- =====================================================================
--- Trigger: TRG_TaoHoaDonKhiMoPhien
--- Mục đích: Tự động tạo hóa đơn khi mở phiên làm việc mới
--- Thời điểm: AFTER INSERT ON PHIENLAMVIEC
--- =====================================================================
-
 CREATE OR REPLACE TRIGGER TRG_TaoHoaDonKhiMoPhien
 AFTER INSERT ON PHIENLAMVIEC
 FOR EACH ROW

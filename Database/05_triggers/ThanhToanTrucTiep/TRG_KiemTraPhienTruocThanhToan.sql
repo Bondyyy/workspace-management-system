@@ -1,10 +1,3 @@
--- =====================================================================
--- Trigger: TRG_KiemTraPhienTruocThanhToan
--- Mục đích: Đảm bảo chỉ thanh toán được khi phiên đã kết thúc
--- Điều kiện: TrangThaiPhien = 'Đã kết thúc'
--- Thời điểm: BEFORE UPDATE OF TrangThaiThanhToan, PhuongThucThanhToan
--- =====================================================================
-
 CREATE OR REPLACE TRIGGER TRG_KiemTraPhienTruocThanhToan
 BEFORE UPDATE OF TrangThaiThanhToan, PhuongThucThanhToan ON HOADON
 FOR EACH ROW

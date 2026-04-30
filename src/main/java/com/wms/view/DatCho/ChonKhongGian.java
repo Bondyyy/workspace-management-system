@@ -1,8 +1,9 @@
 package com.wms.view.DatCho;
-import com.wms.view.XemSoDoKhongGian.XemSoDoKhongGian;
+
 import com.wms.dao.KhongGianDAO;
-import java.awt.event.ActionEvent;
+import com.wms.view.XemSoDoKhongGian.XemSoDoKhongGianForm;
 import javax.swing.JOptionPane;
+import java.awt.event.ActionEvent;
 
 /**
  *
@@ -371,20 +372,57 @@ public class ChonKhongGian extends javax.swing.JPanel {
             boolean conCho = dao.kiemTraTinhTrangKhongGian(loaiKhongGian, strNgay, strGioToi);
 
             if (conCho) {
-                JOptionPane.showMessageDialog(this, "Không gian sẵn sàng! Chuyển sang bước thanh toán.");
+                // 1. LẤY THỜI GIAN THUÊ ĐỂ TÍNH TIỀN (Ví dụ: "3 giờ" -> lấy số 3)
+                String thoiGianStr = (String) cbGioMoPhien.getSelectedItem();
+                int soGioThue = 1; // Mặc định
+                try {
+                    if (thoiGianStr != null && thoiGianStr.contains(" giờ")) {
+                        soGioThue = Integer.parseInt(thoiGianStr.split(" ")[0]);
+                    }
+                } catch (Exception ex) {}
 
-                // Đổi màn hình Panel
-                java.awt.Container khungChua = this.getParent(); 
-                if (khungChua != null) {
-                    khungChua.removeAll();
-                    ThanhToanTruoc pnlThanhToan = new ThanhToanTruoc();
-                    pnlThanhToan.setSize(khungChua.getSize());
-                    khungChua.add(pnlThanhToan);
-                    khungChua.revalidate(); 
-                    khungChua.repaint();    
+                // TÍNH TIỀN: Giả sử giá thuê là 50.000đ/giờ (Bạn có thể thay đổi logic này sau)
+                double tongTienTamTinh = soGioThue * 50000.0;
+
+                // 2. TẠO ĐỐI TƯỢNG HÓA ĐƠN
+                com.wms.model.ThanhToan_KhuyenMai.HoaDonDTO hoaDonMoi = new com.wms.model.ThanhToan_KhuyenMai.HoaDonDTO();
+                String maHD_TuDong = "HD" + System.currentTimeMillis(); // VD: HD171453...
+                
+                hoaDonMoi.setMaHoaDon(maHD_TuDong);
+                hoaDonMoi.setSoHD(maHD_TuDong); 
+                hoaDonMoi.setTongTien(tongTienTamTinh);
+                hoaDonMoi.setThanhTien(tongTienTamTinh); // Lúc này chưa áp mã giảm giá nên ThanhTien = TongTien
+                hoaDonMoi.setTrangThaiThanhToan("Đang chờ thanh toán"); // Khớp đúng với Ràng buộc CHECK trong DB
+
+                // 3. LƯU VÀO DATABASE
+                com.wms.dao.HoaDonDAO hdDAO = new com.wms.dao.HoaDonDAO();
+                boolean luuThanhCong = hdDAO.taoHoaDonMoi(hoaDonMoi);
+
+                if (luuThanhCong) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Tạo đơn thành công! Chuyển sang thanh toán.");
+
+                    // 4. CHUYỂN MÀN HÌNH VÀ TRUYỀN DỮ LIỆU
+                    java.awt.Container khungChua = this.getParent(); 
+                    if (khungChua != null) {
+                        khungChua.removeAll();
+                        
+                        // Lấy HTML từ cái ô preview Hóa đơn tạm tính trên màn hình
+                        String htmlHoaDon = txtThongTinHienThi.getText();
+                        
+                        // Khởi tạo màn hình Thanh toán, truyền cả HTML và Hóa Đơn DTO sang
+                        ThanhToanTruoc pnlThanhToan = new ThanhToanTruoc(htmlHoaDon, hoaDonMoi);
+                        pnlThanhToan.setSize(khungChua.getSize());
+                        
+                        khungChua.add(pnlThanhToan);
+                        khungChua.revalidate(); 
+                        khungChua.repaint();    
+                    }
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Lỗi hệ thống: Không thể khởi tạo hóa đơn!");
                 }
+
             } else {
-                JOptionPane.showMessageDialog(this, "Rất tiếc, đã hết chỗ trong khung giờ này.");
+                javax.swing.JOptionPane.showMessageDialog(this, "Rất tiếc, đã hết chỗ trong khung giờ này.");
             }
 
         } catch (java.time.format.DateTimeParseException e) {
@@ -405,7 +443,7 @@ public class ChonKhongGian extends javax.swing.JPanel {
         java.awt.Frame parentFrame = (window instanceof java.awt.Frame) ? (java.awt.Frame) window : null;
 
         // Khởi tạo JDialog và truyền panel này (this) sang
-        XemSoDoKhongGian dialogSoDo = new XemSoDoKhongGian(parentFrame, true, this);
+        XemSoDoKhongGianForm dialogSoDo = new XemSoDoKhongGianForm(parentFrame, true, this);
         dialogSoDo.setVisible(true); 
         updateThongTinHienThi();
       }

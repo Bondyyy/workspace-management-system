@@ -1,7 +1,7 @@
 package com.wms.controller;
 
 import com.wms.dao.KhachHangDAO;
-import com.wms.model.HoiVienDTO;
+import com.wms.model.NhanSu_KhachHang.HoiVienDTO;
 import java.util.List;
 
 public class QuanLyHoiVienController {
