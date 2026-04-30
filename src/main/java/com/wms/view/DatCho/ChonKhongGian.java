@@ -1,24 +1,102 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.wms.view.DatCho;
+import com.wms.view.XemSoDoKhongGian.XemSoDoKhongGian;
+import com.wms.dao.KhongGianDAO;
+import java.awt.event.ActionEvent;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author kyduy
  */
-public class ChonKhongGian extends javax.swing.JFrame {
-    
+public class ChonKhongGian extends javax.swing.JPanel {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ChonKhongGian.class.getName());
-
-    /**
-     * Creates new form ChonKhongGian
-     */
     public ChonKhongGian() {
         initComponents();
+        txtThongTinHienThi.setContentType("text/html");
+        KhongGianDAO dao = new KhongGianDAO();
+        java.util.List<String> listChiNhanh = dao.layDanhSachChiNhanhHoatDong();
+        
+        cbChiNhanh.removeAllItems();
+        cbChiNhanh.addItem("--Chọn Chi nhánh--");
+        
+        for (String cn : listChiNhanh) {
+            cbChiNhanh.addItem(cn); 
+        }
     }
+    private void updateThongTinHienThi() {
+        String ngay = NgayDatTruoc.getText();
+        String chinhanh = (String) cbChiNhanh.getSelectedItem();
+        String loai = (String) cbKhongGian.getSelectedItem();
+        String gioToi = (String) cbGioToi.getSelectedItem();
+        String thoiGian = (String) cbGioMoPhien.getSelectedItem();
+        String ghiChu = GhiChu.getText();
 
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html>");
+        sb.append("<h2 style='color: #C73D6E; text-align: center;'>HÓA ĐƠN TẠM TÍNH</h2>");
+        sb.append("<hr>");
+        sb.append("<p><b>Ngày đặt:</b> ").append(ngay).append("</p>");
+        sb.append("<p><b>Chi nhánh:</b> ").append(chinhanh).append("</p>");
+        sb.append("<p><b>Loại không gian:</b> ").append(loai).append("</p>");
+        sb.append("<p><b>Giờ đến dự kiến:</b> ").append(gioToi).append("</p>");
+        sb.append("<p><b>Thời gian thuê:</b> ").append(thoiGian).append("</p>");
+        sb.append("<p><b>Ghi chú:</b> ").append(ghiChu.isEmpty() ? "Không có" : ghiChu).append("</p>");
+        sb.append("<hr>");
+        sb.append("<p style='text-align: right;'><i>Vui lòng kiểm tra kỹ trước khi xác nhận</i></p>");
+        sb.append("</html>");
+
+        txtThongTinHienThi.setText(sb.toString());
+    }
+     public void dienThongTinTuSoDo(String tenKhongGianDaChon) {
+        cbKhongGian.setSelectedItem(tenKhongGianDaChon);
+        updateThongTinHienThi();
+        System.out.println("Đã nhận dữ liệu từ sơ đồ: " + tenKhongGianDaChon);
+    }
+    
+    private void cbKhongGian2ActionPerformed(ActionEvent e) {
+        
+        updateThongTinHienThi();
+        }
+
+    private void cbGioToiActionPerformed(ActionEvent e) {   
+        String selectedGioToi = (String) cbGioToi.getSelectedItem();
+        
+        // Lấy tên chi nhánh khách hàng đang chọn ở ComboBox Chi Nhánh
+        String selectedChiNhanh = (String) cbChiNhanh.getSelectedItem();
+
+        if (selectedGioToi == null || selectedGioToi.isEmpty() || selectedGioToi.contains("--")) {
+            return;
+        }
+        
+        // 1. Parse giờ khách tới
+        java.time.LocalTime gioToi = java.time.LocalTime.parse(selectedGioToi);
+        
+        // 2. LẤY GIỜ ĐÓNG CỬA TỪ DATABASE THAY VÌ FIX CỨNG
+        java.time.LocalTime gioDongCua;
+        if (selectedChiNhanh != null && !selectedChiNhanh.contains("--")) {
+            // Gọi DAO để lấy giờ đóng cửa thực tế của chi nhánh đó
+            KhongGianDAO dao = new KhongGianDAO();
+            gioDongCua = dao.layGioDongCuaCuaChiNhanh(selectedChiNhanh);
+        } else {
+            // Nếu khách chưa chọn chi nhánh, tạm thời lấy mặc định là 22:00
+            gioDongCua = java.time.LocalTime.parse("22:00");
+        }
+            
+        // 3. Tính số giờ tối đa khách có thể ngồi
+        long maxGioNgoi = java.time.Duration.between(gioToi, gioDongCua).toHours();
+            
+        cbGioMoPhien.removeAllItems();
+            
+        if (maxGioNgoi <= 0) {
+            cbGioMoPhien.addItem("Sắp/Đã tới giờ đóng cửa (" + gioDongCua.toString() + ")");
+        } else {
+            for (int i = 1; i <= maxGioNgoi; i++) {
+                cbGioMoPhien.addItem(i + " giờ");
+            }
+            cbGioMoPhien.addItem("Ngồi đến lúc đóng cửa (" + gioDongCua.toString() + ")");
+        }                   
+        updateThongTinHienThi();
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -29,216 +107,311 @@ public class ChonKhongGian extends javax.swing.JFrame {
     private void initComponents() {
 
         jPopupMenu1 = new javax.swing.JPopupMenu();
+        jDialog1 = new javax.swing.JDialog();
+        jDialog2 = new javax.swing.JDialog();
+        popupMenu1 = new java.awt.PopupMenu();
         mainPanel = new javax.swing.JPanel();
         lblTitle = new javax.swing.JLabel();
-        cbKhongGian = new javax.swing.JComboBox<>();
+        NgayDatTruoc = new javax.swing.JFormattedTextField();
+        lblKhongGian1 = new javax.swing.JLabel();
+        cbChiNhanh = new javax.swing.JComboBox<>();
         lblGioToi = new javax.swing.JLabel();
         cbGioToi = new javax.swing.JComboBox<>();
         lblGioMoPhien = new javax.swing.JLabel();
         cbGioMoPhien = new javax.swing.JComboBox<>();
-        btnXacNhan = new javax.swing.JButton();
-        lblKhongGian1 = new javax.swing.JLabel();
-        jProgressBar1 = new javax.swing.JProgressBar();
-        jFormattedTextField1 = new javax.swing.JFormattedTextField();
         lblKhongGian2 = new javax.swing.JLabel();
-        lblKhongGian3 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTextPane1 = new javax.swing.JTextPane();
         lblKhongGian4 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        GhiChu = new javax.swing.JTextPane();
+        lblKhongGian5 = new javax.swing.JLabel();
+        XemSoDoKG = new javax.swing.JButton();
+        lblThongTinKhach = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        txtThongTinHienThi = new javax.swing.JTextPane();
+        VeTrangChu = new javax.swing.JButton();
+        btnXacNhan5 = new javax.swing.JButton();
+        lblKhongGian6 = new javax.swing.JLabel();
+        lblKhongGian7 = new javax.swing.JLabel();
+        lblKhongGian3 = new javax.swing.JLabel();
+        cbKhongGian = new javax.swing.JComboBox<>();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Đặt Chỗ Trước");
+        javax.swing.GroupLayout jDialog1Layout = new javax.swing.GroupLayout(jDialog1.getContentPane());
+        jDialog1.getContentPane().setLayout(jDialog1Layout);
+        jDialog1Layout.setHorizontalGroup(
+            jDialog1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
+        );
+        jDialog1Layout.setVerticalGroup(
+            jDialog1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
+        );
+
+        javax.swing.GroupLayout jDialog2Layout = new javax.swing.GroupLayout(jDialog2.getContentPane());
+        jDialog2.getContentPane().setLayout(jDialog2Layout);
+        jDialog2Layout.setHorizontalGroup(
+            jDialog2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
+        );
+        jDialog2Layout.setVerticalGroup(
+            jDialog2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
+        );
+
+        popupMenu1.setLabel("popupMenu1");
+
+        setLayout(new java.awt.BorderLayout());
 
         mainPanel.setBackground(new java.awt.Color(255, 255, 255));
         mainPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+        mainPanel.setLayout(null);
 
         lblTitle.setFont(new java.awt.Font("Arial", 1, 28)); // NOI18N
         lblTitle.setForeground(new java.awt.Color(199, 61, 110));
-        lblTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblTitle.setText("ĐẶT CHỖ TRƯỚC");
-        lblTitle.setToolTipText("");
+        mainPanel.add(lblTitle);
+        lblTitle.setBounds(60, 30, 350, 40);
 
-        cbKhongGian.setBackground(new java.awt.Color(255, 240, 245));
-        cbKhongGian.setFont(new java.awt.Font("Times New Roman", 2, 16)); // NOI18N
-        cbKhongGian.setForeground(new java.awt.Color(199, 61, 110));
-        cbKhongGian.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Bàn đơn (1 người)", "Bàn đôi (2 người)", "Bàn nhóm loại 1 (3 - 4 người)", "Bàn nhóm loại 2 (5 - 8 người)", "Phòng nhóm tiêu chuẩn (9 - 16 người)", "Phòng thảo luận nhóm (17 - 32 người)" }));
-        cbKhongGian.addActionListener(this::cbKhongGianActionPerformed);
+        NgayDatTruoc.setBackground(new java.awt.Color(255, 240, 245));
+        try {
+            NgayDatTruoc.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.MaskFormatter("##/##/####")));
+        } catch (java.text.ParseException ex) {
+            ex.printStackTrace();
+        }
+        NgayDatTruoc.addActionListener(this::NgayDatTruocActionPerformed);
+        mainPanel.add(NgayDatTruoc);
+        NgayDatTruoc.setBounds(270, 110, 130, 40);
+
+        lblKhongGian1.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        lblKhongGian1.setForeground(new java.awt.Color(232, 85, 136));
+        lblKhongGian1.setText("Chọn chi nhánh đặt chỗ trước(*)");
+        mainPanel.add(lblKhongGian1);
+        lblKhongGian1.setBounds(50, 160, 350, 21);
+
+        cbChiNhanh.setBackground(new java.awt.Color(255, 240, 245));
+        cbChiNhanh.setFont(new java.awt.Font("Times New Roman", 2, 16)); // NOI18N
+        cbChiNhanh.setForeground(new java.awt.Color(199, 61, 110));
+        cbChiNhanh.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--Chọn Chi nhánh--", " Chi nhánh A", " Chi nhánh B", " Chi nhánh C" }));
+        cbChiNhanh.setPreferredSize(new java.awt.Dimension(286, 25));
+        cbChiNhanh.addActionListener(this::cbChiNhanhActionPerformed);
+        mainPanel.add(cbChiNhanh);
+        cbChiNhanh.setBounds(50, 190, 350, 45);
 
         lblGioToi.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
         lblGioToi.setForeground(new java.awt.Color(232, 85, 136));
         lblGioToi.setText("Giờ dự kiến tới(*)");
+        mainPanel.add(lblGioToi);
+        lblGioToi.setBounds(50, 340, 160, 21);
 
         cbGioToi.setBackground(new java.awt.Color(255, 240, 245));
-        cbGioToi.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        cbGioToi.setFont(new java.awt.Font("Times New Roman", 2, 16)); // NOI18N
         cbGioToi.setForeground(new java.awt.Color(199, 61, 110));
-        cbGioToi.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "08:00", "08:30", "09:00", "09:30" }));
+        cbGioToi.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--Thời gian đến", "7:30", "8:00", "8:30", "9:00", "9:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", " ", " " }));
+        cbGioToi.setPreferredSize(new java.awt.Dimension(139, 25));
         cbGioToi.addActionListener(this::cbGioToiActionPerformed);
+        mainPanel.add(cbGioToi);
+        cbGioToi.setBounds(50, 370, 160, 40);
 
         lblGioMoPhien.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
         lblGioMoPhien.setForeground(new java.awt.Color(232, 85, 136));
-        lblGioMoPhien.setText("Thời gian phiên dự kiến(*)");
+        lblGioMoPhien.setText("Thời gian dự kiến(*)");
+        mainPanel.add(lblGioMoPhien);
+        lblGioMoPhien.setBounds(240, 340, 160, 21);
 
         cbGioMoPhien.setBackground(new java.awt.Color(255, 240, 245));
-        cbGioMoPhien.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        cbGioMoPhien.setFont(new java.awt.Font("Times New Roman", 2, 16)); // NOI18N
         cbGioMoPhien.setForeground(new java.awt.Color(199, 61, 110));
-        cbGioMoPhien.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "08:15", "08:45", "09:15", "09:45" }));
+        cbGioMoPhien.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Thời gian", "1", "2", "3", "4", "5", "6", "7", "8" }));
+        cbGioMoPhien.setMinimumSize(new java.awt.Dimension(101, 25));
         cbGioMoPhien.addActionListener(this::cbGioMoPhienActionPerformed);
-
-        btnXacNhan.setBackground(new java.awt.Color(232, 85, 136));
-        btnXacNhan.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
-        btnXacNhan.setText("Kiểm tra tình trạng không gian đã chọn");
-        btnXacNhan.setBorderPainted(false);
-        btnXacNhan.setFocusPainted(false);
-        btnXacNhan.addActionListener(this::btnXacNhanActionPerformed);
-
-        lblKhongGian1.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        lblKhongGian1.setForeground(new java.awt.Color(232, 85, 136));
-        lblKhongGian1.setText("Chọn loại không gian(*)");
-        lblKhongGian1.setToolTipText("");
-
-        jProgressBar1.setBackground(new java.awt.Color(199, 61, 110));
-        jProgressBar1.setForeground(new java.awt.Color(255, 240, 245));
-
-        jFormattedTextField1.setBackground(new java.awt.Color(255, 240, 245));
-        jFormattedTextField1.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL))));
-        jFormattedTextField1.setPreferredSize(new java.awt.Dimension(300, 55));
-        jFormattedTextField1.addActionListener(this::jFormattedTextField1ActionPerformed);
+        mainPanel.add(cbGioMoPhien);
+        cbGioMoPhien.setBounds(240, 370, 160, 40);
 
         lblKhongGian2.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
         lblKhongGian2.setForeground(new java.awt.Color(232, 85, 136));
         lblKhongGian2.setText("Ghi chú");
-        lblKhongGian2.setToolTipText("");
-
-        lblKhongGian3.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        lblKhongGian3.setForeground(new java.awt.Color(232, 85, 136));
-        lblKhongGian3.setText("Ngày đặt chỗ trước (*)");
-        lblKhongGian3.setToolTipText("");
-
-        jTextPane1.setPreferredSize(new java.awt.Dimension(180, 40));
-        jScrollPane1.setViewportView(jTextPane1);
+        mainPanel.add(lblKhongGian2);
+        lblKhongGian2.setBounds(50, 440, 70, 21);
 
         lblKhongGian4.setFont(new java.awt.Font("Times New Roman", 2, 12)); // NOI18N
         lblKhongGian4.setForeground(new java.awt.Color(232, 85, 136));
         lblKhongGian4.setText("(nếu có)");
-        lblKhongGian4.setToolTipText("");
+        mainPanel.add(lblKhongGian4);
+        lblKhongGian4.setBounds(110, 430, 50, 40);
 
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 38, Short.MAX_VALUE)
-        );
+        GhiChu.setBackground(new java.awt.Color(255, 240, 245));
+        jScrollPane1.setViewportView(GhiChu);
 
-        org.jdesktop.layout.GroupLayout mainPanelLayout = new org.jdesktop.layout.GroupLayout(mainPanel);
-        mainPanel.setLayout(mainPanelLayout);
-        mainPanelLayout.setHorizontalGroup(
-            mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(mainPanelLayout.createSequentialGroup()
-                .add(50, 50, 50)
-                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(lblTitle)
-                    .add(jProgressBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(btnXacNhan, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 700, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(mainPanelLayout.createSequentialGroup()
-                        .add(57, 57, 57)
-                        .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                                .add(lblKhongGian1)
-                                .add(lblKhongGian3)
-                                .add(mainPanelLayout.createSequentialGroup()
-                                    .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                        .add(mainPanelLayout.createSequentialGroup()
-                                            .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                                .add(lblKhongGian2)
-                                                .add(mainPanelLayout.createSequentialGroup()
-                                                    .add(6, 6, 6)
-                                                    .add(lblKhongGian4)))
-                                            .add(18, 18, 18)
-                                            .add(jScrollPane1))
-                                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jFormattedTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 578, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                        .add(org.jdesktop.layout.GroupLayout.TRAILING, mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                                            .add(org.jdesktop.layout.GroupLayout.LEADING, cbKhongGian, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .add(mainPanelLayout.createSequentialGroup()
-                                                .add(lblGioToi)
-                                                .add(18, 18, 18)
-                                                .add(cbGioMoPhien, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 423, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                                    .add(106, 106, 106)))
-                            .add(mainPanelLayout.createSequentialGroup()
-                                .add(lblGioMoPhien)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(cbGioToi, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 365, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(mainPanelLayout.createSequentialGroup()
-                                .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(106, 106, 106)))))
-                .add(0, 9, Short.MAX_VALUE))
-        );
-        mainPanelLayout.setVerticalGroup(
-            mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(mainPanelLayout.createSequentialGroup()
-                .add(25, 25, 25)
-                .add(lblTitle)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jProgressBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(18, 18, 18)
-                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblKhongGian3)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jFormattedTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblKhongGian1)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cbKhongGian, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cbGioMoPhien, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblGioToi))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cbGioToi, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblGioMoPhien))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(mainPanelLayout.createSequentialGroup()
-                        .add(lblKhongGian2)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(lblKhongGian4)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 19, Short.MAX_VALUE)
-                .add(btnXacNhan, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(36, 36, 36))
-        );
+        mainPanel.add(jScrollPane1);
+        jScrollPane1.setBounds(170, 430, 230, 50);
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(mainPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .add(0, 12, Short.MAX_VALUE)
-                .add(mainPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-        );
+        lblKhongGian5.setFont(new java.awt.Font("Times New Roman", 2, 12)); // NOI18N
+        lblKhongGian5.setForeground(new java.awt.Color(232, 85, 136));
+        lblKhongGian5.setText("(dd/MM/yyyy)");
+        mainPanel.add(lblKhongGian5);
+        lblKhongGian5.setBounds(190, 130, 80, 20);
 
-        pack();
-        setLocationRelativeTo(null);
+        XemSoDoKG.setBackground(new java.awt.Color(240, 123, 170));
+        XemSoDoKG.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        XemSoDoKG.setForeground(new java.awt.Color(255, 255, 255));
+        XemSoDoKG.setText("Sơ đồ không gian");
+        XemSoDoKG.setBorderPainted(false);
+        XemSoDoKG.setFocusPainted(false);
+        XemSoDoKG.addActionListener(this::XemSoDoKGActionPerformed);
+        mainPanel.add(XemSoDoKG);
+        XemSoDoKG.setBounds(560, 90, 200, 40);
+
+        lblThongTinKhach.setFont(new java.awt.Font("Times New Roman", 1, 20)); // NOI18N
+        lblThongTinKhach.setForeground(new java.awt.Color(199, 61, 110));
+        lblThongTinKhach.setText("Thông tin khách hàng đã chọn");
+        mainPanel.add(lblThongTinKhach);
+        lblThongTinKhach.setBounds(470, 150, 260, 24);
+
+        jScrollPane2.setViewportView(txtThongTinHienThi);
+
+        mainPanel.add(jScrollPane2);
+        jScrollPane2.setBounds(430, 180, 340, 300);
+
+        VeTrangChu.setBackground(new java.awt.Color(178, 34, 34));
+        VeTrangChu.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        VeTrangChu.setForeground(new java.awt.Color(255, 255, 255));
+        VeTrangChu.setText("VỀ TRANG CHỦ");
+        VeTrangChu.setBorderPainted(false);
+        VeTrangChu.setFocusPainted(false);
+        VeTrangChu.setPreferredSize(new java.awt.Dimension(365, 30));
+        VeTrangChu.addActionListener(this::VeTrangChuActionPerformed);
+        mainPanel.add(VeTrangChu);
+        VeTrangChu.setBounds(50, 510, 170, 50);
+
+        btnXacNhan5.setBackground(new java.awt.Color(199, 61, 110));
+        btnXacNhan5.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        btnXacNhan5.setForeground(new java.awt.Color(255, 255, 255));
+        btnXacNhan5.setText("Kiểm tra tình trạng không gian đã chọn");
+        btnXacNhan5.setBorderPainted(false);
+        btnXacNhan5.setFocusPainted(false);
+        btnXacNhan5.setPreferredSize(new java.awt.Dimension(365, 30));
+        btnXacNhan5.addActionListener(this::btnXacNhan5ActionPerformed);
+        mainPanel.add(btnXacNhan5);
+        btnXacNhan5.setBounds(410, 510, 365, 50);
+
+        lblKhongGian6.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        lblKhongGian6.setForeground(new java.awt.Color(232, 85, 136));
+        lblKhongGian6.setText("Ngày sử dụng (*)");
+        mainPanel.add(lblKhongGian6);
+        lblKhongGian6.setBounds(50, 120, 200, 20);
+
+        lblKhongGian7.setFont(new java.awt.Font("Times New Roman", 2, 12)); // NOI18N
+        lblKhongGian7.setForeground(new java.awt.Color(232, 85, 136));
+        lblKhongGian7.setText("Xem sơ đồ không gian tại đây:");
+        mainPanel.add(lblKhongGian7);
+        lblKhongGian7.setBounds(430, 70, 200, 15);
+
+        lblKhongGian3.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        lblKhongGian3.setForeground(new java.awt.Color(232, 85, 136));
+        lblKhongGian3.setText("Chọn loại không gian(*)");
+        mainPanel.add(lblKhongGian3);
+        lblKhongGian3.setBounds(50, 250, 350, 21);
+
+        cbKhongGian.setBackground(new java.awt.Color(255, 240, 245));
+        cbKhongGian.setFont(new java.awt.Font("Times New Roman", 2, 16)); // NOI18N
+        cbKhongGian.setForeground(new java.awt.Color(199, 61, 110));
+        cbKhongGian.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--Chọn loại không gian--", "Bàn đơn (1 người)", "Bàn đôi (2 người)", "Bàn nhóm loại 1 (3 - 4 người)", "Bàn nhóm loại 2 (5 - 8 người)", "Phòng nhóm tiêu chuẩn (9 - 16 người)", "Phòng thảo luận nhóm (17 - 32 người)" }));
+        cbKhongGian.setPreferredSize(new java.awt.Dimension(286, 25));
+        cbKhongGian.addActionListener(this::cbKhongGianActionPerformed);
+        mainPanel.add(cbKhongGian);
+        cbKhongGian.setBounds(50, 280, 350, 45);
+
+        add(mainPanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jFormattedTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFormattedTextField1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jFormattedTextField1ActionPerformed
+    private void NgayDatTruocActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NgayDatTruocActionPerformed
+        updateThongTinHienThi();
+    }//GEN-LAST:event_NgayDatTruocActionPerformed
 
+    private void VeTrangChuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_VeTrangChuActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_VeTrangChuActionPerformed
+
+    private void btnXacNhan5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnXacNhan5ActionPerformed
+        String loaiKhongGian = (String) cbKhongGian.getSelectedItem();
+        String strNgay = NgayDatTruoc.getText().trim();
+        String strGioToi = (String) cbGioToi.getSelectedItem();
+        
+        if (strNgay.isEmpty() || strGioToi == null || strGioToi.contains("--")) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn đầy đủ ngày và giờ!");
+            return;
+        }
+
+        try {
+            java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            java.time.LocalDate ngayDat = java.time.LocalDate.parse(strNgay, dtf);
+            java.time.LocalDate ngayHienTai = java.time.LocalDate.now();
+
+            if (ngayDat.isBefore(ngayHienTai)) {
+                JOptionPane.showMessageDialog(this, "Ngày đặt không hợp lệ. Vui lòng chọn lại!");
+                return;
+            }
+
+            if (ngayDat.isEqual(ngayHienTai)) {
+                java.time.LocalTime gioToi = java.time.LocalTime.parse(strGioToi);
+                java.time.LocalTime gioHienTai = java.time.LocalTime.now();
+                if (gioToi.isBefore(gioHienTai)) {
+                    JOptionPane.showMessageDialog(this, "Giờ tới phải sau giờ hiện tại: " + gioHienTai.toString().substring(0, 5), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            if (ngayDat.isAfter(ngayHienTai.plusDays(14))) {
+                 JOptionPane.showMessageDialog(this, "Hệ thống chỉ nhận đặt trước tối đa 14 ngày.");
+                 return;
+            }
+
+            // --- GỌI DAO Ở BÊN TRONG KHỐI TRY ĐỂ ĐẢM BẢO DỮ LIỆU ĐÃ HỢP LỆ ---
+            updateThongTinHienThi();
+            KhongGianDAO dao = new KhongGianDAO();
+            boolean conCho = dao.kiemTraTinhTrangKhongGian(loaiKhongGian, strNgay, strGioToi);
+
+            if (conCho) {
+                JOptionPane.showMessageDialog(this, "Không gian sẵn sàng! Chuyển sang bước thanh toán.");
+
+                // Đổi màn hình Panel
+                java.awt.Container khungChua = this.getParent(); 
+                if (khungChua != null) {
+                    khungChua.removeAll();
+                    ThanhToanTruoc pnlThanhToan = new ThanhToanTruoc();
+                    pnlThanhToan.setSize(khungChua.getSize());
+                    khungChua.add(pnlThanhToan);
+                    khungChua.revalidate(); 
+                    khungChua.repaint();    
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Rất tiếc, đã hết chỗ trong khung giờ này.");
+            }
+
+        } catch (java.time.format.DateTimeParseException e) {
+            JOptionPane.showMessageDialog(this, "Định dạng ngày không hợp lệ (Dùng dd/MM/yyyy)!");
+        }
+    }//GEN-LAST:event_btnXacNhan5ActionPerformed
+
+    private void cbKhongGianActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbKhongGianActionPerformed
+           updateThongTinHienThi();
+    }//GEN-LAST:event_cbKhongGianActionPerformed
+    private void cbGioMoPhienActionPerformed(ActionEvent e) {
+        updateThongTinHienThi();
+    }
+
+    private void XemSoDoKGActionPerformed(ActionEvent e) {
+        // Lấy cửa sổ Frame chứa Panel này
+        java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+        java.awt.Frame parentFrame = (window instanceof java.awt.Frame) ? (java.awt.Frame) window : null;
+
+        // Khởi tạo JDialog và truyền panel này (this) sang
+        XemSoDoKhongGian dialogSoDo = new XemSoDoKhongGian(parentFrame, true, this);
+        dialogSoDo.setVisible(true); 
+        updateThongTinHienThi();
+      }
+    private void cbChiNhanhActionPerformed(java.awt.event.ActionEvent evt){
+        updateThongTinHienThi();
+     }   
     /**
      * @param args the command line arguments
      */
@@ -265,23 +438,57 @@ public class ChonKhongGian extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnXacNhan;
+    private javax.swing.JTextPane GhiChu;
+    private javax.swing.JFormattedTextField NgayDatTruoc;
+    private javax.swing.JButton VeTrangChu;
+    private javax.swing.JButton XemSoDoKG;
+    private javax.swing.JButton btnXacNhan5;
+    private javax.swing.JComboBox<String> cbChiNhanh;
     private javax.swing.JComboBox<String> cbGioMoPhien;
     private javax.swing.JComboBox<String> cbGioToi;
     private javax.swing.JComboBox<String> cbKhongGian;
-    private javax.swing.JFormattedTextField jFormattedTextField1;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JDialog jDialog1;
+    private javax.swing.JDialog jDialog2;
     private javax.swing.JPopupMenu jPopupMenu1;
-    private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextPane jTextPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblGioMoPhien;
     private javax.swing.JLabel lblGioToi;
     private javax.swing.JLabel lblKhongGian1;
     private javax.swing.JLabel lblKhongGian2;
     private javax.swing.JLabel lblKhongGian3;
     private javax.swing.JLabel lblKhongGian4;
+    private javax.swing.JLabel lblKhongGian5;
+    private javax.swing.JLabel lblKhongGian6;
+    private javax.swing.JLabel lblKhongGian7;
+    private javax.swing.JLabel lblThongTinKhach;
     private javax.swing.JLabel lblTitle;
     private javax.swing.JPanel mainPanel;
+    private java.awt.PopupMenu popupMenu1;
+    private javax.swing.JTextPane txtThongTinHienThi;
     // End of variables declaration//GEN-END:variables
+
+    private void setDefaultCloseOperation(int EXIT_ON_CLOSE) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    private void setTitle(String đặt_Chỗ_Trước) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    private void setResizable(boolean b) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    private Object getContentPane() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    private void pack() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    private void setLocationRelativeTo(Object object) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

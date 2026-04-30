@@ -1,5 +1,6 @@
-package View;
+package com.wms.view.XemSoDoKhongGian;
 
+import com.wms.view.DatCho.ChonKhongGian;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -7,6 +8,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -59,6 +61,14 @@ public class XemSoDoKhongGian extends JPanel {
 
     public XemSoDoKhongGian() {
         khoiTaoThanhPhan();
+    }
+
+    public XemSoDoKhongGian(String loaiKhongGian) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public XemSoDoKhongGian(Frame parentFrame, boolean b, ChonKhongGian aThis) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     private void khoiTaoThanhPhan() {

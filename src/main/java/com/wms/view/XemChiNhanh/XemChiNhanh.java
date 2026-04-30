@@ -1,4 +1,4 @@
-package View;
+package com.wms.view.XemChiNhanh;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
