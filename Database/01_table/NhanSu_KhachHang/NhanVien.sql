@@ -11,3 +11,12 @@ CREATE TABLE NHANVIEN (
     MaCN VARCHAR2(50),
     MaND VARCHAR2(50), UNIQUE(MaND)
 );
+
+alter table NHANVIEN
+add (HoVaTen VARCHAR2(50))
+
+INSERT INTO NHANVIEN (MaNV, HoVaTen, LoaiNV) VALUES ('NV01', 'Nguyễn Văn Bondy', 'Quản lý');
+INSERT INTO NHANVIEN (MaNV, HoVaTen, LoaiNV) VALUES ('NV02', 'Trần Thị Lễ Tân', 'Lễ tân');
+
+commit;
+select * from NHANVIEN
