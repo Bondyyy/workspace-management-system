@@ -195,7 +195,7 @@ public class DatChoTruocForm extends javax.swing.JFrame {
         pnMain.add(btnLamMoi);
         btnLamMoi.setBounds(800, 460, 220, 35);
 
-        getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
+        add(pnMain, java.awt.BorderLayout.CENTER);
 
         pack();
         setLocationRelativeTo(null);

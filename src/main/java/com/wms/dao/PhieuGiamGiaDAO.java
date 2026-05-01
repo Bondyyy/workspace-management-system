@@ -1,15 +1,48 @@
 package com.wms.dao;
-
 import com.wms.config.DatabaseConnection;
 import com.wms.model.ThanhToan_KhuyenMai.PhieuGiamGiaDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PhieuGiamGiaDAO {
 
+public class PhieuGiamGiaDAO {
     private Connection getConn() {
         return DatabaseConnection.getInstance().getConnection();
+    }
+    
+    // Hàm lấy thông tin mã giảm giá từ DB
+    public PhieuGiamGiaDTO layThongTinVoucher(String maVoucher) {
+        Connection conn = getConn();
+        if (conn == null) return null;
+
+        String sql = "SELECT MaPGG, GiaTriGiamGia, GiaTriApDungToiThieu, NgayBatDauApDung, NgayKetThucApDung, SLDaDung, SLToiDa " +
+                     "FROM PHIEUGIAMGIA WHERE MaPGG = ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            // Trim để tránh trường hợp người dùng copy dư dấu cách
+            pstmt.setString(1, maVoucher.trim()); 
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    PhieuGiamGiaDTO dto = new PhieuGiamGiaDTO();
+                    dto.setMaPGG(rs.getString("MaPGG"));
+                    dto.setGiaTriGiamGia(rs.getDouble("GiaTriGiamGia"));
+                    dto.setGiaTriApDungToiThieu(rs.getDouble("GiaTriApDungToiThieu"));
+                    dto.setNgayBatDauApDung(rs.getTimestamp("NgayBatDauApDung"));
+                    dto.setNgayKetThucApDung(rs.getTimestamp("NgayKetThucApDung"));
+                    
+                    // Dùng đúng setter theo DTO
+                    dto.setSlDaDung(rs.getInt("SLDaDung")); 
+                    dto.setSlToiDa(rs.getInt("SLToiDa"));
+                    
+                    return dto;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Lỗi truy xuất Voucher: " + e.getMessage());
+        }
+        return null;
     }
 
     public List<PhieuGiamGiaDTO> layDanhSach() {

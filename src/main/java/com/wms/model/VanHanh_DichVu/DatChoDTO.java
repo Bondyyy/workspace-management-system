@@ -1,15 +1,17 @@
 package com.wms.model.VanHanh_DichVu;
 
+import java.sql.Timestamp;
+
 public class DatChoDTO {
     private String maDatCho;
-    private java.sql.Timestamp thoiGianDat;
-    private java.sql.Timestamp thoiGianDuKienToi;
+    private Timestamp thoiGianDat;
+    private Timestamp thoiGianDuKienToi;
     private Integer khoangThoiGianSuDung;
     private String trangThaiDatTruoc;
     private Double thanhTien;
     private String ghiChu;
     private String maQR;
-    private java.sql.Timestamp capNhatLanCuoi;
+    private Timestamp capNhatLanCuoi;
     private String maKH;
     private String maKG;
 
@@ -23,19 +25,19 @@ public class DatChoDTO {
         this.maDatCho = maDatCho;
     }
 
-    public java.sql.Timestamp getThoiGianDat() {
+    public Timestamp getThoiGianDat() {
         return thoiGianDat;
     }
 
-    public void setThoiGianDat(java.sql.Timestamp thoiGianDat) {
+    public void setThoiGianDat(Timestamp thoiGianDat) {
         this.thoiGianDat = thoiGianDat;
     }
 
-    public java.sql.Timestamp getThoiGianDuKienToi() {
+    public Timestamp getThoiGianDuKienToi() {
         return thoiGianDuKienToi;
     }
 
-    public void setThoiGianDuKienToi(java.sql.Timestamp thoiGianDuKienToi) {
+    public void setThoiGianDuKienToi(Timestamp thoiGianDuKienToi) {
         this.thoiGianDuKienToi = thoiGianDuKienToi;
     }
 
@@ -79,11 +81,11 @@ public class DatChoDTO {
         this.maQR = maQR;
     }
 
-    public java.sql.Timestamp getCapNhatLanCuoi() {
+    public Timestamp getCapNhatLanCuoi() {
         return capNhatLanCuoi;
     }
 
-    public void setCapNhatLanCuoi(java.sql.Timestamp capNhatLanCuoi) {
+    public void setCapNhatLanCuoi(Timestamp capNhatLanCuoi) {
         this.capNhatLanCuoi = capNhatLanCuoi;
     }
 

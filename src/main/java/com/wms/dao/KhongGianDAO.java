@@ -1,23 +1,133 @@
 package com.wms.dao;
 
-import com.wms.config.DatabaseConnection;
-import com.wms.model.CoSoVatChat.KhongGianDTO;
-
-import java.sql.*;
+import com.wms.config.DatabaseConnection; 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import com.wms.model.CoSoVatChat.KhongGianDTO;
+import java.sql.CallableStatement;
+import java.sql.ResultSetMetaData;
+import java.sql.Types;
+/**
+ *
+ * @author kyduy
+ */
 
 public class KhongGianDAO {
-
+    
     private Connection getConn() {
         return DatabaseConnection.getInstance().getConnection();
     }
 
-    public List<KhongGianDTO> layTatCaKhongGian() {
+    // [HÀM MỚI] Lấy danh sách các chi nhánh ĐANG HOẠT ĐỘNG để đổ vào ComboBox
+    public List<String> layDanhSachChiNhanhHoatDong() {
+        List<String> danhSach = new ArrayList<>();
+        Connection conn = getConn();
+        if (conn == null) return danhSach;
+
+        // Chỉ lấy những chi nhánh có trạng thái 'Đang hoạt động' dựa trên Constraint của bạn
+        String sql = "SELECT TenCN FROM CHINHANH WHERE TrangThai = 'Đang hoạt động'"; 
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                danhSach.add(rs.getString("TenCN"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi khi lấy danh sách chi nhánh!");
+            e.printStackTrace(); 
+        }
+        return danhSach;
+    }
+
+    // Các hàm cũ giữ nguyên hoàn toàn (vì nó đã đúng 100%)
+    public void kiemTraDanhSachKhongGian() {  
+        Connection conn = getConn();
+        if (conn == null) {
+            System.out.println("Lỗi: Không lấy được kết nối tới Database!");
+            return;
+        }
+        String sql = "SELECT MaKhongGian, TenKhongGian FROM KHONGGIAN";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            System.out.println("--- DANH SÁCH KHÔNG GIAN ---");
+            while (rs.next()) {
+                System.out.println("Mã: " + rs.getString("MaKhongGian") + " | Tên: " + rs.getString("TenKhongGian"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<String> layDanhSachLoaiKhongGian() {
+        List<String> danhSach = new ArrayList<>();
+        Connection conn = getConn();
+        if (conn == null) return danhSach;
+        String sql = "SELECT DISTINCT TenKhongGian FROM KHONGGIAN"; 
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                danhSach.add(rs.getString("TenKhongGian"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); 
+        }
+        return danhSach;
+    }
+
+    public boolean kiemTraTinhTrangKhongGian(String tenKhongGian, String ngayDat, String gioToi) {
+        Connection conn = getConn();
+        if (conn == null) return false;
+        boolean isAvailable = false;
+        String sql = "SELECT COUNT(*) AS SoLuongTrong FROM KHONGGIAN WHERE TenKhongGian = ? AND TrangThai = 'TRONG'"; 
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tenKhongGian);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    if (rs.getInt("SoLuongTrong") > 0) isAvailable = true; 
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return isAvailable;
+    }
+
+    public java.time.LocalTime layGioDongCuaCuaChiNhanh(String tenChiNhanh) {
+        java.time.LocalTime gioDongCuaDeFault = java.time.LocalTime.of(22, 0); 
+        Connection conn = getConn();
+        if (conn == null) return gioDongCuaDeFault;
+
+        String sql = "SELECT ThoiGianDongCua FROM CHINHANH WHERE TenCN = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tenChiNhanh.trim()); 
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String timeStr = rs.getString("ThoiGianDongCua");
+                    if (timeStr != null && !timeStr.trim().isEmpty()) {
+                        if(timeStr.length() > 5) {
+                            timeStr = timeStr.substring(0, 5); 
+                        }
+                        return java.time.LocalTime.parse(timeStr); 
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (java.time.format.DateTimeParseException e) {
+            System.out.println("Lỗi parse định dạng thời gian.");
+        }
+        return gioDongCuaDeFault;
+    }
+    public List<com.wms.model.CoSoVatChat.KhongGianDTO> layTatCaKhongGian() {
         return timKiem(null, null, null);
     }
 
-    public List<KhongGianDTO> timKiem(String tuKhoa, String maCN, String maLoaiKG) {
+    public List<com.wms.model.CoSoVatChat.KhongGianDTO> timKiem(String tuKhoa, String maCN, String maLoaiKG) {
         String sqlFull = buildQuery(true, tuKhoa, maCN, maLoaiKG);
         List<Object> params = buildParams(tuKhoa, maCN, maLoaiKG);
 
@@ -70,8 +180,8 @@ public class KhongGianDAO {
         return params;
     }
 
-    private List<KhongGianDTO> executeQuery(String sql, List<Object> params) throws SQLException {
-        List<KhongGianDTO> list = new ArrayList<>();
+    private List<com.wms.model.CoSoVatChat.KhongGianDTO> executeQuery(String sql, List<Object> params) throws SQLException {
+        List<com.wms.model.CoSoVatChat.KhongGianDTO> list = new ArrayList<>();
         try (PreparedStatement ps = getConn().prepareStatement(sql)) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -85,11 +195,11 @@ public class KhongGianDAO {
         return list;
     }
 
-    public List<KhongGianDTO> layTheoChiNhanh(String maCN) {
+    public List<com.wms.model.CoSoVatChat.KhongGianDTO> layTheoChiNhanh(String maCN) {
         return timKiem(null, maCN, null);
     }
 
-    public boolean them(KhongGianDTO dto) {
+    public boolean them(com.wms.model.CoSoVatChat.KhongGianDTO dto) {
         // 1. Sử dụng mã từ DTO nếu có, nếu không thì tự sinh
         if (dto.getMaKG() == null || dto.getMaKG().trim().isEmpty()) {
             dto.setMaKG(taoMaMoi());
@@ -112,7 +222,7 @@ public class KhongGianDAO {
         }
     }
 
-    public boolean capNhat(KhongGianDTO dto) {
+    public boolean capNhat(com.wms.model.CoSoVatChat.KhongGianDTO dto) {
         // Sử dụng Stored Procedure mới (10 tham số)
         String sql = "{call SP_CapNhatKhongGian(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement cs = getConn().prepareCall(sql)) {
