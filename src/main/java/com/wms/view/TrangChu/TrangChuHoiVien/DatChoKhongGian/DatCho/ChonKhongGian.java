@@ -1,4 +1,4 @@
-package com.wms.view.DatCho;
+package com.wms.view.TrangChu.TrangChuHoiVien.DatChoKhongGian.DatCho;
 
 import com.wms.dao.KhongGianDAO;
 import com.wms.view.XemSoDoKhongGian.XemSoDoKhongGianForm;

@@ -1,6 +1,6 @@
 package com.wms.view.XemSoDoKhongGian;
 
-import com.wms.view.DatCho.ChonKhongGian;
+import com.wms.view.TrangChu.TrangChuHoiVien.DatChoKhongGian.DatCho.ChonKhongGian;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
