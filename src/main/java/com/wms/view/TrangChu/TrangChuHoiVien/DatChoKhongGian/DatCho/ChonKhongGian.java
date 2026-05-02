@@ -1,7 +1,6 @@
 package com.wms.view.TrangChu.TrangChuHoiVien.DatChoKhongGian.DatCho;
 
 import com.wms.dao.KhongGianDAO;
-import com.wms.view.XemSoDoKhongGian.XemSoDoKhongGianForm;
 import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 
@@ -443,8 +442,8 @@ public class ChonKhongGian extends javax.swing.JPanel {
         java.awt.Frame parentFrame = (window instanceof java.awt.Frame) ? (java.awt.Frame) window : null;
 
         // Khởi tạo JDialog và truyền panel này (this) sang
-        XemSoDoKhongGianForm dialogSoDo = new XemSoDoKhongGianForm(parentFrame, true, this);
-        dialogSoDo.setVisible(true); 
+        //XemSoDoKhongGianForm dialogSoDo = new XemSoDoKhongGianForm(parentFrame, true, this);
+        //dialogSoDo.setVisible(true); 
         updateThongTinHienThi();
       }
     private void cbChiNhanhActionPerformed(java.awt.event.ActionEvent evt){
