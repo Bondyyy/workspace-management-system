@@ -258,4 +258,22 @@ public class NhanVienDAO {
     private String taoMaNVMoi(Connection conn) throws SQLException {
         return "NV" + (System.currentTimeMillis() % 1000000);
     }
+    
+    // Hàm bổ sung: Lấy mã nhân viên dựa trên mã người dùng đang đăng nhập
+    public String layMaNVTuMaND(String maND) {
+        String maNV = null;
+        String sql = "SELECT MaNV FROM NHANVIEN WHERE MaND = ?";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    maNV = rs.getString("MaNV");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[NhanVienDAO] Lỗi lấy mã nhân viên từ mã người dùng: " + e.getMessage());
+        }
+        return maNV;
+    }
 }
