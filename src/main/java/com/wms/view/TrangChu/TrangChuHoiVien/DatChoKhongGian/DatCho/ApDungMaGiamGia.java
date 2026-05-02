@@ -1,4 +1,4 @@
-package com.wms.view.DatCho;
+package com.wms.view.TrangChu.TrangChuHoiVien.DatChoKhongGian.DatCho;
 
 import com.wms.dao.PhieuGiamGiaDAO;
 import com.wms.model.ThanhToan_KhuyenMai.PhieuGiamGiaDTO;
