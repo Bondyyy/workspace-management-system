@@ -1,8 +1,8 @@
 package com.wms.dao;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.PhanQuyen_BaoMat.VaiTroDTO;
-import com.wms.model.PhanQuyen_BaoMat.ChucNangDTO;
+import com.wms.model.VaiTroDTO;
+import com.wms.model.ChucNangDTO;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -284,16 +284,13 @@ public class VaiTroDAO {
     public List<ChucNangDTO> getChucNangMacDinh() {
         List<ChucNangDTO> list = new ArrayList<>();
         String[][] data = {
-                { "CN01", "Quản lý nhân viên", "Thêm, sửa, xóa thông tin nhân viên" },
-                { "CN02", "Quản lý hội viên", "Xem và chỉnh sửa thông tin hội viên" },
-                { "CN03", "Đặt chỗ không gian", "Tạo và duyệt phiếu đặt chỗ" },
-                { "CN04", "Quản lý dịch vụ F&B", "Thêm, sửa, xóa dịch vụ ăn uống" },
-                { "CN05", "Thanh toán hóa đơn", "Thực hiện thu ngân, xuất hóa đơn" },
-                { "CN06", "Quản lý chi nhánh", "Thêm và chỉnh sửa thông tin chi nhánh" },
-                { "CN07", "Quản lý phiếu giảm giá", "Tạo và duyệt chương trình khuyến mãi" },
-                { "CN08", "Xem báo cáo doanh thu", "Xem dashboard và thống kê tài chính" },
-                { "CN09", "Quản lý nhóm quyền", "Phân quyền và quản lý vai trò người dùng" },
-                { "CN10", "Quản lý không gian", "Thêm, sửa phòng và khu vực" }
+                { "CN01", "Tổng quan", "Xem dashboard thống kê và báo cáo" },
+                { "CN02", "Quản lý Chi nhánh", "Thêm, sửa, vô hiệu hóa thông tin chi nhánh" },
+                { "CN03", "Quản lý Không gian", "Thêm, sửa, xóa và xem sơ đồ không gian" },
+                { "CN04", "Quản lý Dịch vụ", "Thêm, sửa, xóa dịch vụ F&B và tiện ích" },
+                { "CN05", "Quản lý Phiếu giảm giá", "Tạo và duyệt chương trình khuyến mãi" },
+                { "CN06", "Quản lý Nhân viên", "Quản lý thông tin và phân quyền nhân viên" },
+                { "CN07", "Quản lý Hội viên", "Quản lý thông tin và hạng thành viên" }
         };
         for (String[] row : data) {
             ChucNangDTO cn = new ChucNangDTO();
@@ -306,28 +303,29 @@ public class VaiTroDAO {
     }
 
     public void khoiTaoDuLieuChucNang() {
-        String sqlCheck = "SELECT COUNT(*) FROM CHUCNANG";
-        try (PreparedStatement ps = getConn().prepareStatement(sqlCheck);
-                ResultSet rs = ps.executeQuery()) {
-            if (rs.next() && rs.getInt(1) > 0)
-                return; // Đã có dữ liệu
-        } catch (SQLException e) {
-            System.err.println("[VaiTroDAO] Lỗi kiểm tra bảng CHUCNANG: " + e.getMessage());
-            return;
-        }
-
-        String sqlInsert = "INSERT INTO CHUCNANG (MaChucNang, TenChucNang, MoTa) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = getConn().prepareStatement(sqlInsert)) {
-            for (ChucNangDTO cn : getChucNangMacDinh()) {
-                ps.setString(1, cn.getMaChucNang());
-                ps.setString(2, cn.getTenChucNang());
-                ps.setString(3, cn.getMoTa());
-                ps.addBatch();
+        Connection conn = getConn();
+        if (conn == null) return;
+        try {
+            // Cập nhật lại các chức năng mới (Merge)
+            String mergeSql = "MERGE INTO CHUCNANG dest USING (SELECT ? AS MaChucNang, ? AS TenChucNang, ? AS MoTa FROM DUAL) src ON (dest.MaChucNang = src.MaChucNang) WHEN MATCHED THEN UPDATE SET dest.TenChucNang = src.TenChucNang, dest.MoTa = src.MoTa WHEN NOT MATCHED THEN INSERT (MaChucNang, TenChucNang, MoTa) VALUES (src.MaChucNang, src.TenChucNang, src.MoTa)";
+            try (PreparedStatement ps = conn.prepareStatement(mergeSql)) {
+                for (ChucNangDTO cn : getChucNangMacDinh()) {
+                    ps.setString(1, cn.getMaChucNang());
+                    ps.setString(2, cn.getTenChucNang());
+                    ps.setString(3, cn.getMoTa());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
             }
-            ps.executeBatch();
-            System.out.println("[VaiTroDAO] Khởi tạo dữ liệu bảng CHUCNANG thành công.");
+            
+            // Xóa các chức năng dư thừa cũ không còn tồn tại
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate("DELETE FROM CHITIETCHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07')");
+                st.executeUpdate("DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07')");
+            }
+            System.out.println("[VaiTroDAO] Đồng bộ dữ liệu bảng CHUCNANG thành công.");
         } catch (SQLException e) {
-            System.err.println("[VaiTroDAO] Lỗi khởi tạo dữ liệu CHUCNANG: " + e.getMessage());
+            System.err.println("[VaiTroDAO] Lỗi đồng bộ dữ liệu CHUCNANG: " + e.getMessage());
         }
     }
 

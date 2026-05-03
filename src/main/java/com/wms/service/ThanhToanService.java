@@ -1,10 +1,14 @@
 package com.wms.service;
 
-import com.wms.dao.HoaDonDAO;
-import com.wms.dao.NhanVienDAO;
-import com.wms.model.ThanhToan_KhuyenMai.ThongTinHoaDonDTO;
 import com.wms.controller.DangNhapController;
-import com.wms.model.NhanSu_KhachHang.NguoiDungDTO;
+
+import com.wms.dao.PhieuGiamGiaDAO;
+
+import com.wms.dao.HoaDonDAO;
+
+import com.wms.dao.NhanVienDAO;
+import com.wms.model.NguoiDungDTO;
+import com.wms.model.ThongTinHoaDonDTO;
 
 public class ThanhToanService {
     
@@ -22,11 +26,18 @@ public class ThanhToanService {
     }
 
     // Thực hiện logic thanh toán
-    public boolean thucHienThanhToan(String maHoaDon, String phuongThuc) {
+    public boolean thucHienThanhToan(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
         String maNV = layMaNhanVienDangNhap();
         
-        // Gọi DAO để update (Trigger trong DB sẽ lo việc đổi Trạng Thái thành 'Đã thanh toán thành công')
-        return hoaDonDAO.xacNhanThanhToan(maHoaDon, phuongThuc, maNV);
+        // Gọi DAO để update
+        boolean updated = hoaDonDAO.xacNhanThanhToan(maHoaDon, phuongThuc, maNV, maPGG, thanhTien);
+        
+        if (updated && maPGG != null && !maPGG.isEmpty()) {
+            // Tăng số lượng đã dùng của voucher
+            new PhieuGiamGiaDAO().tangSoLuongDaDung(maPGG);
+        }
+        
+        return updated;
     }
 
     // Lấy mã nhân viên từ session đăng nhập
@@ -38,3 +49,8 @@ public class ThanhToanService {
         return null; // Nếu test chưa đăng nhập
     }
 }
+
+
+
+
+

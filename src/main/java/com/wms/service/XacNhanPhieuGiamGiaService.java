@@ -1,8 +1,9 @@
 package com.wms.service;
 
 import com.wms.dao.PhieuGiamGiaDAO;
-import com.wms.model.ThanhToan_KhuyenMai.XacNhanPhieuGiamGiaDTO;
-import com.wms.model.ThanhToan_KhuyenMai.PhieuGiamGiaDTO;
+
+import com.wms.model.PhieuGiamGiaDTO;
+import com.wms.model.XacNhanPhieuGiamGiaDTO;
 import java.util.Date;
 
 /**
@@ -111,3 +112,8 @@ public class XacNhanPhieuGiamGiaService {
         return voucherDAO.layThongTinVoucher(maChuSoPGG.trim().toUpperCase());
     }
 }
+
+
+
+
+

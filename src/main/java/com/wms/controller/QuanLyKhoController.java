@@ -1,8 +1,8 @@
 package com.wms.controller;
 
-import com.wms.model.VanHanh_DichVu.DichVuDTO;
-import com.wms.service.QuanLyKho.QuanKhoService;
-import com.wms.view.QuanLyKho.QuanLyKhoForm;
+import com.wms.model.DichVuDTO;
+import com.wms.service.QuanKhoService;
+import com.wms.view.TrangChuQuanLy.QuanLyKho.QuanLyKhoForm;
 
 import java.util.List;
 

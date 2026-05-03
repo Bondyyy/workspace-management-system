@@ -1,7 +1,7 @@
 package com.wms.controller;
 
 import com.wms.dao.PhieuGiamGiaDAO;
-import com.wms.model.ThanhToan_KhuyenMai.PhieuGiamGiaDTO;
+import com.wms.model.PhieuGiamGiaDTO;
 import java.util.List;
 
 public class PhieuGiamGiaController {

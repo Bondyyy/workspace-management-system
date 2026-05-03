@@ -1,6 +1,6 @@
 package com.wms.dao;
 import com.wms.config.DatabaseConnection;
-import com.wms.model.ThanhToan_KhuyenMai.PhieuGiamGiaDTO;
+import com.wms.model.PhieuGiamGiaDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,6 +127,18 @@ public class PhieuGiamGiaDAO {
             System.err.println("[PhieuGiamGiaDAO] Lỗi tìm theo mã: " + e.getMessage());
         }
         return null;
+    }
+
+    public boolean tangSoLuongDaDung(String maPGG) {
+        String sql = "UPDATE PHIEUGIAMGIA SET SLDaDung = SLDaDung + 1 WHERE MaPGG = ?";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maPGG);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[PhieuGiamGiaDAO] Lỗi tăng số lượng đã dùng: " + e.getMessage());
+            return false;
+        }
     }
 
     private PhieuGiamGiaDTO mapRow(ResultSet rs) throws SQLException {

@@ -1,7 +1,7 @@
 package com.wms.dao;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.CoSoVatChat.LoaiKhongGianDTO;
+import com.wms.model.LoaiKhongGianDTO;
 
 import java.sql.*;
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package com.wms.dao;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.VanHanh_DichVu.LoaiDichVuDTO;
+import com.wms.model.LoaiDichVuDTO;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;

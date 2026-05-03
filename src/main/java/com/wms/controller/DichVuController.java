@@ -2,8 +2,8 @@ package com.wms.controller;
 
 import com.wms.dao.DichVuDAO;
 import com.wms.dao.LoaiDichVuDAO;
-import com.wms.model.VanHanh_DichVu.DichVuDTO;
-import com.wms.model.VanHanh_DichVu.LoaiDichVuDTO;
+import com.wms.model.DichVuDTO;
+import com.wms.model.LoaiDichVuDTO;
 import java.util.List;
 
 public class DichVuController {

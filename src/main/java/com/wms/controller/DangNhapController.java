@@ -1,6 +1,6 @@
 package com.wms.controller;
 
-import com.wms.model.NhanSu_KhachHang.NguoiDungDTO;
+import com.wms.model.NguoiDungDTO;
 import com.wms.service.NguoiDungService;
 
 public class DangNhapController {

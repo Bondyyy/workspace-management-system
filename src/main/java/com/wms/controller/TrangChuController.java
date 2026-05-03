@@ -1,7 +1,7 @@
 package com.wms.controller;
 
 import com.wms.dao.TrangChuDAO;
-import com.wms.model.NhanSu_KhachHang.NguoiDungDTO;
+import com.wms.model.NguoiDungDTO;
 import java.util.ArrayList;
 import java.util.List;
 

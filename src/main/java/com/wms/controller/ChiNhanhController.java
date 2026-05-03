@@ -1,7 +1,7 @@
 package com.wms.controller;
 
 import com.wms.dao.ChiNhanhDAO;
-import com.wms.model.CoSoVatChat.ChiNhanhDTO;
+import com.wms.model.ChiNhanhDTO;
 import java.util.List;
 
 public class ChiNhanhController {

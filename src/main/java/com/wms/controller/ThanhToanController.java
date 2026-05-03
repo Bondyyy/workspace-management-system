@@ -1,7 +1,7 @@
 package com.wms.controller;
 
-import com.wms.model.ThanhToan_KhuyenMai.XacNhanPhieuGiamGiaDTO;
-import com.wms.model.ThanhToan_KhuyenMai.ThongTinHoaDonDTO;
+import com.wms.model.XacNhanPhieuGiamGiaDTO;
+import com.wms.model.ThongTinHoaDonDTO;
 import com.wms.service.ThanhToanService;
 import com.wms.service.XacNhanPhieuGiamGiaService;
 
@@ -21,11 +21,11 @@ public class ThanhToanController {
     }
 
     // View sẽ gọi hàm này khi người dùng bấm xác nhận ở form Tiền Mặt / Chuyển Khoản
-    public boolean xacNhanThanhToan(String maHoaDon, String phuongThuc) {
+    public boolean xacNhanThanhToan(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
         if (maHoaDon == null || maHoaDon.isEmpty()) {
             return false;
         }
-        return thanhToanService.thucHienThanhToan(maHoaDon, phuongThuc);
+        return thanhToanService.thucHienThanhToan(maHoaDon, phuongThuc, maPGG, thanhTien);
     }
     
     /**

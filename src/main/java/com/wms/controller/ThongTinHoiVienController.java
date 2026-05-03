@@ -1,8 +1,8 @@
 package com.wms.controller;
 
 import com.wms.dao.ThongTinHoiVienDAO;
-import com.wms.model.NhanSu_KhachHang.NguoiDungDTO;
-import com.wms.model.NhanSu_KhachHang.HoiVienDTO;
+import com.wms.model.NguoiDungDTO;
+import com.wms.model.HoiVienDTO;
 
 public class ThongTinHoiVienController {
 

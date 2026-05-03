@@ -1,7 +1,7 @@
 package com.wms.dao;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.NhanSu_KhachHang.HoiVienDTO;
+import com.wms.model.HoiVienDTO;
 import com.wms.util.PasswordUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

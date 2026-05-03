@@ -1,12 +1,13 @@
 package com.wms.dao;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.NhanSu_KhachHang.NhanVienDTO;
-import com.wms.model.NhanSu_KhachHang.NguoiDungDTO;
+import com.wms.model.NhanVienDTO;
+import com.wms.model.NguoiDungDTO;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import com.wms.util.PasswordUtil;
 
 public class NhanVienDAO {
 
@@ -85,58 +86,51 @@ public class NhanVienDAO {
             autoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
-            // 1. Tạo MaND mới
             String maND = java.util.UUID.randomUUID().toString();
+            String maKH = java.util.UUID.randomUUID().toString();
             nd.setMaND(maND);
+            nv.setMaND(maND);
 
-            // 2. INSERT vào NGUOIDUNG
-            String sqlND = "INSERT INTO NGUOIDUNG (MaND, TenTaiKhoan, MatKhauMaHoa, Email, SDT, " +
-                           "GioiTinh, AnhDaiDien, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) " +
-                           "VALUES (?, ?, ?, ?, ?, ?, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+            String sqlND = "INSERT INTO NGUOIDUNG (MaND, TenTaiKhoan, MatKhauMaHoa, SDT, Email, GioiTinh, AnhDaiDien, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) " +
+                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
             try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
+                String defaultUser = (nd.getSdt() != null && !nd.getSdt().isEmpty()) ? nd.getSdt() : maND.substring(0, 8);
                 ps.setString(1, maND);
-                // TenTaiKhoan tự sinh: email hoặc SĐT
-                ps.setString(2, nd.getEmail() != null ? nd.getEmail() : nd.getSdt());
-                ps.setString(3, "DEFAULT_PASS"); // Mật khẩu sẽ được cấp riêng
-                ps.setString(4, nd.getEmail());
-                ps.setString(5, nd.getSdt());
+                ps.setString(2, defaultUser);
+                ps.setString(3, PasswordUtil.hash("123456")); 
+                ps.setString(4, nd.getSdt());
+                ps.setString(5, nd.getEmail());
                 ps.setString(6, nd.getGioiTinh());
                 ps.setString(7, nd.getAnhDaiDien());
+                ps.setString(8, "Đang hoạt động");
                 ps.executeUpdate();
             }
 
-            // 3. INSERT vào KHACHHANG (lưu họ tên)
             String sqlKH = "INSERT INTO KHACHHANG (MaKH, HoTenKH, TongChiTieu, CapNhatLanCuoi, MaND) " +
                            "VALUES (?, ?, 0, CURRENT_TIMESTAMP, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
-                ps.setString(1, java.util.UUID.randomUUID().toString());
+                ps.setString(1, maKH);
                 ps.setString(2, hoTen);
                 ps.setString(3, maND);
                 ps.executeUpdate();
             }
 
-            // 4. Sử dụng MaNV từ DTO hoặc tự sinh nếu trống
-            String maNV = (nv.getMaNV() != null && !nv.getMaNV().trim().isEmpty()) 
-                           ? nv.getMaNV() : taoMaNVMoi(conn);
-            nv.setMaNV(maNV);
-            nv.setMaND(maND);
-
-            // 5. INSERT vào NHANVIEN
-            String sqlNV = "INSERT INTO NHANVIEN (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, " +
-                           "PhuCap, TienThuong, CaLamViec, LuongCoBan, MaCN, MaND) " +
+            if (nv.getMaNV() == null || nv.getMaNV().isEmpty()) {
+                nv.setMaNV(taoMaNVMoi(conn));
+            }
+            String sqlNV = "INSERT INTO NHANVIEN (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, PhuCap, TienThuong, CaLamViec, LuongCoBan, MaCN, MaND) " +
                            "VALUES (?, ?, CURRENT_DATE, ?, 0, 0, ?, ?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
-                ps.setString(1, maNV);
+                ps.setString(1, nv.getMaNV());
                 ps.setString(2, nv.getLoaiNV());
-                ps.setString(3, nv.getTrangThaiLamViec());
+                ps.setString(3, nv.getTrangThaiLamViec() != null ? nv.getTrangThaiLamViec() : "Đang làm việc");
                 ps.setString(4, nv.getCaLamViec());
-                ps.setDouble(5, nv.getLuongCoBan() != null ? nv.getLuongCoBan() : 0);
+                ps.setDouble(5, nv.getLuongCoBan());
                 ps.setString(6, nv.getMaCN());
                 ps.setString(7, maND);
                 ps.executeUpdate();
             }
 
-            // 6. Gán vai trò cho nhân viên
             if (maVaiTro != null && !maVaiTro.isEmpty()) {
                 String sqlVT = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
@@ -148,13 +142,12 @@ public class NhanVienDAO {
 
             conn.commit();
             return true;
-
         } catch (SQLException e) {
             System.err.println("[NhanVienDAO] Lỗi thêm nhân viên: " + e.getMessage());
-            try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+            try { conn.rollback(); } catch (SQLException ex) {}
             return false;
         } finally {
-            try { conn.setAutoCommit(autoCommit); } catch (SQLException ex) { /* ignore */ }
+            try { conn.setAutoCommit(autoCommit); } catch (SQLException ex) {}
         }
     }
 
@@ -167,19 +160,16 @@ public class NhanVienDAO {
             autoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
-            // 1. UPDATE NGUOIDUNG
-            String sqlND = "UPDATE NGUOIDUNG SET Email = ?, SDT = ?, GioiTinh = ?, " +
-                           "AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaND = ?";
+            String sqlND = "UPDATE NGUOIDUNG SET SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaND = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
-                ps.setString(1, nd.getEmail());
-                ps.setString(2, nd.getSdt());
+                ps.setString(1, nd.getSdt());
+                ps.setString(2, nd.getEmail());
                 ps.setString(3, nd.getGioiTinh());
                 ps.setString(4, nd.getAnhDaiDien());
                 ps.setString(5, nv.getMaND());
                 ps.executeUpdate();
             }
 
-            // 2. UPDATE KHACHHANG (họ tên)
             String sqlKH = "UPDATE KHACHHANG SET HoTenKH = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaND = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
                 ps.setString(1, hoTen);
@@ -187,20 +177,17 @@ public class NhanVienDAO {
                 ps.executeUpdate();
             }
 
-            // 3. UPDATE NHANVIEN
-            String sqlNV = "UPDATE NHANVIEN SET LoaiNV = ?, TrangThaiLamViec = ?, " +
-                           "CaLamViec = ?, LuongCoBan = ?, MaCN = ? WHERE MaNV = ?";
+            String sqlNV = "UPDATE NHANVIEN SET LoaiNV = ?, CaLamViec = ?, LuongCoBan = ?, MaCN = ?, TrangThaiLamViec = ? WHERE MaNV = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
                 ps.setString(1, nv.getLoaiNV());
-                ps.setString(2, nv.getTrangThaiLamViec());
-                ps.setString(3, nv.getCaLamViec());
-                ps.setDouble(4, nv.getLuongCoBan() != null ? nv.getLuongCoBan() : 0);
-                ps.setString(5, nv.getMaCN());
+                ps.setString(2, nv.getCaLamViec());
+                ps.setDouble(3, nv.getLuongCoBan());
+                ps.setString(4, nv.getMaCN());
+                ps.setString(5, nv.getTrangThaiLamViec());
                 ps.setString(6, nv.getMaNV());
                 ps.executeUpdate();
             }
 
-            // 4. Cập nhật vai trò: xóa cũ → thêm mới
             if (maVaiTro != null && !maVaiTro.isEmpty()) {
                 String sqlDelVT = "DELETE FROM CHITIETVAITRO WHERE MaND = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sqlDelVT)) {
@@ -217,27 +204,68 @@ public class NhanVienDAO {
 
             conn.commit();
             return true;
-
         } catch (SQLException e) {
             System.err.println("[NhanVienDAO] Lỗi cập nhật nhân viên: " + e.getMessage());
-            try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+            try { conn.rollback(); } catch (SQLException ex) {}
             return false;
         } finally {
-            try { conn.setAutoCommit(autoCommit); } catch (SQLException ex) { /* ignore */ }
+            try { conn.setAutoCommit(autoCommit); } catch (SQLException ex) {}
+        }
+    }
+
+    public boolean xoaNhanVien(String maNV, String maND) {
+        Connection conn = getConn();
+        if (conn == null) return false;
+
+        boolean autoCommit = true;
+        try {
+            autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+
+            String sqlVT = "DELETE FROM CHITIETVAITRO WHERE MaND = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
+                ps.setString(1, maND);
+                ps.executeUpdate();
+            }
+
+            String sqlNV = "DELETE FROM NHANVIEN WHERE MaNV = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
+                ps.setString(1, maNV);
+                ps.executeUpdate();
+            }
+
+            String sqlKH = "DELETE FROM KHACHHANG WHERE MaND = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
+                ps.setString(1, maND);
+                ps.executeUpdate();
+            }
+
+            String sqlND = "DELETE FROM NGUOIDUNG WHERE MaND = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
+                ps.setString(1, maND);
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[NhanVienDAO] Lỗi xóa nhân viên: " + e.getMessage());
+            try { conn.rollback(); } catch (SQLException ex) {}
+            return false;
+        } finally {
+            try { conn.setAutoCommit(autoCommit); } catch (SQLException ex) {}
         }
     }
 
     public List<String[]> layDanhSachChiNhanh() {
         List<String[]> list = new ArrayList<>();
-        String sql = "SELECT MaCN, TenCN FROM CHINHANH WHERE TrangThai = 'Đang hoạt động' ORDER BY TenCN";
+        String sql = "SELECT MaCN, TenCN FROM CHINHANH WHERE TrangThai = 'Đang hoạt động'";
         try (PreparedStatement ps = getConn().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(new String[]{rs.getString("MaCN"), rs.getString("TenCN")});
             }
-        } catch (SQLException e) {
-            System.err.println("[NhanVienDAO] Lỗi lấy danh sách chi nhánh: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
 
@@ -249,9 +277,22 @@ public class NhanVienDAO {
             while (rs.next()) {
                 list.add(new String[]{rs.getString("MaVaiTro"), rs.getString("TenVaiTro")});
             }
-        } catch (SQLException e) {
-            System.err.println("[NhanVienDAO] Lỗi lấy danh sách vai trò: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public List<String[]> layDanhSachQuanLy() {
+        List<String[]> list = new ArrayList<>();
+        String sql = "SELECT nv.MaNV, kh.HoTenKH " +
+                     "FROM NHANVIEN nv " +
+                     "JOIN KHACHHANG kh ON nv.MaND = kh.MaND " +
+                     "WHERE nv.TrangThaiLamViec = 'Đang làm việc'";
+        try (PreparedStatement ps = getConn().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new String[]{rs.getString("MaNV"), rs.getString("HoTenKH")});
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
 
@@ -259,7 +300,6 @@ public class NhanVienDAO {
         return "NV" + (System.currentTimeMillis() % 1000000);
     }
     
-    // Hàm bổ sung: Lấy mã nhân viên dựa trên mã người dùng đang đăng nhập
     public String layMaNVTuMaND(String maND) {
         String maNV = null;
         String sql = "SELECT MaNV FROM NHANVIEN WHERE MaND = ?";
