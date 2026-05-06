@@ -17,13 +17,13 @@ public class ChiTietDichVuDAO {
 
     public List<DichVuDaDatDTO> layDanhSachDichVuDat(String keyword) {
         List<DichVuDaDatDTO> list = new ArrayList<>();
-        String sql = "SELECT ct.MaPhien, dv.TenDV, ct.SoLuong, p.ThoiGianBatDau, kh.HoTenKH, kg.TenKhongGian, ct.GhiChu "
+        String sql = "SELECT ct.MaPhien, dv.TenDV, ct.SoLuong, p.ThoiGianBatDau, kh.HoTenKH, kg.TenKG, ct.GhiChu "
                 +
                 "FROM CHITIETDICHVU ct " +
                 "JOIN DICHVU dv ON ct.MaDV = dv.MaDV " +
                 "JOIN PHIENLAMVIEC p ON ct.MaPhien = p.MaPhien " +
                 "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-                "JOIN KHONGGIAN kg ON p.MaKhongGian = kg.MaKhongGian " +
+                "JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
                 "WHERE ct.MaPhien LIKE ? OR dv.TenDV LIKE ? " +
                 "ORDER BY p.ThoiGianBatDau DESC";
 
@@ -50,7 +50,7 @@ public class ChiTietDichVuDAO {
                     }
 
                     dto.setKhachHang(rs.getString("HoTenKH"));
-                    dto.setTenKhongGian(rs.getString("TenKhongGian"));
+                    dto.setTenKhongGian(rs.getString("TenKG"));
                     dto.setGhiChu(rs.getString("GhiChu") != null ? rs.getString("GhiChu") : "");
 
                     list.add(dto);

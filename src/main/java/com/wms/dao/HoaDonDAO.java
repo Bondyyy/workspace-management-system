@@ -17,7 +17,7 @@ public class HoaDonDAO {
         if (conn == null) return list;
 
         StringBuilder sql = new StringBuilder(
-            "SELECT h.*, kh.HoTenKH " +
+            "SELECT h.*, kh.HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc " +
             "FROM HOADON h " +
             "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
             "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
@@ -28,7 +28,11 @@ public class HoaDonDAO {
             sql.append("AND (h.MaHoaDon LIKE ? OR kh.HoTenKH LIKE ? OR h.SoHD LIKE ?) ");
         }
         if (statusFilter != null && !statusFilter.equals("Tất cả")) {
-            sql.append("AND h.TrangThaiThanhToan = ? ");
+            if (statusFilter.equals("Chưa thanh toán")) {
+                sql.append("AND h.TrangThaiThanhToan IN ('Chưa thanh toán', 'Đang chờ thanh toán') ");
+            } else {
+                sql.append("AND h.TrangThaiThanhToan = ? ");
+            }
         }
         sql.append("ORDER BY h.NgayLapHoaDon DESC");
 
@@ -41,7 +45,9 @@ public class HoaDonDAO {
                 ps.setString(idx++, q);
             }
             if (statusFilter != null && !statusFilter.equals("Tất cả")) {
-                ps.setString(idx++, statusFilter);
+                if (!statusFilter.equals("Chưa thanh toán")) {
+                    ps.setString(idx++, statusFilter);
+                }
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -58,6 +64,18 @@ public class HoaDonDAO {
                     hd.setMaPGG(rs.getString("MaPGG"));
                     hd.setMaNV(rs.getString("MaNV"));
                     hd.setHoTenKH(rs.getString("HoTenKH"));
+                    hd.setMaDatCho(rs.getString("MaDatCho"));
+                    hd.setTrangThaiPhien(rs.getString("TrangThaiPhien"));
+                    
+                    double tt = rs.getDouble("TongTien");
+                    double thanh = rs.getDouble("ThanhTien");
+                    // Patch cho trường hợp trigger tính toán lệch hoặc chưa cập nhật TongTien
+                    if (tt == 0 && thanh > 0) tt = thanh;
+                    
+                    hd.setTongTien(tt);
+                    hd.setThanhTien(thanh);
+                    hd.setThoiGianBatDauPhien(rs.getTimestamp("ThoiGianBatDau"));
+                    hd.setThoiGianKetThucPhien(rs.getTimestamp("ThoiGianKetThuc"));
                     list.add(hd);
                 }
             }
@@ -91,6 +109,21 @@ public class HoaDonDAO {
         }
     }
 
+    public boolean capNhatTrangThaiThanhToanTheoPhien(String maPhien, String trangThai) {
+        String sql = "UPDATE HOADON SET TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
+        Connection conn = DatabaseConnection.getInstance().getConnection();
+        if (conn == null) return false;
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, trangThai);
+            pstmt.setString(2, maPhien);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[HoaDonDAO] Lỗi cập nhật trạng thái hóa đơn: " + e.getMessage());
+            return false;
+        }
+    }
+
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
         ThongTinHoaDonDTO thongTin = null;
         Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -118,8 +151,13 @@ public class HoaDonDAO {
                     thongTin.setMaHoaDon(rsChung.getString("MaHoaDon"));
                     thongTin.setHoTenKH(rsChung.getString("HoTenKH"));
                     thongTin.setTenKhongGian(rsChung.getString("TenKG"));
-                    thongTin.setTongTien(rsChung.getDouble("TongTien"));
-                    thongTin.setThanhTien(rsChung.getDouble("ThanhTien"));
+                    
+                    double tt_ct = rsChung.getDouble("TongTien");
+                    double thanh_ct = rsChung.getDouble("ThanhTien");
+                    if (tt_ct == 0 && thanh_ct > 0) tt_ct = thanh_ct;
+                    
+                    thongTin.setTongTien(tt_ct);
+                    thongTin.setThanhTien(thanh_ct);
 
                     String maPhien = rsChung.getString("MaPhien");
                     Timestamp tBĐ = rsChung.getTimestamp("ThoiGianBatDau");
@@ -157,18 +195,17 @@ public class HoaDonDAO {
         return thongTin;
     }
 
-    public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG, double thanhTien) {
+    public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG) {
         Connection conn = DatabaseConnection.getInstance().getConnection();
         if (conn == null) return false;
 
-        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, ThanhTien = ?, TrangThaiThanhToan = 'Đã thanh toán', NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaHoaDon = ?";
+        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, TrangThaiThanhToan = 'Đã thanh toán', NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaHoaDon = ?";
         
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, phuongThucThanhToan);
             pstmt.setString(2, maNV);
             pstmt.setString(3, maPGG);
-            pstmt.setDouble(4, thanhTien);
-            pstmt.setString(5, maHoaDon);
+            pstmt.setString(4, maHoaDon);
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {

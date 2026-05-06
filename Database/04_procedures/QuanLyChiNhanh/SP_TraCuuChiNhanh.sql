@@ -14,7 +14,7 @@ BEGIN
                CN.ThoiGianMoCua,
                CN.ThoiGianDongCua,
                CN.TrangThai,
-               NV.MaND AS MaNV_QuanLy
+               NV.MaNV AS MaNV_QuanLy
         FROM CHINHANH CN
         LEFT JOIN NHANVIEN NV ON NV.MaCN = CN.MaCN AND NV.LoaiNV = 'Quản lý'
         WHERE (p_TuKhoa IS NULL

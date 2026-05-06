@@ -18,11 +18,12 @@ public class EmailUtil {
                 prop.load(input);
                 SENDER_EMAIL = prop.getProperty("mail.sender.email");
                 SENDER_APP_PASSWORD = prop.getProperty("mail.sender.password");
+                System.out.println("[EmailUtil] Đã nạp cấu hình: " + SENDER_EMAIL);
             } else {
-                System.err.println("Không tìm thấy file config.properties trong resources!");
+                System.err.println("[EmailUtil] Không tìm thấy file config.properties trong resources!");
             }
         } catch (Exception ex) {
-            System.err.println("Lỗi nạp cấu hình email: " + ex.getMessage());
+            System.err.println("[EmailUtil] Lỗi nạp cấu hình email: " + ex.getMessage());
         }
     }
 
@@ -31,7 +32,11 @@ public class EmailUtil {
     }
 
     public static boolean sendOTP(String toEmail, String otp) {
-        if (SENDER_EMAIL == null || SENDER_APP_PASSWORD == null) return false;
+        System.out.println("[EmailUtil] Đang gửi OTP tới: " + toEmail);
+        if (SENDER_EMAIL == null || SENDER_APP_PASSWORD == null) {
+            System.err.println("[EmailUtil] Lỗi: SENDER_EMAIL hoặc SENDER_APP_PASSWORD chưa được cấu hình!");
+            return false;
+        }
 
         Session session = createSmtpSession();
         try {
@@ -44,9 +49,11 @@ public class EmailUtil {
             message.setContent(content, "text/html; charset=utf-8");
 
             Transport.send(message);
+            System.out.println("[EmailUtil] Gửi email thành công!");
             return true;
         } catch (MessagingException e) {
-            System.err.println("Lỗi gửi mail: " + e.getMessage());
+            System.err.println("[EmailUtil] Lỗi gửi mail: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -57,6 +64,9 @@ public class EmailUtil {
         props.put("mail.smtp.port", "587");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        props.put("mail.smtp.timeout", "10000"); // 10s timeout
+        props.put("mail.smtp.connectiontimeout", "10000");
 
         return Session.getInstance(props, new Authenticator() {
             @Override

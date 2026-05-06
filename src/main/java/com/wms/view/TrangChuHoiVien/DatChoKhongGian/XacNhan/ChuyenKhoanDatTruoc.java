@@ -8,7 +8,9 @@ import com.wms.model.NguoiDungDTO;
 import com.wms.dao.HoaDonDAO;
 
 import com.wms.dao.KhachHangDAO;
+import com.wms.dao.DatChoDAO;
 import com.wms.model.PhienLamViecDTO;
+import com.wms.model.DatChoDTO;
 import com.wms.model.HoaDonDTO;
 
 import java.text.DecimalFormat;
@@ -376,24 +378,43 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
         if (res != JOptionPane.YES_OPTION) return;
 
         try {
-            // 1. Tạo Phiên làm việc
+            // 1. Tạo Đơn đặt chỗ (DATCHO)
+            String maDatCho = "DC" + System.currentTimeMillis();
+            DatChoDTO dc = new DatChoDTO();
+            dc.setMaDatCho(maDatCho);
+            dc.setMaKH(maKH);
+            dc.setMaKG(maKG_Booking);
+            dc.setThanhTien(thanhTien);
+            dc.setGhiChu(txtGhiChu.getText());
+            dc.setTrangThaiDatTruoc("Đang chờ thanh toán");
+            dc.setThoiGianDat(new Timestamp(System.currentTimeMillis()));
+            
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            LocalDateTime batDau = LocalDateTime.parse(txtNgay.getText() + " " + txtBatDau.getText(), dtf);
+            dc.setThoiGianDuKienToi(Timestamp.valueOf(batDau));
+
+            DatChoDAO dcDAO = new DatChoDAO();
+            if (!dcDAO.taoDatChoMoi(dc)) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi lưu đơn đặt chỗ!");
+                return;
+            }
+
+            // 2. Tạo Phiên làm việc (Liên kết với MaDatCho)
             String maPhien = "PH" + System.currentTimeMillis();
             PhienLamViecDTO phien = new PhienLamViecDTO();
             phien.setMaPhien(maPhien);
             phien.setMaKH(maKH);
             phien.setMaKG(maKG_Booking);
+            phien.setMaDatCho(maDatCho); // QUAN TRỌNG: Gán mã đặt chỗ vào đây
             phien.setTrangThaiPhien("Đã đặt trước");
             
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-            LocalDateTime batDau = LocalDateTime.parse(txtNgay.getText() + " " + txtBatDau.getText(), dtf);
-            LocalDateTime ketThuc = LocalDateTime.parse(txtNgay.getText() + " " + txtKetThuc.getText(), dtf);
-            
             phien.setThoiGianBatDau(Timestamp.valueOf(batDau));
+            LocalDateTime ketThuc = LocalDateTime.parse(txtNgay.getText() + " " + txtKetThuc.getText(), dtf);
             phien.setThoiGianDuKienKetThuc(Timestamp.valueOf(ketThuc));
 
             PhienLamViecDAO pDAO = new PhienLamViecDAO();
             if (pDAO.taoPhienLamViecMoi(phien)) {
-                // 2. Tạo Hóa đơn
+                // 3. Tạo Hóa đơn
                 String maHD = "HD" + System.currentTimeMillis();
                 HoaDonDTO hd = new HoaDonDTO();
                 hd.setMaHoaDon(maHD);

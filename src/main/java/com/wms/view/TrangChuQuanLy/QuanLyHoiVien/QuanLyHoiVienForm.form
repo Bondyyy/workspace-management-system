@@ -378,11 +378,12 @@
               <Font name="Segoe UI" size="13" style="0"/>
             </Property>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="4">
-                <StringItem index="0" value="Kh&#xe1;ch h&#xe0;ng m&#x1edb;i"/>
-                <StringItem index="1" value="Th&#xe0;nh vi&#xea;n B&#x1ea1;c"/>
-                <StringItem index="2" value="Th&#xe0;nh vi&#xea;n V&#xe0;ng"/>
-                <StringItem index="3" value="VIP Kim C&#x1b0;&#x1a1;ng"/>
+              <StringArray count="5">
+                <StringItem index="0" value="Kh&#xf4;ng c&#xf3;"/>
+                <StringItem index="1" value="&#x110;&#x1ed3;ng"/>
+                <StringItem index="2" value="B&#x1ea1;c"/>
+                <StringItem index="3" value="V&#xe0;ng"/>
+                <StringItem index="4" value="Kim c&#x1b0;&#x1a1;ng"/>
               </StringArray>
             </Property>
           </Properties>
@@ -391,7 +392,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="20" y="420" width="370" height="30"/>
+              <AbsoluteConstraints x="20" y="420" width="170" height="40"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -413,7 +414,7 @@
           </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="20" y="470" width="170" height="40"/>
+              <AbsoluteConstraints x="220" y="420" width="170" height="40"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -566,6 +567,28 @@
             </Component>
           </SubComponents>
         </Container>
+        <Component class="javax.swing.JButton" name="btnXoa">
+          <Properties>
+            <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+              <Color blue="8d" green="5e" red="eb" type="rgb"/>
+            </Property>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+              <Font name="Segoe UI" size="14" style="1"/>
+            </Property>
+            <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+              <Color blue="ff" green="ff" red="ff" type="rgb"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Xo&#xe1;"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnXoaActionPerformed"/>
+          </Events>
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+              <AbsoluteConstraints x="20" y="470" width="170" height="40"/>
+            </Constraint>
+          </Constraints>
+        </Component>
       </SubComponents>
     </Container>
   </SubComponents>

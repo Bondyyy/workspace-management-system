@@ -14,10 +14,19 @@ public class NguoiDungDTO {
     private java.sql.Timestamp thoiGianTao;
     private java.sql.Timestamp capNhatLanCuoi;
     private java.sql.Timestamp lanCuoiDangNhap;
+    private String hoTen;
     private String trangThaiND;
     private List<String> vaiTro;
 
     public NguoiDungDTO() {}
+
+    public String getHoTen() {
+        return hoTen;
+    }
+
+    public void setHoTen(String hoTen) {
+        this.hoTen = hoTen;
+    }
 
     public String getMaND() {
         return maND;
@@ -124,6 +133,10 @@ public class NguoiDungDTO {
     }
 
     public boolean hasRole(String roleName) {
-        return vaiTro != null && vaiTro.contains(roleName);
+        if (vaiTro == null) return false;
+        for (String r : vaiTro) {
+            if (r != null && r.trim().equalsIgnoreCase(roleName.trim())) return true;
+        }
+        return false;
     }
 }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import com.wms.view.TrangChuHoiVien.DatChoKhongGian.XemSoDoKhongGian.XemSoDoKhongGianForm;
 /**
  *
  * @author Thinkapd T14s
@@ -115,7 +116,7 @@ public class XemChiNhanhForm extends javax.swing.JPanel {
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // BÊN TRÁI: ICON
-        JLabel lblIcon = new JLabel("🏢 " + chiNhanh.ma, SwingConstants.CENTER);
+        JLabel lblIcon = new JLabel(chiNhanh.ma, SwingConstants.CENTER);
         lblIcon.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblIcon.setForeground(Color.decode("#EB5E8D"));
         lblIcon.setPreferredSize(new Dimension(120, 100));
@@ -132,7 +133,7 @@ public class XemChiNhanhForm extends javax.swing.JPanel {
         pnGiua.add(lblTen);
         pnGiua.add(Box.createRigidArea(new Dimension(0, 5)));
         
-        JLabel lblInfo = new JLabel("📍 " + chiNhanh.diaChi + "   |   🕒 " + chiNhanh.gioMo + " - " + chiNhanh.gioDong + "   |   📞 " + chiNhanh.hotline);
+        JLabel lblInfo = new JLabel("Địa chỉ: " + chiNhanh.diaChi + "   |   Giờ: " + chiNhanh.gioMo + " - " + chiNhanh.gioDong + "   |   SĐT: " + chiNhanh.hotline);
         lblInfo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblInfo.setForeground(new Color(97, 97, 97));
         pnGiua.add(lblInfo);
@@ -140,10 +141,11 @@ public class XemChiNhanhForm extends javax.swing.JPanel {
         card.add(pnGiua, BorderLayout.CENTER);
 
         // BÊN PHẢI: TRẠNG THÁI
-        JLabel lblTrangThai = new JLabel("Hoạt động".equals(chiNhanh.trangThai) ? "✓ Hoạt động" : "✕ Đóng cửa", SwingConstants.CENTER);
+        boolean isActive = "Đang hoạt động".equalsIgnoreCase(chiNhanh.trangThai) || "Hoạt động".equalsIgnoreCase(chiNhanh.trangThai);
+        JLabel lblTrangThai = new JLabel(isActive ? "Hoạt động" : "Đóng cửa", SwingConstants.CENTER);
         lblTrangThai.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblTrangThai.setOpaque(true);
-        if ("Hoạt động".equals(chiNhanh.trangThai)) {
+        if (isActive) {
             lblTrangThai.setForeground(new Color(27, 94, 32)); lblTrangThai.setBackground(new Color(200, 230, 201));
         } else {
             lblTrangThai.setForeground(new Color(183, 28, 28)); lblTrangThai.setBackground(new Color(255, 205, 210));
@@ -180,7 +182,8 @@ public class XemChiNhanhForm extends javax.swing.JPanel {
 
     private void btnXacNhanActionPerformed(java.awt.event.ActionEvent evt) {                                           
         if (chiNhanhDangChon != null) {
-            if ("Đóng cửa".equals(chiNhanhDangChon.trangThai)) {
+            boolean isClosed = "Đóng cửa".equalsIgnoreCase(chiNhanhDangChon.trangThai) || "Ngừng hoạt động".equalsIgnoreCase(chiNhanhDangChon.trangThai);
+            if (isClosed) {
                 JOptionPane.showMessageDialog(this, "Chi nhánh này hiện đang đóng cửa. Vui lòng chọn chi nhánh khác!", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -189,7 +192,7 @@ public class XemChiNhanhForm extends javax.swing.JPanel {
             System.out.println("Đã chọn chi nhánh: " + chiNhanhDangChon.ma);
             java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
             if (window instanceof com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) {
-                ((com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) window).showPanel(new com.wms.view.TrangChuHoiVien.DatChoKhongGian.XemSoDoKhongGian.XemSoDoKhongGianForm(chiNhanhDangChon.ma, chiNhanhDangChon.ten)
+                ((com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) window).showPanel(new XemSoDoKhongGianForm(chiNhanhDangChon.ma, chiNhanhDangChon.ten)
                 );
             }
         }
@@ -235,7 +238,7 @@ public class XemChiNhanhForm extends javax.swing.JPanel {
         btnXacNhan.setBackground(new java.awt.Color(235, 94, 141));
         btnXacNhan.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
-        btnXacNhan.setText("Xem sơ đồ không gian  ➔");
+        btnXacNhan.setText("Xem sơ đồ không gian");
         btnXacNhan.setEnabled(false);
         btnXacNhan.addActionListener(this::btnXacNhanActionPerformed);
         pnMain.add(btnXacNhan);

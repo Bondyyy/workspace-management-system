@@ -77,9 +77,25 @@ public class NhanVienDAO {
         return list;
     }
 
-    public boolean themNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro) {
+    public boolean themNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) {
         Connection conn = getConn();
         if (conn == null) return false;
+        
+        // Kiểm tra trùng lặp Email và SĐT trước khi bắt đầu transaction
+        NguoiDungDAO ndDAO = new NguoiDungDAO();
+        try {
+            if (ndDAO.kiemTraEmailTonTai(nd.getEmail())) {
+                System.err.println("[NhanVienDAO] Lỗi: Email " + nd.getEmail() + " đã tồn tại trong hệ thống!");
+                return false;
+            }
+            if (ndDAO.kiemTraSdtTonTai(nd.getSdt())) {
+                System.err.println("[NhanVienDAO] Lỗi: Số điện thoại " + nd.getSdt() + " đã tồn tại trong hệ thống!");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("[NhanVienDAO] Lỗi kiểm tra trùng lặp: " + e.getMessage());
+            return false;
+        }
 
         boolean autoCommit = true;
         try {
@@ -95,9 +111,11 @@ public class NhanVienDAO {
                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
             try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
                 String defaultUser = (nd.getSdt() != null && !nd.getSdt().isEmpty()) ? nd.getSdt() : maND.substring(0, 8);
+                String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau) : PasswordUtil.hash("123456");
+
                 ps.setString(1, maND);
                 ps.setString(2, defaultUser);
-                ps.setString(3, PasswordUtil.hash("123456")); 
+                ps.setString(3, hashedPw); 
                 ps.setString(4, nd.getSdt());
                 ps.setString(5, nd.getEmail());
                 ps.setString(6, nd.getGioiTinh());
@@ -151,7 +169,7 @@ public class NhanVienDAO {
         }
     }
 
-    public boolean capNhatNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro) {
+    public boolean capNhatNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) {
         Connection conn = getConn();
         if (conn == null) return false;
 
@@ -160,13 +178,24 @@ public class NhanVienDAO {
             autoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
-            String sqlND = "UPDATE NGUOIDUNG SET SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaND = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
+            StringBuilder sqlND = new StringBuilder("UPDATE NGUOIDUNG SET SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP");
+            boolean hasNewPw = (matKhau != null && !matKhau.isEmpty());
+            if (hasNewPw) {
+                sqlND.append(", MatKhauMaHoa = ?");
+            }
+            sqlND.append(" WHERE MaND = ?");
+
+            try (PreparedStatement ps = conn.prepareStatement(sqlND.toString())) {
                 ps.setString(1, nd.getSdt());
                 ps.setString(2, nd.getEmail());
                 ps.setString(3, nd.getGioiTinh());
                 ps.setString(4, nd.getAnhDaiDien());
-                ps.setString(5, nv.getMaND());
+                if (hasNewPw) {
+                    ps.setString(5, PasswordUtil.hash(matKhau));
+                    ps.setString(6, nv.getMaND());
+                } else {
+                    ps.setString(5, nv.getMaND());
+                }
                 ps.executeUpdate();
             }
 
@@ -188,12 +217,14 @@ public class NhanVienDAO {
                 ps.executeUpdate();
             }
 
+            // Cập nhật vai trò (Xoá cũ, thêm mới nếu có)
+            String sqlDelVT = "DELETE FROM CHITIETVAITRO WHERE MaND = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlDelVT)) {
+                ps.setString(1, nv.getMaND());
+                ps.executeUpdate();
+            }
+
             if (maVaiTro != null && !maVaiTro.isEmpty()) {
-                String sqlDelVT = "DELETE FROM CHITIETVAITRO WHERE MaND = ?";
-                try (PreparedStatement ps = conn.prepareStatement(sqlDelVT)) {
-                    ps.setString(1, nv.getMaND());
-                    ps.executeUpdate();
-                }
                 String sqlVT = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
                     ps.setString(1, nv.getMaND());
@@ -315,5 +346,22 @@ public class NhanVienDAO {
             System.err.println("[NhanVienDAO] Lỗi lấy mã nhân viên từ mã người dùng: " + e.getMessage());
         }
         return maNV;
+    }
+
+    public String layMaCNTuMaND(String maND) {
+        String maCN = null;
+        String sql = "SELECT MaCN FROM NHANVIEN WHERE MaND = ?";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    maCN = rs.getString("MaCN");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[NhanVienDAO] Lỗi lấy mã chi nhánh từ mã người dùng: " + e.getMessage());
+        }
+        return maCN;
     }
 }

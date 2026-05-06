@@ -315,26 +315,47 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         gbc.insets = new java.awt.Insets(1, 1, 1, 1);
         gbc.fill = java.awt.GridBagConstraints.BOTH;
 
+        // Cố định kích thước các cột và hàng để không bị co lại
+        for (int i = 0; i < MAX_COLS; i++) {
+            gbc.gridx = i;
+            gbc.gridy = MAX_ROWS + 1;
+            gbc.weightx = 0;
+            panelSoDo.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(DON_VI, 1)), gbc);
+        }
+        for (int j = 0; j < MAX_ROWS; j++) {
+            gbc.gridx = MAX_COLS + 1;
+            gbc.gridy = j;
+            gbc.weighty = 0;
+            panelSoDo.add(javax.swing.Box.createRigidArea(new java.awt.Dimension(1, DON_VI)), gbc);
+        }
+
+        // Nút Lễ tân cố định
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
         javax.swing.JButton btnLeTan = new javax.swing.JButton("RECEPTION");
+        btnLeTan.setPreferredSize(new java.awt.Dimension(DON_VI * 2, DON_VI));
         btnLeTan.setBackground(mauLeTan);
         btnLeTan.setForeground(java.awt.Color.WHITE);
         btnLeTan.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
         btnLeTan.setEnabled(false);
         panelSoDo.add(btnLeTan, gbc);
 
+        // Vẽ các ô không gian
         for (com.wms.model.KhongGianDTO kg : dsKG) {
             gbc.gridx = kg.getToaDoX();
             gbc.gridy = kg.getToaDoY();
             gbc.gridwidth = kg.getChieuDai();
             gbc.gridheight = kg.getChieuRong();
             
-            btnLeTan.setPreferredSize(new java.awt.Dimension(DON_VI * gbc.gridwidth, DON_VI * gbc.gridheight));
+            java.awt.Dimension size = new java.awt.Dimension(DON_VI * kg.getChieuDai(), DON_VI * kg.getChieuRong());
             
             javax.swing.JButton btn = new javax.swing.JButton(kg.getMaKG());
+            btn.setPreferredSize(size);
+            btn.setMinimumSize(size);
             btn.setToolTipText(kg.getTenKG() + " (X:" + kg.getToaDoX() + ", Y:" + kg.getToaDoY() + ")");
             btn.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 9));
             
@@ -357,11 +378,12 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
             panelSoDo.add(btn, gbc);
         }
         
-        gbc.gridx = MAX_COLS;
-        gbc.gridy = MAX_ROWS;
+        // Đẩy toàn bộ về góc trên bên trái
+        gbc.gridx = MAX_COLS + 2;
+        gbc.gridy = MAX_ROWS + 2;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        panelSoDo.add(new javax.swing.Box.Filler(new java.awt.Dimension(0,0), new java.awt.Dimension(0,0), new java.awt.Dimension(0,0)), gbc);
+        panelSoDo.add(javax.swing.Box.createGlue(), gbc);
 
         panelSoDo.revalidate();
         panelSoDo.repaint();
@@ -372,6 +394,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         if (row < 0) return;
         txtToaDoX.setText(tblKhongGian.getValueAt(row, 2).toString());
         txtToaDoY.setText(tblKhongGian.getValueAt(row, 3).toString());
+        // Sửa lại logic hiển thị: Rộng (Cột 4) và Dài (Cột 5)
         txtChieuRong.setText(tblKhongGian.getValueAt(row, 4).toString());
         txtChieuDai.setText(tblKhongGian.getValueAt(row, 5).toString());
     }
@@ -383,23 +406,34 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
             return;
         }
         try {
+            String maKG = tblKhongGian.getValueAt(row, 0).toString();
             int x = Integer.parseInt(txtToaDoX.getText());
             int y = Integer.parseInt(txtToaDoY.getText());
             int w = Integer.parseInt(txtChieuRong.getText());
             int h = Integer.parseInt(txtChieuDai.getText());
             
-            com.wms.model.KhongGianDTO dto = dsKG.get(row);
-            dto.setToaDoX(x);
-            dto.setToaDoY(y);
-            dto.setChieuDai(w);
-            dto.setChieuRong(h);
+            // Tìm đúng DTO trong danh sách bằng MaKG (tránh lỗi khi bảng bị sắp xếp)
+            com.wms.model.KhongGianDTO selectedDto = null;
+            for (com.wms.model.KhongGianDTO dto : dsKG) {
+                if (dto.getMaKG().equals(maKG)) {
+                    selectedDto = dto;
+                    break;
+                }
+            }
             
-            tblKhongGian.setValueAt(x, row, 2);
-            tblKhongGian.setValueAt(y, row, 3);
-            tblKhongGian.setValueAt(w, row, 4);
-            tblKhongGian.setValueAt(h, row, 5);
-            
-            veSoDo();
+            if (selectedDto != null) {
+                selectedDto.setToaDoX(x);
+                selectedDto.setToaDoY(y);
+                selectedDto.setChieuDai(w);
+                selectedDto.setChieuRong(h);
+                
+                tblKhongGian.setValueAt(x, row, 2);
+                tblKhongGian.setValueAt(y, row, 3);
+                tblKhongGian.setValueAt(w, row, 4);
+                tblKhongGian.setValueAt(h, row, 5);
+                
+                veSoDo();
+            }
         } catch (NumberFormatException e) {
             javax.swing.JOptionPane.showMessageDialog(this, "Toạ độ và kích thước phải là số nguyên!");
         }
@@ -416,8 +450,9 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
             }
             if (success) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Lưu thành công!");
+                taiDanhSach(); // Tải lại từ CSDL để đảm bảo dữ liệu khớp hoàn toàn
             } else {
-                javax.swing.JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi lưu một số không gian.");
+                javax.swing.JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi lưu một số không gian. Vui lòng kiểm tra lại kết nối hoặc cấu trúc bảng DB.");
             }
         }
     }

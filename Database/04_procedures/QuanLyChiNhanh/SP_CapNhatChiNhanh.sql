@@ -49,6 +49,17 @@ BEGIN
         DuongDayNong = p_DuongDayNong
     WHERE MaCN = p_MaCN;
 
+    -- Cập nhật nhân viên quản lý (nếu có truyền)
+    IF p_MaNV_QuanLy IS NOT NULL THEN
+        -- Gỡ bỏ chi nhánh khỏi quản lý cũ (nếu có)
+        UPDATE NHANVIEN SET MaCN = NULL 
+        WHERE MaCN = p_MaCN AND LoaiNV = 'Quản lý';
+        
+        -- Gán chi nhánh cho quản lý mới
+        UPDATE NHANVIEN SET MaCN = p_MaCN 
+        WHERE MaNV = p_MaNV_QuanLy;
+    END IF;
+
     COMMIT;
     p_outMessage := 'Cập nhật chi nhánh [' || p_MaCN || '] thành công!';
 

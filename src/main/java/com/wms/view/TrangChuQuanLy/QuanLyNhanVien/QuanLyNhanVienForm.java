@@ -1,6 +1,6 @@
 package com.wms.view.TrangChuQuanLy.QuanLyNhanVien;
 
-import com.wms.dao.NhanVienDAO;
+import com.wms.controller.QuanLyNhanVienController;
 
 import com.wms.dao.VaiTroDAO;
 import com.wms.model.NhanVienDTO;
@@ -12,7 +12,7 @@ import java.util.List;
 
 public class QuanLyNhanVienForm extends javax.swing.JPanel {
 
-    private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
+    private final QuanLyNhanVienController controller = new QuanLyNhanVienController();
     private final VaiTroDAO vaiTroDAO = new VaiTroDAO();
     private String maNVDangChon = null;
     private String maNDDangChon = null;
@@ -76,6 +76,9 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         btnTimKiem = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblNhanVien = new javax.swing.JTable();
+        btnXoa = new javax.swing.JButton();
+        txtMatKhau = new javax.swing.JTextField();
+        lblSDT1 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -144,23 +147,23 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
 
         lblSDT.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblSDT.setForeground(new java.awt.Color(35, 30, 48));
-        lblSDT.setText("Số điện thoại (*)");
+        lblSDT.setText("Mật khẩu tài khoản (*)");
         pnMain.add(lblSDT);
-        lblSDT.setBounds(170, 190, 220, 18);
+        lblSDT.setBounds(20, 290, 180, 18);
 
         txtSDT.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtSDT);
-        txtSDT.setBounds(170, 210, 220, 30);
+        txtSDT.setBounds(170, 200, 220, 30);
 
         lblEmail.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblEmail.setForeground(new java.awt.Color(35, 30, 48));
         lblEmail.setText("Email (*)");
         pnMain.add(lblEmail);
-        lblEmail.setBounds(20, 290, 170, 18);
+        lblEmail.setBounds(170, 230, 170, 18);
 
         txtEmail.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtEmail);
-        txtEmail.setBounds(20, 310, 170, 30);
+        txtEmail.setBounds(170, 250, 220, 30);
 
         lblLuong.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLuong.setForeground(new java.awt.Color(35, 30, 48));
@@ -225,7 +228,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         cbxNhomQuyen.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cbxNhomQuyen.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Admin (Toàn quyền)", "Quản lý Chi nhánh", "Nhân viên phục vụ", "Chưa cấp quyền" }));
         pnMain.add(cbxNhomQuyen);
-        cbxNhomQuyen.setBounds(20, 490, 370, 30);
+        cbxNhomQuyen.setBounds(20, 490, 170, 40);
 
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -233,7 +236,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         btnThemMoi.setText("Thêm mới");
         btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(20, 540, 170, 40);
+        btnThemMoi.setBounds(220, 490, 170, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -304,8 +307,54 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         pnMain.add(jScrollPane1);
         jScrollPane1.setBounds(420, 130, 600, 480);
 
+        btnXoa.setBackground(new java.awt.Color(235, 94, 141));
+        btnXoa.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnXoa.setForeground(new java.awt.Color(255, 255, 255));
+        btnXoa.setText("Xoá");
+        btnXoa.addActionListener(this::btnXoaActionPerformed);
+        pnMain.add(btnXoa);
+        btnXoa.setBounds(20, 540, 170, 40);
+
+        txtMatKhau.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        txtMatKhau.addActionListener(this::txtMatKhauActionPerformed);
+        pnMain.add(txtMatKhau);
+        txtMatKhau.setBounds(20, 310, 170, 30);
+
+        lblSDT1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblSDT1.setForeground(new java.awt.Color(35, 30, 48));
+        lblSDT1.setText("Số điện thoại (*)");
+        pnMain.add(lblSDT1);
+        lblSDT1.setBounds(170, 180, 220, 18);
+
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtMatKhauActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtMatKhauActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtMatKhauActionPerformed
+
+    private void btnXoaActionPerformed(java.awt.event.ActionEvent evt) {
+        if (maNVDangChon == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần xoá từ bảng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, 
+                "Bạn có chắc chắn muốn xoá nhân viên " + txtHoTen.getText() + " (Mã: " + maNVDangChon + ")?\n" +
+                "Hành động này sẽ xoá toàn bộ dữ liệu người dùng liên quan và không thể hoàn tác!", 
+                "Xác nhận xoá", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            boolean ok = controller.xoaNhanVien(maNVDangChon, maNDDangChon);
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Xoá nhân viên thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                lamMoiForm();
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(this, "Xoá nhân viên thất bại! Nhân viên có thể đang có dữ liệu liên quan ở các bảng khác (Hóa đơn, Phiên làm việc...).", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
     private void btnDoiAnhActionPerformed(java.awt.event.ActionEvent evt) {
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
@@ -346,7 +395,9 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         nd.setAnhDaiDien(anhPath != null ? anhPath.toString() : null);
 
         String maVaiTro = getMaVaiTroDangChon();
-        boolean ok = nhanVienDAO.themNhanVien(nv, nd, hoTen, maVaiTro);
+        String matKhau = txtMatKhau.getText().trim();
+        
+        boolean ok = controller.themNhanVien(nv, nd, hoTen, maVaiTro, matKhau);
         if (ok) {
             JOptionPane.showMessageDialog(this, "Thêm nhân viên thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             lamMoiForm();
@@ -384,7 +435,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         Object anhPath = lblAnhDaiDien.getClientProperty("anhPath");
         nd.setAnhDaiDien(anhPath != null ? anhPath.toString() : null);
 
-        boolean ok = nhanVienDAO.capNhatNhanVien(nv, nd, hoTen, getMaVaiTroDangChon());
+        String matKhau = txtMatKhau.getText().trim();
+        boolean ok = controller.capNhatNhanVien(nv, nd, hoTen, getMaVaiTroDangChon(), matKhau);
         if (ok) {
             JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             lamMoiForm();
@@ -408,7 +460,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         String tuKhoa = txtTimKiem.getText().trim();
-        List<Object[]> ds = tuKhoa.isEmpty() ? nhanVienDAO.layDanhSachNhanVien() : nhanVienDAO.timKiemNhanVien(tuKhoa);
+        List<Object[]> ds = tuKhoa.isEmpty() ? controller.layDanhSachNhanVien() : controller.timKiemNhanVien(tuKhoa);
         hienThiLenBang(ds);
     }
 
@@ -441,7 +493,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     // ---- HELPER METHODS ----
 
     private void loadData() {
-        List<Object[]> ds = nhanVienDAO.layDanhSachNhanVien();
+        List<Object[]> ds = controller.layDanhSachNhanVien();
         hienThiLenBang(ds);
     }
 
@@ -467,13 +519,14 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private void loadComboBoxData() {
         cbxChiNhanh.removeAllItems();
         cbxChiNhanh.addItem("-- Chọn chi nhánh --");
-        List<String[]> chiNhanhs = nhanVienDAO.layDanhSachChiNhanh();
+        List<String[]> chiNhanhs = controller.layDanhSachChiNhanh();
         for (String[] cn : chiNhanhs) {
             cbxChiNhanh.addItem(cn[1]);
             cbxChiNhanh.putClientProperty("maCN_" + cn[1], cn[0]);
         }
         cbxNhomQuyen.removeAllItems();
-        List<String[]> vaiTros = nhanVienDAO.layDanhSachVaiTro();
+        cbxNhomQuyen.addItem("-- Chưa cấp quyền --");
+        List<String[]> vaiTros = controller.layDanhSachVaiTro();
         for (String[] vt : vaiTros) {
             cbxNhomQuyen.addItem(vt[1]);
             cbxNhomQuyen.putClientProperty("maVT_" + vt[1], vt[0]);
@@ -488,6 +541,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         txtSDT.setText("");
         txtEmail.setText("");
         txtLuong.setText("");
+        txtMatKhau.setText("");
         txtTimKiem.setText("");
         cbxGioiTinh.setSelectedIndex(0);
         cbxCaLam.setSelectedIndex(0);
@@ -530,12 +584,19 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     }
 
     private void setComboByMaVT(String maVT) {
-        if (maVT == null) return;
-        for (int i = 0; i < cbxNhomQuyen.getItemCount(); i++) {
+        if (maVT == null) {
+            cbxNhomQuyen.setSelectedIndex(0);
+            return;
+        }
+        for (int i = 1; i < cbxNhomQuyen.getItemCount(); i++) {
             String ten = cbxNhomQuyen.getItemAt(i);
             Object ma = cbxNhomQuyen.getClientProperty("maVT_" + ten);
-            if (maVT.equals(ma)) { cbxNhomQuyen.setSelectedIndex(i); return; }
+            if (maVT.equals(ma)) { 
+                cbxNhomQuyen.setSelectedIndex(i); 
+                return; 
+            }
         }
+        cbxNhomQuyen.setSelectedIndex(0);
     }
 
 
@@ -546,6 +607,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private javax.swing.JButton btnPhanQuyen;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
+    private javax.swing.JButton btnXoa;
     private javax.swing.JComboBox<String> cbxCaLam;
     private javax.swing.JComboBox<String> cbxChiNhanh;
     private javax.swing.JComboBox<String> cbxGioiTinh;
@@ -565,6 +627,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblMaNV;
     private javax.swing.JLabel lblNhomQuyen;
     private javax.swing.JLabel lblSDT;
+    private javax.swing.JLabel lblSDT1;
     private javax.swing.JLabel lblTimKiem;
     private javax.swing.JLabel lblTrangThai;
     private javax.swing.JPanel pnHeader;
@@ -574,6 +637,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtHoTen;
     private javax.swing.JTextField txtLuong;
     private javax.swing.JTextField txtMaNV;
+    private javax.swing.JTextField txtMatKhau;
     private javax.swing.JTextField txtSDT;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables

@@ -29,6 +29,7 @@ public class ChuyenKhoanForm extends javax.swing.JDialog {
         this.maHoaDon = maHoaDon;
         initComponents();
         setupData();
+        pack();
         setLocationRelativeTo(parent);
     }
     

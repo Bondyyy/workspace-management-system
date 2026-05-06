@@ -3,10 +3,72 @@ package com.wms.view.TrangChuHoiVien;
 public class TrangChuHoiVienForm extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(TrangChuHoiVienForm.class.getName());
+    private javax.swing.JButton activeButton;
 
     public TrangChuHoiVienForm() {
         initComponents();
+        setupCustomUI();
+        
+        com.wms.model.NguoiDungDTO user = com.wms.controller.DangNhapController.getCurrentUser();
+        if (user != null) {
+            lblGreeting.setText("Xin chào " + user.getHoTen() + "!");
+        }
+
         showPanel(new com.wms.view.TrangChuHoiVien.TrangChu.TrangChuForm());
+        setActiveMenu(btnMenuTrangChu);
+    }
+
+    private void setupCustomUI() {
+        javax.swing.JButton[] menuButtons = {
+            btnMenuTrangChu, btnMenuDatCho, btnMenuUuDai, btnMenuTaiKhoan
+        };
+        
+        java.awt.Color defaultColor = new java.awt.Color(255, 255, 255);
+        java.awt.Color hoverColor = new java.awt.Color(252, 235, 241); 
+        
+        for (javax.swing.JButton btn : menuButtons) {
+            btn.setOpaque(true);
+            btn.setBackground(defaultColor);
+            btn.setFocusPainted(false);
+            btn.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 30, 0, 0));
+            
+            btn.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    if (btn != activeButton) {
+                        btn.setBackground(hoverColor); 
+                    }
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    if (btn != activeButton) {
+                        btn.setBackground(defaultColor); 
+                    }
+                }
+            });
+        }
+        
+        btnDangXuat.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 30, 0, 0));
+    }
+
+    private void setActiveMenu(javax.swing.JButton btn) {
+        java.awt.Color defaultColor = new java.awt.Color(255, 255, 255);
+        java.awt.Color activeColor = new java.awt.Color(252, 235, 241);
+        java.awt.Color activeTextColor = new java.awt.Color(235, 94, 141);
+        java.awt.Color defaultTextColor = new java.awt.Color(48, 30, 35);
+        
+        javax.swing.JButton[] menuButtons = {
+            btnMenuTrangChu, btnMenuDatCho, btnMenuUuDai, btnMenuTaiKhoan
+        };
+        
+        for (javax.swing.JButton b : menuButtons) {
+            if (b == btn) {
+                b.setBackground(activeColor);
+                b.setForeground(activeTextColor);
+                activeButton = b;
+            } else {
+                b.setBackground(defaultColor);
+                b.setForeground(defaultTextColor);
+            }
+        }
     }
 
     /**
@@ -20,15 +82,20 @@ public class TrangChuHoiVienForm extends javax.swing.JFrame {
 
         pnMain = new javax.swing.JPanel();
         pnSidebar = new javax.swing.JPanel();
+        pnLogo = new javax.swing.JPanel();
         lblLogo = new javax.swing.JLabel();
         lblLogoSub = new javax.swing.JLabel();
+        pnMenuContainer = new javax.swing.JPanel();
         btnMenuTrangChu = new javax.swing.JButton();
         btnMenuDatCho = new javax.swing.JButton();
         btnMenuUuDai = new javax.swing.JButton();
         btnMenuTaiKhoan = new javax.swing.JButton();
+        pnLogout = new javax.swing.JPanel();
         btnDangXuat = new javax.swing.JButton();
+        pnRightMain = new javax.swing.JPanel();
         pnHeader = new javax.swing.JPanel();
         lblGreeting = new javax.swing.JLabel();
+        pnUserInfo = new javax.swing.JPanel();
         lblMemberTier = new javax.swing.JLabel();
         pnContent = new javax.swing.JPanel();
 
@@ -36,70 +103,90 @@ public class TrangChuHoiVienForm extends javax.swing.JFrame {
         setTitle("Khu vực Hội viên - Spring System");
         setResizable(false);
 
-        pnMain.setBackground(new java.awt.Color(254, 248, 250));
+        pnMain.setBackground(new java.awt.Color(240, 240, 240));
         pnMain.setPreferredSize(new java.awt.Dimension(1300, 700));
-        pnMain.setLayout(null);
+        pnMain.setLayout(new java.awt.BorderLayout());
 
         pnSidebar.setBackground(new java.awt.Color(255, 255, 255));
-        pnSidebar.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 0, 1, new java.awt.Color(235, 235, 235)));
-        pnSidebar.setLayout(null);
+        pnSidebar.setPreferredSize(new java.awt.Dimension(260, 700));
+        pnSidebar.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 0, 1, new java.awt.Color(224, 224, 224)));
+        pnSidebar.setLayout(new java.awt.BorderLayout());
+
+        pnLogo.setBackground(new java.awt.Color(255, 255, 255));
+        pnLogo.setPreferredSize(new java.awt.Dimension(260, 90));
+        pnLogo.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(224, 224, 224)));
+        pnLogo.setLayout(null);
 
         lblLogo.setFont(new java.awt.Font("Segoe UI", 1, 26)); // NOI18N
         lblLogo.setForeground(new java.awt.Color(235, 94, 141));
         lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblLogo.setText("SPRING ✨");
-        pnSidebar.add(lblLogo);
-        lblLogo.setBounds(0, 20, 250, 40);
+        lblLogo.setText("SPRING MNGT");
+        pnLogo.add(lblLogo);
+        lblLogo.setBounds(0, 20, 260, 35);
 
+        lblLogoSub.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblLogoSub.setForeground(new java.awt.Color(136, 136, 136));
         lblLogoSub.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblLogoSub.setText("M E M B E R   P O R T A L");
-        pnSidebar.add(lblLogoSub);
-        lblLogoSub.setBounds(0, 55, 250, 20);
+        pnLogo.add(lblLogoSub);
+        lblLogoSub.setBounds(0, 55, 260, 20);
+
+        pnSidebar.add(pnLogo, java.awt.BorderLayout.NORTH);
+
+        pnMenuContainer.setBackground(new java.awt.Color(255, 255, 255));
+        pnMenuContainer.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        pnMenuContainer.setLayout(new javax.swing.BoxLayout(pnMenuContainer, javax.swing.BoxLayout.Y_AXIS));
 
         btnMenuTrangChu.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        btnMenuTrangChu.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuTrangChu.setForeground(new java.awt.Color(35, 30, 48));
         btnMenuTrangChu.setText("●  Trang chủ");
         btnMenuTrangChu.setBorderPainted(false);
         btnMenuTrangChu.setContentAreaFilled(false);
         btnMenuTrangChu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnMenuTrangChu.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuTrangChu.setMaximumSize(new java.awt.Dimension(32767, 50));
         btnMenuTrangChu.addActionListener(this::btnMenuTrangChuActionPerformed);
-        pnSidebar.add(btnMenuTrangChu);
-        btnMenuTrangChu.setBounds(20, 120, 210, 45);
+        pnMenuContainer.add(btnMenuTrangChu);
 
         btnMenuDatCho.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        btnMenuDatCho.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuDatCho.setForeground(new java.awt.Color(35, 30, 48));
         btnMenuDatCho.setText("●  Đặt chỗ không gian");
         btnMenuDatCho.setBorderPainted(false);
         btnMenuDatCho.setContentAreaFilled(false);
         btnMenuDatCho.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnMenuDatCho.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuDatCho.setMaximumSize(new java.awt.Dimension(32767, 50));
         btnMenuDatCho.addActionListener(this::btnMenuDatChoActionPerformed);
-        pnSidebar.add(btnMenuDatCho);
-        btnMenuDatCho.setBounds(20, 175, 210, 45);
+        pnMenuContainer.add(btnMenuDatCho);
 
         btnMenuUuDai.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        btnMenuUuDai.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuUuDai.setForeground(new java.awt.Color(35, 30, 48));
         btnMenuUuDai.setText("●  Ưu đãi của tôi");
         btnMenuUuDai.setBorderPainted(false);
         btnMenuUuDai.setContentAreaFilled(false);
         btnMenuUuDai.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnMenuUuDai.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuUuDai.setMaximumSize(new java.awt.Dimension(32767, 50));
         btnMenuUuDai.addActionListener(this::btnMenuUuDaiActionPerformed);
-        pnSidebar.add(btnMenuUuDai);
-        btnMenuUuDai.setBounds(20, 230, 210, 45);
+        pnMenuContainer.add(btnMenuUuDai);
 
         btnMenuTaiKhoan.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        btnMenuTaiKhoan.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuTaiKhoan.setForeground(new java.awt.Color(35, 30, 48));
         btnMenuTaiKhoan.setText("●  Thông tin tài khoản");
         btnMenuTaiKhoan.setBorderPainted(false);
         btnMenuTaiKhoan.setContentAreaFilled(false);
         btnMenuTaiKhoan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnMenuTaiKhoan.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuTaiKhoan.setMaximumSize(new java.awt.Dimension(32767, 50));
         btnMenuTaiKhoan.addActionListener(this::btnMenuTaiKhoanActionPerformed);
-        pnSidebar.add(btnMenuTaiKhoan);
-        btnMenuTaiKhoan.setBounds(20, 290, 210, 45);
+        pnMenuContainer.add(btnMenuTaiKhoan);
+
+        pnSidebar.add(pnMenuContainer, java.awt.BorderLayout.CENTER);
+
+        pnLogout.setBackground(new java.awt.Color(255, 255, 255));
+        pnLogout.setPreferredSize(new java.awt.Dimension(260, 80));
+        pnLogout.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 0, 0, 0, new java.awt.Color(224, 224, 224)));
+        pnLogout.setLayout(new java.awt.BorderLayout());
 
         btnDangXuat.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         btnDangXuat.setForeground(new java.awt.Color(150, 150, 150));
@@ -109,36 +196,43 @@ public class TrangChuHoiVienForm extends javax.swing.JFrame {
         btnDangXuat.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnDangXuat.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnDangXuat.addActionListener(this::btnDangXuatActionPerformed);
-        pnSidebar.add(btnDangXuat);
-        btnDangXuat.setBounds(20, 630, 210, 40);
+        pnLogout.add(btnDangXuat, java.awt.BorderLayout.CENTER);
 
-        pnMain.add(pnSidebar);
-        pnSidebar.setBounds(0, 0, 250, 700);
+        pnSidebar.add(pnLogout, java.awt.BorderLayout.SOUTH);
 
-        pnHeader.setBackground(new java.awt.Color(254, 248, 250));
-        pnHeader.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(235, 235, 235)));
-        pnHeader.setLayout(null);
+        pnMain.add(pnSidebar, java.awt.BorderLayout.WEST);
 
-        lblGreeting.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        lblGreeting.setForeground(new java.awt.Color(48, 30, 35));
-        lblGreeting.setText("👋 Xin chào Hội viên!");
-        pnHeader.add(lblGreeting);
-        lblGreeting.setBounds(30, 0, 250, 60);
+        pnRightMain.setLayout(new java.awt.BorderLayout());
+
+        pnHeader.setBackground(new java.awt.Color(255, 255, 255));
+        pnHeader.setPreferredSize(new java.awt.Dimension(1040, 60));
+        pnHeader.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(224, 224, 224)));
+        pnHeader.setLayout(new java.awt.BorderLayout());
+
+        lblGreeting.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblGreeting.setForeground(new java.awt.Color(35, 30, 48));
+        lblGreeting.setText("Xin chào Hội viên!");
+        lblGreeting.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 20, 0, 0));
+        pnHeader.add(lblGreeting, java.awt.BorderLayout.WEST);
+
+        pnUserInfo.setBackground(new java.awt.Color(255, 255, 255));
+        pnUserInfo.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 20));
+        pnUserInfo.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 5, 15));
 
         lblMemberTier.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblMemberTier.setForeground(new java.awt.Color(235, 94, 141));
-        lblMemberTier.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblMemberTier.setText("⭐ Hạng: VIP Kim Cương");
-        pnHeader.add(lblMemberTier);
-        lblMemberTier.setBounds(800, 0, 220, 60);
+        lblMemberTier.setText("Hạng: VIP Kim Cương");
+        pnUserInfo.add(lblMemberTier);
 
-        pnMain.add(pnHeader);
-        pnHeader.setBounds(250, 0, 1050, 60);
+        pnHeader.add(pnUserInfo, java.awt.BorderLayout.EAST);
+
+        pnRightMain.add(pnHeader, java.awt.BorderLayout.NORTH);
 
         pnContent.setBackground(new java.awt.Color(254, 248, 250));
         pnContent.setLayout(new java.awt.BorderLayout());
-        pnMain.add(pnContent);
-        pnContent.setBounds(250, 60, 1050, 640);
+        pnRightMain.add(pnContent, java.awt.BorderLayout.CENTER);
+
+        pnMain.add(pnRightMain, java.awt.BorderLayout.CENTER);
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
 
@@ -155,18 +249,22 @@ public class TrangChuHoiVienForm extends javax.swing.JFrame {
 
     private void btnMenuTrangChuActionPerformed(java.awt.event.ActionEvent evt) {
         showPanel(new com.wms.view.TrangChuHoiVien.TrangChu.TrangChuForm());
+        setActiveMenu(btnMenuTrangChu);
     }
 
     private void btnMenuDatChoActionPerformed(java.awt.event.ActionEvent evt) {
         showPanel(new com.wms.view.TrangChuHoiVien.DatChoKhongGian.XemChiNhanh.XemChiNhanhForm());
+        setActiveMenu(btnMenuDatCho);
     }
 
     private void btnMenuUuDaiActionPerformed(java.awt.event.ActionEvent evt) {
         showPanel(new com.wms.view.TrangChuHoiVien.UuDaiCuaToi.UuDaiCuaToiForm());
+        setActiveMenu(btnMenuUuDai);
     }
 
     private void btnMenuTaiKhoanActionPerformed(java.awt.event.ActionEvent evt) {
         showPanel(new com.wms.view.TrangChuHoiVien.ThongTinHoiVien.ThongTinHoiVienForm());
+        setActiveMenu(btnMenuTaiKhoan);
     }
 
     private void btnDangXuatActionPerformed(java.awt.event.ActionEvent evt) {
@@ -207,7 +305,12 @@ public class TrangChuHoiVienForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblMemberTier;
     private javax.swing.JPanel pnContent;
     private javax.swing.JPanel pnHeader;
+    private javax.swing.JPanel pnLogo;
+    private javax.swing.JPanel pnLogout;
     private javax.swing.JPanel pnMain;
+    private javax.swing.JPanel pnMenuContainer;
+    private javax.swing.JPanel pnRightMain;
     private javax.swing.JPanel pnSidebar;
+    private javax.swing.JPanel pnUserInfo;
     // End of variables declaration//GEN-END:variables
 }

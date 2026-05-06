@@ -259,7 +259,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelHienThiGiamGia.putClientProperty("lblGiaTriGG", lblGiaTriGG);
         
         // Nút xóa mã giảm giá
-        btnXoaMaGG = new JButton("✕") {
+        btnXoaMaGG = new JButton("X") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -487,14 +487,21 @@ public class ThanhToanHoaDonForm extends JPanel {
 
     private void tinhLaiTongTien() {
         if (maGiamGiaDangAp != null) {
+            // Nếu có mã giảm giá, tính dựa trên tiền gốc
             tienGiamGia = maGiamGiaDangAp.getGiaTriGiamGia();
             thanhTien = Math.max(0, tongTienGoc - tienGiamGia);
             
             JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
-            lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
+            if (lblGiaTriGG != null) {
+                lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
+            }
         } else {
+            // Nếu không có mã giảm giá, thành tiền bằng tiền gốc
             tienGiamGia = 0;
-            thanhTien = tongTienGoc;
+            // Nếu DTO ban đầu đã có thanhTien (từ trigger DB), ta nên giữ nó nếu không có voucher
+            if (thanhTien == 0 && tongTienGoc > 0) {
+                thanhTien = tongTienGoc;
+            }
         }
         
         lblTongTien.setText(formatTien.format(tongTienGoc));
@@ -630,7 +637,12 @@ public class ThanhToanHoaDonForm extends JPanel {
 
         this.hoaDonHienTai = hoaDon;
         this.tongTienGoc = hoaDon.getTongTien();
-        this.thanhTien = tongTienGoc;
+        this.thanhTien = (hoaDon.getThanhTien() > 0) ? hoaDon.getThanhTien() : tongTienGoc;
+        
+        // Trường hợp đặc biệt: Nếu tổng tiền gốc bằng 0 nhưng thành tiền có giá trị (do trigger DB tính)
+        if (this.tongTienGoc == 0 && this.thanhTien > 0) {
+            this.tongTienGoc = this.thanhTien;
+        }
         
         // Cập nhật các label
         lblMaHD.setText(hoaDon.getMaHoaDon() != null ? hoaDon.getMaHoaDon() : "-");
@@ -760,7 +772,7 @@ public class ThanhToanHoaDonForm extends JPanel {
             return;
         }
 
-        JFrame parentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        java.awt.Frame parentFrame = JOptionPane.getFrameForComponent(this);
         TienMatForm dialog = new TienMatForm(parentFrame, true, thanhTien);
         dialog.setVisible(true);
         
@@ -772,8 +784,7 @@ public class ThanhToanHoaDonForm extends JPanel {
             boolean success = thanhToanController.xacNhanThanhToan(
                 hoaDonHienTai.getMaHoaDon(), 
                 "Tiền mặt",
-                maGiamGiaDangAp != null ? maGiamGiaDangAp.getMaPGG() : null,
-                thanhTien
+                maGiamGiaDangAp != null ? maGiamGiaDangAp.getMaPGG() : null
             );
             
             if (success) {
@@ -799,7 +810,7 @@ public class ThanhToanHoaDonForm extends JPanel {
             return;
         }
 
-        JFrame parentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        java.awt.Frame parentFrame = JOptionPane.getFrameForComponent(this);
         ChuyenKhoanForm dialog = new ChuyenKhoanForm(parentFrame, true, thanhTien, hoaDonHienTai.getMaHoaDon());
         dialog.setVisible(true);
         
@@ -811,8 +822,7 @@ public class ThanhToanHoaDonForm extends JPanel {
             boolean success = thanhToanController.xacNhanThanhToan(
                 hoaDonHienTai.getMaHoaDon(), 
                 "Chuyển khoản",
-                maGiamGiaDangAp != null ? maGiamGiaDangAp.getMaPGG() : null,
-                thanhTien
+                maGiamGiaDangAp != null ? maGiamGiaDangAp.getMaPGG() : null
             );
             
             if (success) {

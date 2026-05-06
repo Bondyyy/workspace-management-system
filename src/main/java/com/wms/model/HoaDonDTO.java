@@ -12,8 +12,28 @@ public class HoaDonDTO {
     private String maPGG;
     private String maNV;
     private String hoTenKH;
+    private String maDatCho;
+    private String trangThaiPhien;
+    private java.sql.Timestamp thoiGianBatDauPhien;
+    private java.sql.Timestamp thoiGianKetThucPhien;
 
     public HoaDonDTO() {
+    }
+
+    public java.sql.Timestamp getThoiGianKetThucPhien() {
+        return thoiGianKetThucPhien;
+    }
+
+    public void setThoiGianKetThucPhien(java.sql.Timestamp thoiGianKetThucPhien) {
+        this.thoiGianKetThucPhien = thoiGianKetThucPhien;
+    }
+
+    public String getMaDatCho() {
+        return maDatCho;
+    }
+
+    public void setMaDatCho(String maDatCho) {
+        this.maDatCho = maDatCho;
     }
 
     public String getMaHoaDon() {
@@ -102,6 +122,22 @@ public class HoaDonDTO {
 
     public void setHoTenKH(String hoTenKH) {
         this.hoTenKH = hoTenKH;
+    }
+
+    public String getTrangThaiPhien() {
+        return trangThaiPhien;
+    }
+
+    public void setTrangThaiPhien(String trangThaiPhien) {
+        this.trangThaiPhien = trangThaiPhien;
+    }
+
+    public java.sql.Timestamp getThoiGianBatDauPhien() {
+        return thoiGianBatDauPhien;
+    }
+
+    public void setThoiGianBatDauPhien(java.sql.Timestamp thoiGianBatDauPhien) {
+        this.thoiGianBatDauPhien = thoiGianBatDauPhien;
     }
 
 }

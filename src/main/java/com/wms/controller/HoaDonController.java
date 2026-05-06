@@ -25,11 +25,11 @@ public class HoaDonController {
         return hoaDonDAO.layThongTinChiTietHoaDon(maHoaDon);
     }
 
-    public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG, double thanhTien) {
+    public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG) {
         if (maHoaDon == null || phuongThucThanhToan == null) {
             return false;
         }
-        return hoaDonDAO.xacNhanThanhToan(maHoaDon, phuongThucThanhToan, maNV, maPGG, thanhTien);
+        return hoaDonDAO.xacNhanThanhToan(maHoaDon, phuongThucThanhToan, maNV, maPGG);
     }
 
     public boolean huyHoaDon(String maHoaDon) {

@@ -21,11 +21,11 @@ public class ThanhToanController {
     }
 
     // View sẽ gọi hàm này khi người dùng bấm xác nhận ở form Tiền Mặt / Chuyển Khoản
-    public boolean xacNhanThanhToan(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
+    public boolean xacNhanThanhToan(String maHoaDon, String phuongThuc, String maPGG) {
         if (maHoaDon == null || maHoaDon.isEmpty()) {
             return false;
         }
-        return thanhToanService.thucHienThanhToan(maHoaDon, phuongThuc, maPGG, thanhTien);
+        return thanhToanService.thucHienThanhToan(maHoaDon, phuongThuc, maPGG);
     }
     
     /**

@@ -7,8 +7,8 @@ DECLARE
 BEGIN
     -- Chỉ kiểm tra khi đang cập nhật sang trạng thái thanh toán thành công
     -- hoặc khi chọn phương thức thanh toán
-    IF (:NEW.TrangThaiThanhToan = 'Đã thanh toán thành công' AND 
-        NVL(:OLD.TrangThaiThanhToan, '') != 'Đã thanh toán thành công')
+    IF ((:NEW.TrangThaiThanhToan IN ('Đã thanh toán thành công', 'Đã thanh toán')) AND 
+        (NVL(:OLD.TrangThaiThanhToan, '') NOT IN ('Đã thanh toán thành công', 'Đã thanh toán')))
        OR
        (:NEW.PhuongThucThanhToan IS NOT NULL AND 
         :OLD.PhuongThucThanhToan IS NULL) THEN

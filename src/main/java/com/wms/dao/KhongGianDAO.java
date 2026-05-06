@@ -259,6 +259,12 @@ public class KhongGianDAO {
     }
 
     public boolean capNhat(KhongGianDTO dto) {
+        // Ưu tiên cập nhật trực tiếp vào các cột tọa độ
+        if (capNhatDirect(dto)) {
+            return true;
+        }
+        
+        // Chỉ thử Stored Procedure nếu cập nhật trực tiếp thất bại
         String sql = "{call SP_CapNhatKhongGian(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (CallableStatement cs = getConn().prepareCall(sql)) {
             cs.setString(1, dto.getMaKG());
@@ -275,7 +281,8 @@ public class KhongGianDAO {
             cs.execute();
             return true;
         } catch (SQLException e) {
-            return capNhatDirect(dto);
+            System.err.println("[KhongGianDAO] Lỗi cập nhật nghiêm trọng: " + e.getMessage());
+            return false; // Trả về false để Form biết là lưu thất bại
         }
     }
 
@@ -291,10 +298,11 @@ public class KhongGianDAO {
             ps.setInt(6, dto.getToaDoY());
             ps.setInt(7, dto.getChieuDai());
             ps.setInt(8, dto.getChieuRong());
-            ps.setString(9, dto.getMaKG());
+            ps.setString(9, dto.getMaKG().trim()); // Sử dụng trim() để tránh lỗi khoảng trắng
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            return capNhatBasic(dto);
+            System.err.println("[KhongGianDAO] Lỗi capNhatDirect: " + e.getMessage());
+            return false;
         }
     }
 
@@ -305,10 +313,10 @@ public class KhongGianDAO {
             ps.setString(2, dto.getViTri());
             ps.setString(3, dto.getMaLoaiKG());
             ps.setString(4, dto.getTrangThaiKG());
-            ps.setString(5, dto.getMaKG());
+            ps.setString(5, dto.getMaKG().trim());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[KhongGianDAO] Lỗi capNhatBasic: " + e.getMessage());
             return false;
         }
     }

@@ -19,7 +19,7 @@ BEGIN
 
     IF v_TrangThai = 'Đã sử dụng' THEN
         RAISE_APPLICATION_ERROR(-20003, 'Lỗi: Vé QR này đã được xài trước đó!');
-    ELSIF v_TrangThai != 'Đã thanh toán thành công' THEN
+    ELSIF v_TrangThai NOT IN ('Đã thanh toán thành công', 'Đang chờ thanh toán') THEN
         RAISE_APPLICATION_ERROR(-20004, 'Lỗi: Vé chưa thanh toán hoặc giao dịch thất bại!');
     END IF;
 

@@ -168,6 +168,15 @@ public class KhachHangDAO {
     }
 
     public void insert(HoiVienDTO dto) throws SQLException {
+        // Kiểm tra trùng lặp Email và SĐT trước khi bắt đầu transaction
+        NguoiDungDAO ndDAO = new NguoiDungDAO();
+        if (ndDAO.kiemTraEmailTonTai(dto.getEmail())) {
+            throw new SQLException("Lỗi: Email " + dto.getEmail() + " đã tồn tại trong hệ thống!");
+        }
+        if (ndDAO.kiemTraSdtTonTai(dto.getSdt())) {
+            throw new SQLException("Lỗi: Số điện thoại " + dto.getSdt() + " đã tồn tại trong hệ thống!");
+        }
+
         String maND = java.util.UUID.randomUUID().toString();
         String maKH = java.util.UUID.randomUUID().toString();
         dto.setMaND(maND);

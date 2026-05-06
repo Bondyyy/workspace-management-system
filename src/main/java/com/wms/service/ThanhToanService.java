@@ -26,11 +26,11 @@ public class ThanhToanService {
     }
 
     // Thực hiện logic thanh toán
-    public boolean thucHienThanhToan(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
+    public boolean thucHienThanhToan(String maHoaDon, String phuongThuc, String maPGG) {
         String maNV = layMaNhanVienDangNhap();
         
         // Gọi DAO để update
-        boolean updated = hoaDonDAO.xacNhanThanhToan(maHoaDon, phuongThuc, maNV, maPGG, thanhTien);
+        boolean updated = hoaDonDAO.xacNhanThanhToan(maHoaDon, phuongThuc, maNV, maPGG);
         
         if (updated && maPGG != null && !maPGG.isEmpty()) {
             // Tăng số lượng đã dùng của voucher

@@ -24,6 +24,7 @@ public class QuanLyHangTVForm extends javax.swing.JDialog {
     public QuanLyHangTVForm(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        pack();
         loadDataToTable();
     }
 
@@ -115,6 +116,7 @@ public class QuanLyHangTVForm extends javax.swing.JDialog {
         pnLeft.add(lblMaHang);
         lblMaHang.setBounds(20, 60, 260, 20);
 
+        txtMaHang.setEditable(false);
         txtMaHang.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnLeft.add(txtMaHang);
         txtMaHang.setBounds(20, 80, 260, 35);
@@ -126,7 +128,12 @@ public class QuanLyHangTVForm extends javax.swing.JDialog {
         lblTenHang.setBounds(20, 130, 260, 20);
 
         cbxTenHang.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxTenHang.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Khách hàng mới", "Thành viên Bạc", "Thành viên Vàng", "VIP Kim Cương" }));
+        cbxTenHang.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Không có", "Đồng", "Bạc", "Vàng", "Kim cương" }));
+        cbxTenHang.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxTenHangActionPerformed(evt);
+            }
+        });
         pnLeft.add(cbxTenHang);
         cbxTenHang.setBounds(20, 150, 260, 35);
 
@@ -241,6 +248,11 @@ public class QuanLyHangTVForm extends javax.swing.JDialog {
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cbxTenHangActionPerformed(java.awt.event.ActionEvent evt) {
+        int index = cbxTenHang.getSelectedIndex();
+        txtMaHang.setText("HTV0" + (index + 1));
+    }
 
     private void btnThemActionPerformed(java.awt.event.ActionEvent evt) {
         com.wms.model.HangThanhVienDTO dto = new com.wms.model.HangThanhVienDTO();

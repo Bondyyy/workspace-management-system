@@ -4,10 +4,9 @@
  */
 package com.wms.view.TrangChuQuanLy.QuanLyHoiVien;
 
-
 /**
  *
- * @author Thinkapd T14s
+ * @author HuyLai
  */
 public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private com.wms.controller.QuanLyHoiVienController controller = new com.wms.controller.QuanLyHoiVienController();
@@ -36,7 +35,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
                 new java.text.SimpleDateFormat("dd/MM/yyyy").format(dto.getNgaySinh());
             }
             model.addRow(new Object[] {
-                    dto.getMaKH(), dto.getHoTen(), dto.getSdt(), dto.getEmail(), dto.getTongChiTieu(), dto.getHangThanhVien(), dto.getTrangThai()
+                    dto.getMaKH(), dto.getHoTen(), dto.getSdt(), dto.getEmail(), dto.getTongChiTieu(),
+                    dto.getHangThanhVien(), dto.getTrangThai()
             });
         }
     }
@@ -48,7 +48,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated
+    // Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -83,6 +84,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnTimKiem = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblHoiVien = new javax.swing.JTable();
+        btnXoa = new javax.swing.JButton();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -209,9 +211,10 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         lblHangTV.setBounds(20, 400, 370, 18);
 
         cbxHangTV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxHangTV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Khách hàng mới", "Thành viên Bạc", "Thành viên Vàng", "VIP Kim Cương" }));
+        cbxHangTV.setModel(new javax.swing.DefaultComboBoxModel<>(
+                new String[] { "Không có", "Đồng", "Bạc", "Vàng", "Kim cương" }));
         pnMain.add(cbxHangTV);
-        cbxHangTV.setBounds(20, 420, 370, 30);
+        cbxHangTV.setBounds(20, 420, 170, 40);
 
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -219,7 +222,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnThemMoi.setText("Thêm mới");
         btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(20, 470, 170, 40);
+        btnThemMoi.setBounds(220, 420, 170, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -263,19 +266,18 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnTimKiem.setBounds(920, 80, 100, 35);
 
         tblHoiVien.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+                new Object[][] {
 
-            },
-            new String [] {
-                "Mã HV", "Họ và tên", "SĐT", "Email", "Tổng chi tiêu", "Hạng TV", "Trạng thái"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
+                },
+                new String[] {
+                        "Mã HV", "Họ và tên", "SĐT", "Email", "Tổng chi tiêu", "Hạng TV", "Trạng thái"
+                }) {
+            boolean[] canEdit = new boolean[] {
+                    false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             }
         });
         tblHoiVien.setRowHeight(30);
@@ -290,11 +292,21 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         pnMain.add(jScrollPane1);
         jScrollPane1.setBounds(420, 130, 600, 480);
 
+        btnXoa.setBackground(new java.awt.Color(235, 94, 141));
+        btnXoa.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnXoa.setForeground(new java.awt.Color(255, 255, 255));
+        btnXoa.setText("Xoá");
+        btnXoa.addActionListener(this::btnXoaActionPerformed);
+        pnMain.add(btnXoa);
+        btnXoa.setBounds(20, 470, 170, 40);
+
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnQuanLyHangActionPerformed(java.awt.event.ActionEvent evt) {
-        com.wms.view.TrangChuQuanLy.QuanLyHoiVien.QuanLyHangThanhVien.QuanLyHangTVForm form = new com.wms.view.TrangChuQuanLy.QuanLyHoiVien.QuanLyHangThanhVien.QuanLyHangTVForm(new javax.swing.JFrame(), true);
+        java.awt.Window parentWindow = javax.swing.SwingUtilities.getWindowAncestor(this);
+        com.wms.view.TrangChuQuanLy.QuanLyHoiVien.QuanLyHangThanhVien.QuanLyHangTVForm form = new com.wms.view.TrangChuQuanLy.QuanLyHoiVien.QuanLyHangThanhVien.QuanLyHangTVForm(
+                (java.awt.Frame) parentWindow, true);
         form.setLocationRelativeTo(this);
         form.setVisible(true);
     }
@@ -305,7 +317,9 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         if (fileChooser.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
             java.io.File file = fileChooser.getSelectedFile();
             currentAvatarPath = file.getAbsolutePath();
-            lblAnhDaiDien.setIcon(new javax.swing.ImageIcon(new javax.swing.ImageIcon(currentAvatarPath).getImage().getScaledInstance(lblAnhDaiDien.getWidth(), lblAnhDaiDien.getHeight(), java.awt.Image.SCALE_SMOOTH)));
+            lblAnhDaiDien.setIcon(
+                    new javax.swing.ImageIcon(new javax.swing.ImageIcon(currentAvatarPath).getImage().getScaledInstance(
+                            lblAnhDaiDien.getWidth(), lblAnhDaiDien.getHeight(), java.awt.Image.SCALE_SMOOTH)));
             lblAnhDaiDien.setText("");
         }
     }
@@ -462,13 +476,16 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             if (selectedHoiVien.getTrangThai() != null) {
                 cbxTrangThai.setSelectedItem(selectedHoiVien.getTrangThai());
             }
-            txtTongChiTieu.setText(selectedHoiVien.getTongChiTieu() != null ? String.valueOf(selectedHoiVien.getTongChiTieu()) : "0");
+            txtTongChiTieu.setText(
+                    selectedHoiVien.getTongChiTieu() != null ? String.valueOf(selectedHoiVien.getTongChiTieu()) : "0");
             txtMaHV.setText(selectedHoiVien.getMaKH());
 
             if (selectedHoiVien.getAnhDaiDien() != null && !selectedHoiVien.getAnhDaiDien().isEmpty()) {
                 currentAvatarPath = selectedHoiVien.getAnhDaiDien();
                 try {
-                    lblAnhDaiDien.setIcon(new javax.swing.ImageIcon(new javax.swing.ImageIcon(currentAvatarPath).getImage().getScaledInstance(lblAnhDaiDien.getWidth(), lblAnhDaiDien.getHeight(), java.awt.Image.SCALE_SMOOTH)));
+                    lblAnhDaiDien.setIcon(new javax.swing.ImageIcon(
+                            new javax.swing.ImageIcon(currentAvatarPath).getImage().getScaledInstance(
+                                    lblAnhDaiDien.getWidth(), lblAnhDaiDien.getHeight(), java.awt.Image.SCALE_SMOOTH)));
                     lblAnhDaiDien.setText("");
                 } catch (Exception e) {
                     lblAnhDaiDien.setIcon(null);
@@ -489,6 +506,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private javax.swing.JButton btnQuanLyHang;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
+    private javax.swing.JButton btnXoa;
     private javax.swing.JComboBox<String> cbxGioiTinh;
     private javax.swing.JComboBox<String> cbxHangTV;
     private javax.swing.JComboBox<String> cbxTrangThai;
@@ -517,5 +535,3 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtTongChiTieu;
     // End of variables declaration//GEN-END:variables
 }
-
-

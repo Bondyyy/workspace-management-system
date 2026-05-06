@@ -42,8 +42,11 @@ public class VaiTroDAO {
             autoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
-            String maVT = taoMaVaiTroMoi(conn);
-            vt.setMaVaiTro(maVT);
+            String maVT = vt.getMaVaiTro();
+            if (maVT == null || maVT.trim().isEmpty()) {
+                maVT = taoMaVaiTroMoi(conn);
+                vt.setMaVaiTro(maVT);
+            }
 
             String sqlVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
@@ -284,13 +287,17 @@ public class VaiTroDAO {
     public List<ChucNangDTO> getChucNangMacDinh() {
         List<ChucNangDTO> list = new ArrayList<>();
         String[][] data = {
-                { "CN01", "Tổng quan", "Xem dashboard thống kê và báo cáo" },
-                { "CN02", "Quản lý Chi nhánh", "Thêm, sửa, vô hiệu hóa thông tin chi nhánh" },
-                { "CN03", "Quản lý Không gian", "Thêm, sửa, xóa và xem sơ đồ không gian" },
-                { "CN04", "Quản lý Dịch vụ", "Thêm, sửa, xóa dịch vụ F&B và tiện ích" },
-                { "CN05", "Quản lý Phiếu giảm giá", "Tạo và duyệt chương trình khuyến mãi" },
-                { "CN06", "Quản lý Nhân viên", "Quản lý thông tin và phân quyền nhân viên" },
-                { "CN07", "Quản lý Hội viên", "Quản lý thông tin và hạng thành viên" }
+            { "CN01", "Tổng quan", "Xem dashboard thống kê và báo cáo" },
+            { "CN02", "Chi nhánh", "Quản lý thông tin và trạng thái các chi nhánh" },
+            { "CN03", "Không gian", "Quản lý sơ đồ, vị trí và trạng thái chỗ ngồi/phòng" },
+            { "CN04", "Thông tin Dịch vụ", "Quản lý danh mục dịch vụ F&B và tiện ích" },
+            { "CN05", "Kho Dịch vụ", "Quản lý nhập xuất tồn kho hàng hóa dịch vụ" },
+            { "CN06", "Dịch vụ Khách đặt", "Quản lý các yêu cầu dịch vụ từ khách hàng" },
+            { "CN07", "Phiên làm việc", "Theo dõi và quản lý các ca trực, phiên sử dụng" },
+            { "CN08", "Hóa đơn & Thu ngân", "Xử lý thanh toán, xuất hóa đơn và báo cáo doanh thu" },
+            { "CN09", "Khuyến mãi (Voucher)", "Tạo và quản lý các chương trình ưu đãi, mã giảm giá" },
+            { "CN10", "Hội viên / Khách hàng", "Quản lý thông tin, hạng thành viên và lịch sử tích điểm" },
+            { "CN11", "Nhân sự / Phân quyền", "Quản lý tài khoản nhân viên và thiết lập quyền hạn" }
         };
         for (String[] row : data) {
             ChucNangDTO cn = new ChucNangDTO();
@@ -320,8 +327,8 @@ public class VaiTroDAO {
             
             // Xóa các chức năng dư thừa cũ không còn tồn tại
             try (Statement st = conn.createStatement()) {
-                st.executeUpdate("DELETE FROM CHITIETCHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07')");
-                st.executeUpdate("DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07')");
+                st.executeUpdate("DELETE FROM CHITIETCHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11')");
+                st.executeUpdate("DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11')");
             }
             System.out.println("[VaiTroDAO] Đồng bộ dữ liệu bảng CHUCNANG thành công.");
         } catch (SQLException e) {

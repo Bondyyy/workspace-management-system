@@ -1,6 +1,9 @@
 CREATE OR REPLACE TRIGGER TRG_TaoHoaDonKhiMoPhien
 AFTER INSERT ON PHIENLAMVIEC
 FOR EACH ROW
+-- Chỉ tự động tạo hóa đơn khi mở phiên trực tiếp (Đang hoạt động)
+-- Đối với khách đặt trước, hóa đơn sẽ được xử lý bởi code ứng dụng hoặc procedure thanh toán
+WHEN (NEW.TrangThaiPhien = 'Đang hoạt động')
 DECLARE
     v_MaHoaDon VARCHAR2(50);
 BEGIN
@@ -18,12 +21,12 @@ BEGIN
         MaNV
     ) VALUES (
         v_MaHoaDon,
-        0,  -- TongTien sẽ được tính lại bởi trigger TRG_TinhToanHoaDon
-        0,  -- ThanhTien sẽ được tính lại bởi trigger TRG_TinhToanHoaDon
+        0,  -- Sẽ được cập nhật khi kết thúc phiên
+        0,  -- Sẽ được cập nhật khi kết thúc phiên
         SYSTIMESTAMP,
         'Đang chờ thanh toán',
         :NEW.MaPhien,
-        NULL  -- MaNV sẽ được cập nhật sau khi lễ tân xác nhận thanh toán
+        NULL
     );
 END TRG_TaoHoaDonKhiMoPhien;
 /

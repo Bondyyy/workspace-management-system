@@ -53,6 +53,11 @@ BEGIN
         p_DuongDayNong, 'Đang hoạt động'
     );
 
+    -- Cập nhật nhân viên quản lý cho chi nhánh mới
+    UPDATE NHANVIEN 
+    SET MaCN = p_MaCN 
+    WHERE MaNV = p_MaNV_QuanLy;
+
     COMMIT;
     p_outMessage := 'Thêm chi nhánh "' || p_TenCN || '" thành công!';
 

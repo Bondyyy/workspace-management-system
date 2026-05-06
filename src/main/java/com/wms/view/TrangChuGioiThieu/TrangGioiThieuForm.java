@@ -4,25 +4,259 @@
  */
 package com.wms.view.TrangChuGioiThieu;
 
-/**
- *
- * @author Thinkapd T14s
- */
+import java.awt.Image;
+import javax.swing.ImageIcon;
+
 public class TrangGioiThieuForm extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger
             .getLogger(TrangGioiThieuForm.class.getName());
 
-    /**
-     * Creates new form TrangGioiThieuForm
-     */
     public TrangGioiThieuForm() {
         initComponents();
-        showLoginForm(); // Mặc định mở form đăng nhập
+        setSize(1200, 720);
+        setLocationRelativeTo(null);
+
+
+
+        // Cấu hình các panel cho phép hiển thị mờ
+        pnLeft.setOpaque(false);
+        pnRight.setOpaque(false);
+        pnAuthContainer.setOpaque(false);
+
+        // Đưa ảnh nền ra pnMain và mở rộng full kích thước
+        pnMain.add(lblBackground);
+        lblBackground.setBounds(0, 0, 1200, 700);
+        // Đưa lblBackground xuống lớp dưới cùng
+        pnMain.setComponentZOrder(lblBackground, pnMain.getComponentCount() - 1);
+
+        // Tải ảnh nền hero
+        setBackgroundImage("/images/TrangGioiThieu.png");
+
+        // Làm mờ khung chứa chữ Spring Workspace và bo góc
+        pnTextOverlay.setOpaque(false);
+        pnTextOverlay.setBorder(new javax.swing.border.AbstractBorder() {
+            @Override
+            public void paintBorder(java.awt.Component c, java.awt.Graphics g, int x, int y, int width, int height) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new java.awt.Color(255, 255, 255, 170)); // Mờ hơn (alpha 170)
+                g2.fillRoundRect(x, y, width, height, 25, 25); // Bo góc 25px
+                g2.dispose();
+            }
+        });
+
+        // Làm mờ khung đăng nhập
+        pnLeft.setBorder(new javax.swing.border.AbstractBorder() {
+            @Override
+            public void paintBorder(java.awt.Component c, java.awt.Graphics g, int x, int y, int width, int height) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setColor(new java.awt.Color(255, 255, 255, 225)); // Khung đăng nhập trắng mờ (alpha 225)
+                g2.fillRect(x, y, width, height);
+                g2.dispose();
+            }
+        });
+
+        // Mở form đăng nhập
+        showLoginForm();
+
+        // === TEAM SECTION mới (thêm trực tiếp vào pnMain, y = 700) ===
+        javax.swing.JPanel teamSection = buildTeamSection();
+        teamSection.setBounds(0, 700, 1200, 580);
+        pnMain.add(teamSection);
+
+        // Cập nhật lại kích thước của pnMain để JScrollPane cuộn được
+        pnMain.setPreferredSize(new java.awt.Dimension(1200, 1280));
+
+        // Cuộn mượt hơn
+        scrollPaneMain.getVerticalScrollBar().setUnitIncrement(20);
+
+        // Scroll về đầu trang
+        javax.swing.SwingUtilities.invokeLater(() -> scrollPaneMain.getVerticalScrollBar().setValue(0));
+    }
+
+    /**
+     * Team section phong cách nhẹ nhàng, nền hồng nhạt — người dùng scroll xuống
+     * mới thấy
+     */
+    private javax.swing.JPanel buildTeamSection() {
+        javax.swing.JPanel section = new javax.swing.JPanel(null);
+        // Nền hồng nhạt — như nh trong ảnh tham khảo
+        section.setBackground(new java.awt.Color(252, 237, 243));
+
+        // Label nhỏ phía trên: "VỀ CHÚNG TÔI"
+        javax.swing.JLabel lblAbout = new javax.swing.JLabel("VỀ CHÚNG TÔI");
+        lblAbout.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+        lblAbout.setForeground(new java.awt.Color(220, 70, 110));
+        lblAbout.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblAbout.setBounds(0, 40, 1200, 20);
+        section.add(lblAbout);
+
+        // Tiêu đề chính: "Đội hình Spring"
+        javax.swing.JLabel title = new javax.swing.JLabel("Đội hình Spring");
+        title.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 36));
+        title.setForeground(new java.awt.Color(25, 25, 40));
+        title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        title.setBounds(0, 65, 1200, 48);
+        section.add(title);
+
+        // Mô tả
+        javax.swing.JLabel desc = new javax.swing.JLabel(
+                "Nhóm Spring với rất nhiều ☕ và 💻");
+        desc.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        desc.setForeground(new java.awt.Color(100, 100, 120));
+        desc.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        desc.setBounds(0, 118, 1200, 22);
+        section.add(desc);
+
+        // 4 thành viên — tên đầy đủ
+        String[] names = { "Lai Mộc Huy", "Huỳnh Đức Dũng", "Sơn Nguyễn Kỳ Duyên", "Nguyễn Thành Đức" };
+        String[] roles = { "Nhóm trưởng", "Nhóm phó", "Thư ký", "Thành viên" };
+        String[] paths = {
+                "/images/ThanhVienNhom/Huy2.png",
+                "/images/ThanhVienNhom/Dung2.png",
+                "/images/ThanhVienNhom/Duyen2.png",
+                "/images/ThanhVienNhom/Duc.png"
+        };
+
+        // Card lớn hơn — ảnh full-width phần trên
+        int cardW = 230, cardH = 320, gap = 22;
+        int startX = (1200 - (4 * cardW + 3 * gap)) / 2;
+        for (int i = 0; i < 4; i++) {
+            javax.swing.JPanel card = buildMemberCard(names[i], roles[i], paths[i], cardW, cardH);
+            card.setBounds(startX + i * (cardW + gap), 160, cardW, cardH);
+            section.add(card);
+        }
+
+        // Footer
+        javax.swing.JLabel footer = new javax.swing.JLabel(
+                "© 2026 Hệ thống quản lý Không gian Làm việc và Học tập  —  Được phát triển bởi Nhóm Spring");
+        footer.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        footer.setForeground(new java.awt.Color(160, 140, 150));
+        footer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        footer.setBounds(0, 510, 1200, 25);
+        section.add(footer);
+
+        return section;
+    }
+
+    /**
+     * Card kiểu như ảnh tham khảo:
+     * - Ảnh full-width phần trên (không padding), tỷ lệ 4:3
+     * - Tên + role ở dải trắng bên dưới
+     * - Bo góc 14px, bóng nhẹ
+     */
+    private javax.swing.JPanel buildMemberCard(String name, String role, String imgPath, int w, int h) {
+        int photoH = (int) (h * 0.72); // Ảnh chiếm 72% chiều cao card
+        int infoH = h - photoH; // Phần text bên dưới
+
+        javax.swing.JPanel card = new javax.swing.JPanel(null) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                // Bóng nhẹ
+                g2.setColor(new java.awt.Color(0, 0, 0, 18));
+                g2.fillRoundRect(3, 5, getWidth() - 2, getHeight() - 2, 14, 14);
+                // Nền trắng
+                g2.setColor(java.awt.Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 4, 14, 14);
+                g2.dispose();
+            }
+        };
+        card.setOpaque(false);
+
+        // Ảnh phía trên — full-width, không padding, bo góc trên
+        javax.swing.JLabel photo = new javax.swing.JLabel() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                if (getIcon() != null) {
+                    java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                    g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                            java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                    // Clip bo góc trên
+                    java.awt.geom.RoundRectangle2D rr = new java.awt.geom.RoundRectangle2D.Float(0, 0, getWidth(),
+                            getHeight() + 20, 14, 14);
+                    g2.setClip(rr);
+                    getIcon().paintIcon(this, g2, 0, 0);
+                    g2.dispose();
+                }
+            }
+        };
+        photo.setBounds(0, 0, w, photoH);
+        loadAvatarInto(photo, imgPath, w, photoH); // <-- scale theo w×h
+        card.add(photo);
+
+        // Tên
+        javax.swing.JLabel lName = new javax.swing.JLabel(name);
+        lName.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        lName.setForeground(new java.awt.Color(22, 22, 40));
+        lName.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lName.setBounds(0, photoH + 10, w, 22);
+        card.add(lName);
+
+        // Vai trò — hồng accent
+        javax.swing.JLabel lRole = new javax.swing.JLabel(role);
+        lRole.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        lRole.setForeground(new java.awt.Color(220, 60, 105));
+        lRole.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lRole.setBounds(0, photoH + 34, w, 18);
+        card.add(lRole);
+
+        return card;
+    }
+
+    /** Tải avatar, scale và crop lấp đầy kích thước w×h (như object-fit: cover) */
+    private void loadAvatarInto(javax.swing.JLabel label, String imagePath, int w, int h) {
+        try {
+            java.net.URL imgURL = getClass().getResource(imagePath);
+            if (imgURL != null) {
+                java.awt.image.BufferedImage originalImg = javax.imageio.ImageIO.read(imgURL);
+                if (originalImg != null) {
+                    int imgW = originalImg.getWidth();
+                    int imgH = originalImg.getHeight();
+
+                    double scaleX = (double) w / imgW;
+                    double scaleY = (double) h / imgH;
+                    double scale = Math.max(scaleX, scaleY);
+
+                    int scaledW = (int) Math.ceil(imgW * scale);
+                    int scaledH = (int) Math.ceil(imgH * scale);
+
+                    // Sử dụng SCALE_SMOOTH để thu nhỏ mượt mà, chống rỗ pixel (aliasing) với ảnh
+                    // gốc lớn
+                    java.awt.Image smoothImg = originalImg.getScaledInstance(scaledW, scaledH,
+                            java.awt.Image.SCALE_SMOOTH);
+                    // Bọc vào ImageIcon để đảm bảo ảnh scale được load xong hoàn toàn trước khi vẽ
+                    smoothImg = new javax.swing.ImageIcon(smoothImg).getImage();
+
+                    int x = (w - scaledW) / 2;
+                    int y = (h - scaledH) / 2;
+
+                    java.awt.image.BufferedImage bimg = new java.awt.image.BufferedImage(w, h,
+                            java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    java.awt.Graphics2D g2 = bimg.createGraphics();
+                    g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                            java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    g2.drawImage(smoothImg, x, y, null);
+                    g2.dispose();
+
+                    label.setIcon(new javax.swing.ImageIcon(bimg));
+                }
+            } else {
+                logger.warning("Không tìm thấy avatar: " + imagePath);
+            }
+        } catch (Exception e) {
+            logger.warning("Lỗi tải avatar: " + e.getMessage());
+        }
     }
 
     public void showLoginForm() {
         com.wms.view.TrangChuGioiThieu.DangNhap.DangNhapForm loginForm = new com.wms.view.TrangChuGioiThieu.DangNhap.DangNhapForm();
+        loginForm.setOpaque(false); // Cần thiết để hiển thị nền mờ phía dưới
         pnAuthContainer.removeAll();
         pnAuthContainer.add(loginForm, java.awt.BorderLayout.CENTER);
         pnAuthContainer.revalidate();
@@ -31,10 +265,36 @@ public class TrangGioiThieuForm extends javax.swing.JFrame {
 
     public void showRegisterForm() {
         com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm registerForm = new com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm();
+        registerForm.setOpaque(false); // Cần thiết để hiển thị nền mờ phía dưới
         pnAuthContainer.removeAll();
         pnAuthContainer.add(registerForm, java.awt.BorderLayout.CENTER);
         pnAuthContainer.revalidate();
         pnAuthContainer.repaint();
+    }
+
+    public void showForgotPasswordForm() {
+        com.wms.view.TrangChuGioiThieu.QuenMatKhau.QuenMatKhauForm forgotForm = new com.wms.view.TrangChuGioiThieu.QuenMatKhau.QuenMatKhauForm();
+        forgotForm.setOpaque(false);
+        pnAuthContainer.removeAll();
+        pnAuthContainer.add(forgotForm, java.awt.BorderLayout.CENTER);
+        pnAuthContainer.revalidate();
+        pnAuthContainer.repaint();
+    }
+
+    public void setBackgroundImage(String imagePath) {
+        try {
+            java.net.URL imgURL = getClass().getResource(imagePath);
+            if (imgURL != null) {
+                Image img = new ImageIcon(imgURL).getImage()
+                        .getScaledInstance(1200, 700, Image.SCALE_SMOOTH);
+                lblBackground.setIcon(new ImageIcon(img));
+                lblBackground.setText("");
+            } else {
+                logger.warning("Không tìm thấy ảnh: " + imagePath);
+            }
+        } catch (Exception e) {
+            logger.warning("Lỗi tải ảnh nền: " + e.getMessage());
+        }
     }
 
     /**
@@ -44,216 +304,72 @@ public class TrangGioiThieuForm extends javax.swing.JFrame {
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated
+    // <editor-fold defaultstate="collapsed" desc="Generated
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        scrollMain = new javax.swing.JScrollPane();
-        pnContainer = new javax.swing.JPanel();
-        pnAuthSection = new javax.swing.JPanel();
-        lblWelcome = new javax.swing.JLabel();
+        scrollPaneMain = new javax.swing.JScrollPane();
+        pnMain = new javax.swing.JPanel();
+        pnLeft = new javax.swing.JPanel();
         pnAuthContainer = new javax.swing.JPanel();
-        pnInfoSection = new javax.swing.JPanel();
-        lblInfoMainTitle = new javax.swing.JLabel();
-        pnInfoCard = new javax.swing.JPanel();
-        lblRichText = new javax.swing.JLabel();
-        pnTeamSection = new javax.swing.JPanel();
-        lblTeamTitle = new javax.swing.JLabel();
-        lblTeamSub = new javax.swing.JLabel();
-        pnMember1 = new javax.swing.JPanel();
-        lblAva1 = new javax.swing.JLabel();
-        lblName1 = new javax.swing.JLabel();
-        lblRole1 = new javax.swing.JLabel();
-        pnMember2 = new javax.swing.JPanel();
-        lblAva2 = new javax.swing.JLabel();
-        lblName2 = new javax.swing.JLabel();
-        lblRole2 = new javax.swing.JLabel();
-        pnMember3 = new javax.swing.JPanel();
-        lblAva3 = new javax.swing.JLabel();
-        lblName3 = new javax.swing.JLabel();
-        lblRole3 = new javax.swing.JLabel();
-        pnMember4 = new javax.swing.JPanel();
-        lblAva4 = new javax.swing.JLabel();
-        lblName4 = new javax.swing.JLabel();
-        lblRole4 = new javax.swing.JLabel();
+        pnRight = new javax.swing.JPanel();
+        pnTextOverlay = new javax.swing.JPanel();
+        lblTitleRight = new javax.swing.JLabel();
+        lblDescRight = new javax.swing.JLabel();
+        lblBackground = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Hệ thống Quản lý Không gian Spring");
-        getContentPane().setLayout(new java.awt.BorderLayout());
+        setTitle("Spring Workspace - Welcome");
+        setResizable(false);
 
-        scrollMain.setBorder(null);
-        scrollMain.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPaneMain.setBorder(null);
 
-        pnContainer.setBackground(new java.awt.Color(255, 255, 255));
-        pnContainer.setPreferredSize(new java.awt.Dimension(1200, 1800));
-        pnContainer.setLayout(null);
+        pnMain.setBackground(new java.awt.Color(255, 255, 255));
+        pnMain.setPreferredSize(new java.awt.Dimension(1200, 1050));
+        pnMain.setLayout(null);
 
-        pnAuthSection.setBackground(new java.awt.Color(245, 246, 250));
-        pnAuthSection.setLayout(null);
-
-        lblWelcome.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
-        lblWelcome.setForeground(new java.awt.Color(235, 94, 141));
-        lblWelcome.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblWelcome.setText("KHÔNG GIAN LÀM VIỆC VÀ HỌC TẬP");
-        pnAuthSection.add(lblWelcome);
-        lblWelcome.setBounds(0, 40, 1280, 48);
+        pnLeft.setBackground(new java.awt.Color(255, 255, 255));
+        pnLeft.setLayout(new java.awt.GridBagLayout());
 
         pnAuthContainer.setBackground(new java.awt.Color(255, 255, 255));
-        pnAuthContainer.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        pnAuthContainer.setPreferredSize(new java.awt.Dimension(420, 550));
         pnAuthContainer.setLayout(new java.awt.BorderLayout());
-        pnAuthSection.add(pnAuthContainer);
-        pnAuthContainer.setBounds(240, 110, 800, 450);
+        pnLeft.add(pnAuthContainer, new java.awt.GridBagConstraints());
 
-        pnContainer.add(pnAuthSection);
-        pnAuthSection.setBounds(0, 0, 1280, 600);
+        pnMain.add(pnLeft);
+        pnLeft.setBounds(0, 0, 500, 700);
 
-        pnInfoSection.setBackground(new java.awt.Color(245, 246, 250));
-        pnInfoSection.setLayout(null);
+        pnRight.setLayout(null);
 
-        lblInfoMainTitle.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
-        lblInfoMainTitle.setForeground(new java.awt.Color(48, 30, 35));
-        lblInfoMainTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblInfoMainTitle.setText("GIỚI THIỆU HỆ THỐNG");
-        pnInfoSection.add(lblInfoMainTitle);
-        lblInfoMainTitle.setBounds(0, 40, 1280, 38);
+        pnTextOverlay.setBackground(new java.awt.Color(255, 255, 255));
+        pnTextOverlay.setLayout(null);
 
-        pnInfoCard.setBackground(new java.awt.Color(255, 255, 255));
-        pnInfoCard.setBorder(javax.swing.BorderFactory.createLineBorder(null));
-        pnInfoCard.setLayout(null);
+        lblTitleRight.setFont(new java.awt.Font("Segoe UI", 1, 48)); // NOI18N
+        lblTitleRight.setForeground(new java.awt.Color(235, 94, 141));
+        lblTitleRight.setText("SPRING WORKSPACE");
+        pnTextOverlay.add(lblTitleRight);
+        lblTitleRight.setBounds(30, 30, 540, 60);
 
-        lblRichText.setText(
-                "<html><body style='font-family: Segoe UI; padding: 20px; color: #301e23;'><h2 style='color: #eb5e8d; margin-top: 0;'>Hệ thống Quản lý Không gian Làm việc và Học tập (Spring System)</h2><p style='font-size: 14px; line-height: 1.5;'><b>Spring System</b> là giải pháp phần mềm toàn diện giúp số hóa và tự động hóa quy trình vận hành các mô hình Không gian làm việc chung. Hệ thống giải quyết triệt để các hạn chế của quản lý thủ công, mang lại trải nghiệm liền mạch cho khách hàng từ lúc đặt chỗ đến khi thanh toán.</p><h3 style='color: #eb5e8d;'>Các tính năng nổi bật:</h3><ul style='font-size: 14px; line-height: 1.5;'><li><b>Tối ưu Đặt chỗ & Không gian:</b> Trực quan hóa sơ đồ chỗ ngồi, đặt chỗ trực tuyến, cập nhật trạng thái theo thời gian thực.</li><li><b>Trải nghiệm Tiện ích Liền mạch:</b> Gọi đồ uống (F&B), thuê thiết bị và gia hạn thời gian sử dụng ngay tại bàn.</li><li><b>Quản lý Tài chính & Hội viên:</b> Thanh toán tập trung một lần khi ra về, quản lý hạng thành viên, tích điểm và tự động áp dụng mã giảm giá.</li><li><b>Vận hành Chuỗi & Tự động hóa:</b> Báo cáo doanh thu chi tiết, lưu vết giao dịch và sẵn sàng tích hợp kiểm soát cửa bằng mã QR.</li></ul><p style='font-size: 13px; font-style: italic; color: #888888; margin-top: 15px;'>Đề tài được thực hiện bởi nhóm sinh viên lớp HTTT2024.1 - Trường Đại học Công nghệ Thông tin (UIT).<br>Công cụ phát triển: Java Swing, Oracle Database, DataGrip, Netbeans, Lucidchart.</p></body></html>");
-        lblRichText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        pnInfoCard.add(lblRichText);
-        lblRichText.setBounds(0, 0, 800, 420);
+        lblDescRight.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        lblDescRight.setForeground(new java.awt.Color(35, 30, 48));
+        lblDescRight.setText("<html><div style='line-height: 1.6;'>Nơi hội tụ của những ý tưởng đột phá và cộng đồng sáng tạo. Chúng tôi mang đến trải nghiệm tiện nghi và chuyên nghiệp nhất.</div></html>");
+        pnTextOverlay.add(lblDescRight);
+        lblDescRight.setBounds(30, 100, 540, 80);
 
-        pnInfoSection.add(pnInfoCard);
-        pnInfoCard.setBounds(240, 100, 800, 420);
+        pnRight.add(pnTextOverlay);
+        pnTextOverlay.setBounds(50, 220, 600, 200);
 
-        pnContainer.add(pnInfoSection);
-        pnInfoSection.setBounds(0, 600, 1280, 600);
+        lblBackground.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        pnRight.add(lblBackground);
+        lblBackground.setBounds(0, 0, 700, 700);
 
-        pnTeamSection.setBackground(new java.awt.Color(255, 255, 255));
-        pnTeamSection.setLayout(null);
+        pnMain.add(pnRight);
+        pnRight.setBounds(500, 0, 700, 700);
 
-        lblTeamTitle.setFont(new java.awt.Font("Segoe UI", 1, 28)); // NOI18N
-        lblTeamTitle.setForeground(new java.awt.Color(48, 30, 35));
-        lblTeamTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblTeamTitle.setText("ĐỘI HÌNH SPRING");
-        pnTeamSection.add(lblTeamTitle);
-        lblTeamTitle.setBounds(0, 30, 1280, 38);
+        scrollPaneMain.setViewportView(pnMain);
 
-        lblTeamSub.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        lblTeamSub.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblTeamSub.setText("Tìm hiểu chi tiết về vai trò, thế mạnh và nhiệm vụ của từng thành viên.");
-        pnTeamSection.add(lblTeamSub);
-        lblTeamSub.setBounds(0, 70, 1280, 20);
-
-        pnMember1.setBackground(new java.awt.Color(255, 255, 255));
-        pnMember1.setLayout(null);
-
-        lblAva1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblAva1.setText("[Ảnh Huy]");
-        lblAva1.setBorder(javax.swing.BorderFactory.createLineBorder(null));
-        pnMember1.add(lblAva1);
-        lblAva1.setBounds(10, 10, 200, 250);
-
-        lblName1.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        lblName1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblName1.setText("Lai Mộc Huy");
-        pnMember1.add(lblName1);
-        lblName1.setBounds(0, 270, 220, 22);
-
-        lblRole1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblRole1.setForeground(new java.awt.Color(235, 94, 141));
-        lblRole1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblRole1.setText("Nhóm trưởng");
-        pnMember1.add(lblRole1);
-        lblRole1.setBounds(0, 295, 220, 18);
-
-        pnTeamSection.add(pnMember1);
-        pnMember1.setBounds(170, 150, 220, 350);
-
-        pnMember2.setBackground(new java.awt.Color(255, 255, 255));
-        pnMember2.setLayout(null);
-
-        lblAva2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblAva2.setText("[Ảnh Dũng]");
-        lblAva2.setBorder(javax.swing.BorderFactory.createLineBorder(null));
-        pnMember2.add(lblAva2);
-        lblAva2.setBounds(10, 10, 200, 250);
-
-        lblName2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        lblName2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblName2.setText("Huỳnh Đức Dũng");
-        pnMember2.add(lblName2);
-        lblName2.setBounds(0, 270, 220, 22);
-
-        lblRole2.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblRole2.setForeground(new java.awt.Color(235, 94, 141));
-        lblRole2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblRole2.setText("Nhóm phó");
-        pnMember2.add(lblRole2);
-        lblRole2.setBounds(0, 295, 220, 18);
-
-        pnTeamSection.add(pnMember2);
-        pnMember2.setBounds(410, 150, 220, 350);
-
-        pnMember3.setBackground(new java.awt.Color(255, 255, 255));
-        pnMember3.setLayout(null);
-
-        lblAva3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblAva3.setText("[Ảnh Duyên]");
-        lblAva3.setBorder(javax.swing.BorderFactory.createLineBorder(null));
-        pnMember3.add(lblAva3);
-        lblAva3.setBounds(10, 10, 200, 250);
-
-        lblName3.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        lblName3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblName3.setText("Sơn Nguyễn Kỳ Duyên");
-        pnMember3.add(lblName3);
-        lblName3.setBounds(0, 270, 220, 22);
-
-        lblRole3.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblRole3.setForeground(new java.awt.Color(235, 94, 141));
-        lblRole3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblRole3.setText("Thư ký");
-        pnMember3.add(lblRole3);
-        lblRole3.setBounds(0, 295, 220, 18);
-
-        pnTeamSection.add(pnMember3);
-        pnMember3.setBounds(650, 150, 220, 350);
-
-        pnMember4.setBackground(new java.awt.Color(255, 255, 255));
-        pnMember4.setLayout(null);
-
-        lblAva4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblAva4.setText("[Ảnh Thành Đức]");
-        lblAva4.setBorder(javax.swing.BorderFactory.createLineBorder(null));
-        pnMember4.add(lblAva4);
-        lblAva4.setBounds(10, 10, 200, 250);
-
-        lblName4.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        lblName4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblName4.setText("Nguyễn Thành Đức");
-        pnMember4.add(lblName4);
-        lblName4.setBounds(0, 270, 220, 22);
-
-        lblRole4.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblRole4.setForeground(new java.awt.Color(235, 94, 141));
-        lblRole4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblRole4.setText("Thành viên");
-        pnMember4.add(lblRole4);
-        lblRole4.setBounds(0, 295, 220, 18);
-
-        pnTeamSection.add(pnMember4);
-        pnMember4.setBounds(890, 150, 220, 350);
-
-        pnContainer.add(pnTeamSection);
-        pnTeamSection.setBounds(0, 1200, 1280, 600);
-
-        scrollMain.setViewportView(pnContainer);
-
-        getContentPane().add(scrollMain, java.awt.BorderLayout.CENTER);
+        getContentPane().add(scrollPaneMain, java.awt.BorderLayout.CENTER);
 
         pack();
         setLocationRelativeTo(null);
@@ -285,37 +401,21 @@ public class TrangGioiThieuForm extends javax.swing.JFrame {
         // </editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new TrangGioiThieuForm().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            com.wms.util.SuperAdminCreator.initialize(); // Tự động kiểm tra quyền & admin khi mở app
+            new TrangGioiThieuForm().setVisible(true);
+        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel lblAva1;
-    private javax.swing.JLabel lblAva2;
-    private javax.swing.JLabel lblAva3;
-    private javax.swing.JLabel lblAva4;
-    private javax.swing.JLabel lblInfoMainTitle;
-    private javax.swing.JLabel lblName1;
-    private javax.swing.JLabel lblName2;
-    private javax.swing.JLabel lblName3;
-    private javax.swing.JLabel lblName4;
-    private javax.swing.JLabel lblRichText;
-    private javax.swing.JLabel lblRole1;
-    private javax.swing.JLabel lblRole2;
-    private javax.swing.JLabel lblRole3;
-    private javax.swing.JLabel lblRole4;
-    private javax.swing.JLabel lblTeamSub;
-    private javax.swing.JLabel lblTeamTitle;
-    private javax.swing.JLabel lblWelcome;
+    private javax.swing.JLabel lblBackground;
+    private javax.swing.JLabel lblDescRight;
+    private javax.swing.JLabel lblTitleRight;
     private javax.swing.JPanel pnAuthContainer;
-    private javax.swing.JPanel pnAuthSection;
-    private javax.swing.JPanel pnContainer;
-    private javax.swing.JPanel pnInfoCard;
-    private javax.swing.JPanel pnInfoSection;
-    private javax.swing.JPanel pnMember1;
-    private javax.swing.JPanel pnMember2;
-    private javax.swing.JPanel pnMember3;
-    private javax.swing.JPanel pnMember4;
-    private javax.swing.JPanel pnTeamSection;
-    private javax.swing.JScrollPane scrollMain;
+    private javax.swing.JPanel pnLeft;
+    private javax.swing.JPanel pnMain;
+    private javax.swing.JPanel pnRight;
+    private javax.swing.JPanel pnTextOverlay;
+    private javax.swing.JScrollPane scrollPaneMain;
     // End of variables declaration//GEN-END:variables
 }

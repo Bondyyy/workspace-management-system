@@ -143,6 +143,73 @@ public class NguoiDungService {
             return ketQuaDangKy.LOI_CSDL;
         }
     }
+
+    // QUÊN MẬT KHẨU
+    public enum ketQuaQuenMatKhau {
+        THANH_CONG,
+        EMAIL_KHONG_TON_TAI,
+        LOI_GUI_MAIL,
+        LOI_CSDL,
+        DU_LIEU_KHONG_HOP_LE
+    }
+
+    public static class OtpQuenPassResponse {
+        private final ketQuaQuenMatKhau result;
+        private final String otp;
+
+        public OtpQuenPassResponse(ketQuaQuenMatKhau result, String otp) {
+            this.result = result;
+            this.otp = otp;
+        }
+
+        public ketQuaQuenMatKhau getResult() { return result; }
+        public String getOtp() { return otp; }
+    }
+
+    public OtpQuenPassResponse yeuCauOtpQuenMatKhau(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return new OtpQuenPassResponse(ketQuaQuenMatKhau.DU_LIEU_KHONG_HOP_LE, null);
+        }
+
+        try {
+            if (!nguoiDungDAO.kiemTraEmailTonTai(email.trim())) {
+                return new OtpQuenPassResponse(ketQuaQuenMatKhau.EMAIL_KHONG_TON_TAI, null);
+            }
+
+            String otp = EmailUtil.generateRandomOTP();
+            boolean isSent = EmailUtil.sendOTP(email.trim(), otp);
+
+            if (isSent) {
+                return new OtpQuenPassResponse(ketQuaQuenMatKhau.THANH_CONG, otp);
+            } else {
+                return new OtpQuenPassResponse(ketQuaQuenMatKhau.LOI_GUI_MAIL, null);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[Service] Lỗi SQL khi yêu cầu OTP quên mật khẩu: " + e.getMessage());
+            return new OtpQuenPassResponse(ketQuaQuenMatKhau.LOI_CSDL, null);
+        }
+    }
+
+    public ketQuaQuenMatKhau datLaiMatKhau(String email, String matKhauMoi) {
+        if (email == null || email.trim().isEmpty() || matKhauMoi == null || matKhauMoi.trim().isEmpty()) {
+            return ketQuaQuenMatKhau.DU_LIEU_KHONG_HOP_LE;
+        }
+
+        try {
+            if (!nguoiDungDAO.kiemTraEmailTonTai(email.trim())) {
+                return ketQuaQuenMatKhau.EMAIL_KHONG_TON_TAI;
+            }
+
+            String matKhauMaHoa = PasswordUtil.hash(matKhauMoi);
+            nguoiDungDAO.capNhatMatKhauTheoEmail(email.trim(), matKhauMaHoa);
+            return ketQuaQuenMatKhau.THANH_CONG;
+
+        } catch (SQLException e) {
+            System.err.println("[Service] Lỗi SQL khi đặt lại mật khẩu: " + e.getMessage());
+            return ketQuaQuenMatKhau.LOI_CSDL;
+        }
+    }
 }
 
 

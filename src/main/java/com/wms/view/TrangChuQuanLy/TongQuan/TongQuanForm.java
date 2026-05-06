@@ -4,11 +4,19 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import com.wms.dao.ThongKeDAO;
+import com.wms.dao.ChiNhanhDAO;
+import com.wms.model.ChiNhanhDTO;
 
 public class TongQuanForm extends javax.swing.JPanel {
+
+    private final ThongKeDAO tkDao = new ThongKeDAO();
+    private final ChiNhanhDAO cnDao = new ChiNhanhDAO();
 
     private final Color mauHong = Color.decode("#EB5E8D");
     private final Color mauHongNhat = new Color(235, 94, 141, 50); 
@@ -19,7 +27,17 @@ public class TongQuanForm extends javax.swing.JPanel {
     public TongQuanForm() {
         initComponents();
         initDefaultDates();
-        veGiaoDienBaoCao(25400000, 28000000, 2600000); 
+        loadComboChiNhanh();
+        capNhatDuLieu(); 
+    }
+
+    private void loadComboChiNhanh() {
+        cbxChiNhanh.removeAllItems();
+        cbxChiNhanh.addItem("Tất cả chi nhánh");
+        List<ChiNhanhDTO> list = cnDao.layDanhSachChiNhanh();
+        for (ChiNhanhDTO cn : list) {
+            cbxChiNhanh.addItem(cn.getMaCN() + " - " + cn.getTenCN());
+        }
     }
 
     private void initDefaultDates() {
@@ -63,7 +81,7 @@ public class TongQuanForm extends javax.swing.JPanel {
         return pnl;
     }
 
-    private JPanel taoVungBiDo() {
+    private JPanel taoVungBiDo(List<Double> pointsData) {
         JPanel pnl = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -86,8 +104,16 @@ public class TongQuanForm extends javax.swing.JPanel {
                     g2.drawLine(padding, y, getWidth() - padding, y);
                 }
                 
-                int[] points = {30, 70, 45, 90, 60, 100, 85};
-                int stepX = chartW / (points.length - 1);
+                if (pointsData == null || pointsData.isEmpty()) {
+                    g2.dispose();
+                    return;
+                }
+
+                double maxVal = 0;
+                for (Double d : pointsData) if (d > maxVal) maxVal = d;
+                if (maxVal == 0) maxVal = 1000000; // Tránh chia cho 0
+
+                int stepX = chartW / (pointsData.size() - 1);
                 
                 g2.setColor(mauHong);
                 g2.setStroke(new BasicStroke(3f));
@@ -95,19 +121,18 @@ public class TongQuanForm extends javax.swing.JPanel {
                 Polygon p = new Polygon();
                 p.addPoint(padding, padding + chartH); 
                 
-                for(int i=0; i<points.length - 1; i++) {
+                for(int i=0; i < pointsData.size(); i++) {
                     int x1 = padding + i * stepX;
-                    int y1 = padding + chartH - (points[i] * chartH / 100);
-                    int x2 = padding + (i+1) * stepX;
-                    int y2 = padding + chartH - (points[i+1] * chartH / 100);
+                    int y1 = (int) (padding + chartH - (pointsData.get(i) * chartH / (maxVal * 1.2)));
                     
-                    g2.drawLine(x1, y1, x2, y2);
+                    if (i > 0) {
+                        int xPrev = padding + (i - 1) * stepX;
+                        int yPrev = (int) (padding + chartH - (pointsData.get(i-1) * chartH / (maxVal * 1.2)));
+                        g2.drawLine(xPrev, yPrev, x1, y1);
+                    }
+                    
                     g2.fillOval(x1 - 4, y1 - 4, 8, 8); 
                     p.addPoint(x1, y1);
-                    if(i == points.length - 2) {
-                        g2.fillOval(x2 - 4, y2 - 4, 8, 8);
-                        p.addPoint(x2, y2);
-                    }
                 }
                 p.addPoint(padding + chartW, padding + chartH); 
                 
@@ -128,7 +153,7 @@ public class TongQuanForm extends javax.swing.JPanel {
         return pnl;
     }
 
-    private JPanel taoVungThongTinQuanLy() {
+    private JPanel taoVungThongTinQuanLy(int ckPercent, int tmPercent) {
         JPanel pnl = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -173,11 +198,11 @@ public class TongQuanForm extends javax.swing.JPanel {
         lblRole.setBounds(100, 45, 140, 20);
         pnl.add(lblRole);
 
-        JPanel pnlPhone = taoDongInfo("📞 SĐT:", "0901234567");
+        JPanel pnlPhone = taoDongInfo("SĐT:", "0901234567");
         pnlPhone.setBounds(20, 95, 200, 20);
         pnl.add(pnlPhone);
         
-        JPanel pnlVaiTro = taoDongInfo("⭐ Quyền:", "Toàn quyền");
+        JPanel pnlVaiTro = taoDongInfo("Quyền:", "Toàn quyền");
         pnlVaiTro.setBounds(20, 125, 200, 20);
         pnl.add(pnlVaiTro);
 
@@ -188,11 +213,11 @@ public class TongQuanForm extends javax.swing.JPanel {
         lblThanhToan.setBounds(260, 20, 220, 20);
         pnl.add(lblThanhToan);
 
-        JPanel pnlCK = taoTienTrinh("Chuyển khoản / Momo (65%)", 65, mauXanh);
+        JPanel pnlCK = taoTienTrinh("Chuyển khoản / Momo (" + ckPercent + "%)", ckPercent, mauXanh);
         pnlCK.setBounds(260, 55, 210, 40);
         pnl.add(pnlCK);
         
-        JPanel pnlTM = taoTienTrinh("Tiền mặt (35%)", 35, mauHong); // Dùng màu hồng thay vì màu cam
+        JPanel pnlTM = taoTienTrinh("Tiền mặt (" + tmPercent + "%)", tmPercent, mauHong); 
         pnlTM.setBounds(260, 105, 210, 40);
         pnl.add(pnlTM);
 
@@ -242,13 +267,11 @@ public class TongQuanForm extends javax.swing.JPanel {
         
         // Tạo bảng bằng Java thuần
         String[] columns = {"Mã HĐ", "Khách hàng", "Số tiền", "Trạng thái"};
-        Object[][] data = {
-            {"HD001", "Nguyễn Văn A", "150,000", "Đã thanh toán"}, 
-            {"HD002", "Khách vãng lai", "55,000", "Chưa thanh toán"}, 
-            {"HD003", "Trần Thị B", "320,000", "Đã thanh toán"},
-            {"HD004", "Lê Văn C", "1,200,000", "Đã hủy"}, 
-            {"HD005", "Phạm D", "45,000", "Đã thanh toán"}
-        };
+        List<Object[]> dataList = tkDao.layRecentTransactions();
+        Object[][] data = new Object[dataList.size()][4];
+        for (int i = 0; i < dataList.size(); i++) {
+            data[i] = dataList.get(i);
+        }
         
         JTable tbl = new JTable(new DefaultTableModel(data, columns)) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
@@ -286,7 +309,20 @@ public class TongQuanForm extends javax.swing.JPanel {
         return pnlWrapper;
     }
 
-    private void veGiaoDienBaoCao(double doanhThuThuc, double truocGiam, double chietKhau) {
+    private void capNhatDuLieu() {
+        String tuNgay = txtTuNgay.getText();
+        String denNgay = txtDenNgay.getText();
+        String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
+        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
+
+        Map<String, Double> stats = tkDao.layDoanhThuTongHop(tuNgay, denNgay, chiNhanh, loaiDT);
+        List<Double> chartData = tkDao.layDoanhThu7NgayGầnNhất(chiNhanh);
+        Map<String, Integer> paymentStats = tkDao.layCoCauThanhToan();
+
+        veGiaoDienBaoCao(stats.get("doanhThuThuc"), stats.get("truocGiam"), stats.get("chietKhau"), chartData, paymentStats);
+    }
+
+    private void veGiaoDienBaoCao(double doanhThuThuc, double truocGiam, double chietKhau, List<Double> chartData, Map<String, Integer> pStats) {
         pnCard1.removeAll();
         pnCard1.add(taoTheThongKe("DOANH THU THỰC TẾ", formatTien.format(doanhThuThuc), mauHong), BorderLayout.CENTER);
         
@@ -297,10 +333,10 @@ public class TongQuanForm extends javax.swing.JPanel {
         pnCard3.add(taoTheThongKe("TỔNG CHIẾT KHẤU", formatTien.format(chietKhau), mauCam), BorderLayout.CENTER);
 
         pnChart.removeAll();
-        pnChart.add(taoVungBiDo(), BorderLayout.CENTER);
+        pnChart.add(taoVungBiDo(chartData), BorderLayout.CENTER);
 
         pnManagerInfo.removeAll();
-        pnManagerInfo.add(taoVungThongTinQuanLy(), BorderLayout.CENTER);
+        pnManagerInfo.add(taoVungThongTinQuanLy(pStats.get("CK"), pStats.get("TM")), BorderLayout.CENTER);
         
         pnInvoices.removeAll();
         pnInvoices.add(taoVungHoaDon(), BorderLayout.CENTER);
@@ -319,7 +355,7 @@ public class TongQuanForm extends javax.swing.JPanel {
             return;
         }
 
-        veGiaoDienBaoCao(32500000, 36000000, 3500000); 
+        capNhatDuLieu();
         JOptionPane.showMessageDialog(this, "Đã cập nhật dữ liệu Tổng quan mới nhất!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }                                            
 

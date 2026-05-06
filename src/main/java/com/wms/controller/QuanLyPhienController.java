@@ -17,8 +17,8 @@ public class QuanLyPhienController {
         this.dao = new PhienLamViecDAO();
     }
 
-    public void loadDanhSachPhien(String keyword) {
-        List<PhienLamViecFullDTO> list = dao.layDanhSachPhien(keyword);
+    public void loadDanhSachPhien(String keyword, String maCN) {
+        List<PhienLamViecFullDTO> list = dao.layDanhSachPhien(keyword, maCN);
         view.hienThiDanhSachPhien(list);
     }
 

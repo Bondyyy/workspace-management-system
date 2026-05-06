@@ -29,6 +29,7 @@ public class TienMatForm extends javax.swing.JDialog {
         this.tongTien = tongTien;
         initComponents();
         setupLogic();
+        pack();
         setLocationRelativeTo(parent);
     }
     
@@ -44,10 +45,49 @@ public class TienMatForm extends javax.swing.JDialog {
             public void changedUpdate(DocumentEvent e) { tinhTienThua(); }
         });
         
-        btnGoiY1.addActionListener(e -> txtSoTienKhachDua.setText("50000"));
-        btnGoiY2.addActionListener(e -> txtSoTienKhachDua.setText("100000"));
-        btnGoiY3.addActionListener(e -> txtSoTienKhachDua.setText("200000"));
-        btnGoiY4.addActionListener(e -> txtSoTienKhachDua.setText("500000"));
+        // Tính toán và hiển thị các gợi ý mệnh giá thông minh
+        double[] suggestions = calculateSuggestions(tongTien);
+        
+        btnGoiY1.setText(formatShort(suggestions[0]));
+        btnGoiY1.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[0])));
+        
+        btnGoiY2.setText(formatShort(suggestions[1]));
+        btnGoiY2.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[1])));
+        
+        btnGoiY3.setText(formatShort(suggestions[2]));
+        btnGoiY3.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[2])));
+        
+        btnGoiY4.setText(formatShort(suggestions[3]));
+        btnGoiY4.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[3])));
+    }
+    
+    private double[] calculateSuggestions(double amount) {
+        double[] s = new double[4];
+        s[0] = amount; // 1. Đúng số
+        
+        // 2. Làm tròn lên hàng chục nghìn (ví dụ 355k -> 360k)
+        s[1] = Math.ceil(amount / 10000.0) * 10000.0;
+        if (s[1] <= s[0]) s[1] += 10000.0;
+        
+        // 3. Làm tròn lên hàng trăm nghìn (ví dụ 360k -> 400k hoặc 500k)
+        s[2] = Math.ceil(amount / 100000.0) * 100000.0;
+        if (s[2] <= s[1]) s[2] += 100000.0;
+        
+        // 4. Mốc chẵn lớn tiếp theo (500k, 1M, 2M, 5M...)
+        double[] thresholds = {50000, 100000, 200000, 500000, 1000000, 2000000, 5000000};
+        s[3] = s[2] + 500000.0; // Mặc định
+        for (double t : thresholds) {
+            if (t > s[2]) {
+                s[3] = t;
+                break;
+            }
+        }
+        return s;
+    }
+    
+    private String formatShort(double value) {
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        return nf.format(value);
     }
     
     private void tinhTienThua() {

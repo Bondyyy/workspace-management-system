@@ -9,9 +9,18 @@ BEGIN
     FROM KHONGGIAN
     WHERE MaKG = :NEW.MaKG;
 
-    -- 2. Ném lỗi nếu không gian không sẵn sàng
-    IF v_TrangThaiKG != 'Trống' THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Lỗi: Không gian này hiện không trống (Trạng thái: ' || v_TrangThaiKG || '). Không thể tạo phiên làm việc!');
+    -- 2. Ném lỗi dựa trên loại phiên
+    -- Nếu là mở phiên dùng ngay (Đang hoạt động) -> Phải yêu cầu phòng Trống
+    IF :NEW.TrangThaiPhien = 'Đang hoạt động' AND v_TrangThaiKG != 'Trống' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Lỗi: Không gian này hiện đang có người sử dụng hoặc chưa sẵn sàng (Trạng thái: ' || v_TrangThaiKG || ').');
     END IF;
+
+    -- Nếu là phòng đang bảo trì -> Chặn tất cả
+    IF v_TrangThaiKG = 'Bảo trì' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Lỗi: Không gian này đang được bảo trì, không thể đặt chỗ!');
+    END IF;
+
+    -- Lưu ý: Nếu là 'Đã đặt trước', chúng ta cho phép tạo phiên ngay cả khi v_TrangThaiKG là 'Đang hoạt động' 
+    -- vì khách đang đặt cho một khung giờ trong tương lai.
 END;
 /
