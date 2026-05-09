@@ -1,19 +1,22 @@
 package com.wms.view.TrangChuHoiVien.ThongTinHoiVien;
 
-import com.wms.controller.ThongTinHoiVienController;
+import com.wms.controller.TrangChuQuanLy.QuanLyHoiVien.ThongTinHoiVienController;
+import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
+import javax.swing.ImageIcon;
+import java.awt.Image;
 
 public class ThongTinHoiVienForm extends javax.swing.JPanel {
 
-    private com.wms.controller.ThongTinHoiVienController controller;
+    private ThongTinHoiVienController controller;
 
     public ThongTinHoiVienForm() {
         initComponents();
-        controller = new com.wms.controller.ThongTinHoiVienController();
+        controller = new ThongTinHoiVienController();
         loadData();
     }
 
     private void loadData() {
-        com.wms.model.HoiVienDTO dto = controller.layThongTin();
+        HoiVienDTO dto = controller.layThongTin();
         if (dto == null || dto.getMaND() == null) return;
         
         lblDisplayName.setText(dto.getHoTen());
@@ -33,6 +36,19 @@ public class ThongTinHoiVienForm extends javax.swing.JPanel {
         
         if (dto.getGioiTinh() != null) {
             cbxGioiTinh.setSelectedItem(dto.getGioiTinh());
+        }
+
+        if (dto.getAnhDaiDien() != null) {
+            try {
+                ImageIcon icon = new ImageIcon(dto.getAnhDaiDien());
+                Image img = icon.getImage().getScaledInstance(lblAvatar.getWidth(), lblAvatar.getHeight(), Image.SCALE_SMOOTH);
+                lblAvatar.setIcon(new ImageIcon(img));
+                lblAvatar.setText("");
+                lblAvatar.putClientProperty("anhData", dto.getAnhDaiDien());
+            } catch (Exception e) {
+                lblAvatar.setIcon(null);
+                lblAvatar.setText("[Lỗi ảnh]");
+            }
         }
     }
 
@@ -255,11 +271,26 @@ public class ThongTinHoiVienForm extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnChangeAvatarActionPerformed(java.awt.event.ActionEvent evt) {
+        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Images", "jpg", "png", "jpeg"));
+        if (chooser.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
+            try {
+                java.io.File file = chooser.getSelectedFile();
+                byte[] data = java.nio.file.Files.readAllBytes(file.toPath());
+                ImageIcon icon = new ImageIcon(data);
+                Image img = icon.getImage().getScaledInstance(lblAvatar.getWidth(), lblAvatar.getHeight(), Image.SCALE_SMOOTH);
+                lblAvatar.setIcon(new ImageIcon(img));
+                lblAvatar.setText("");
+                lblAvatar.putClientProperty("anhData", data);
+            } catch (Exception e) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Lỗi đọc ảnh!");
+            }
+        }
     }
 
     private void btnUpdateProfileActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            com.wms.model.HoiVienDTO dto = new com.wms.model.HoiVienDTO();
+            HoiVienDTO dto = new HoiVienDTO();
             dto.setHoTen(txtHoTen.getText().trim());
             dto.setSdt(txtSDT.getText().trim());
             
@@ -271,6 +302,9 @@ public class ThongTinHoiVienForm extends javax.swing.JPanel {
             }
             
             dto.setGioiTinh(cbxGioiTinh.getSelectedItem().toString());
+            
+            Object data = lblAvatar.getClientProperty("anhData");
+            dto.setAnhDaiDien(data instanceof byte[] ? (byte[]) data : null);
             
             if (controller.capNhatThongTin(dto)) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật thành công!");

@@ -1,37 +1,72 @@
 package com.wms.view.TrangChuQuanLy.QuanLyNhanVien;
 
-import com.wms.dao.VaiTroDAO;
-
-import com.wms.model.VaiTroDTO;
+import com.wms.controller.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienController;
+import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
 import com.wms.model.ChucNangDTO;
-
-import javax.swing.JOptionPane;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;
+import java.util.ArrayList;
 
 public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
-
-    private static final java.util.logging.Logger logger = java.util.logging.Logger
-            .getLogger(QuanLyNhomQuyenForm.class.getName());
-    private final VaiTroDAO vaiTroDAO = new VaiTroDAO();
+    private final QuanLyNhanVienController controller = new QuanLyNhanVienController();
     private String maVaiTroDangChon = null;
-    private final java.util.List<VaiTroDTO> danhSachVaiTro = new java.util.ArrayList<>();
-    private final java.util.List<ChucNangDTO> danhSachChucNang = new java.util.ArrayList<>();
+    private final List<VaiTroDTO> danhSachVaiTro = new ArrayList<>();
+    private final List<ChucNangDTO> danhSachChucNang = new ArrayList<>();
 
-    /**
-     * Creates new form QuanLyNhomQuyenForm
-     */
     public QuanLyNhomQuyenForm(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        setTitle("Quản lý Nhóm Quyền");
-        setSize(870, 670);
-        setLocationRelativeTo(parent);
-        vaiTroDAO.khoiTaoDuLieuChucNang();
         loadCbxChucNang();
         loadDanhSachVaiTro();
     }
 
+    private void loadDanhSachVaiTro() {
+        DefaultTableModel model = (DefaultTableModel) tblNhomQuyen.getModel();
+        model.setRowCount(0);
+        danhSachVaiTro.clear();
+        List<VaiTroDTO> list = controller.layDanhSachVaiTroNhanVien();
+        danhSachVaiTro.addAll(list);
+        for (VaiTroDTO vt : list) {
+            model.addRow(new Object[] { vt.getMaVaiTro(), vt.getTenVaiTro() });
+        }
+    }
+
+    private void loadCbxChucNang() {
+        cbxChucNang.removeAllItems();
+        danhSachChucNang.clear();
+        List<ChucNangDTO> list = controller.layTatCaChucNang();
+        danhSachChucNang.addAll(list);
+        for (ChucNangDTO cn : list) {
+            cbxChucNang.addItem(cn.getTenChucNang());
+        }
+    }
+
+    private void loadChucNangCuaVaiTro(String maVaiTro) {
+        DefaultTableModel model = (DefaultTableModel) tblChucNangDaChon.getModel();
+        model.setRowCount(0);
+        List<String[]> list = controller.layChucNangCuaVaiTro(maVaiTro);
+        for (String[] cn : list) {
+            model.addRow(new Object[] { cn[0], cn[1] });
+        }
+    }
+
+    private void lamMoiPanel() {
+        maVaiTroDangChon = null;
+        txtTenNhom.setText("");
+        txtMoTa.setText("");
+        ((DefaultTableModel) tblChucNangDaChon.getModel()).setRowCount(0);
+        tblNhomQuyen.clearSelection();
+    }
+
+    private List<String> layDanhSachMaCNTuBang() {
+        List<String> list = new ArrayList<>();
+        DefaultTableModel model = (DefaultTableModel) tblChucNangDaChon.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            list.add((String) model.getValueAt(i, 0));
+        }
+        return list;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -40,7 +75,7 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -59,15 +94,20 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
         pnLine = new javax.swing.JPanel();
         lblChonQuyen = new javax.swing.JLabel();
         cbxChucNang = new javax.swing.JComboBox<>();
-        btnLuuChucNang = new javax.swing.JButton();
+        btnThemQuyen = new javax.swing.JButton();
         scrollChucNang = new javax.swing.JScrollPane();
         tblChucNangDaChon = new javax.swing.JTable();
         btnXoaQuyen = new javax.swing.JButton();
+        btnLuuChucNang = new javax.swing.JButton();
         btnThemMoi = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
         btnXoaNhom = new javax.swing.JButton();
         btnLamMoi = new javax.swing.JButton();
-        btnThemQuyen = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Quản lý Nhóm Quyền");
+        setModal(true);
+        setResizable(false);
 
         pnMain.setBackground(new java.awt.Color(254, 248, 250));
         pnMain.setPreferredSize(new java.awt.Dimension(850, 650));
@@ -97,19 +137,12 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
         lblListTitle.setBounds(15, 15, 250, 30);
 
         tblNhomQuyen.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Mã Nhóm", "Tên Nhóm Quyền"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
+                new Object[][] {},
+                new String[] { "Mã Nhóm", "Tên Nhóm Quyền" }) {
+            boolean[] canEdit = new boolean[] { false, false };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             }
         });
         tblNhomQuyen.setRowHeight(30);
@@ -144,7 +177,6 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
         lblTenNhom.setBounds(20, 60, 150, 18);
 
         txtTenNhom.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        txtTenNhom.addActionListener(this::txtTenNhomActionPerformed);
         pnRight.add(txtTenNhom);
         txtTenNhom.setBounds(20, 80, 310, 30);
 
@@ -169,32 +201,24 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
         lblChonQuyen.setBounds(20, 205, 200, 18);
 
         cbxChucNang.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxChucNang.addActionListener(this::cbxChucNangActionPerformed);
         pnRight.add(cbxChucNang);
         cbxChucNang.setBounds(20, 225, 290, 30);
 
-        btnLuuChucNang.setBackground(new java.awt.Color(235, 94, 141));
-        btnLuuChucNang.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        btnLuuChucNang.setForeground(new java.awt.Color(255, 255, 255));
-        btnLuuChucNang.setText("Lưu chức năng");
-        btnLuuChucNang.addActionListener(this::btnLuuChucNangActionPerformed);
-        pnRight.add(btnLuuChucNang);
-        btnLuuChucNang.setBounds(280, 420, 150, 30);
+        btnThemQuyen.setBackground(new java.awt.Color(235, 94, 141));
+        btnThemQuyen.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        btnThemQuyen.setForeground(new java.awt.Color(255, 255, 255));
+        btnThemQuyen.setText("+ Thêm vào");
+        btnThemQuyen.addActionListener(e -> btnThemQuyenActionPerformed());
+        pnRight.add(btnThemQuyen);
+        btnThemQuyen.setBounds(320, 225, 110, 30);
 
         tblChucNangDaChon.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Mã CN", "Tên Chức Năng"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
+                new Object[][] {},
+                new String[] { "Mã CN", "Tên Chức Năng" }) {
+            boolean[] canEdit = new boolean[] { false, false };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             }
         });
         tblChucNangDaChon.setRowHeight(25);
@@ -207,15 +231,23 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
         btnXoaQuyen.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnXoaQuyen.setForeground(new java.awt.Color(220, 53, 69));
         btnXoaQuyen.setText("Gỡ quyền đang chọn từ bảng ^");
-        btnXoaQuyen.addActionListener(this::btnXoaQuyenActionPerformed);
+        btnXoaQuyen.addActionListener(e -> btnXoaQuyenActionPerformed());
         pnRight.add(btnXoaQuyen);
         btnXoaQuyen.setBounds(20, 420, 250, 28);
+
+        btnLuuChucNang.setBackground(new java.awt.Color(235, 94, 141));
+        btnLuuChucNang.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        btnLuuChucNang.setForeground(new java.awt.Color(255, 255, 255));
+        btnLuuChucNang.setText("Lưu chức năng");
+        btnLuuChucNang.addActionListener(e -> btnLuuChucNangActionPerformed());
+        pnRight.add(btnLuuChucNang);
+        btnLuuChucNang.setBounds(280, 420, 150, 30);
 
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
-        btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
+        btnThemMoi.addActionListener(e -> btnThemMoiActionPerformed());
         pnRight.add(btnThemMoi);
         btnThemMoi.setBounds(20, 465, 100, 40);
 
@@ -223,7 +255,7 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
-        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
+        btnCapNhat.addActionListener(e -> btnCapNhatActionPerformed());
         pnRight.add(btnCapNhat);
         btnCapNhat.setBounds(130, 465, 100, 40);
 
@@ -231,257 +263,120 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
         btnXoaNhom.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnXoaNhom.setForeground(new java.awt.Color(255, 255, 255));
         btnXoaNhom.setText("Xóa nhóm");
-        btnXoaNhom.addActionListener(this::btnXoaNhomActionPerformed);
+        btnXoaNhom.addActionListener(e -> btnXoaNhomActionPerformed());
         pnRight.add(btnXoaNhom);
         btnXoaNhom.setBounds(240, 465, 190, 40);
 
         btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
         btnLamMoi.setText("Làm mới");
-        btnLamMoi.addActionListener(this::btnLamMoiActionPerformed);
+        btnLamMoi.addActionListener(e -> lamMoiPanel());
         pnRight.add(btnLamMoi);
         btnLamMoi.setBounds(340, 80, 90, 30);
-
-        btnThemQuyen.setBackground(new java.awt.Color(235, 94, 141));
-        btnThemQuyen.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        btnThemQuyen.setForeground(new java.awt.Color(255, 255, 255));
-        btnThemQuyen.setText("+ Thêm vào");
-        btnThemQuyen.addActionListener(this::btnThemQuyenActionPerformed);
-        pnRight.add(btnThemQuyen);
-        btnThemQuyen.setBounds(320, 225, 110, 30);
 
         pnMain.add(pnRight);
         pnRight.setBounds(380, 70, 450, 520);
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
+        pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void cbxChucNangActionPerformed(java.awt.event.ActionEvent evt) {
-    }
-
-    private void txtTenNhomActionPerformed(java.awt.event.ActionEvent evt) {
-    }
 
     private void tblNhomQuyenMouseClicked(java.awt.event.MouseEvent evt) {
         int row = tblNhomQuyen.getSelectedRow();
-        if (row < 0)
+        if (row < 0 || row >= danhSachVaiTro.size())
             return;
-        DefaultTableModel model = (DefaultTableModel) tblNhomQuyen.getModel();
-        maVaiTroDangChon = (String) model.getValueAt(row, 0);
-        txtTenNhom.setText((String) model.getValueAt(row, 1));
-        // Fix #3: lấy mô tả từ List thay vì clientProperty (tránh sai khi sort)
-        String moTa = row < danhSachVaiTro.size() ? danhSachVaiTro.get(row).getMoTa() : "";
-        txtMoTa.setText(moTa != null ? moTa : "");
+        VaiTroDTO vt = danhSachVaiTro.get(row);
+        maVaiTroDangChon = vt.getMaVaiTro();
+        txtTenNhom.setText(vt.getTenVaiTro());
+        txtMoTa.setText(vt.getMoTa() != null ? vt.getMoTa() : "");
         loadChucNangCuaVaiTro(maVaiTroDangChon);
     }
 
-    private void btnThemQuyenActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnThemQuyenActionPerformed() {
         int idx = cbxChucNang.getSelectedIndex();
-        // Fix #4: lấy maCN từ List thay vì clientProperty
         if (idx < 0 || idx >= danhSachChucNang.size())
             return;
         ChucNangDTO cn = danhSachChucNang.get(idx);
-        String maCN = cn.getMaChucNang();
-        String tenCN = cn.getTenChucNang();
-        // Kiểm tra trùng
         DefaultTableModel model = (DefaultTableModel) tblChucNangDaChon.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
-            if (maCN.equals(model.getValueAt(i, 0))) {
-                JOptionPane.showMessageDialog(this, "Chức năng này đã được thêm!", "Cảnh báo",
-                        JOptionPane.WARNING_MESSAGE);
+            if (cn.getMaChucNang().equals(model.getValueAt(i, 0))) {
+                JOptionPane.showMessageDialog(this, "Chức năng này đã có trong danh sách!");
                 return;
             }
         }
-        model.addRow(new Object[] { maCN, tenCN });
+        model.addRow(new Object[] { cn.getMaChucNang(), cn.getTenChucNang() });
     }
 
-    private void btnXoaQuyenActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnXoaQuyenActionPerformed() {
         int row = tblChucNangDaChon.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn chức năng cần gỡ!", "Thông báo",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
+        if (row >= 0) {
+            ((DefaultTableModel) tblChucNangDaChon.getModel()).removeRow(row);
         }
-        ((DefaultTableModel) tblChucNangDaChon.getModel()).removeRow(row);
     }
 
-    private void btnLuuChucNangActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnLuuChucNangActionPerformed() {
         if (maVaiTroDangChon == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Vui lòng chọn nhóm quyền từ danh sách bên trái trước khi lưu chức năng!",
-                    "Chưa chọn nhóm", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhóm quyền!");
             return;
         }
-        List<String> dsMaCN = layDanhSachMaCNTuBang();
-        // Dùng method chuyên biệt: chỉ cập nhật chức năng, không đụng tên/mô tả
-        boolean ok = vaiTroDAO.capNhatChucNangCuaVaiTro(maVaiTroDangChon, dsMaCN);
-        if (ok) {
-            JOptionPane.showMessageDialog(this,
-                    "Lưu chức năng thành công cho nhóm: " + txtTenNhom.getText(),
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
-            loadChucNangCuaVaiTro(maVaiTroDangChon);
+        if (controller.capNhatChucNangCuaVaiTro(maVaiTroDangChon, layDanhSachMaCNTuBang())) {
+            JOptionPane.showMessageDialog(this, "Lưu thành công!");
         } else {
-            JOptionPane.showMessageDialog(this,
-                    "Lưu thất bại! Vui lòng thử lại.",
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lưu thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        String tenNhom = txtTenNhom.getText().trim();
-        if (tenNhom.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên nhóm quyền!", "Cảnh báo",
-                    JOptionPane.WARNING_MESSAGE);
+    private void btnThemMoiActionPerformed() {
+        String ten = txtTenNhom.getText().trim();
+        if (ten.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên nhóm!");
             return;
         }
         VaiTroDTO vt = new VaiTroDTO();
-        vt.setTenVaiTro(tenNhom);
+        vt.setTenVaiTro(ten);
         vt.setMoTa(txtMoTa.getText().trim());
-        List<String> dsMaCN = layDanhSachMaCNTuBang();
-        boolean ok = vaiTroDAO.themVaiTro(vt, dsMaCN);
-        if (ok) {
-            JOptionPane.showMessageDialog(this, "Thêm nhóm quyền thành công!", "Thông báo",
-                    JOptionPane.INFORMATION_MESSAGE);
+        if (controller.themVaiTro(vt, layDanhSachMaCNTuBang())) {
+            JOptionPane.showMessageDialog(this, "Thêm mới thành công!");
             lamMoiPanel();
             loadDanhSachVaiTro();
         } else {
-            JOptionPane.showMessageDialog(this, "Thêm thất bại! Kiểm tra lại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
-        if (maVaiTroDangChon == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhóm quyền cần cập nhật!", "Cảnh báo",
-                    JOptionPane.WARNING_MESSAGE);
+    private void btnCapNhatActionPerformed() {
+        if (maVaiTroDangChon == null)
             return;
-        }
-        String tenNhom = txtTenNhom.getText().trim();
-        if (tenNhom.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên nhóm quyền!", "Cảnh báo",
-                    JOptionPane.WARNING_MESSAGE);
+        String ten = txtTenNhom.getText().trim();
+        if (ten.isEmpty())
             return;
-        }
         VaiTroDTO vt = new VaiTroDTO();
         vt.setMaVaiTro(maVaiTroDangChon);
-        vt.setTenVaiTro(tenNhom);
+        vt.setTenVaiTro(ten);
         vt.setMoTa(txtMoTa.getText().trim());
-        List<String> dsMaCN = layDanhSachMaCNTuBang();
-        boolean ok = vaiTroDAO.capNhatVaiTro(vt, dsMaCN);
-        if (ok) {
-            JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        if (controller.capNhatVaiTro(vt, layDanhSachMaCNTuBang())) {
+            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
             loadDanhSachVaiTro();
         } else {
             JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void btnXoaNhomActionPerformed(java.awt.event.ActionEvent evt) {
-        if (maVaiTroDangChon == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhóm quyền cần xóa!", "Cảnh báo",
-                    JOptionPane.WARNING_MESSAGE);
+    private void btnXoaNhomActionPerformed() {
+        if (maVaiTroDangChon == null)
             return;
-        }
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc chắn muốn xóa nhóm quyền '" + txtTenNhom.getText() + "' không?\n" +
-                        "(Lưu ý: không thể xóa nếu đang có nhân viên sử dụng)",
-                "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (confirm != JOptionPane.YES_OPTION)
-            return;
-        boolean ok = vaiTroDAO.xoaVaiTro(maVaiTroDangChon);
-        if (ok) {
-            JOptionPane.showMessageDialog(this, "Xóa nhóm quyền thành công!", "Thông báo",
-                    JOptionPane.INFORMATION_MESSAGE);
-            lamMoiPanel();
-            loadDanhSachVaiTro();
-        } else {
-            JOptionPane.showMessageDialog(this, "Xóa thất bại! Nhóm này có thể đang được gán cho nhân viên.", "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        lamMoiPanel();
-        tblNhomQuyen.clearSelection();
-    }
-
-    private void loadDanhSachVaiTro() {
-        DefaultTableModel model = (DefaultTableModel) tblNhomQuyen.getModel();
-        model.setRowCount(0);
-        // Fix #3: lưu vào List thay vì clientProperty
-        danhSachVaiTro.clear();
-        List<VaiTroDTO> list = vaiTroDAO.layTatCaVaiTro();
-        danhSachVaiTro.addAll(list);
-        for (VaiTroDTO vt : list) {
-            model.addRow(new Object[] { vt.getMaVaiTro(), vt.getTenVaiTro() });
-        }
-    }
-
-    private void loadCbxChucNang() {
-        cbxChucNang.removeAllItems();
-        // Fix #4: lưu vào List thay vì clientProperty
-        danhSachChucNang.clear();
-        List<ChucNangDTO> list = vaiTroDAO.layTatCaChucNang();
-        danhSachChucNang.addAll(list);
-        for (ChucNangDTO cn : list) {
-            cbxChucNang.addItem(cn.getTenChucNang());
-        }
-    }
-
-    private void loadChucNangCuaVaiTro(String maVaiTro) {
-        DefaultTableModel model = (DefaultTableModel) tblChucNangDaChon.getModel();
-        model.setRowCount(0);
-        List<String[]> list = vaiTroDAO.layChucNangCuaVaiTro(maVaiTro);
-        for (String[] cn : list) {
-            model.addRow(new Object[] { cn[0], cn[1] });
-        }
-    }
-
-    private List<String> layDanhSachMaCNTuBang() {
-        List<String> list = new java.util.ArrayList<>();
-        DefaultTableModel model = (DefaultTableModel) tblChucNangDaChon.getModel();
-        for (int i = 0; i < model.getRowCount(); i++) {
-            list.add((String) model.getValueAt(i, 0));
-        }
-        return list;
-    }
-
-    private void lamMoiPanel() {
-        maVaiTroDangChon = null;
-        txtTenNhom.setText("");
-        txtMoTa.setText("");
-        ((DefaultTableModel) tblChucNangDaChon.getModel()).setRowCount(0);
-    }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
+        int confirm = JOptionPane.showConfirmDialog(this, "Xóa nhóm quyền này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            if (controller.xoaVaiTro(maVaiTroDangChon)) {
+                JOptionPane.showMessageDialog(this, "Xóa thành công!");
+                lamMoiPanel();
+                loadDanhSachVaiTro();
+            } else {
+                JOptionPane.showMessageDialog(this, "Xóa thất bại! (Có thể đang gán cho nhân viên)", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-        // </editor-fold>
-
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                QuanLyNhomQuyenForm dialog = new QuanLyNhomQuyenForm(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -512,8 +407,3 @@ public class QuanLyNhomQuyenForm extends javax.swing.JDialog {
     private javax.swing.JTextField txtTenNhom;
     // End of variables declaration//GEN-END:variables
 }
-
-
-
-
-

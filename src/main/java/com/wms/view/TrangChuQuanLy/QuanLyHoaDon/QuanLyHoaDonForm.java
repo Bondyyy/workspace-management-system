@@ -1,20 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package com.wms.view.TrangChuQuanLy.QuanLyHoaDon;
 
-import com.wms.model.HoaDonDTO;
 import com.wms.controller.HoaDonController;
-
-/**
- *
- * @author Thinkapd T14s
- */
+import com.wms.model.HoaDonDTO;
 import com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.ThanhToanHoaDonForm;
+
 import java.awt.Window;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -23,66 +16,50 @@ import javax.swing.table.DefaultTableModel;
 
 public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
-    private final HoaDonController hoaDonController;
+    private static final long MILLIS_PER_HOUR = 3_600_000L;
+    private static final long MILLIS_PER_MIN  = 60_000L;
+    private static final long MILLIS_PER_SEC  = 1_000L;
+
+    private final HoaDonController hoaDonController = new HoaDonController();
     private DefaultTableModel tableModel;
     private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     private HoaDonDTO currentHD;
+    private List<HoaDonDTO> dsHoaDon = Collections.emptyList(); // cache, tránh gọi DB 2 lần
     private javax.swing.Timer realTimeTimer;
 
-    /**
-     * Creates new form QuanLyHoaDonForm
-     */
     public QuanLyHoaDonForm() {
         initComponents();
-        hoaDonController = new HoaDonController();
-        initTable();
+        tableModel = (DefaultTableModel) tblHoaDon.getModel();
         loadDataToTable();
         initRealTimeTimer();
     }
 
     private void initRealTimeTimer() {
-        realTimeTimer = new javax.swing.Timer(1000, e -> {
-            updateRealTimeDuration();
-        });
+        realTimeTimer = new javax.swing.Timer(1000, e -> updateRealTimeDuration());
         realTimeTimer.start();
     }
 
     private void updateRealTimeDuration() {
         if (currentHD == null || txtThoiGianDaDung == null) return;
-
-        // Chỉ chạy timer nếu phiên chưa kết thúc VÀ hóa đơn chưa thanh toán
-        boolean isRunning = !"Đã kết thúc".equals(currentHD.getTrangThaiPhien()) && 
-                          !"Đã thanh toán".equals(currentHD.getTrangThaiThanhToan());
-
+        boolean isRunning = !"Đã kết thúc".equals(currentHD.getTrangThaiPhien())
+                         && !"Đã thanh toán".equals(currentHD.getTrangThaiThanhToan());
         if (currentHD.getThoiGianBatDauPhien() != null && isRunning) {
-            long now = System.currentTimeMillis();
-            long start = currentHD.getThoiGianBatDauPhien().getTime();
-            long diff = now - start;
-
-            if (diff > 0) {
-                long hours = diff / (3600 * 1000);
-                long minutes = (diff % (3600 * 1000)) / (60 * 1000);
-                long seconds = (diff % (60 * 1000)) / 1000;
-                txtThoiGianDaDung.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
-            } else {
-                txtThoiGianDaDung.setText("00:00:00");
-            }
+            long diff = System.currentTimeMillis() - currentHD.getThoiGianBatDauPhien().getTime();
+            txtThoiGianDaDung.setText(diff > 0
+                    ? String.format("%02d:%02d:%02d",
+                            diff / MILLIS_PER_HOUR,
+                            (diff % MILLIS_PER_HOUR) / MILLIS_PER_MIN,
+                            (diff % MILLIS_PER_MIN) / MILLIS_PER_SEC)
+                    : "00:00:00");
         }
     }
 
-    private void initTable() {
-        tableModel = (DefaultTableModel) tblHoaDon.getModel();
-    }
-
     private void loadDataToTable() {
-        String searchText = txtTimKiem.getText();
-        String statusFilter = cbxLocTrangThai.getSelectedItem().toString();
-
-        List<HoaDonDTO> ds = hoaDonController.layDanhSachHoaDon(searchText, statusFilter);
+        dsHoaDon = hoaDonController.layDanhSachHoaDon(
+                txtTimKiem.getText(), cbxLocTrangThai.getSelectedItem().toString());
         tableModel.setRowCount(0);
-
-        for (HoaDonDTO hd : ds) {
+        for (HoaDonDTO hd : dsHoaDon) {
             tableModel.addRow(new Object[] {
                     hd.getMaHoaDon(),
                     sdf.format(hd.getNgayLapHoaDon()),
@@ -95,64 +72,63 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     }
 
     private void showChiTietHoaDon(String maHD) {
-        // Lấy thông tin cơ bản từ danh sách
         int row = tblHoaDon.getSelectedRow();
-        if (row == -1)
-            return;
+        if (row == -1) return;
 
         txtMaHD.setText(maHD);
         txtKhachHang.setText(tableModel.getValueAt(row, 2).toString());
         txtNgayTao.setText(tableModel.getValueAt(row, 1).toString());
         txtNgayTao.setCaretPosition(0);
 
-        // Tìm DTO tương ứng để lấy thông tin chi tiết hơn
-        String searchText = txtTimKiem.getText();
-        String statusFilter = cbxLocTrangThai.getSelectedItem().toString();
-        List<HoaDonDTO> ds = hoaDonController.layDanhSachHoaDon(searchText, statusFilter);
+        for (HoaDonDTO hd : dsHoaDon) {
+            if (!hd.getMaHoaDon().equals(maHD)) continue;
+            this.currentHD = hd;
 
-        for (HoaDonDTO hd : ds) {
-            if (hd.getMaHoaDon().equals(maHD)) {
-                this.currentHD = hd;
-                txtThanhToan.setText(hd.getPhuongThucThanhToan() != null ? hd.getPhuongThucThanhToan() : "Chưa chọn");
-                txtTruocGiamGia.setText(df.format(hd.getTongTien()));
-                txtSauGiamGia.setText(df.format(hd.getThanhTien()));
-                txtTrangThai.setText(hd.getTrangThaiThanhToan());
-                if (txtHinhThuc != null) {
-                    txtHinhThuc.setText(hd.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp");
-                }
-                if (txtTrangThaiPhien != null) {
-                    txtTrangThaiPhien.setText(hd.getTrangThaiPhien() != null ? hd.getTrangThaiPhien() : "N/A");
-                }
-                if (txtThoiGianBatDau != null) {
-                    txtThoiGianBatDau.setText(hd.getThoiGianBatDauPhien() != null ? sdf.format(hd.getThoiGianBatDauPhien()) : "N/A");
-                    txtThoiGianBatDau.setCaretPosition(0);
-                }
-
-                // Thiết lập giá trị thời gian đã dùng ban đầu
-                if (txtThoiGianDaDung != null) {
-                    if (hd.getThoiGianBatDauPhien() != null) {
-                        long start = hd.getThoiGianBatDauPhien().getTime();
-                        long end = (hd.getThoiGianKetThucPhien() != null) ? hd.getThoiGianKetThucPhien().getTime() : System.currentTimeMillis();
-                        long diff = end - start;
-                        if (diff > 0) {
-                            long hours = diff / (3600 * 1000);
-                            long minutes = (diff % (3600 * 1000)) / (60 * 1000);
-                            long seconds = (diff % (60 * 1000)) / 1000;
-                            txtThoiGianDaDung.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
-                        } else {
-                            txtThoiGianDaDung.setText("00:00:00");
-                        }
-                    } else {
-                        txtThoiGianDaDung.setText("00:00:00");
-                    }
-                }
-
-                boolean isChoThanhToan = hd.getTrangThaiThanhToan().equals("Chưa thanh toán") || 
-                                         hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán");
-                btnXacNhan.setEnabled(isChoThanhToan);
-                btnHuy.setEnabled(isChoThanhToan);
-                break;
+            txtThanhToan.setText(hd.getPhuongThucThanhToan() != null ? hd.getPhuongThucThanhToan() : "Chưa chọn");
+            txtTruocGiamGia.setText(df.format(hd.getTongTien()));
+            txtTrangThai.setText(hd.getTrangThaiThanhToan());
+            if (txtHinhThuc != null) txtHinhThuc.setText(hd.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp");
+            if (txtTrangThaiPhien != null) txtTrangThaiPhien.setText(hd.getTrangThaiPhien() != null ? hd.getTrangThaiPhien() : "N/A");
+            if (txtThoiGianBatDau != null) {
+                txtThoiGianBatDau.setText(hd.getThoiGianBatDauPhien() != null ? sdf.format(hd.getThoiGianBatDauPhien()) : "N/A");
+                txtThoiGianBatDau.setCaretPosition(0);
             }
+
+            if (txtThoiGianDaDung != null) {
+                if (hd.getThoiGianBatDauPhien() != null) {
+                    long start = hd.getThoiGianBatDauPhien().getTime();
+                    long end = hd.getThoiGianKetThucPhien() != null
+                            ? hd.getThoiGianKetThucPhien().getTime() : System.currentTimeMillis();
+                    long diff = end - start;
+                    txtThoiGianDaDung.setText(diff > 0
+                            ? String.format("%02d:%02d:%02d",
+                                    diff / MILLIS_PER_HOUR,
+                                    (diff % MILLIS_PER_HOUR) / MILLIS_PER_MIN,
+                                    (diff % MILLIS_PER_MIN) / MILLIS_PER_SEC)
+                            : "00:00:00");
+
+                    // Logic làm tròn: < 15p thì giữ nguyên, >= 15p thì làm tròn lên 1 tiếng
+                    long totalMinutes = diff / MILLIS_PER_MIN;
+                    long hours = totalMinutes / 60;
+                    long minutes = totalMinutes % 60;
+                    long roundedHours = (minutes < 15) ? hours : hours + 1;
+                    txtThoiGianLamTron.setText(roundedHours + " giờ");
+                } else {
+                    txtThoiGianDaDung.setText("00:00:00");
+                    txtThoiGianLamTron.setText("0 giờ");
+                }
+            }
+
+            if (txtThoiGianKetThuc != null) {
+                txtThoiGianKetThuc.setText(hd.getThoiGianKetThucPhien() != null ? sdf.format(hd.getThoiGianKetThucPhien()) : "N/A");
+                txtThoiGianKetThuc.setCaretPosition(0);
+            }
+
+            boolean choThanhToan = hd.getTrangThaiThanhToan().equals("Chưa thanh toán")
+                                || hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán");
+            btnXacNhan.setEnabled(choThanhToan);
+            btnHuy.setEnabled(choThanhToan);
+            break;
         }
     }
 
@@ -193,10 +169,8 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         txtTrangThai = new javax.swing.JTextField();
         btnXacNhan = new javax.swing.JButton();
         btnXoa = new javax.swing.JButton();
-        btnInHoaDon = new javax.swing.JButton();
+        btnXemHoaDon = new javax.swing.JButton();
         btnHuy = new javax.swing.JButton();
-        lblTongTien1 = new javax.swing.JLabel();
-        txtSauGiamGia = new javax.swing.JTextField();
         txtHinhThuc = new javax.swing.JTextField();
         lblTrangThai1 = new javax.swing.JLabel();
         txtTrangThaiPhien = new javax.swing.JTextField();
@@ -205,6 +179,10 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         lblNgayTao1 = new javax.swing.JLabel();
         txtThoiGianBatDau = new javax.swing.JTextField();
         lblNgayTao2 = new javax.swing.JLabel();
+        txtThoiGianKetThuc = new javax.swing.JTextField();
+        lblNgayTao3 = new javax.swing.JLabel();
+        lblNgayTao4 = new javax.swing.JLabel();
+        txtThoiGianLamTron = new javax.swing.JTextField();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -312,19 +290,19 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         txtMaHD.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         txtMaHD.setBorder(null);
         pnRight.add(txtMaHD);
-        txtMaHD.setBounds(20, 80, 390, 30);
+        txtMaHD.setBounds(20, 80, 180, 30);
 
         lblKhachHang.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblKhachHang.setForeground(new java.awt.Color(136, 136, 136));
         lblKhachHang.setText("Khách hàng");
         pnRight.add(lblKhachHang);
-        lblKhachHang.setBounds(20, 120, 100, 18);
+        lblKhachHang.setBounds(230, 60, 100, 18);
 
         txtKhachHang.setEditable(false);
         txtKhachHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtKhachHang.setBorder(null);
         pnRight.add(txtKhachHang);
-        txtKhachHang.setBounds(20, 140, 180, 30);
+        txtKhachHang.setBounds(230, 80, 180, 30);
 
         lblNgayTao.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgayTao.setForeground(new java.awt.Color(136, 136, 136));
@@ -342,13 +320,13 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         lblThanhToan.setForeground(new java.awt.Color(136, 136, 136));
         lblThanhToan.setText("Phương thức TT");
         pnRight.add(lblThanhToan);
-        lblThanhToan.setBounds(20, 240, 150, 18);
+        lblThanhToan.setBounds(230, 180, 150, 18);
 
         txtThanhToan.setEditable(false);
         txtThanhToan.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtThanhToan.setBorder(null);
         pnRight.add(txtThanhToan);
-        txtThanhToan.setBounds(20, 260, 180, 30);
+        txtThanhToan.setBounds(230, 200, 180, 30);
 
         lblTongTien.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTongTien.setForeground(new java.awt.Color(136, 136, 136));
@@ -390,15 +368,15 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         btnXoa.setText("Xóa hóa đơn");
         btnXoa.addActionListener(this::btnXoaActionPerformed);
         pnRight.add(btnXoa);
-        btnXoa.setBounds(160, 490, 130, 40);
+        btnXoa.setBounds(150, 490, 120, 40);
 
-        btnInHoaDon.setBackground(new java.awt.Color(235, 94, 141));
-        btnInHoaDon.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnInHoaDon.setForeground(new java.awt.Color(255, 255, 255));
-        btnInHoaDon.setText("In hóa đơn");
-        btnInHoaDon.addActionListener(this::btnInHoaDonActionPerformed);
-        pnRight.add(btnInHoaDon);
-        btnInHoaDon.setBounds(300, 490, 110, 40);
+        btnXemHoaDon.setBackground(new java.awt.Color(235, 94, 141));
+        btnXemHoaDon.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnXemHoaDon.setForeground(new java.awt.Color(255, 255, 255));
+        btnXemHoaDon.setText("Xem hóa đơn");
+        btnXemHoaDon.addActionListener(this::btnXemHoaDonActionPerformed);
+        pnRight.add(btnXemHoaDon);
+        btnXemHoaDon.setBounds(270, 490, 140, 40);
 
         btnHuy.setBackground(new java.awt.Color(220, 53, 69));
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -407,19 +385,6 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         btnHuy.addActionListener(this::btnHuyActionPerformed);
         pnRight.add(btnHuy);
         btnHuy.setBounds(20, 490, 130, 40);
-
-        lblTongTien1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblTongTien1.setForeground(new java.awt.Color(136, 136, 136));
-        lblTongTien1.setText("Tổng cộng (Sau giảm giá)");
-        pnRight.add(lblTongTien1);
-        lblTongTien1.setBounds(230, 300, 180, 18);
-
-        txtSauGiamGia.setEditable(false);
-        txtSauGiamGia.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        txtSauGiamGia.setForeground(new java.awt.Color(235, 94, 141));
-        txtSauGiamGia.setBorder(null);
-        pnRight.add(txtSauGiamGia);
-        txtSauGiamGia.setBounds(230, 320, 180, 40);
 
         txtHinhThuc.setEditable(false);
         txtHinhThuc.setFont(new java.awt.Font("Segoe UI", 3, 16)); // NOI18N
@@ -438,36 +403,63 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         txtTrangThaiPhien.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtTrangThaiPhien.setBorder(null);
         pnRight.add(txtTrangThaiPhien);
-        txtTrangThaiPhien.setBounds(230, 260, 180, 30);
+        txtTrangThaiPhien.setBounds(230, 320, 180, 40);
 
         lblThanhToan1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThanhToan1.setForeground(new java.awt.Color(136, 136, 136));
         lblThanhToan1.setText("Trạng thái phiên");
         pnRight.add(lblThanhToan1);
-        lblThanhToan1.setBounds(230, 240, 150, 18);
+        lblThanhToan1.setBounds(230, 300, 150, 18);
 
         txtThoiGianDaDung.setEditable(false);
         txtThoiGianDaDung.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtThoiGianDaDung.setBorder(null);
         pnRight.add(txtThoiGianDaDung);
-        txtThoiGianDaDung.setBounds(230, 200, 180, 30);
+        txtThoiGianDaDung.setBounds(20, 260, 180, 30);
 
         lblNgayTao1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgayTao1.setForeground(new java.awt.Color(136, 136, 136));
         lblNgayTao1.setText("Thời gian đã dùng");
         pnRight.add(lblNgayTao1);
-        lblNgayTao1.setBounds(230, 180, 140, 18);
+        lblNgayTao1.setBounds(20, 240, 140, 18);
 
+        txtThoiGianBatDau.setEditable(false);
+        txtThoiGianBatDau.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtThoiGianBatDau.setBorder(null);
         txtThoiGianBatDau.addActionListener(this::txtThoiGianBatDauActionPerformed);
         pnRight.add(txtThoiGianBatDau);
-        txtThoiGianBatDau.setBounds(230, 140, 180, 30);
+        txtThoiGianBatDau.setBounds(20, 140, 180, 30);
 
         lblNgayTao2.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgayTao2.setForeground(new java.awt.Color(136, 136, 136));
         lblNgayTao2.setText("Thời gian bắt đầu phiên");
         pnRight.add(lblNgayTao2);
-        lblNgayTao2.setBounds(230, 120, 160, 18);
+        lblNgayTao2.setBounds(20, 120, 160, 18);
+
+        txtThoiGianKetThuc.setEditable(false);
+        txtThoiGianKetThuc.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtThoiGianKetThuc.setBorder(null);
+        txtThoiGianKetThuc.addActionListener(this::txtThoiGianKetThucActionPerformed);
+        pnRight.add(txtThoiGianKetThuc);
+        txtThoiGianKetThuc.setBounds(230, 140, 180, 30);
+
+        lblNgayTao3.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblNgayTao3.setForeground(new java.awt.Color(136, 136, 136));
+        lblNgayTao3.setText("Thời gian kết thúc phiên");
+        pnRight.add(lblNgayTao3);
+        lblNgayTao3.setBounds(230, 120, 160, 18);
+
+        lblNgayTao4.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblNgayTao4.setForeground(new java.awt.Color(136, 136, 136));
+        lblNgayTao4.setText("Thời gian làm tròn");
+        pnRight.add(lblNgayTao4);
+        lblNgayTao4.setBounds(230, 240, 140, 18);
+
+        txtThoiGianLamTron.setEditable(false);
+        txtThoiGianLamTron.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtThoiGianLamTron.setBorder(null);
+        pnRight.add(txtThoiGianLamTron);
+        txtThoiGianLamTron.setBounds(230, 260, 180, 30);
 
         pnMain.add(pnRight);
         pnRight.setBounds(630, 70, 420, 540);
@@ -482,6 +474,10 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     private void txtThoiGianBatDauActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtThoiGianBatDauActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtThoiGianBatDauActionPerformed
+
+    private void txtThoiGianKetThucActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtThoiGianKetThucActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtThoiGianKetThucActionPerformed
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         String maHD = txtMaHD.getText();
@@ -561,8 +557,43 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnInHoaDonActionPerformed(java.awt.event.ActionEvent evt) {
-        JOptionPane.showMessageDialog(this, "Tính năng in hóa đơn đang được phát triển!");
+    private void btnXemHoaDonActionPerformed(java.awt.event.ActionEvent evt) {
+        String maHD = txtMaHD.getText();
+        if (maHD.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn hóa đơn để xem!");
+            return;
+        }
+
+        com.wms.model.ThongTinHoaDonDTO tt = hoaDonController.layChiTietHoaDon(maHD);
+        if (tt == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin chi tiết!");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("      --- HÓA ĐƠN CHI TIẾT ---\n\n");
+        sb.append("Mã HĐ: ").append(tt.getMaHoaDon()).append("\n");
+        sb.append("Khách hàng: ").append(tt.getHoTenKH()).append("\n");
+        sb.append("Không gian: ").append(tt.getTenKhongGian()).append("\n");
+        sb.append("Thời gian: ").append(tt.getThoiGianSửDung()).append("\n");
+        sb.append("Số giờ tính: ").append(tt.getTongSoGio()).append(" giờ\n");
+        sb.append("--------------------------------\n");
+        sb.append(String.format("%-20s %3s %10s\n", "Dịch vụ", "SL", "Đơn giá"));
+        for (com.wms.model.DichVuDaDungDTO dv : tt.getDanhSachDichVu()) {
+            sb.append(String.format("%-20s %3d %,10.0f\n", dv.getTenDichVu(), dv.getSoLuong(), dv.getDonGia()));
+        }
+        sb.append("--------------------------------\n");
+        sb.append("TỔNG CỘNG: ").append(String.format("%,.0f VNĐ", tt.getTongTien())).append("\n");
+        sb.append("THANH TOÁN: ").append(String.format("%,.0f VNĐ", tt.getThanhTien())).append("\n\n");
+        sb.append("      --- CẢM ƠN QUÝ KHÁCH ---");
+
+        javax.swing.JTextArea textArea = new javax.swing.JTextArea(sb.toString());
+        textArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 13));
+        textArea.setEditable(false);
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+        scrollPane.setPreferredSize(new java.awt.Dimension(400, 500));
+
+        JOptionPane.showMessageDialog(this, scrollPane, "Hóa đơn PDF Preview", JOptionPane.PLAIN_MESSAGE);
     }
 
     private void resetForm() {
@@ -571,18 +602,19 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         txtNgayTao.setText("");
         txtThanhToan.setText("");
         txtTruocGiamGia.setText("");
-        txtSauGiamGia.setText("");
         txtTrangThai.setText("");
+        txtThoiGianKetThuc.setText("");
+        txtThoiGianLamTron.setText("");
         btnXacNhan.setEnabled(false);
         btnHuy.setEnabled(false);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnHuy;
-    private javax.swing.JButton btnInHoaDon;
     private javax.swing.JButton btnLamMoi;
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JButton btnXacNhan;
+    private javax.swing.JButton btnXemHoaDon;
     private javax.swing.JButton btnXoa;
     private javax.swing.JComboBox<String> cbxLocTrangThai;
     private javax.swing.JScrollPane jScrollPane1;
@@ -594,10 +626,11 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblNgayTao;
     private javax.swing.JLabel lblNgayTao1;
     private javax.swing.JLabel lblNgayTao2;
+    private javax.swing.JLabel lblNgayTao3;
+    private javax.swing.JLabel lblNgayTao4;
     private javax.swing.JLabel lblThanhToan;
     private javax.swing.JLabel lblThanhToan1;
     private javax.swing.JLabel lblTongTien;
-    private javax.swing.JLabel lblTongTien1;
     private javax.swing.JLabel lblTrangThai;
     private javax.swing.JLabel lblTrangThai1;
     private javax.swing.JPanel pnHeader;
@@ -609,10 +642,11 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtKhachHang;
     private javax.swing.JTextField txtMaHD;
     private javax.swing.JTextField txtNgayTao;
-    private javax.swing.JTextField txtSauGiamGia;
     private javax.swing.JTextField txtThanhToan;
     private javax.swing.JTextField txtThoiGianBatDau;
     private javax.swing.JTextField txtThoiGianDaDung;
+    private javax.swing.JTextField txtThoiGianKetThuc;
+    private javax.swing.JTextField txtThoiGianLamTron;
     private javax.swing.JTextField txtTimKiem;
     private javax.swing.JTextField txtTrangThai;
     private javax.swing.JTextField txtTrangThaiPhien;

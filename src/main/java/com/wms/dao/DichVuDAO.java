@@ -34,8 +34,10 @@ public class DichVuDAO {
                     dv.setTenDV(rs.getString("TenDV"));
                     dv.setDonGia(rs.getDouble("DonGia"));
                     dv.setTrangThaiDV(rs.getString("TrangThaiDV"));
-                    dv.setHinhAnh(rs.getString("HinhAnh"));
+                    dv.setHinhAnh(rs.getBytes("HinhAnh"));
                     dv.setMaLoaiDV(rs.getString("MaLoaiDV"));
+                    dv.setSoLuong(rs.getInt("SoLuong"));
+                    dv.setGiaGoc(rs.getDouble("GiaGoc"));
                     list.add(dv);
                 }
             }
@@ -46,7 +48,7 @@ public class DichVuDAO {
     }
 
     public boolean themDichVu(DichVuDTO dv) {
-        String sql = "{call sp_ThemDichVu(?, ?, ?, ?, ?, ?)}";
+        String sql = "{call sp_ThemDichVu(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (Connection conn = getConn();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, dv.getMaDV());
@@ -54,7 +56,16 @@ public class DichVuDAO {
             cs.setString(3, dv.getMaLoaiDV());
             cs.setDouble(4, dv.getDonGia());
             cs.setString(5, dv.getTrangThaiDV());
-            cs.registerOutParameter(6, java.sql.Types.VARCHAR);
+            if (dv.getHinhAnh() != null) cs.setBytes(6, dv.getHinhAnh());
+            else cs.setNull(6, java.sql.Types.BLOB);
+            
+            if (dv.getSoLuong() != null) cs.setInt(7, dv.getSoLuong());
+            else cs.setNull(7, java.sql.Types.INTEGER);
+            
+            if (dv.getGiaGoc() != null) cs.setDouble(8, dv.getGiaGoc());
+            else cs.setNull(8, java.sql.Types.DOUBLE);
+            
+            cs.registerOutParameter(9, java.sql.Types.VARCHAR);
             
             cs.execute();
             return true;
@@ -65,14 +76,25 @@ public class DichVuDAO {
     }
 
     public boolean capNhatDichVu(DichVuDTO dv) {
-        String sql = "{call sp_CapNhatDichVu(?, ?, ?, ?, ?)}";
+        String sql = "{call sp_CapNhatDichVu(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (Connection conn = getConn();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, dv.getMaDV());
             cs.setString(2, dv.getTenDV());
             cs.setDouble(3, dv.getDonGia());
             cs.setString(4, dv.getTrangThaiDV());
-            cs.registerOutParameter(5, java.sql.Types.VARCHAR);
+            if (dv.getHinhAnh() != null) cs.setBytes(5, dv.getHinhAnh());
+            else cs.setNull(5, java.sql.Types.BLOB);
+            
+            cs.setString(6, dv.getMaLoaiDV());
+            
+            if (dv.getSoLuong() != null) cs.setInt(7, dv.getSoLuong());
+            else cs.setNull(7, java.sql.Types.INTEGER);
+            
+            if (dv.getGiaGoc() != null) cs.setDouble(8, dv.getGiaGoc());
+            else cs.setNull(8, java.sql.Types.DOUBLE);
+            
+            cs.registerOutParameter(9, java.sql.Types.VARCHAR);
             
             cs.execute();
             return true;

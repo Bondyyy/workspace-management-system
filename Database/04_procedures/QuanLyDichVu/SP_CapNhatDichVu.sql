@@ -3,6 +3,10 @@ CREATE OR REPLACE PROCEDURE sp_CapNhatDichVu (
     p_TenDV       IN VARCHAR2,
     p_DonGia      IN NUMBER,
     p_TrangThaiDV IN VARCHAR2,
+    p_HinhAnh     IN BLOB,
+    p_MaLoaiDV    IN VARCHAR2,
+    p_SoLuong     IN NUMBER,
+    p_GiaGoc      IN NUMBER,
     p_outMessage  OUT VARCHAR2
 )
 AS
@@ -26,7 +30,11 @@ BEGIN
     UPDATE DICHVU
     SET TenDV = p_TenDV,
         DonGia = p_DonGia,
-        TrangThaiDV = p_TrangThaiDV
+        TrangThaiDV = p_TrangThaiDV,
+        HinhAnh = NVL(p_HinhAnh, HinhAnh),
+        MaLoaiDV = p_MaLoaiDV,
+        SoLuong = p_SoLuong,
+        GiaGoc = p_GiaGoc
     WHERE MaDV = p_MaDV;
 
     COMMIT;

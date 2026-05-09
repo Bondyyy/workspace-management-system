@@ -1,32 +1,72 @@
 package com.wms.view.TrangChuQuanLy.QuanLyPhieuGiamGia;
 
-import com.wms.controller.PhieuGiamGiaController;
+import com.wms.controller.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaController;
+import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
+import com.wms.model.NguoiDungDTO;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.text.SimpleDateFormat;
+import java.util.List;
 
 public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
-    private com.wms.controller.PhieuGiamGiaController controller;
-    private java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+    private final PhieuGiamGiaController controller = new PhieuGiamGiaController();
+    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
-    /**
-     * Creates new form QuanLyPhieuGiamGiaForm
-     */
     public QuanLyPhieuGiamGiaForm() {
         initComponents();
-        controller = new com.wms.controller.PhieuGiamGiaController();
+        setupTable();
+        txtMaPGG.setText(controller.sinhMaMoi());
+        
+        // Thêm định dạng tiền tệ khi nhập
+        addCurrencyFormatting(txtGiaTriGiamGia);
+        addCurrencyFormatting(txtGiaTriApDungToiThieu);
+        
         loadDataToTable();
-        generateNewID();
+    }
+
+    private void setupTable() {
+        // Căn lề cho các cột số và ngày tháng
+        javax.swing.table.DefaultTableCellRenderer rightRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(javax.swing.JLabel.RIGHT);
+        
+        javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        
+        tblPhieuGiamGia.getColumnModel().getColumn(2).setCellRenderer(rightRenderer); // Giá trị
+        tblPhieuGiamGia.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); // ĐK Áp dụng
+        tblPhieuGiamGia.getColumnModel().getColumn(4).setCellRenderer(centerRenderer); // Từ ngày
+        tblPhieuGiamGia.getColumnModel().getColumn(5).setCellRenderer(centerRenderer); // Đến ngày
+        tblPhieuGiamGia.getColumnModel().getColumn(6).setCellRenderer(centerRenderer); // SL Đã dùng
+        tblPhieuGiamGia.getColumnModel().getColumn(7).setCellRenderer(centerRenderer); // SL Tối đa
+    }
+
+    private void addCurrencyFormatting(javax.swing.JTextField textField) {
+        textField.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                String text = textField.getText().replace(",", "");
+                if (text.isEmpty()) return;
+                try {
+                    double value = Double.parseDouble(text);
+                    textField.setText(String.format("%,.0f", value));
+                } catch (NumberFormatException ex) {
+                    // Bỏ qua nếu không phải số
+                }
+            }
+        });
     }
 
     private void loadDataToTable() {
-        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblPhieuGiamGia.getModel();
+        DefaultTableModel model = (DefaultTableModel) tblPhieuGiamGia.getModel();
         model.setRowCount(0);
-        java.util.List<com.wms.model.PhieuGiamGiaDTO> list = controller.layDanhSach();
-        for (com.wms.model.PhieuGiamGiaDTO dto : list) {
+        List<PhieuGiamGiaDTO> list = controller.layDanhSach();
+        for (PhieuGiamGiaDTO dto : list) {
             model.addRow(new Object[]{
                 dto.getMaPGG(),
                 dto.getMaChuSoPGG(),
-                dto.getGiaTriGiamGia(),
-                dto.getGiaTriApDungToiThieu(),
+                String.format("%,.0f", dto.getGiaTriGiamGia()),
+                String.format("%,.0f", dto.getGiaTriApDungToiThieu()),
                 sdf.format(dto.getNgayBatDauApDung()),
                 sdf.format(dto.getNgayKetThucApDung()),
                 dto.getSlDaDung(),
@@ -35,93 +75,34 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         }
     }
 
-    private void generateNewID() {
-        String newID = "PGG" + System.currentTimeMillis() % 1000000;
-        txtMaPGG.setText(newID);
-    }
-
-    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            com.wms.model.PhieuGiamGiaDTO dto = getFormData();
-            if (controller.themMoi(dto)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Thêm phiếu giảm giá thành công!");
-                loadDataToTable();
-                btnHuyActionPerformed(null);
-            } else {
-                javax.swing.JOptionPane.showMessageDialog(this, "Thêm thất bại!");
-            }
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
-        }
-    }
-
-    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            com.wms.model.PhieuGiamGiaDTO dto = getFormData();
-            if (controller.capNhat(dto)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadDataToTable();
-            }
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi cập nhật!");
-        }
-    }
-
-    private void btnXoaActionPerformed(java.awt.event.ActionEvent evt) {
-        String ma = txtMaPGG.getText();
-        if (ma.isEmpty()) return;
-        
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa phiếu " + ma + "?");
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
-            if (controller.xoa(ma)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Đã xóa!");
-                loadDataToTable();
-                btnHuyActionPerformed(null);
-            }
-        }
-    }
-
-    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
-        generateNewID();
+    private void laMoiForm() {
+        txtMaPGG.setText(controller.sinhMaMoi());
         txtMaChuSoPGG.setText("");
         txtGiaTriGiamGia.setText("");
         txtGiaTriApDungToiThieu.setText("");
         txtSLToiDa.setText("");
         txtNgayBatDauApDung.setText("");
         txtNgayKetThucApDung.setText("");
+        tblPhieuGiamGia.clearSelection();
     }
 
-    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
-        loadDataToTable();
-    }
-
-    private void tblPhieuGiamGiaMouseClicked(java.awt.event.MouseEvent evt) {
-        int row = tblPhieuGiamGia.getSelectedRow();
-        if (row >= 0) {
-            String ma = tblPhieuGiamGia.getValueAt(row, 0).toString();
-            com.wms.model.PhieuGiamGiaDTO dto = controller.timTheoMa(ma);
-            if (dto != null) {
-                txtMaPGG.setText(dto.getMaPGG());
-                txtMaChuSoPGG.setText(dto.getMaChuSoPGG());
-                txtGiaTriGiamGia.setText(String.valueOf(dto.getGiaTriGiamGia()));
-                txtGiaTriApDungToiThieu.setText(String.valueOf(dto.getGiaTriApDungToiThieu()));
-                txtSLToiDa.setText(String.valueOf(dto.getSlToiDa()));
-                txtNgayBatDauApDung.setText(sdf.format(dto.getNgayBatDauApDung()));
-                txtNgayKetThucApDung.setText(sdf.format(dto.getNgayKetThucApDung()));
-            }
-        }
-    }
-
-    private com.wms.model.PhieuGiamGiaDTO getFormData() throws Exception {
-        com.wms.model.PhieuGiamGiaDTO dto = new com.wms.model.PhieuGiamGiaDTO();
+    private PhieuGiamGiaDTO getFormData() throws Exception {
+        PhieuGiamGiaDTO dto = new PhieuGiamGiaDTO();
         dto.setMaPGG(txtMaPGG.getText().trim());
         dto.setMaChuSoPGG(txtMaChuSoPGG.getText().trim());
-        dto.setGiaTriGiamGia(Double.parseDouble(txtGiaTriGiamGia.getText()));
-        dto.setGiaTriApDungToiThieu(Double.parseDouble(txtGiaTriApDungToiThieu.getText()));
-        dto.setSlToiDa(Integer.parseInt(txtSLToiDa.getText()));
-        dto.setNgayBatDauApDung(sdf.parse(txtNgayBatDauApDung.getText()));
-        dto.setNgayKetThucApDung(sdf.parse(txtNgayKetThucApDung.getText()));
-        dto.setMaNV("ADMIN");
+        
+        // Loại bỏ dấu phẩy trước khi parse số
+        String giaTriStr = txtGiaTriGiamGia.getText().replace(",", "").replace(".", "");
+        String apDungStr = txtGiaTriApDungToiThieu.getText().replace(",", "").replace(".", "");
+        
+        dto.setGiaTriGiamGia(Double.parseDouble(giaTriStr));
+        dto.setGiaTriApDungToiThieu(Double.parseDouble(apDungStr));
+        dto.setSlToiDa(Integer.parseInt(txtSLToiDa.getText().trim()));
+        dto.setNgayBatDauApDung(sdf.parse(txtNgayBatDauApDung.getText().trim()));
+        dto.setNgayKetThucApDung(sdf.parse(txtNgayKetThucApDung.getText().trim()));
+        
+        NguoiDungDTO user = com.wms.controller.DangNhapController.getCurrentUser();
+        dto.setMaNV(user != null ? user.getMaNV() : "NV_ADMIN"); 
         return dto;
     }
 
@@ -187,8 +168,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         lblMaPGG.setBounds(20, 70, 170, 18);
 
         txtMaPGG.setEditable(false);
-        txtMaPGG.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         txtMaPGG.setBackground(new java.awt.Color(240, 240, 240));
+        txtMaPGG.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtMaPGG);
         txtMaPGG.setBounds(20, 90, 170, 35);
 
@@ -256,7 +237,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
-        btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
+        btnThemMoi.addActionListener(e -> btnThemMoiActionPerformed());
         pnMain.add(btnThemMoi);
         btnThemMoi.setBounds(20, 340, 170, 40);
 
@@ -264,7 +245,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
-        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
+        btnCapNhat.addActionListener(e -> btnCapNhatActionPerformed());
         pnMain.add(btnCapNhat);
         btnCapNhat.setBounds(210, 340, 170, 40);
 
@@ -272,14 +253,14 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         btnXoa.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnXoa.setForeground(new java.awt.Color(255, 255, 255));
         btnXoa.setText("Xóa");
-        btnXoa.addActionListener(this::btnXoaActionPerformed);
+        btnXoa.addActionListener(e -> btnXoaActionPerformed());
         pnMain.add(btnXoa);
         btnXoa.setBounds(20, 395, 170, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
-        btnHuy.addActionListener(this::btnHuyActionPerformed);
+        btnHuy.addActionListener(e -> laMoiForm());
         pnMain.add(btnHuy);
         btnHuy.setBounds(210, 395, 170, 40);
 
@@ -297,7 +278,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setText("Tìm");
-        btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
+        btnTimKiem.addActionListener(e -> loadDataToTable());
         pnMain.add(btnTimKiem);
         btnTimKiem.setBounds(920, 80, 100, 35);
 
@@ -332,6 +313,67 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnThemMoiActionPerformed() {
+        try {
+            PhieuGiamGiaDTO dto = getFormData();
+            if (controller.themMoi(dto)) {
+                JOptionPane.showMessageDialog(this, "Thêm phiếu giảm giá thành công!");
+                loadDataToTable();
+                laMoiForm();
+            } else {
+                JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại thông tin.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi nhập liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void btnCapNhatActionPerformed() {
+        try {
+            PhieuGiamGiaDTO dto = getFormData();
+            if (controller.capNhat(dto)) {
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                loadDataToTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void btnXoaActionPerformed() {
+        String ma = txtMaPGG.getText();
+        if (ma.isEmpty()) return;
+        
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa phiếu " + ma + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            if (controller.xoa(ma)) {
+                JOptionPane.showMessageDialog(this, "Đã xóa thành công!");
+                loadDataToTable();
+                laMoiForm();
+            } else {
+                JOptionPane.showMessageDialog(this, "Không thể xóa phiếu này!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void tblPhieuGiamGiaMouseClicked(java.awt.event.MouseEvent evt) {
+        int row = tblPhieuGiamGia.getSelectedRow();
+        if (row >= 0) {
+            String ma = tblPhieuGiamGia.getValueAt(row, 0).toString();
+            PhieuGiamGiaDTO dto = controller.timTheoMa(ma);
+            if (dto != null) {
+                txtMaPGG.setText(dto.getMaPGG());
+                txtMaChuSoPGG.setText(dto.getMaChuSoPGG());
+                txtGiaTriGiamGia.setText(String.valueOf(dto.getGiaTriGiamGia()));
+                txtGiaTriApDungToiThieu.setText(String.valueOf(dto.getGiaTriApDungToiThieu()));
+                txtSLToiDa.setText(String.valueOf(dto.getSlToiDa()));
+                txtNgayBatDauApDung.setText(sdf.format(dto.getNgayBatDauApDung()));
+                txtNgayKetThucApDung.setText(sdf.format(dto.getNgayKetThucApDung()));
+            }
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCapNhat;
@@ -362,5 +404,3 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
 }
-
-

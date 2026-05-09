@@ -1,47 +1,54 @@
 package com.wms.view.TrangChuQuanLy.QuanLyChiNhanh;
 
-import com.wms.dao.KhongGianDAO;
+import com.wms.controller.TrangChuQuanLy.QuanLyKhongGian.KhongGianController;
+import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
+
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(QuanLySoDoKhongGianForm.class.getName());
+
+    private static final Logger logger = Logger.getLogger(QuanLySoDoKhongGianForm.class.getName());
+    private final KhongGianController controller = new KhongGianController();
     private String maCN;
-    private com.wms.dao.KhongGianDAO khongGianDAO = new com.wms.dao.KhongGianDAO();
-    private java.util.List<com.wms.model.KhongGianDTO> dsKG;
+    private List<KhongGianDTO> dsKG;
+    private Map<String, KhongGianDTO> mapKG = new HashMap<>(); // lookup nhanh theo MaKG
     private javax.swing.JPanel panelSoDo;
     
-    private final java.awt.Color mauHongChinh = java.awt.Color.decode("#EB5E8D");
-    private final java.awt.Color mauTrong_Nen = java.awt.Color.decode("#FFF0F5");
-    private final java.awt.Color mauTrong_Vien = java.awt.Color.decode("#E0E0E0");
-    private final java.awt.Color mauDaDat_Nen = java.awt.Color.decode("#FFF3E0");
-    private final java.awt.Color mauDaDat_Vien = java.awt.Color.decode("#FFB74D");
-    private final java.awt.Color mauDangDung_Nen = java.awt.Color.decode("#E8F5E9");
-    private final java.awt.Color mauDangDung_Vien = java.awt.Color.decode("#66BB6A");
-    private final java.awt.Color mauBaoTri_Nen = java.awt.Color.decode("#F5F5F5");
-    private final java.awt.Color mauBaoTri_Vien = java.awt.Color.decode("#9E9E9E");
-    private final java.awt.Color mauLeTan = java.awt.Color.decode("#34495E");
+    private final Color mauHongChinh = Color.decode("#EB5E8D");
+    private final Color mauTrong_Nen = Color.decode("#FFF0F5");
+    private final Color mauTrong_Vien = Color.decode("#E0E0E0");
+    private final Color mauDaDat_Nen = Color.decode("#FFF3E0");
+    private final Color mauDaDat_Vien = Color.decode("#FFB74D");
+    private final Color mauDangDung_Nen = Color.decode("#E8F5E9");
+    private final Color mauDangDung_Vien = Color.decode("#66BB6A");
+    private final Color mauBaoTri_Nen = Color.decode("#F5F5F5");
+    private final Color mauBaoTri_Vien = Color.decode("#9E9E9E");
+    private final Color mauLeTan = Color.decode("#34495E");
 
     private final int MAX_COLS = 12;
     private final int MAX_ROWS = 8;
     private final int DON_VI = 50;
 
-    /**
-     * Creates new form QuanLySoDoKhongGianForm
-     */
     public QuanLySoDoKhongGianForm(java.awt.Frame parent, boolean modal, String maCN, String tenCN) {
         super(parent, modal);
         this.maCN = maCN;
         initComponents();
         this.setContentPane(pnMain);
-        if (tenCN != null) {
-            lblHeaderTitle.setText("SƠ ĐỒ KHÔNG GIAN - " + tenCN.toUpperCase());
-        }
+        if (tenCN != null) lblHeaderTitle.setText("SƠ ĐỒ KHÔNG GIAN - " + tenCN.toUpperCase());
         initCustomUI();
         taiDanhSach();
         this.pack();
         this.setLocationRelativeTo(parent);
     }
-    
+
     public QuanLySoDoKhongGianForm(java.awt.Frame parent, boolean modal) {
         this(parent, modal, "CN001", "Chi nhánh mặc định");
     }
@@ -182,7 +189,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         btnCapNhatToaDo.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhatToaDo.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhatToaDo.setText("Cập nhật trên Sơ đồ");
-        btnCapNhatToaDo.addActionListener(this::btnCapNhatToaDoActionPerformed);
+        btnCapNhatToaDo.addActionListener(e -> btnCapNhatToaDoActionPerformed());
         pnLeft.add(btnCapNhatToaDo);
         btnCapNhatToaDo.setBounds(15, 420, 320, 35);
 
@@ -190,7 +197,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         btnLuuCSDL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnLuuCSDL.setForeground(new java.awt.Color(255, 255, 255));
         btnLuuCSDL.setText("Lưu thay đổi CSDL");
-        btnLuuCSDL.addActionListener(this::btnLuuCSDLActionPerformed);
+        btnLuuCSDL.addActionListener(e -> btnLuuCSDLActionPerformed());
         pnLeft.add(btnLuuCSDL);
         btnLuuCSDL.setBounds(15, 465, 320, 35);
 
@@ -228,28 +235,24 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
 
     private void initCustomUI() {
         panelSoDo = new GridPanel();
-        
         javax.swing.JPanel canvas = new javax.swing.JPanel(new java.awt.BorderLayout());
         canvas.setOpaque(false);
         canvas.add(panelSoDo, java.awt.BorderLayout.CENTER);
-        
         pnBaoNgoai.setLayout(new java.awt.BorderLayout());
         pnBaoNgoai.add(canvas, java.awt.BorderLayout.CENTER);
-        
-        // Chú thích mở rộng
-        pnChuThich.add(taoMucChuThich("Quầy lễ tân", mauLeTan, java.awt.Color.BLACK));
+
+        pnChuThich.add(taoMucChuThich("Quầy lễ tân", mauLeTan, Color.BLACK));
         pnChuThich.add(taoMucChuThich("Trống", mauTrong_Nen, mauTrong_Vien));
         pnChuThich.add(taoMucChuThich("Đã đặt", mauDaDat_Nen, mauDaDat_Vien));
         pnChuThich.add(taoMucChuThich("Đang dùng", mauDangDung_Nen, mauDangDung_Vien));
         pnChuThich.add(taoMucChuThich("Bảo trì", mauBaoTri_Nen, mauBaoTri_Vien));
     }
 
-    // Lớp vẽ lưới và trục tọa độ
     class GridPanel extends javax.swing.JPanel {
         public GridPanel() {
             setLayout(new java.awt.GridBagLayout());
-            setBackground(java.awt.Color.WHITE);
-            setPreferredSize(new java.awt.Dimension(MAX_COLS * DON_VI + 30, MAX_ROWS * DON_VI + 30));
+            setBackground(Color.WHITE);
+            setPreferredSize(new Dimension(MAX_COLS * DON_VI + 30, MAX_ROWS * DON_VI + 30));
         }
 
         @Override
@@ -258,37 +261,28 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
             java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
             g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
 
-            g2.setColor(new java.awt.Color(240, 240, 240));
+            g2.setColor(new Color(240, 240, 240));
             g2.fillRect(0, 0, MAX_COLS * DON_VI, MAX_ROWS * DON_VI);
-            
-            g2.setColor(new java.awt.Color(220, 220, 220));
-            for (int i = 0; i <= MAX_COLS; i++) {
-                g2.drawLine(i * DON_VI, 0, i * DON_VI, MAX_ROWS * DON_VI);
-            }
-            for (int j = 0; j <= MAX_ROWS; j++) {
-                g2.drawLine(0, j * DON_VI, MAX_COLS * DON_VI, j * DON_VI);
-            }
+            g2.setColor(new Color(220, 220, 220));
+            for (int i = 0; i <= MAX_COLS; i++) g2.drawLine(i * DON_VI, 0, i * DON_VI, MAX_ROWS * DON_VI);
+            for (int j = 0; j <= MAX_ROWS; j++) g2.drawLine(0, j * DON_VI, MAX_COLS * DON_VI, j * DON_VI);
 
-            g2.setColor(java.awt.Color.GRAY);
-            g2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
-            for (int i = 0; i < MAX_COLS; i++) {
-                g2.drawString("X:" + i, i * DON_VI + 5, 12);
-            }
-            for (int j = 0; j < MAX_ROWS; j++) {
-                g2.drawString("Y:" + j, 5, j * DON_VI + 12);
-            }
-            
-            g2.setColor(new java.awt.Color(235, 94, 141));
+            g2.setColor(Color.GRAY);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            for (int i = 0; i < MAX_COLS; i++) g2.drawString("X:" + i, i * DON_VI + 5, 12);
+            for (int j = 0; j < MAX_ROWS; j++) g2.drawString("Y:" + j, 5, j * DON_VI + 12);
+
+            g2.setColor(mauHongChinh);
             g2.setStroke(new java.awt.BasicStroke(2));
             g2.drawRect(0, 0, MAX_COLS * DON_VI, MAX_ROWS * DON_VI);
         }
     }
 
-    private javax.swing.JPanel taoMucChuThich(String ten, java.awt.Color nen, java.awt.Color vien) {
+    private javax.swing.JPanel taoMucChuThich(String ten, Color nen, Color vien) {
         javax.swing.JPanel p = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
         p.setOpaque(false);
         javax.swing.JLabel box = new javax.swing.JLabel();
-        box.setPreferredSize(new java.awt.Dimension(15, 15));
+        box.setPreferredSize(new Dimension(15, 15));
         box.setOpaque(true);
         box.setBackground(nen);
         box.setBorder(javax.swing.BorderFactory.createLineBorder(vien, 1));
@@ -298,12 +292,16 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
     }
 
     private void taiDanhSach() {
-        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblKhongGian.getModel();
+        dsKG = controller.layTheoChiNhanh(maCN);
+        mapKG.clear();
+        for (KhongGianDTO dto : dsKG) mapKG.put(dto.getMaKG(), dto);
+
+        DefaultTableModel model = (DefaultTableModel) tblKhongGian.getModel();
         model.setRowCount(0);
-        dsKG = khongGianDAO.layTheoChiNhanh(maCN);
-        for (com.wms.model.KhongGianDTO dto : dsKG) {
+        for (KhongGianDTO dto : dsKG) {
             model.addRow(new Object[]{
-                dto.getMaKG(), dto.getTenKG(), dto.getToaDoX(), dto.getToaDoY(), dto.getChieuDai(), dto.getChieuRong()
+                dto.getMaKG(), dto.getTenKG(), dto.getToaDoX(), dto.getToaDoY(),
+                dto.getChieuDai(), dto.getChieuRong()
             });
         }
         veSoDo();
@@ -345,7 +343,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         panelSoDo.add(btnLeTan, gbc);
 
         // Vẽ các ô không gian
-        for (com.wms.model.KhongGianDTO kg : dsKG) {
+        for (com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO kg : dsKG) {
             gbc.gridx = kg.getToaDoX();
             gbc.gridy = kg.getToaDoY();
             gbc.gridwidth = kg.getChieuDai();
@@ -392,67 +390,54 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
     private void tblKhongGianMouseClicked(java.awt.event.MouseEvent evt) {
         int row = tblKhongGian.getSelectedRow();
         if (row < 0) return;
-        txtToaDoX.setText(tblKhongGian.getValueAt(row, 2).toString());
-        txtToaDoY.setText(tblKhongGian.getValueAt(row, 3).toString());
-        // Sửa lại logic hiển thị: Rộng (Cột 4) và Dài (Cột 5)
-        txtChieuRong.setText(tblKhongGian.getValueAt(row, 4).toString());
-        txtChieuDai.setText(tblKhongGian.getValueAt(row, 5).toString());
+        String maKG = tblKhongGian.getValueAt(row, 0).toString();
+        KhongGianDTO dto = mapKG.get(maKG);
+        if (dto == null) return;
+        txtToaDoX.setText(String.valueOf(dto.getToaDoX()));
+        txtToaDoY.setText(String.valueOf(dto.getToaDoY()));
+        txtChieuRong.setText(String.valueOf(dto.getChieuDai()));
+        txtChieuDai.setText(String.valueOf(dto.getChieuRong()));
     }
 
-    private void btnCapNhatToaDoActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCapNhatToaDoActionPerformed() {
         int row = tblKhongGian.getSelectedRow();
         if (row < 0) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Chọn một không gian trong bảng!");
+            JOptionPane.showMessageDialog(this, "Chọn một không gian trong bảng!");
             return;
         }
         try {
             String maKG = tblKhongGian.getValueAt(row, 0).toString();
-            int x = Integer.parseInt(txtToaDoX.getText());
-            int y = Integer.parseInt(txtToaDoY.getText());
-            int w = Integer.parseInt(txtChieuRong.getText());
-            int h = Integer.parseInt(txtChieuDai.getText());
-            
-            // Tìm đúng DTO trong danh sách bằng MaKG (tránh lỗi khi bảng bị sắp xếp)
-            com.wms.model.KhongGianDTO selectedDto = null;
-            for (com.wms.model.KhongGianDTO dto : dsKG) {
-                if (dto.getMaKG().equals(maKG)) {
-                    selectedDto = dto;
-                    break;
-                }
-            }
-            
-            if (selectedDto != null) {
-                selectedDto.setToaDoX(x);
-                selectedDto.setToaDoY(y);
-                selectedDto.setChieuDai(w);
-                selectedDto.setChieuRong(h);
-                
+            int x = Integer.parseInt(txtToaDoX.getText().trim());
+            int y = Integer.parseInt(txtToaDoY.getText().trim());
+            int w = Integer.parseInt(txtChieuRong.getText().trim());
+            int h = Integer.parseInt(txtChieuDai.getText().trim());
+
+            KhongGianDTO dto = mapKG.get(maKG);
+            if (dto != null) {
+                dto.setToaDoX(x); dto.setToaDoY(y);
+                dto.setChieuDai(w); dto.setChieuRong(h);
                 tblKhongGian.setValueAt(x, row, 2);
                 tblKhongGian.setValueAt(y, row, 3);
                 tblKhongGian.setValueAt(w, row, 4);
                 tblKhongGian.setValueAt(h, row, 5);
-                
                 veSoDo();
             }
         } catch (NumberFormatException e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Toạ độ và kích thước phải là số nguyên!");
+            JOptionPane.showMessageDialog(this, "Toạ độ và kích thước phải là số nguyên!");
         }
     }
 
-    private void btnLuuCSDLActionPerformed(java.awt.event.ActionEvent evt) {
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Bạn có muốn lưu toàn bộ thay đổi toạ độ vào CSDL không?", "Xác nhận", javax.swing.JOptionPane.YES_NO_OPTION);
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
-            boolean success = true;
-            for (com.wms.model.KhongGianDTO dto : dsKG) {
-                if (!khongGianDAO.capNhat(dto)) {
-                    success = false;
-                }
-            }
-            if (success) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Lưu thành công!");
-                taiDanhSach(); // Tải lại từ CSDL để đảm bảo dữ liệu khớp hoàn toàn
+    private void btnLuuCSDLActionPerformed() {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Bạn có muốn lưu toàn bộ thay đổi toạ độ vào CSDL không?",
+                "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            String loi = controller.luuToaDo(dsKG);
+            if (loi == null) {
+                JOptionPane.showMessageDialog(this, "Lưu thành công!");
+                taiDanhSach();
             } else {
-                javax.swing.JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi lưu một số không gian. Vui lòng kiểm tra lại kết nối hoặc cấu trúc bảng DB.");
+                JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

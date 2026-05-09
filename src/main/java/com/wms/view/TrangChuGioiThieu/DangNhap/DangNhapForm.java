@@ -183,16 +183,23 @@ public class DangNhapForm extends javax.swing.JPanel {
                     currentWin.dispose();
                 }
 
-                // Điều hướng dựa trên vai trò
-                if (user.hasRole("Quản lý") || user.hasRole("Quản trị viên") || user.hasRole("Quản trị hệ thống")) {
+                // Nếu user có bất kỳ vai trò nào khác Hội viên → đây là nhân viên/quản lý
+                boolean laNhanVien = false;
+                if (user.getVaiTro() != null) {
+                    for (String vt : user.getVaiTro()) {
+                        if (vt != null && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_NAME)
+                                && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_CODE)) {
+                            laNhanVien = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (laNhanVien) {
+                    // Nhân viên có bất kỳ vai trò quản lý → vào trang quản lý
                     new com.wms.view.TrangChuQuanLy.TrangChuQuanLyForm().setVisible(true);
-                } else if (user.hasRole("Hội viên") || user.hasRole("VT02") || user.getVaiTro() == null || user.getVaiTro().isEmpty()) {
-                    // Nếu là Hội viên hoặc chưa có vai trò rõ ràng thì mặc định vào trang Hội viên
-                    new com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm().setVisible(true);
                 } else {
-                    System.out.println("[Login] Vai trò không xác định: " + user.getVaiTro());
-                    JOptionPane.showMessageDialog(null, "Tài khoản chưa được phân quyền chính thức!", "Thông báo",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    // Hội viên hoặc chưa có vai trò → trang Hội viên
                     new com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm().setVisible(true);
                 }
                 break;

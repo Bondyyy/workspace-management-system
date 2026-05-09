@@ -5,18 +5,16 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-import com.wms.dao.ThongKeDAO;
-import com.wms.dao.ChiNhanhDAO;
-import com.wms.model.ChiNhanhDTO;
+import com.wms.controller.TongQuanController;
+import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
+import com.wms.model.TongQuanDTO;
 
 public class TongQuanForm extends javax.swing.JPanel {
 
-    private final ThongKeDAO tkDao = new ThongKeDAO();
-    private final ChiNhanhDAO cnDao = new ChiNhanhDAO();
+    private final TongQuanController controller = new TongQuanController();
 
     private final Color mauHong = Color.decode("#EB5E8D");
     private final Color mauHongNhat = new Color(235, 94, 141, 50); 
@@ -34,8 +32,7 @@ public class TongQuanForm extends javax.swing.JPanel {
     private void loadComboChiNhanh() {
         cbxChiNhanh.removeAllItems();
         cbxChiNhanh.addItem("Tất cả chi nhánh");
-        List<ChiNhanhDTO> list = cnDao.layDanhSachChiNhanh();
-        for (ChiNhanhDTO cn : list) {
+        for (ChiNhanhDTO cn : controller.layDanhSachChiNhanh()) {
             cbxChiNhanh.addItem(cn.getMaCN() + " - " + cn.getTenCN());
         }
     }
@@ -70,7 +67,7 @@ public class TongQuanForm extends javax.swing.JPanel {
 
         JLabel lblTitle = new JLabel(tieuDe);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTitle.setForeground(mauHong); // Dùng màu hồng cho tiêu đề thẻ
+        lblTitle.setForeground(mauHong);
 
         JLabel lblValue = new JLabel(giaTri);
         lblValue.setFont(new Font("Segoe UI", Font.BOLD, 26));
@@ -147,7 +144,7 @@ public class TongQuanForm extends javax.swing.JPanel {
         
         JLabel lblTitle = new JLabel("BIỂU ĐỒ DOANH THU 7 NGÀY GẦN NHẤT");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblTitle.setForeground(mauHong); // Dùng màu hồng
+        lblTitle.setForeground(mauHong);
         pnl.add(lblTitle, BorderLayout.NORTH);
         
         return pnl;
@@ -183,9 +180,8 @@ public class TongQuanForm extends javax.swing.JPanel {
             }
         };
         pnl.setOpaque(false);
-        pnl.setLayout(null); // Layout tuyệt đối khớp với kích thước 490x175
+        pnl.setLayout(null);
 
-        // Nửa trái: Thông tin cá nhân
         JLabel lblName = new JLabel("Admin Hệ Thống");
         lblName.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblName.setForeground(mauHong);
@@ -206,7 +202,6 @@ public class TongQuanForm extends javax.swing.JPanel {
         pnlVaiTro.setBounds(20, 125, 200, 20);
         pnl.add(pnlVaiTro);
 
-        // Nửa phải: Cơ cấu thanh toán
         JLabel lblThanhToan = new JLabel("CƠ CẤU THANH TOÁN (KỲ NÀY)");
         lblThanhToan.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblThanhToan.setForeground(mauHong);
@@ -255,24 +250,20 @@ public class TongQuanForm extends javax.swing.JPanel {
         return pnl;
     }
 
-    private JPanel taoVungHoaDon() {
+    private JPanel taoVungHoaDon(List<Object[]> dataList) {
         JPanel pnl = new JPanel(new BorderLayout());
         pnl.setOpaque(false);
-        
+
         JLabel lblTitle = new JLabel("GIAO DỊCH GẦN NHẤT");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblTitle.setForeground(mauHong); // Dùng màu hồng
+        lblTitle.setForeground(mauHong);
         lblTitle.setBorder(new EmptyBorder(15, 20, 10, 20));
         pnl.add(lblTitle, BorderLayout.NORTH);
-        
-        // Tạo bảng bằng Java thuần
+
         String[] columns = {"Mã HĐ", "Khách hàng", "Số tiền", "Trạng thái"};
-        List<Object[]> dataList = tkDao.layRecentTransactions();
         Object[][] data = new Object[dataList.size()][4];
-        for (int i = 0; i < dataList.size(); i++) {
-            data[i] = dataList.get(i);
-        }
-        
+        for (int i = 0; i < dataList.size(); i++) data[i] = dataList.get(i);
+
         JTable tbl = new JTable(new DefaultTableModel(data, columns)) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -283,14 +274,12 @@ public class TongQuanForm extends javax.swing.JPanel {
         tbl.setSelectionForeground(mauHong);
         tbl.getTableHeader().setBackground(Color.WHITE);
         tbl.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        
+
         JScrollPane scroll = new JScrollPane(tbl);
-        scroll.setBorder(BorderFactory.createEmptyBorder(0, 20, 15, 20)); 
+        scroll.setBorder(BorderFactory.createEmptyBorder(0, 20, 15, 20));
         scroll.getViewport().setBackground(Color.WHITE);
-        
         pnl.add(scroll, BorderLayout.CENTER);
-        
-        // Bọc vào Panel bo góc
+
         JPanel pnlWrapper = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -305,30 +294,39 @@ public class TongQuanForm extends javax.swing.JPanel {
         };
         pnlWrapper.setOpaque(false);
         pnlWrapper.add(pnl, BorderLayout.CENTER);
-        
         return pnlWrapper;
     }
 
     private void capNhatDuLieu() {
-        String tuNgay = txtTuNgay.getText();
+        String tuNgay  = txtTuNgay.getText();
         String denNgay = txtDenNgay.getText();
         String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
-        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
+        String loaiDT   = (String) cbxLoaiDichVu.getSelectedItem();
 
-        Map<String, Double> stats = tkDao.layDoanhThuTongHop(tuNgay, denNgay, chiNhanh, loaiDT);
-        List<Double> chartData = tkDao.layDoanhThu7NgayGầnNhất(chiNhanh);
-        Map<String, Integer> paymentStats = tkDao.layCoCauThanhToan();
+        TongQuanDTO dto = controller.layDuLieu(tuNgay, denNgay, chiNhanh, loaiDT);
 
-        veGiaoDienBaoCao(stats.get("doanhThuThuc"), stats.get("truocGiam"), stats.get("chietKhau"), chartData, paymentStats);
+        int ckPercent = dto.getCoCauThanhToan().getOrDefault("CK", 0);
+        int tmPercent = dto.getCoCauThanhToan().getOrDefault("TM", 0);
+
+        veGiaoDienBaoCao(
+                dto.getDoanhThuThuc(),
+                dto.getTruocGiam(),
+                dto.getChietKhau(),
+                dto.getDoanhThu7Ngay(),
+                dto.getGiaoDichGanNhat(),
+                ckPercent, tmPercent
+        );
     }
 
-    private void veGiaoDienBaoCao(double doanhThuThuc, double truocGiam, double chietKhau, List<Double> chartData, Map<String, Integer> pStats) {
+    private void veGiaoDienBaoCao(double doanhThuThuc, double truocGiam, double chietKhau,
+                                   List<Double> chartData, List<Object[]> giaoDich,
+                                   int ckPercent, int tmPercent) {
         pnCard1.removeAll();
         pnCard1.add(taoTheThongKe("DOANH THU THỰC TẾ", formatTien.format(doanhThuThuc), mauHong), BorderLayout.CENTER);
-        
+
         pnCard2.removeAll();
         pnCard2.add(taoTheThongKe("TRƯỚC GIẢM GIÁ", formatTien.format(truocGiam), mauXanh), BorderLayout.CENTER);
-        
+
         pnCard3.removeAll();
         pnCard3.add(taoTheThongKe("TỔNG CHIẾT KHẤU", formatTien.format(chietKhau), mauCam), BorderLayout.CENTER);
 
@@ -336,10 +334,10 @@ public class TongQuanForm extends javax.swing.JPanel {
         pnChart.add(taoVungBiDo(chartData), BorderLayout.CENTER);
 
         pnManagerInfo.removeAll();
-        pnManagerInfo.add(taoVungThongTinQuanLy(pStats.get("CK"), pStats.get("TM")), BorderLayout.CENTER);
-        
+        pnManagerInfo.add(taoVungThongTinQuanLy(ckPercent, tmPercent), BorderLayout.CENTER);
+
         pnInvoices.removeAll();
-        pnInvoices.add(taoVungHoaDon(), BorderLayout.CENTER);
+        pnInvoices.add(taoVungHoaDon(giaoDich), BorderLayout.CENTER);
 
         this.revalidate();
         this.repaint();

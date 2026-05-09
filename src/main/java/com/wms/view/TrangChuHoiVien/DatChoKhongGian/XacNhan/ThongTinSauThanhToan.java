@@ -1,6 +1,6 @@
 package com.wms.view.TrangChuHoiVien.DatChoKhongGian.XacNhan;
 
-import com.wms.model.PhieuGiamGiaDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import javax.swing.JOptionPane;
 import com.wms.model.HoaDonDTO;
 

@@ -1,6 +1,6 @@
 package com.wms.view.components;
 
-import com.wms.model.KhongGianDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -102,12 +102,11 @@ public class SoDoKhongGianPanel extends JPanel {
             }
         };
         
-        String displayText = kg.getTenKG();
-        if (displayText != null && displayText.length() > 10) {
-            displayText = kg.getMaKG();
-        }
-        nutKG.setText("<html><center>" + displayText + "</center></html>");
-        nutKG.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        String line1 = kg.getTenKG() != null ? kg.getTenKG() : kg.getMaKG();
+        String line2 = kg.getTenLoaiKG() != null ? kg.getTenLoaiKG() : "";
+        
+        nutKG.setText("<html><center>" + line1 + "<br/><font size='2'>" + line2 + "</font></center></html>");
+        nutKG.setFont(new Font("Segoe UI", Font.BOLD, 11));
         
         nutKG.setFocusPainted(false);
         nutKG.setContentAreaFilled(false);

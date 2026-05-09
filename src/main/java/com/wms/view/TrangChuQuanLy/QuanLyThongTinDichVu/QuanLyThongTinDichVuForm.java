@@ -1,48 +1,42 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package com.wms.view.TrangChuQuanLy.QuanLyThongTinDichVu;
 
-import com.wms.controller.DichVuController;
+import com.wms.controller.TrangChuQuanLy.DichVuController;
+import com.wms.model.DichVuDTO;
+import com.wms.model.LoaiDichVuDTO;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.List;
 
-/**
- *
- * @author Thinkapd T14s
- */
 public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
 
-    private final com.wms.controller.DichVuController controller;
-    private javax.swing.table.DefaultTableModel tableModel;
-    private java.util.List<com.wms.model.LoaiDichVuDTO> dsLoai;
+    private final DichVuController controller = new DichVuController();
+    private List<LoaiDichVuDTO> dsLoai;
+    private List<DichVuDTO> dsDichVu;
 
     public QuanLyThongTinDichVuForm() {
         initComponents();
-        controller = new com.wms.controller.DichVuController();
-        initTable();
         loadLoaiDV();
         loadData(null);
-        txtMaDV.setText(generateMaDV());
-    }
-
-    private void initTable() {
-        tableModel = (javax.swing.table.DefaultTableModel) tblDichVu.getModel();
+        txtMaDV.setText(controller.generateMaDV());
     }
 
     private void loadLoaiDV() {
         cbxLoaiDV.removeAllItems();
         cbxLoaiDV.addItem("-- Chọn loại DV --");
         dsLoai = controller.layDanhSachLoai();
-        for (com.wms.model.LoaiDichVuDTO l : dsLoai) {
+        for (LoaiDichVuDTO l : dsLoai) {
             cbxLoaiDV.addItem(l.getTenLoaiDV());
+            cbxLoaiDV.putClientProperty("maLoai_" + l.getTenLoaiDV(), l.getMaLoaiDV());
         }
     }
 
     private void loadData(String tuKhoa) {
-        tableModel.setRowCount(0);
-        java.util.List<com.wms.model.DichVuDTO> list = controller.layDanhSach(null, null, tuKhoa);
-        for (com.wms.model.DichVuDTO dv : list) {
-            tableModel.addRow(new Object[]{
+        DefaultTableModel model = (DefaultTableModel) tblDichVu.getModel();
+        model.setRowCount(0);
+        dsDichVu = controller.layDanhSach(null, null, tuKhoa);
+        for (DichVuDTO dv : dsDichVu) {
+            model.addRow(new Object[]{
                 dv.getMaDV(),
                 dv.getTenDV(),
                 getTenLoai(dv.getMaLoaiDV()),
@@ -53,21 +47,17 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
     }
 
     private String getTenLoai(String maLoai) {
-        for (com.wms.model.LoaiDichVuDTO l : dsLoai) {
+        for (LoaiDichVuDTO l : dsLoai) {
             if (l.getMaLoaiDV().equals(maLoai)) return l.getTenLoaiDV();
         }
         return maLoai;
     }
 
-    private String getMaLoai(String tenLoai) {
-        for (com.wms.model.LoaiDichVuDTO l : dsLoai) {
-            if (l.getTenLoaiDV().equals(tenLoai)) return l.getMaLoaiDV();
-        }
-        return null;
-    }
-
-    private String generateMaDV() {
-        return "DV" + System.currentTimeMillis() % 1000000;
+    private String getMaLoaiDangChon() {
+        String tenLoai = (String) cbxLoaiDV.getSelectedItem();
+        if (tenLoai == null || tenLoai.startsWith("--")) return null;
+        Object ma = cbxLoaiDV.getClientProperty("maLoai_" + tenLoai);
+        return ma != null ? ma.toString() : null;
     }
 
     /**
@@ -132,7 +122,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnDoiAnh.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnDoiAnh.setForeground(new java.awt.Color(235, 94, 141));
         btnDoiAnh.setText("Chọn ảnh");
-        btnDoiAnh.addActionListener(this::btnDoiAnhActionPerformed);
+        btnDoiAnh.addActionListener(e -> btnDoiAnhActionPerformed());
         pnMain.add(btnDoiAnh);
         btnDoiAnh.setBounds(20, 220, 140, 30);
 
@@ -176,7 +166,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         lblLoaiDV.setBounds(180, 210, 210, 18);
 
         cbxLoaiDV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxLoaiDV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn loại DV --", "Nước uống", "Thức ăn nhẹ" }));
+        cbxLoaiDV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn loại DV --" }));
         pnMain.add(cbxLoaiDV);
         cbxLoaiDV.setBounds(180, 230, 210, 35);
 
@@ -194,7 +184,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
-        btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
+        btnThemMoi.addActionListener(e -> btnThemMoiActionPerformed());
         pnMain.add(btnThemMoi);
         btnThemMoi.setBounds(20, 360, 180, 40);
 
@@ -202,7 +192,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
-        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
+        btnCapNhat.addActionListener(e -> btnCapNhatActionPerformed());
         pnMain.add(btnCapNhat);
         btnCapNhat.setBounds(210, 360, 180, 40);
 
@@ -210,14 +200,14 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnQuanLyLoaiDV.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnQuanLyLoaiDV.setForeground(new java.awt.Color(255, 255, 255));
         btnQuanLyLoaiDV.setText("Q.Lý Loại Dịch vụ");
-        btnQuanLyLoaiDV.addActionListener(this::btnQuanLyLoaiDVActionPerformed);
+        btnQuanLyLoaiDV.addActionListener(e -> btnQuanLyLoaiDVActionPerformed());
         pnMain.add(btnQuanLyLoaiDV);
         btnQuanLyLoaiDV.setBounds(20, 415, 180, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
-        btnHuy.addActionListener(this::btnHuyActionPerformed);
+        btnHuy.addActionListener(e -> lamMoiForm());
         pnMain.add(btnHuy);
         btnHuy.setBounds(210, 415, 180, 40);
 
@@ -235,25 +225,20 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setText("Tìm");
-        btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
+        btnTimKiem.addActionListener(e -> {
+            loadData(txtTimKiem.getText().trim());
+        });
         pnMain.add(btnTimKiem);
         btnTimKiem.setBounds(920, 80, 100, 35);
 
         tblDichVu.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
+            new Object [][] {},
             new String [] {
                 "Mã DV", "Tên dịch vụ", "Loại dịch vụ", "Đơn giá", "Trạng thái"
             }
         ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
+            boolean[] canEdit = new boolean [] { false, false, false, false, false };
+            public boolean isCellEditable(int rowIndex, int columnIndex) { return canEdit [columnIndex]; }
         });
         tblDichVu.setRowHeight(30);
         tblDichVu.setSelectionBackground(new java.awt.Color(235, 94, 141));
@@ -270,93 +255,117 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnDoiAnhActionPerformed(java.awt.event.ActionEvent evt) {
-        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
-        if (chooser.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
+    private void btnDoiAnhActionPerformed() {
+        JFileChooser chooser = new JFileChooser();
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = chooser.getSelectedFile().getAbsolutePath();
-            lblAnhDichVu.setIcon(new javax.swing.ImageIcon(new javax.swing.ImageIcon(path).getImage().getScaledInstance(140, 140, java.awt.Image.SCALE_SMOOTH)));
+            lblAnhDichVu.setIcon(new ImageIcon(new ImageIcon(path).getImage().getScaledInstance(140, 140, Image.SCALE_SMOOTH)));
             lblAnhDichVu.setText("");
             lblAnhDichVu.putClientProperty("path", path);
         }
     }
 
-    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnThemMoiActionPerformed() {
         try {
-            if (txtTenDV.getText().isEmpty() || txtDonGia.getText().isEmpty() || cbxLoaiDV.getSelectedIndex() <= 0) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!");
-                return;
-            }
-            com.wms.model.DichVuDTO dv = new com.wms.model.DichVuDTO();
-            dv.setMaDV(txtMaDV.getText());
-            dv.setTenDV(txtTenDV.getText());
-            dv.setMaLoaiDV(getMaLoai(cbxLoaiDV.getSelectedItem().toString()));
-            dv.setDonGia(Double.parseDouble(txtDonGia.getText().replace(",", "")));
-            dv.setTrangThaiDV(cbxTrangThai.getSelectedItem().toString());
-            Object path = lblAnhDichVu.getClientProperty("path");
-            dv.setHinhAnh(path != null ? path.toString() : null);
-
+            DichVuDTO dv = getFormData();
             if (controller.themMoi(dv)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Thêm dịch vụ thành công!");
+                JOptionPane.showMessageDialog(this, "Thêm dịch vụ thành công!");
+                lamMoiForm();
                 loadData(null);
-                btnHuyActionPerformed(null);
+            } else {
+                JOptionPane.showMessageDialog(this, "Thêm thất bại!");
             }
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
         }
     }
 
-    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCapNhatActionPerformed() {
         try {
-            com.wms.model.DichVuDTO dv = new com.wms.model.DichVuDTO();
-            dv.setMaDV(txtMaDV.getText());
-            dv.setTenDV(txtTenDV.getText());
-            dv.setDonGia(Double.parseDouble(txtDonGia.getText().replace(",", "")));
-            dv.setTrangThaiDV(cbxTrangThai.getSelectedItem().toString());
-
+            DichVuDTO dv = getFormData();
             if (controller.capNhat(dv)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                 loadData(null);
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
             }
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
         }
     }
 
-    private void btnQuanLyLoaiDVActionPerformed(java.awt.event.ActionEvent evt) {
-        java.awt.Window parentWindow = javax.swing.SwingUtilities.getWindowAncestor(this);
-        if (parentWindow instanceof java.awt.Frame) {
-            QuanLyLoaiDichVuForm dialog = new QuanLyLoaiDichVuForm((java.awt.Frame) parentWindow, true);
-            dialog.setVisible(true);
-            loadLoaiDV(); // Refresh combobox after dialog close
-        }
+    private void btnQuanLyLoaiDVActionPerformed() {
+        Frame parent = (Frame) SwingUtilities.getWindowAncestor(this);
+        QuanLyLoaiDichVuForm dialog = new QuanLyLoaiDichVuForm(parent, true);
+        dialog.setVisible(true);
+        loadLoaiDV();
     }
 
-    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
-        txtMaDV.setText(generateMaDV());
+    private void lamMoiForm() {
+        txtMaDV.setText(controller.generateMaDV());
         txtTenDV.setText("");
         txtDonGia.setText("");
         cbxLoaiDV.setSelectedIndex(0);
         cbxTrangThai.setSelectedIndex(0);
         lblAnhDichVu.setIcon(null);
         lblAnhDichVu.setText("[Ảnh dịch vụ]");
+        lblAnhDichVu.putClientProperty("path", null);
         tblDichVu.clearSelection();
     }
 
-    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
-        loadData(txtTimKiem.getText());
+    private DichVuDTO getFormData() throws Exception {
+        if (txtTenDV.getText().isEmpty() || txtDonGia.getText().isEmpty() || cbxLoaiDV.getSelectedIndex() <= 0) {
+            throw new Exception("Vui lòng nhập đầy đủ thông tin!");
+        }
+        DichVuDTO dv = new DichVuDTO();
+        dv.setMaDV(txtMaDV.getText());
+        dv.setTenDV(txtTenDV.getText().trim());
+        dv.setMaLoaiDV(getMaLoaiDangChon());
+        try {
+            dv.setDonGia(Double.parseDouble(txtDonGia.getText().replace(",", "").replace(".", "")));
+        } catch (NumberFormatException e) {
+            throw new Exception("Đơn giá không hợp lệ!");
+        }
+        dv.setTrangThaiDV((String) cbxTrangThai.getSelectedItem());
+        Object pathObj = lblAnhDichVu.getClientProperty("path");
+        if (pathObj != null) {
+            String path = pathObj.toString();
+            try {
+                dv.setHinhAnh(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)));
+            } catch (java.io.IOException e) {
+                System.err.println("Lỗi đọc file ảnh: " + e.getMessage());
+            }
+        }
+        return dv;
     }
 
     private void tblDichVuMouseClicked(java.awt.event.MouseEvent evt) {
         int row = tblDichVu.getSelectedRow();
-        if (row >= 0) {
-            txtMaDV.setText(tableModel.getValueAt(row, 0).toString());
-            txtTenDV.setText(tableModel.getValueAt(row, 1).toString());
-            cbxLoaiDV.setSelectedItem(tableModel.getValueAt(row, 2).toString());
-            txtDonGia.setText(tableModel.getValueAt(row, 3).toString().replace(".", ""));
-            cbxTrangThai.setSelectedItem(tableModel.getValueAt(row, 4).toString());
+        if (row < 0) return;
+        DefaultTableModel model = (DefaultTableModel) tblDichVu.getModel();
+        txtMaDV.setText(model.getValueAt(row, 0).toString());
+        txtTenDV.setText(model.getValueAt(row, 1).toString());
+        cbxLoaiDV.setSelectedItem(model.getValueAt(row, 2).toString());
+        txtDonGia.setText(model.getValueAt(row, 3).toString().replace(".", "").replace(",", ""));
+        cbxTrangThai.setSelectedItem(model.getValueAt(row, 4).toString());
+        
+        // Hiển thị ảnh
+        String maDV = model.getValueAt(row, 0).toString();
+        for (DichVuDTO dv : dsDichVu) {
+            if (dv.getMaDV().equals(maDV)) {
+                if (dv.getHinhAnh() != null) {
+                    ImageIcon icon = new ImageIcon(dv.getHinhAnh());
+                    Image img = icon.getImage().getScaledInstance(140, 140, Image.SCALE_SMOOTH);
+                    lblAnhDichVu.setIcon(new ImageIcon(img));
+                    lblAnhDichVu.setText("");
+                } else {
+                    lblAnhDichVu.setIcon(null);
+                    lblAnhDichVu.setText("[Ảnh dịch vụ]");
+                }
+                break;
+            }
         }
     }
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCapNhat;
@@ -385,5 +394,3 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
 }
-
-

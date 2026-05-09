@@ -1,21 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package com.wms.view.TrangChuQuanLy.QuanLyPhien;
 
-/**
- *
- * @author Thinkapd T14s
- */
+import com.wms.controller.DangNhapController;
+import com.wms.controller.TrangChuQuanLy.QuanLyPhien.MoPhienMoiController;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
+import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -23,48 +14,77 @@ import javax.swing.Timer;
 
 public class MoPhienMoiForm extends javax.swing.JPanel {
 
-    // Khai báo bảng màu chuẩn Spring Workspace
     private final Color COLOR_AVAILABLE = Color.decode("#FFF0F5");
     private final Color COLOR_IN_USE = Color.decode("#E8F5E9");
     private final Color COLOR_MAINTENANCE = Color.decode("#F5F5F5");
-
     private final Color COLOR_PRIMARY = Color.decode("#eb5e8d");
 
-    private String maCNHienTai = null;
+    private final MoPhienMoiController controller;
+    private String maCNHienTai;
     private com.wms.view.components.SoDoKhongGianPanel mapPanel;
-    private com.wms.model.KhongGianDTO khongGianChonDTO = null;
-    private java.util.List<com.wms.model.KhongGianDTO> dsKGHienTai;
+    private com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO khongGianChonDTO = null;
+    private List<com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO> dsKGHienTai;
 
     public MoPhienMoiForm(String maCN) {
         initComponents();
+        controller = new MoPhienMoiController(this);
 
         if (maCN != null && !maCN.isEmpty()) {
             this.maCNHienTai = maCN;
         } else {
-            // Xác định chi nhánh của nhân viên đang trực quầy (Fallback)
-            com.wms.model.NguoiDungDTO user = com.wms.controller.DangNhapController.getCurrentUser();
-            if (user != null) {
-                this.maCNHienTai = new com.wms.dao.NhanVienDAO().layMaCNTuMaND(user.getMaND());
-            }
+            com.wms.model.NguoiDungDTO user = DangNhapController.getCurrentUser();
+            this.maCNHienTai = controller.layMaCNNguoiDung(user);
         }
 
         initMap();
         initLegend();
+        initTimeCalculation();
         startClock();
     }
 
-    // 1. Tải sơ đồ không gian từ Database theo tọa độ chi nhánh
+    private void initTimeCalculation() {
+        txtThoiGianSuDung.setEditable(true);
+        txtThoiGianSuDung.setBackground(Color.WHITE);
+        txtThoiGianSuDung.setText("1"); // Mặc định 1h
+        
+        // Cập nhật giờ kết thúc lần đầu
+        updateEndTime();
+
+        // Thêm listener để tính giờ kết thúc khi thay đổi số giờ
+        txtThoiGianSuDung.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { updateEndTime(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { updateEndTime(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { updateEndTime(); }
+        });
+    }
+
+    private void updateEndTime() {
+        try {
+            String suDungStr = txtThoiGianSuDung.getText().trim();
+            if (suDungStr.isEmpty()) {
+                txtThoiGianKetThuc.setText("");
+                return;
+            }
+            int hours = Integer.parseInt(suDungStr);
+            if (hours <= 0) {
+                txtThoiGianKetThuc.setText("Số giờ > 0");
+                return;
+            }
+            
+            long now = System.currentTimeMillis();
+            long end = now + (long) hours * 3600 * 1000;
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
+            txtThoiGianKetThuc.setText(sdf.format(new Date(end)));
+        } catch (NumberFormatException e) {
+            txtThoiGianKetThuc.setText("Chỉ nhập số nguyên");
+        }
+    }
+
     private void initMap() {
         pnSoDo.removeAll();
-        pnSoDo.setLayout(new java.awt.BorderLayout()); 
+        pnSoDo.setLayout(new java.awt.BorderLayout());
 
-        com.wms.dao.KhongGianDAO khongGianDAO = new com.wms.dao.KhongGianDAO();
-
-        if (maCNHienTai != null) {
-            dsKGHienTai = khongGianDAO.layTheoChiNhanh(maCNHienTai);
-        } else {
-            dsKGHienTai = khongGianDAO.layTatCaKhongGian();
-        }
+        dsKGHienTai = controller.layKhongGian(maCNHienTai);
 
         if (dsKGHienTai == null || dsKGHienTai.isEmpty()) {
             pnSoDo.add(new JLabel("Không có dữ liệu sơ đồ cho chi nhánh này."), java.awt.BorderLayout.CENTER);
@@ -75,14 +95,11 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
         mapPanel = new com.wms.view.components.SoDoKhongGianPanel();
         mapPanel.setOnTableClick(kg -> handleTableClick(kg));
-
-        // Vẽ sơ đồ ban đầu
         mapPanel.veSoDo(dsKGHienTai, khongGianChonDTO != null ? khongGianChonDTO.getMaKG() : null);
-        
+
         JScrollPane scroll = new JScrollPane(mapPanel);
         scroll.setBorder(null);
         pnSoDo.add(scroll, java.awt.BorderLayout.CENTER);
-
         pnSoDo.revalidate();
         pnSoDo.repaint();
     }
@@ -116,10 +133,9 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         return img;
     }
 
-    // 3. Xử lý khi click vào một bàn trên sơ đồ
-    private void handleTableClick(com.wms.model.KhongGianDTO kg) {
+    private void handleTableClick(com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO kg) {
         String status = kg.getTrangThaiKG() != null ? kg.getTrangThaiKG().trim() : "Trống";
-        
+
         if ("Đang hoạt động".equals(status)) {
             JOptionPane.showMessageDialog(this, "Không gian này đang có khách sử dụng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
@@ -129,25 +145,18 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
             return;
         }
 
-        // Cập nhật DTO đang chọn
         khongGianChonDTO = kg;
-
-        // Vẽ lại sơ đồ để hiển thị bàn đang chọn
         mapPanel.veSoDo(dsKGHienTai, kg.getMaKG());
-
-        // Hiển thị thông tin sang Form bên phải
         txtKhongGianChon.setText(kg.getTenKG());
         txtLoaiKhongGian.setText(kg.getTenLoaiKG() != null ? kg.getTenLoaiKG() : "Không xác định");
+        txtMaKGian.setText(kg.getMaKG());
+        txtGiaTien.setText(kg.getDonGia() != null ? String.format("%,.0f", kg.getDonGia()) : "0");
     }
 
-    // 4. Đồng hồ thời gian thực
     private void startClock() {
-        Timer timer = new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
-                txtThoiGianBatDau.setText(sdf.format(new Date()));
-            }
+        Timer timer = new Timer(1000, e -> {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
+            txtThoiGianBatDau.setText(sdf.format(new Date()));
         });
         timer.start();
     }
@@ -159,6 +168,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtSoDienThoai.setText("");
         txtKhongGianChon.setText("(Chưa chọn chỗ ngồi)");
         txtLoaiKhongGian.setText("");
+        txtMaKGian.setText("");
 
         khongGianChonDTO = null;
         if (mapPanel != null) {
@@ -170,69 +180,43 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         String tenKH = txtTenKhachHang.getText().trim();
         String sdt = txtSoDienThoai.getText().trim();
         String khongGian = txtKhongGianChon.getText();
+        String suDungStr = txtThoiGianSuDung.getText().trim();
 
         if (tenKH.isEmpty() || sdt.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập Tên và Số điện thoại khách hàng!", "Lỗi",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         if (khongGianChonDTO == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn Không gian/Chỗ ngồi trên sơ đồ bên trái!", "Lỗi",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        String maKG = khongGianChonDTO.getMaKG();
-
-        // Tìm hoặc tạo mới khách hàng
-        com.wms.dao.KhachHangDAO khDAO = new com.wms.dao.KhachHangDAO();
-        java.util.List<com.wms.model.HoiVienDTO> dsKH = khDAO.search(sdt);
-        String maKH = null;
-
-        if (dsKH != null && !dsKH.isEmpty()) {
-            maKH = dsKH.get(0).getMaKH();
-        } else {
-            com.wms.model.HoiVienDTO newKH = new com.wms.model.HoiVienDTO();
-            newKH.setHoTen(tenKH);
-            newKH.setSdt(sdt);
-            newKH.setTrangThai("Đang hoạt động");
-            try {
-                khDAO.insert(newKH);
-                dsKH = khDAO.search(sdt);
-                if (dsKH != null && !dsKH.isEmpty()) {
-                    maKH = dsKH.get(0).getMaKH();
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi tạo thông tin khách hàng: " + ex.getMessage(), "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        }
-
-        if (maKH == null) {
-            JOptionPane.showMessageDialog(this, "Không thể xác định Khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        int soGio = 0;
+        try {
+            soGio = Integer.parseInt(suDungStr);
+            if (soGio <= 0) throw new Exception();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Thời gian sử dụng phải là số nguyên dương (giờ)!", "Lỗi",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Tạo phiên làm việc mới
-        com.wms.model.PhienLamViecDTO phien = new com.wms.model.PhienLamViecDTO();
-        String maPhien = "PH" + System.currentTimeMillis();
-        phien.setMaPhien(maPhien);
-        phien.setMaKH(maKH);
-        phien.setMaKG(maKG);
-        phien.setTrangThaiPhien("Đang hoạt động");
-        phien.setThoiGianBatDau(new java.sql.Timestamp(System.currentTimeMillis()));
+        double giaTien = 0;
+        try {
+            String giaStr = txtGiaTien.getText().replace(",", "").replace(".", "").trim();
+            giaTien = Double.parseDouble(giaStr);
+        } catch (Exception e) {
+            // Nếu lỗi format thì mặc định = 0 hoặc lấy từ DTO nếu có
+        }
 
-        com.wms.dao.PhienLamViecDAO pDAO = new com.wms.dao.PhienLamViecDAO();
-        if (pDAO.taoPhienLamViecMoi(phien)) {
+        if (controller.moPhienMoi(tenKH, sdt, khongGianChonDTO.getMaKG(), soGio, giaTien)) {
             JOptionPane.showMessageDialog(this, "Mở phiên thành công cho khách hàng: " + tenKH + "\nTại: " + khongGian,
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
-
-            // Reset form và vẽ lại sơ đồ để cập nhật trạng thái mới
             khongGianChonDTO = null;
-            initMap(); // Tải lại dữ liệu mới nhất từ DB để hiện màu xanh (Đang dùng)
-            btnLamMoiActionPerformed(null);
+            initMap();
+            btnLamMoiActionPerformed(evt);
         } else {
             JOptionPane.showMessageDialog(this, "Lỗi khi mở phiên làm việc! Vui lòng thử lại.", "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
@@ -241,7 +225,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnHeader = new javax.swing.JPanel();
@@ -264,6 +248,14 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtThoiGianBatDau = new javax.swing.JTextField();
         btnLamMoi = new javax.swing.JButton();
         btnMoPhien = new javax.swing.JButton();
+        txtThoiGianKetThuc = new javax.swing.JTextField();
+        lblThoiGianBatDau1 = new javax.swing.JLabel();
+        lblLoaiKhongGian1 = new javax.swing.JLabel();
+        txtThoiGianSuDung = new javax.swing.JTextField();
+        txtMaKGian = new javax.swing.JTextField();
+        lblLoaiKhongGian2 = new javax.swing.JLabel();
+        txtGiaTien = new javax.swing.JTextField();
+        lblKhongGianChon1 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(254, 248, 250));
         setPreferredSize(new java.awt.Dimension(1050, 640));
@@ -298,8 +290,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         pnSoDo.setBounds(20, 60, 610, 400);
 
         pnChuThich.setBackground(new java.awt.Color(255, 255, 255));
-        pnChuThich
-                .setBorder(javax.swing.BorderFactory.createMatteBorder(1, 0, 0, 0, new java.awt.Color(240, 240, 240)));
+        pnChuThich.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 0, 0, 0, new java.awt.Color(240, 240, 240)));
         pnChuThich.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 20, 15));
         pnLeftMap.add(pnChuThich);
         pnChuThich.setBounds(20, 470, 610, 50);
@@ -308,8 +299,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         pnLeftMap.setBounds(20, 80, 650, 530);
 
         pnRightForm.setBackground(new java.awt.Color(255, 255, 255));
-        pnRightForm
-                .setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
+        pnRightForm.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
         pnRightForm.setLayout(null);
 
         lblFormTitle.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
@@ -332,50 +322,50 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         lblSDT.setForeground(new java.awt.Color(35, 30, 48));
         lblSDT.setText("Số điện thoại (*)");
         pnRightForm.add(lblSDT);
-        lblSDT.setBounds(20, 125, 300, 20);
+        lblSDT.setBounds(20, 130, 150, 20);
 
         txtSoDienThoai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         pnRightForm.add(txtSoDienThoai);
-        txtSoDienThoai.setBounds(20, 145, 300, 35);
+        txtSoDienThoai.setBounds(20, 150, 150, 35);
 
         lblKhongGianChon.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblKhongGianChon.setForeground(new java.awt.Color(35, 30, 48));
-        lblKhongGianChon.setText("Không gian đã chọn từ Sơ đồ");
+        lblKhongGianChon.setText("Không gian ");
         pnRightForm.add(lblKhongGianChon);
-        lblKhongGianChon.setBounds(20, 195, 300, 20);
+        lblKhongGianChon.setBounds(20, 195, 150, 20);
 
         txtKhongGianChon.setEditable(false);
+        txtKhongGianChon.setBackground(new java.awt.Color(240, 240, 240));
         txtKhongGianChon.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         txtKhongGianChon.setForeground(new java.awt.Color(235, 94, 141));
-        txtKhongGianChon.setBackground(new java.awt.Color(240, 240, 240));
-        txtKhongGianChon.setText("(Chưa chọn chỗ ngồi)");
+        txtKhongGianChon.addActionListener(this::txtKhongGianChonActionPerformed);
         pnRightForm.add(txtKhongGianChon);
-        txtKhongGianChon.setBounds(20, 215, 300, 35);
+        txtKhongGianChon.setBounds(20, 215, 150, 35);
 
         lblLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian.setForeground(new java.awt.Color(35, 30, 48));
         lblLoaiKhongGian.setText("Loại không gian");
         pnRightForm.add(lblLoaiKhongGian);
-        lblLoaiKhongGian.setBounds(20, 265, 300, 20);
+        lblLoaiKhongGian.setBounds(20, 265, 130, 20);
 
         txtLoaiKhongGian.setEditable(false);
-        txtLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtLoaiKhongGian.setBackground(new java.awt.Color(240, 240, 240));
+        txtLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         pnRightForm.add(txtLoaiKhongGian);
-        txtLoaiKhongGian.setBounds(20, 285, 300, 35);
+        txtLoaiKhongGian.setBounds(20, 285, 150, 35);
 
         lblThoiGianBatDau.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThoiGianBatDau.setForeground(new java.awt.Color(35, 30, 48));
         lblThoiGianBatDau.setText("Thời gian bắt đầu phiên");
         pnRightForm.add(lblThoiGianBatDau);
-        lblThoiGianBatDau.setBounds(20, 335, 300, 20);
+        lblThoiGianBatDau.setBounds(20, 335, 150, 20);
 
         txtThoiGianBatDau.setEditable(false);
+        txtThoiGianBatDau.setBackground(new java.awt.Color(240, 240, 240));
         txtThoiGianBatDau.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
         txtThoiGianBatDau.setForeground(new java.awt.Color(102, 102, 102));
-        txtThoiGianBatDau.setBackground(new java.awt.Color(240, 240, 240));
         pnRightForm.add(txtThoiGianBatDau);
-        txtThoiGianBatDau.setBounds(20, 355, 300, 35);
+        txtThoiGianBatDau.setBounds(20, 355, 150, 35);
 
         btnLamMoi.setBackground(new java.awt.Color(220, 53, 69));
         btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -393,9 +383,83 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         pnRightForm.add(btnMoPhien);
         btnMoPhien.setBounds(20, 465, 300, 45);
 
+        txtThoiGianKetThuc.setEditable(false);
+        txtThoiGianKetThuc.setBackground(new java.awt.Color(240, 240, 240));
+        txtThoiGianKetThuc.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
+        txtThoiGianKetThuc.setForeground(new java.awt.Color(102, 102, 102));
+        txtThoiGianKetThuc.addActionListener(this::txtThoiGianKetThucActionPerformed);
+        pnRightForm.add(txtThoiGianKetThuc);
+        txtThoiGianKetThuc.setBounds(180, 355, 150, 35);
+
+        lblThoiGianBatDau1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblThoiGianBatDau1.setForeground(new java.awt.Color(35, 30, 48));
+        lblThoiGianBatDau1.setText("Thời gian kết thúc");
+        pnRightForm.add(lblThoiGianBatDau1);
+        lblThoiGianBatDau1.setBounds(180, 335, 150, 20);
+
+        lblLoaiKhongGian1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblLoaiKhongGian1.setForeground(new java.awt.Color(35, 30, 48));
+        lblLoaiKhongGian1.setText("Thời gian sử dụng");
+        pnRightForm.add(lblLoaiKhongGian1);
+        lblLoaiKhongGian1.setBounds(180, 265, 130, 20);
+
+        txtThoiGianSuDung.setEditable(false);
+        txtThoiGianSuDung.setBackground(new java.awt.Color(240, 240, 240));
+        txtThoiGianSuDung.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtThoiGianSuDung.addActionListener(this::txtThoiGianSuDungActionPerformed);
+        pnRightForm.add(txtThoiGianSuDung);
+        txtThoiGianSuDung.setBounds(180, 285, 150, 35);
+
+        txtMaKGian.setEditable(false);
+        txtMaKGian.setBackground(new java.awt.Color(240, 240, 240));
+        txtMaKGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtMaKGian.addActionListener(this::txtMaKGianActionPerformed);
+        pnRightForm.add(txtMaKGian);
+        txtMaKGian.setBounds(180, 150, 150, 35);
+
+        lblLoaiKhongGian2.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblLoaiKhongGian2.setForeground(new java.awt.Color(35, 30, 48));
+        lblLoaiKhongGian2.setText("Mã không gian");
+        pnRightForm.add(lblLoaiKhongGian2);
+        lblLoaiKhongGian2.setBounds(180, 130, 130, 20);
+
+        txtGiaTien.setEditable(false);
+        txtGiaTien.setBackground(new java.awt.Color(240, 240, 240));
+        txtGiaTien.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        txtGiaTien.setForeground(new java.awt.Color(235, 94, 141));
+        txtGiaTien.addActionListener(this::txtGiaTienActionPerformed);
+        pnRightForm.add(txtGiaTien);
+        txtGiaTien.setBounds(180, 215, 150, 35);
+
+        lblKhongGianChon1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblKhongGianChon1.setForeground(new java.awt.Color(35, 30, 48));
+        lblKhongGianChon1.setText("Phí mỗi một giờ");
+        pnRightForm.add(lblKhongGianChon1);
+        lblKhongGianChon1.setBounds(180, 200, 150, 20);
+
         add(pnRightForm);
         pnRightForm.setBounds(690, 80, 340, 530);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtThoiGianSuDungActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtThoiGianSuDungActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtThoiGianSuDungActionPerformed
+
+    private void txtThoiGianKetThucActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtThoiGianKetThucActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtThoiGianKetThucActionPerformed
+
+    private void txtMaKGianActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtMaKGianActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtMaKGianActionPerformed
+
+    private void txtKhongGianChonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtKhongGianChonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtKhongGianChonActionPerformed
+
+    private void txtGiaTienActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtGiaTienActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtGiaTienActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLamMoi;
@@ -403,20 +467,28 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblFormTitle;
     private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblKhongGianChon;
+    private javax.swing.JLabel lblKhongGianChon1;
     private javax.swing.JLabel lblLoaiKhongGian;
+    private javax.swing.JLabel lblLoaiKhongGian1;
+    private javax.swing.JLabel lblLoaiKhongGian2;
     private javax.swing.JLabel lblMapTitle;
     private javax.swing.JLabel lblSDT;
     private javax.swing.JLabel lblTenKhachHang;
     private javax.swing.JLabel lblThoiGianBatDau;
+    private javax.swing.JLabel lblThoiGianBatDau1;
     private javax.swing.JPanel pnChuThich;
     private javax.swing.JPanel pnHeader;
     private javax.swing.JPanel pnLeftMap;
     private javax.swing.JPanel pnRightForm;
     private javax.swing.JPanel pnSoDo;
+    private javax.swing.JTextField txtGiaTien;
     private javax.swing.JTextField txtKhongGianChon;
     private javax.swing.JTextField txtLoaiKhongGian;
+    private javax.swing.JTextField txtMaKGian;
     private javax.swing.JTextField txtSoDienThoai;
     private javax.swing.JTextField txtTenKhachHang;
     private javax.swing.JTextField txtThoiGianBatDau;
+    private javax.swing.JTextField txtThoiGianKetThuc;
+    private javax.swing.JTextField txtThoiGianSuDung;
     // End of variables declaration//GEN-END:variables
 }

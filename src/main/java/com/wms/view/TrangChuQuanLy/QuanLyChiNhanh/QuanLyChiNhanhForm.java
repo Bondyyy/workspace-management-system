@@ -1,86 +1,81 @@
 package com.wms.view.TrangChuQuanLy.QuanLyChiNhanh;
 
-import com.wms.controller.ChiNhanhController;
+import com.wms.controller.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhController;
+import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
+
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.util.List;
 
 public class QuanLyChiNhanhForm extends javax.swing.JPanel {
 
-    private final com.wms.controller.ChiNhanhController controller;
-    private javax.swing.table.DefaultTableModel tableModel;
+    private final ChiNhanhController controller = new ChiNhanhController();
+    private DefaultTableModel tableModel;
     private String selectedMaCN = null;
+    private List<ChiNhanhDTO> danhSachHienThi; // cache để fillForm không cần Vector
 
-    /**
-     * Creates new form QuanLyChiNhanhForm
-     */
     public QuanLyChiNhanhForm() {
         initComponents();
-        controller = new com.wms.controller.ChiNhanhController();
-        initTable();
+        setupTable();
+        tableModel = (DefaultTableModel) tblChiNhanh.getModel();
         loadQuanLyData();
-        loadTableData();
+        loadTableData(controller.layDanhSach());
+    }
+
+    private void setupTable() {
+        // Căn lề cho bảng
+        javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        
+        for (int i = 0; i < tblChiNhanh.getColumnCount(); i++) {
+            if (i == 0 || i >= 3) { // Mã, Giờ, Hotline, Trạng thái
+                tblChiNhanh.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+            }
+        }
     }
 
     private void loadQuanLyData() {
         cbxQuanLy.removeAllItems();
         cbxQuanLy.addItem("Không có quản lý");
-        try {
-            com.wms.dao.NhanVienDAO nvDao = new com.wms.dao.NhanVienDAO();
-            java.util.List<String[]> managers = nvDao.layDanhSachQuanLy();
-            if (managers != null) {
-                for (String[] m : managers) {
-                    cbxQuanLy.addItem(m[0] + " - " + m[1]);
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Lỗi load danh sách quản lý: " + e.getMessage());
+        for (String[] m : controller.layDanhSachQuanLy()) {
+            cbxQuanLy.addItem(m[0] + " - " + m[1]);
         }
     }
 
-    private void initTable() {
-        tableModel = (javax.swing.table.DefaultTableModel) tblChiNhanh.getModel();
-    }
-
-    private void loadTableData() {
+    private void loadTableData(List<ChiNhanhDTO> list) {
+        danhSachHienThi = list;
         tableModel.setRowCount(0);
-        java.util.List<com.wms.model.ChiNhanhDTO> list = controller.layDanhSach();
-        for (com.wms.model.ChiNhanhDTO cn : list) {
-            tableModel.addRow(new Object[]{
-                cn.getMaCN(),
-                cn.getTenCN(),
-                cn.getDiaChi(),
-                cn.getThoiGianMoCua(),
-                cn.getThoiGianDongCua(),
-                cn.getDuongDayNong(),
-                cn.getTrangThai(),
-                cn.getMaNV_QuanLy()
+        for (ChiNhanhDTO cn : list) {
+            tableModel.addRow(new Object[] {
+                    cn.getMaCN(), cn.getTenCN(), cn.getDiaChi(),
+                    cn.getThoiGianMoCua(), cn.getThoiGianDongCua(),
+                    cn.getDuongDayNong(), cn.getTrangThai(), cn.getMaNV_QuanLy()
             });
         }
     }
 
     private void fillForm(int row) {
-        selectedMaCN = (String) tblChiNhanh.getValueAt(row, 0);
-        txtTenChiNhanh.setText((String) tblChiNhanh.getValueAt(row, 1));
-        txtDiaChi.setText((String) tblChiNhanh.getValueAt(row, 2));
-        txtGioMoCua.setText((String) tblChiNhanh.getValueAt(row, 3));
-        txtGioDongCua.setText((String) tblChiNhanh.getValueAt(row, 4));
-        txtHotline1.setText((String) tblChiNhanh.getValueAt(row, 5));
-        cbxTrangThai.setSelectedItem(tblChiNhanh.getValueAt(row, 6));
-        
-        String maNV = null;
-        if (tableModel.getColumnCount() > 7 || ((java.util.Vector)((javax.swing.table.DefaultTableModel)tableModel).getDataVector().elementAt(row)).size() > 7) {
-            maNV = (String) ((java.util.Vector)((javax.swing.table.DefaultTableModel)tableModel).getDataVector().elementAt(row)).elementAt(7);
-        }
-        boolean found = false;
+        if (danhSachHienThi == null || row >= danhSachHienThi.size())
+            return;
+        ChiNhanhDTO cn = danhSachHienThi.get(row);
+        selectedMaCN = cn.getMaCN();
+        txtTenChiNhanh.setText(cn.getTenCN());
+        txtDiaChi.setText(cn.getDiaChi());
+        txtGioMoCua.setText(cn.getThoiGianMoCua());
+        txtGioDongCua.setText(cn.getThoiGianDongCua());
+        txtHotline1.setText(cn.getDuongDayNong());
+        cbxTrangThai.setSelectedItem(cn.getTrangThai());
+
+        String maNV = cn.getMaNV_QuanLy();
+        cbxQuanLy.setSelectedIndex(0);
         if (maNV != null && !maNV.trim().isEmpty()) {
             for (int i = 1; i < cbxQuanLy.getItemCount(); i++) {
-                String item = cbxQuanLy.getItemAt(i);
-                if (item.startsWith(maNV + " -")) {
+                if (cbxQuanLy.getItemAt(i).startsWith(maNV + " -")) {
                     cbxQuanLy.setSelectedIndex(i);
-                    found = true;
                     break;
                 }
             }
         }
-        if (!found) cbxQuanLy.setSelectedIndex(0);
     }
 
     private void clearForm() {
@@ -94,107 +89,59 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         cbxQuanLy.setSelectedIndex(0);
         tblChiNhanh.clearSelection();
     }
-    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            com.wms.model.ChiNhanhDTO cn = new com.wms.model.ChiNhanhDTO();
-            cn.setMaCN("CN" + (System.currentTimeMillis() % 1000000)); 
-            cn.setTenCN(txtTenChiNhanh.getText());
-            cn.setDiaChi(txtDiaChi.getText());
-            cn.setThoiGianMoCua(txtGioMoCua.getText());
-            cn.setThoiGianDongCua(txtGioDongCua.getText());
-            cn.setDuongDayNong(txtHotline1.getText());
-            cn.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang hoạt động");
-            
-            String sel = cbxQuanLy.getSelectedItem().toString();
-            if (sel.equals("Không có quản lý")) {
-                cn.setMaNV_QuanLy(null);
-            } else {
-                cn.setMaNV_QuanLy(sel.split(" - ")[0]);
-            }
 
-            if (controller.themMoi(cn)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Thêm mới chi nhánh thành công!");
-                loadTableData();
-                clearForm();
-            }
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+    private ChiNhanhDTO buildChiNhanhFromForm() {
+        ChiNhanhDTO cn = new ChiNhanhDTO();
+        cn.setTenCN(txtTenChiNhanh.getText().trim());
+        cn.setDiaChi(txtDiaChi.getText().trim());
+        cn.setThoiGianMoCua(txtGioMoCua.getText().trim());
+        cn.setThoiGianDongCua(txtGioDongCua.getText().trim());
+        cn.setDuongDayNong(txtHotline1.getText().trim());
+        cn.setTrangThai(cbxTrangThai.getSelectedItem() != null
+                ? cbxTrangThai.getSelectedItem().toString()
+                : "Đang hoạt động");
+        String sel = cbxQuanLy.getSelectedItem() != null ? cbxQuanLy.getSelectedItem().toString() : "";
+        cn.setMaNV_QuanLy(sel.equals("Không có quản lý") ? null : sel.split(" - ")[0]);
+        return cn;
+    }
+
+    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
+        ChiNhanhDTO cn = buildChiNhanhFromForm();
+        String loi = controller.themMoi(cn);
+        if (loi == null) {
+            JOptionPane.showMessageDialog(this, "Thêm mới chi nhánh thành công!");
+            loadTableData(controller.layDanhSach());
+            clearForm();
+        } else {
+            JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {                                           
+    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
         if (selectedMaCN == null) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng chọn chi nhánh cần cập nhật từ bảng!");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn chi nhánh cần cập nhật từ bảng!");
             return;
         }
-        try {
-            com.wms.model.ChiNhanhDTO cn = new com.wms.model.ChiNhanhDTO();
-            cn.setMaCN(selectedMaCN);
-            cn.setTenCN(txtTenChiNhanh.getText());
-            cn.setDiaChi(txtDiaChi.getText());
-            cn.setThoiGianMoCua(txtGioMoCua.getText());
-            cn.setThoiGianDongCua(txtGioDongCua.getText());
-            cn.setDuongDayNong(txtHotline1.getText());
-            cn.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang hoạt động");
-            
-            String sel = cbxQuanLy.getSelectedItem().toString();
-            if (sel.equals("Không có quản lý")) {
-                cn.setMaNV_QuanLy(null);
-            } else {
-                cn.setMaNV_QuanLy(sel.split(" - ")[0]);
-            }
-
-            if (controller.capNhat(cn)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadTableData();
-            }
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+        ChiNhanhDTO cn = buildChiNhanhFromForm();
+        cn.setMaCN(selectedMaCN);
+        String loi = controller.capNhat(cn);
+        if (loi == null) {
+            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+            loadTableData(controller.layDanhSach());
+        } else {
+            JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-    }                                          
+    }
 
-    private void btnVoHieuHoaActionPerformed(java.awt.event.ActionEvent evt) {                                         
-        if (selectedMaCN == null) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng chọn chi nhánh cần vô hiệu hóa!");
-            return;
-        }
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn vô hiệu hóa chi nhánh này?", "Xác nhận", javax.swing.JOptionPane.YES_NO_OPTION);
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
-            try {
-                if (controller.voHieuHoa(selectedMaCN)) {
-                    javax.swing.JOptionPane.showMessageDialog(this, "Đã vô hiệu hóa chi nhánh!");
-                    loadTableData();
-                    clearForm();
-                }
-            } catch (Exception e) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
-            }
-        }
-    }                                        
-
-    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {                                       
+    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         clearForm();
-    }                                      
+    }
 
-    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        String keyword = txtTimKiem.getText();
-        tableModel.setRowCount(0);
-        java.util.List<com.wms.model.ChiNhanhDTO> list = controller.timKiem(keyword);
-        for (com.wms.model.ChiNhanhDTO cn : list) {
-            tableModel.addRow(new Object[]{
-                cn.getMaCN(),
-                cn.getTenCN(),
-                cn.getDiaChi(),
-                cn.getThoiGianMoCua(),
-                cn.getThoiGianDongCua(),
-                cn.getDuongDayNong(),
-                cn.getTrangThai(),
-                cn.getMaNV_QuanLy()
-            });
-        }
-    }                                          
-    
-    private void btnSoDoActionPerformed(java.awt.event.ActionEvent evt) {                                        
+    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
+        loadTableData(controller.timKiem(txtTimKiem.getText().trim()));
+    }
+
+    private void btnSoDoActionPerformed(java.awt.event.ActionEvent evt) {
         if (selectedMaCN == null) {
             javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng chọn chi nhánh cần xem sơ đồ!");
             return;
@@ -205,26 +152,29 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         if (parentWindow instanceof java.awt.Frame) {
             parentFrame = (java.awt.Frame) parentWindow;
         }
-        
+
         QuanLySoDoKhongGianForm dialog = new QuanLySoDoKhongGianForm(parentFrame, true, selectedMaCN, tenCN);
         dialog.setVisible(true);
-    }                                       
+    }
 
-    private void tblChiNhanhMouseClicked(java.awt.event.MouseEvent evt) {                                         
+    private void tblChiNhanhMouseClicked(java.awt.event.MouseEvent evt) {
         int row = tblChiNhanh.getSelectedRow();
         if (row >= 0) {
             fillForm(row);
         }
     }
+
     private void cbxQuanLyActionPerformed(java.awt.event.ActionEvent evt) {
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated
+    // Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -326,7 +276,8 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         lblTrangThai.setBounds(210, 265, 170, 18);
 
         cbxQuanLy.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxQuanLy.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
+        cbxQuanLy
+                .setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
         cbxQuanLy.addActionListener(this::cbxQuanLyActionPerformed);
         pnMain.add(cbxQuanLy);
         cbxQuanLy.setBounds(20, 350, 360, 40);
@@ -381,19 +332,18 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         btnTimKiem.setBounds(920, 80, 100, 35);
 
         tblChiNhanh.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+                new Object[][] {
 
-            },
-            new String [] {
-                "Mã CN", "Tên chi nhánh", "Địa chỉ", "Giờ mở", "Giờ đóng", "Hotline", "Trạng thái"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
+                },
+                new String[] {
+                        "Mã CN", "Tên chi nhánh", "Địa chỉ", "Giờ mở", "Giờ đóng", "Hotline", "Trạng thái"
+                }) {
+            boolean[] canEdit = new boolean[] {
+                    false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             }
         });
         tblChiNhanh.setRowHeight(30);
@@ -419,7 +369,8 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         lblGioMoCua1.setBounds(20, 200, 170, 18);
 
         cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
+        cbxTrangThai
+                .setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
         cbxTrangThai.addActionListener(this::cbxTrangThaiActionPerformed);
         pnMain.add(cbxTrangThai);
         cbxTrangThai.setBounds(210, 285, 170, 35);
@@ -427,12 +378,9 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cbxTrangThaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTrangThaiActionPerformed
+    private void cbxTrangThaiActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_cbxTrangThaiActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_cbxTrangThaiActionPerformed
-
-  
-
+    }// GEN-LAST:event_cbxTrangThaiActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCapNhat;
@@ -463,5 +411,3 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
 }
-
-

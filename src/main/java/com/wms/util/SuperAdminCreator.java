@@ -1,7 +1,7 @@
 package com.wms.util;
 
-import com.wms.dao.VaiTroDAO;
-import com.wms.model.VaiTroDTO;
+import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.VaiTroDAO;
+import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
 import com.wms.config.DatabaseConnection;
 
 import java.io.InputStream;
@@ -80,21 +80,57 @@ public class SuperAdminCreator {
 
             if (maND != null) {
                 try (PreparedStatement psUp = conn
-                        .prepareStatement("UPDATE NGUOIDUNG SET MatKhauMaHoa = ? WHERE MaND = ?")) {
+                        .prepareStatement("UPDATE NGUOIDUNG SET MatKhauMaHoa = ?, Email = 'admin@spring.com', SDT = '0000000000', GioiTinh = 'Khác' WHERE MaND = ?")) {
                     psUp.setString(1, hashedPassword);
                     psUp.setString(2, maND);
                     psUp.executeUpdate();
                 }
             } else {
                 maND = "ND_ADMIN_" + System.currentTimeMillis();
-                String sqlInsUser = "INSERT INTO NGUOIDUNG (MaND, TenTaiKhoan, MatKhauMaHoa, Email, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
+                String sqlInsUser = "INSERT INTO NGUOIDUNG (MaND, TenTaiKhoan, MatKhauMaHoa, Email, SDT, GioiTinh, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
                         +
-                        "VALUES (?, ?, ?, 'admin@spring.com', 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                        "VALUES (?, ?, ?, 'admin@spring.com', '0000000000', 'Khác', 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
                 try (PreparedStatement psIU = conn.prepareStatement(sqlInsUser)) {
                     psIU.setString(1, maND);
                     psIU.setString(2, username);
                     psIU.setString(3, hashedPassword);
                     psIU.executeUpdate();
+                }
+            }
+
+            // Đảm bảo có bản ghi KHACHHANG (để lấy tên hiển thị)
+            boolean khExists = false;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM KHACHHANG WHERE MaND = ?")) {
+                ps.setString(1, maND);
+                try (ResultSet rs = ps.executeQuery()) { khExists = rs.next(); }
+            }
+            if (!khExists) {
+                String sqlInsKH = "INSERT INTO KHACHHANG (MaKH, HoTenKH, LoaiKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, ?, 'VIP', 'HTV00', 0, CURRENT_TIMESTAMP, ?)";
+                try (PreparedStatement psKH = conn.prepareStatement(sqlInsKH)) {
+                    psKH.setString(1, "KH_ADMIN_" + System.currentTimeMillis());
+                    psKH.setString(2, "Spring Admin");
+                    psKH.setString(3, maND);
+                    psKH.executeUpdate();
+                }
+            } else {
+                try (PreparedStatement psUpKH = conn.prepareStatement("UPDATE KHACHHANG SET HoTenKH = 'Spring Admin' WHERE MaND = ?")) {
+                    psUpKH.setString(1, maND);
+                    psUpKH.executeUpdate();
+                }
+            }
+
+            // Đảm bảo có bản ghi NHANVIEN (để tránh lỗi FK khi thêm PGG, hóa đơn...)
+            boolean nvExists = false;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM NHANVIEN WHERE MaND = ?")) {
+                ps.setString(1, maND);
+                try (ResultSet rs = ps.executeQuery()) { nvExists = rs.next(); }
+            }
+            if (!nvExists) {
+                String sqlInsNV = "INSERT INTO NHANVIEN (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, CaLamViec, LuongCoBan, MaND, MaCN) VALUES (?, 'Quản lý', CURRENT_DATE, 'Đang làm việc', 'Hành chính', 99999999, ?, 'CN001')";
+                try (PreparedStatement psNV = conn.prepareStatement(sqlInsNV)) {
+                    psNV.setString(1, "NV_ADMIN");
+                    psNV.setString(2, maND);
+                    psNV.executeUpdate();
                 }
             }
 

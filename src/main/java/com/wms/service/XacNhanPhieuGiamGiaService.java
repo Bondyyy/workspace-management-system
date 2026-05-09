@@ -1,8 +1,8 @@
 package com.wms.service;
 
-import com.wms.dao.PhieuGiamGiaDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDAO;
 
-import com.wms.model.PhieuGiamGiaDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import com.wms.model.XacNhanPhieuGiamGiaDTO;
 import java.util.Date;
 
@@ -39,7 +39,7 @@ public class XacNhanPhieuGiamGiaService {
         maChuSoPGG = maChuSoPGG.trim().toUpperCase();
         
         // 2. Kiểm tra mã tồn tại
-        PhieuGiamGiaDTO voucher = voucherDAO.layThongTinVoucher(maChuSoPGG);
+        PhieuGiamGiaDTO voucher = voucherDAO.timTheoMa(maChuSoPGG);
         
         if (voucher == null) {
             return new XacNhanPhieuGiamGiaDTO(false, 
@@ -109,7 +109,7 @@ public class XacNhanPhieuGiamGiaService {
         if (maChuSoPGG == null || maChuSoPGG.trim().isEmpty()) {
             return null;
         }
-        return voucherDAO.layThongTinVoucher(maChuSoPGG.trim().toUpperCase());
+        return voucherDAO.timTheoMa(maChuSoPGG.trim().toUpperCase());
     }
 }
 

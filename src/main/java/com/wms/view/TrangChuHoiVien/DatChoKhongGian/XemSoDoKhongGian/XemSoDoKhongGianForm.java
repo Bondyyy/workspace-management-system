@@ -1,9 +1,8 @@
 package com.wms.view.TrangChuHoiVien.DatChoKhongGian.XemSoDoKhongGian;
 
-import com.wms.dao.LoaiKhongGianDAO;
-
-import com.wms.dao.KhongGianDAO;
-import com.wms.model.KhongGianDTO;
+import com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.LoaiKhongGianDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.KhongGianDAO;
+import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
 
 
 import java.awt.*;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import com.wms.model.LoaiKhongGianDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.LoaiKhongGianDTO;
 public class XemSoDoKhongGianForm extends javax.swing.JPanel {
 
     private final Color mauHongChinh = Color.decode("#EB5E8D");
@@ -143,7 +142,7 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
 
     private void loadDataTuDatabase(String maChiNhanh) {
         try {
-            com.wms.dao.KhongGianDAO kgDao = new com.wms.dao.KhongGianDAO();
+            com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.KhongGianDAO kgDao = new com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.KhongGianDAO();
             danhSachKGHienTai = kgDao.layTheoChiNhanh(maChiNhanh);
             panelSoDo.veSoDo(danhSachKGHienTai, null);
         } catch (Exception e) {

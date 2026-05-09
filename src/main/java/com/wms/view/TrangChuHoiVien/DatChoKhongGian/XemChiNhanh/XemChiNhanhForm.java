@@ -4,7 +4,7 @@
  */
 package com.wms.view.TrangChuHoiVien.DatChoKhongGian.XemChiNhanh;
 
-import com.wms.dao.ChiNhanhDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDAO;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,11 +40,11 @@ public class XemChiNhanhForm extends javax.swing.JPanel {
 
     private void loadDanhSachChiNhanh() {
         try {
-            com.wms.dao.ChiNhanhDAO chiNhanhDAO = new com.wms.dao.ChiNhanhDAO();
-            List<com.wms.model.ChiNhanhDTO> dsTuDB = chiNhanhDAO.layDanhSachChiNhanh();
+            com.wms.dao.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDAO chiNhanhDAO = new com.wms.dao.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDAO();
+            List<com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO> dsTuDB = chiNhanhDAO.layDanhSachChiNhanh();
             if (dsTuDB != null && !dsTuDB.isEmpty()) {
                 List<ModelChiNhanh> danhSach = new java.util.ArrayList<>();
-                for (com.wms.model.ChiNhanhDTO db : dsTuDB) {
+                for (com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO db : dsTuDB) {
                     String trangThai = db.getTrangThai() != null ? db.getTrangThai() : "Hoạt động";
                     String gioMo = db.getThoiGianMoCua() != null ? db.getThoiGianMoCua() : "--";
                     String gioDong = db.getThoiGianDongCua() != null ? db.getThoiGianDongCua() : "--";

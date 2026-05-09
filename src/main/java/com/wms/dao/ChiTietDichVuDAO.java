@@ -1,155 +1,179 @@
 package com.wms.dao;
 
-import com.wms.model.DichVuDaDatDTO;
-
 import com.wms.config.DatabaseConnection;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.text.SimpleDateFormat;
+import com.wms.model.TrangChuQuanLy.QuanLyDichVuDat.DichVuDaDatDTO;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChiTietDichVuDAO {
+
     private Connection getConn() {
         return DatabaseConnection.getInstance().getConnection();
     }
 
     public List<DichVuDaDatDTO> layDanhSachDichVuDat(String keyword) {
+        return layDanhSachDichVuTheoPhien(keyword);
+    }
+
+    public List<DichVuDaDatDTO> layDanhSachDichVuTheoPhien(String maPhien) {
         List<DichVuDaDatDTO> list = new ArrayList<>();
-        String sql = "SELECT ct.MaPhien, dv.TenDV, ct.SoLuong, p.ThoiGianBatDau, kh.HoTenKH, kg.TenKG, ct.GhiChu "
-                +
-                "FROM CHITIETDICHVU ct " +
-                "JOIN DICHVU dv ON ct.MaDV = dv.MaDV " +
-                "JOIN PHIENLAMVIEC p ON ct.MaPhien = p.MaPhien " +
-                "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-                "JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                "WHERE ct.MaPhien LIKE ? OR dv.TenDV LIKE ? " +
-                "ORDER BY p.ThoiGianBatDau DESC";
+        String sql = "SELECT ct.MaPhien, dv.TenDV, ct.SoLuong, p.ThoiGianBatDau, " +
+                     "kh.HoTenKH, kg.TenKG, ct.GhiChu " +
+                     "FROM CHITIETDICHVU ct " +
+                     "JOIN DICHVU dv ON ct.MaDV = dv.MaDV " +
+                     "JOIN PHIENLAMVIEC p ON ct.MaPhien = p.MaPhien " +
+                     "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                     "JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                     "WHERE ct.MaPhien = ? OR ? IS NULL " +
+                     "ORDER BY p.ThoiGianBatDau DESC";
 
         try (Connection conn = getConn();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            String searchPattern = "%" + keyword + "%";
-            ps.setString(1, searchPattern);
-            ps.setString(2, searchPattern);
+            ps.setString(1, maPhien);
+            ps.setString(2, maPhien);
 
             try (ResultSet rs = ps.executeQuery()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM/yyyy");
                 while (rs.next()) {
-                    DichVuDaDatDTO dto = new DichVuDaDatDTO();
-                    dto.setMaPhien(rs.getString("MaPhien"));
-                    dto.setTenDichVu(rs.getString("TenDV"));
-                    dto.setSoLuong(rs.getInt("SoLuong"));
-
-                    java.sql.Timestamp ts = rs.getTimestamp("ThoiGianBatDau");
-                    if (ts != null) {
-                        dto.setThoiGianDat(sdf.format(ts));
-                    } else {
-                        dto.setThoiGianDat("");
-                    }
-
-                    dto.setKhachHang(rs.getString("HoTenKH"));
-                    dto.setTenKhongGian(rs.getString("TenKG"));
-                    dto.setGhiChu(rs.getString("GhiChu") != null ? rs.getString("GhiChu") : "");
-
-                    list.add(dto);
+                    Timestamp ts = rs.getTimestamp("ThoiGianBatDau");
+                    list.add(new DichVuDaDatDTO(
+                            rs.getString("MaPhien"),
+                            rs.getString("TenDV"),
+                            rs.getInt("SoLuong"),
+                            ts != null ? ts.toString() : "",
+                            rs.getString("HoTenKH"),
+                            rs.getString("TenKG"),
+                            rs.getString("GhiChu") != null ? rs.getString("GhiChu") : ""
+                    ));
                 }
             }
-        } catch (Exception e) {
-            System.err.println("[ChiTietDichVuDAO] Lỗi lấy danh sách: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("[ChiTietDichVuDAO] Lỗi lấy danh sách dịch vụ theo phiên: " + e.getMessage());
+        }
+        return list;
+    }
+
+    public List<Object[]> layDanhSachPhienHoatDong(String keyword) {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT p.MaPhien, kh.HoTenKH, kg.TenKG, p.ThoiGianBatDau, p.ThoiGianDuKienKetThuc, p.TrangThaiPhien " +
+                     "FROM PHIENLAMVIEC p " +
+                     "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                     "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                     "WHERE p.TrangThaiPhien IN ('Đang sử dụng', 'Đang hoạt động') " +
+                     "AND (p.MaPhien LIKE ? OR kh.HoTenKH LIKE ? OR kg.TenKG LIKE ?) " +
+                     "ORDER BY p.ThoiGianBatDau DESC";
+
+        String pattern = "%" + (keyword == null ? "" : keyword) + "%";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ps.setString(3, pattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Object[]{
+                        rs.getString("MaPhien"),
+                        rs.getString("HoTenKH") != null ? rs.getString("HoTenKH") : "Vãng lai",
+                        rs.getString("TenKG") != null ? rs.getString("TenKG") : "N/A",
+                        rs.getTimestamp("ThoiGianBatDau"),
+                        rs.getTimestamp("ThoiGianDuKienKetThuc"),
+                        rs.getString("TrangThaiPhien")
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ChiTietDichVuDAO] Lỗi lấy danh sách phiên: " + e.getMessage());
         }
         return list;
     }
 
     public boolean themDichVuMoi(String maPhien, String tenDV, int soLuong, String ghiChu) {
-        // Find MaDV based on TenDV
         String maDV = getMaDV(tenDV);
         if (maDV == null) {
-            System.err.println("Không tìm thấy Mã Dịch Vụ cho Tên: " + tenDV);
-            return false;
-        }
-
-        // Check if MaPhien exists
-        if (!kiemTraPhienTonTai(maPhien)) {
-            System.err.println("Mã phiên không tồn tại: " + maPhien);
+            System.err.println("[ChiTietDichVuDAO] Không tìm thấy dịch vụ: " + tenDV);
             return false;
         }
 
         String sql = "INSERT INTO CHITIETDICHVU (MaPhien, MaDV, SoLuong, GhiChu) VALUES (?, ?, ?, ?)";
         try (Connection conn = getConn();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, maPhien);
             ps.setString(2, maDV);
             ps.setInt(3, soLuong);
             ps.setString(4, ghiChu);
-
             return ps.executeUpdate() > 0;
-        } catch (Exception e) {
+
+        } catch (SQLException e) {
             System.err.println("[ChiTietDichVuDAO] Lỗi thêm dịch vụ: " + e.getMessage());
             return false;
         }
     }
 
-    private String getMaDV(String tenDV) {
-        String sql = "SELECT MaDV FROM DICHVU WHERE TenDV = ?";
-        try (Connection conn = getConn();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, tenDV);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next())
-                    return rs.getString("MaDV");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public boolean kiemTraPhienTonTai(String maPhien) {
         String sql = "SELECT 1 FROM PHIENLAMVIEC WHERE MaPhien = ?";
         try (Connection conn = getConn();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, maPhien);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            System.err.println("[ChiTietDichVuDAO] Lỗi kiểm tra phiên: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public List<String> getDanhSachLoaiDichVu() {
         List<String> ds = new ArrayList<>();
-        String sql = "SELECT TenLoaiDV FROM LOAIDICHVU";
+        String sql = "SELECT TenLoaiDV FROM LOAIDICHVU ORDER BY TenLoaiDV";
         try (Connection conn = getConn();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                ds.add(rs.getString("TenLoaiDV"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) ds.add(rs.getString("TenLoaiDV"));
+
+        } catch (SQLException e) {
+            System.err.println("[ChiTietDichVuDAO] Lỗi lấy loại dịch vụ: " + e.getMessage());
         }
         return ds;
     }
 
     public List<String> getDanhSachTenDichVu(String tenLoaiDV) {
         List<String> ds = new ArrayList<>();
-        String sql = "SELECT dv.TenDV FROM DICHVU dv JOIN LOAIDICHVU ldv ON dv.MaLoaiDV = ldv.MaLoaiDV WHERE ldv.TenLoaiDV = ?";
+        String sql = "SELECT dv.TenDV FROM DICHVU dv " +
+                     "JOIN LOAIDICHVU ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
+                     "WHERE ldv.TenLoaiDV = ? ORDER BY dv.TenDV";
         try (Connection conn = getConn();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, tenLoaiDV);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    ds.add(rs.getString("TenDV"));
-                }
+                while (rs.next()) ds.add(rs.getString("TenDV"));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            System.err.println("[ChiTietDichVuDAO] Lỗi lấy tên dịch vụ: " + e.getMessage());
         }
         return ds;
+    }
+
+    private String getMaDV(String tenDV) {
+        String sql = "SELECT MaDV FROM DICHVU WHERE TenDV = ?";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, tenDV);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("MaDV");
+            }
+        } catch (SQLException e) {
+            System.err.println("[ChiTietDichVuDAO] Lỗi lấy mã dịch vụ: " + e.getMessage());
+        }
+        return null;
     }
 }

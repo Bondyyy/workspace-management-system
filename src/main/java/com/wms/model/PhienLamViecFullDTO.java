@@ -1,5 +1,6 @@
 package com.wms.model;
 
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import java.sql.Timestamp;
 
 public class PhienLamViecFullDTO extends PhienLamViecDTO {

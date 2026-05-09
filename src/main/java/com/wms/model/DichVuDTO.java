@@ -3,7 +3,7 @@ package com.wms.model;
 public class DichVuDTO {
     private String maDV;
     private String tenDV;
-    private String hinhAnh;
+    private byte[] hinhAnh;
     private String trangThaiDV;
     private double donGia;
     private String maLoaiDV;
@@ -11,18 +11,9 @@ public class DichVuDTO {
     private String tenLoaiDV; 
     
     private Integer soLuong; 
+    private Double giaGoc;
 
     public DichVuDTO() {
-    }
-
-    public DichVuDTO(String maDV, String tenDV, String hinhAnh, String trangThaiDV, double donGia, String maLoaiDV, Integer soLuong) {
-        this.maDV = maDV;
-        this.tenDV = tenDV;
-        this.hinhAnh = hinhAnh;
-        this.trangThaiDV = trangThaiDV;
-        this.donGia = donGia;
-        this.maLoaiDV = maLoaiDV;
-        this.soLuong = soLuong;
     }
 
     public String getMaDV() { return maDV; }
@@ -31,8 +22,8 @@ public class DichVuDTO {
     public String getTenDV() { return tenDV; }
     public void setTenDV(String tenDV) { this.tenDV = tenDV; }
 
-    public String getHinhAnh() { return hinhAnh; }
-    public void setHinhAnh(String hinhAnh) { this.hinhAnh = hinhAnh; }
+    public byte[] getHinhAnh() { return hinhAnh; }
+    public void setHinhAnh(byte[] hinhAnh) { this.hinhAnh = hinhAnh; }
 
     public String getTrangThaiDV() { return trangThaiDV; }
     public void setTrangThaiDV(String trangThaiDV) { this.trangThaiDV = trangThaiDV; }
@@ -48,4 +39,7 @@ public class DichVuDTO {
 
     public Integer getSoLuong() { return soLuong; }
     public void setSoLuong(Integer soLuong) { this.soLuong = soLuong; }
+
+    public Double getGiaGoc() { return giaGoc; }
+    public void setGiaGoc(Double giaGoc) { this.giaGoc = giaGoc; }
 }

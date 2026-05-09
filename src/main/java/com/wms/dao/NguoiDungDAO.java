@@ -18,10 +18,12 @@ public class NguoiDungDAO {
                     SELECT n.MaND, n.TenTaiKhoan, n.MatKhauMaHoa, n.AnhDaiDien,
                            n.GioiTinh, n.Email, n.SDT, n.NgaySinh,
                            n.ThoiGianTao, n.CapNhatLanCuoi, n.LanCuoiDangNhap, n.TrangThaiND,
-                           v.TenVaiTro, v.MaVaiTro
+                           v.TenVaiTro, v.MaVaiTro, kh.HoTenKH, nv_table.MaNV
                     FROM NGUOIDUNG n
-                    LEFT JOIN CHITIETVAITRO nv ON n.MaND = nv.MaND
-                    LEFT JOIN VAITRO v ON nv.MaVaiTro = v.MaVaiTro
+                    LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND
+                    LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro
+                    LEFT JOIN KHACHHANG kh ON n.MaND = kh.MaND
+                    LEFT JOIN NHANVIEN nv_table ON n.MaND = nv_table.MaND
                     WHERE n.TenTaiKhoan = ? OR n.Email = ? OR n.SDT = ?
                 """;
 
@@ -40,7 +42,7 @@ public class NguoiDungDAO {
                     user.setMaND(rs.getString("MaND"));
                     user.setTenTaiKhoan(rs.getString("TenTaiKhoan"));
                     user.setMatKhauMaHoa(rs.getString("MatKhauMaHoa"));
-                    user.setAnhDaiDien(rs.getString("AnhDaiDien"));
+                    user.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
                     user.setGioiTinh(rs.getString("GioiTinh"));
                     user.setEmail(rs.getString("Email"));
                     user.setSdt(rs.getString("SDT"));
@@ -49,6 +51,15 @@ public class NguoiDungDAO {
                     user.setCapNhatLanCuoi(rs.getTimestamp("CapNhatLanCuoi"));
                     user.setLanCuoiDangNhap(rs.getTimestamp("LanCuoiDangNhap"));
                     user.setTrangThaiND(rs.getString("TrangThaiND"));
+                    String hoTen = rs.getString("HoTenKH");
+                    if (hoTen == null || hoTen.trim().isEmpty()) {
+                        hoTen = rs.getString("TenTaiKhoan");
+                    }
+                    if (hoTen == null || hoTen.trim().isEmpty()) {
+                        hoTen = "Admin"; // Fallback cuối cùng
+                    }
+                    user.setHoTen(hoTen);
+                    user.setMaNV(rs.getString("MaNV"));
                 }
 
                 String tenVaiTro = rs.getString("TenVaiTro");
@@ -64,6 +75,8 @@ public class NguoiDungDAO {
 
         if (user != null) {
             user.setVaiTro(vaiTros);
+            // Load danh sách chức năng của người dùng
+            user.setChucNang(layDanhSachChucNangCuaNguoiDung(user.getMaND()));
         }
         return user;
     }
@@ -145,21 +158,26 @@ public class NguoiDungDAO {
                 psKH.executeUpdate();
             }
 
-            // Đảm bảo vai trò VT02 (Hội viên) tồn tại trong hệ thống
-            String sqlCheckVT = "SELECT COUNT(*) FROM VAITRO WHERE MaVaiTro = 'VT02'";
+            // Đảm bảo vai trò Khách hàng (VT00) tồn tại trong hệ thống
+            String sqlCheckVT = "SELECT COUNT(*) FROM VAITRO WHERE MaVaiTro = ?";
             try (PreparedStatement psCheck = conn.prepareStatement(sqlCheckVT)) {
+                psCheck.setString(1, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
                 ResultSet rsCheck = psCheck.executeQuery();
                 if (rsCheck.next() && rsCheck.getInt(1) == 0) {
-                    String sqlInsVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES ('VT02', 'Hội viên', 'Quyền hạn mặc định cho người đăng ký mới')";
-                    try (Statement st = conn.createStatement()) {
-                        st.executeUpdate(sqlInsVT);
+                    String sqlInsVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
+                    try (PreparedStatement psIns = conn.prepareStatement(sqlInsVT)) {
+                        psIns.setString(1, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
+                        psIns.setString(2, com.wms.config.AppConstants.ROLE_CUSTOMER_NAME);
+                        psIns.setString(3, "Quyền hạn mặc định cho người đăng ký mới");
+                        psIns.executeUpdate();
                     }
                 }
             }
 
-            String sqlVaiTro = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, 'VT02')";
+            String sqlVaiTro = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
             try (PreparedStatement psVT = conn.prepareStatement(sqlVaiTro)) {
                 psVT.setString(1, maND);
+                psVT.setString(2, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
                 psVT.executeUpdate();
             }
 
@@ -187,5 +205,25 @@ public class NguoiDungDAO {
             ps.setString(2, email);
             ps.executeUpdate();
         }
+    }
+
+    public java.util.List<String> layDanhSachChucNangCuaNguoiDung(String maND) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        String sql = "SELECT DISTINCT ctcn.MaChucNang " +
+                "FROM CHITIETVAITRO cvt " +
+                "JOIN CHITIETNHOMCHUCNANG ctncn ON cvt.MaVaiTro = ctncn.MaVaiTro " +
+                "JOIN CHITIETCHUCNANG ctcn ON ctncn.MaNhomChucNang = ctcn.MaNhomChucNang " +
+                "WHERE cvt.MaND = ?";
+        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(rs.getString("MaChucNang"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[NguoiDungDAO] Lỗi lấy chức năng người dùng: " + e.getMessage());
+        }
+        return list;
     }
 }

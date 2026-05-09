@@ -1,30 +1,24 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JDialog.java to edit this template
- */
 package com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.TienMat;
 
 import java.text.NumberFormat;
 import java.util.Locale;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 
-/**
- *
- * @author Thinkapd T14s
- */
-public class TienMatForm extends javax.swing.JDialog {
-    
-    private double tongTien;
+public class TienMatForm extends JDialog {
+
+    private final double tongTien;
     private boolean daThanhToan = false;
     private final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(TienMatForm.class.getName());
 
-    /**
-     * Creates new form TienMatForm
-     */
-    public TienMatForm(java.awt.Frame parent, boolean modal, double tongTien) {
+    private JButton btnGoiY1, btnGoiY2, btnGoiY3, btnGoiY4, btnHuy, btnXacNhan;
+    private JLabel lblGoiY, lblHeaderTitle, lblNhap, lblTienThua, lblTienThuaTitle, lblTongTienTitle;
+    private JPanel pnContent, pnHeader, pnMain;
+    private JTextField txtSoTienKhachDua, txtTongTien;
+
+    public TienMatForm(Frame parent, boolean modal, double tongTien) {
         super(parent, modal);
         this.tongTien = tongTien;
         initComponents();
@@ -32,50 +26,35 @@ public class TienMatForm extends javax.swing.JDialog {
         pack();
         setLocationRelativeTo(parent);
     }
-    
+
     private void setupLogic() {
         txtTongTien.setText(formatTien.format(tongTien));
-        
         txtSoTienKhachDua.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) { tinhTienThua(); }
-            @Override
-            public void removeUpdate(DocumentEvent e) { tinhTienThua(); }
-            @Override
-            public void changedUpdate(DocumentEvent e) { tinhTienThua(); }
+            @Override public void insertUpdate(DocumentEvent e) { tinhTienThua(); }
+            @Override public void removeUpdate(DocumentEvent e) { tinhTienThua(); }
+            @Override public void changedUpdate(DocumentEvent e) { tinhTienThua(); }
         });
-        
-        // Tính toán và hiển thị các gợi ý mệnh giá thông minh
+
         double[] suggestions = calculateSuggestions(tongTien);
-        
         btnGoiY1.setText(formatShort(suggestions[0]));
         btnGoiY1.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[0])));
-        
         btnGoiY2.setText(formatShort(suggestions[1]));
         btnGoiY2.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[1])));
-        
         btnGoiY3.setText(formatShort(suggestions[2]));
         btnGoiY3.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[2])));
-        
         btnGoiY4.setText(formatShort(suggestions[3]));
         btnGoiY4.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[3])));
     }
-    
+
     private double[] calculateSuggestions(double amount) {
         double[] s = new double[4];
-        s[0] = amount; // 1. Đúng số
-        
-        // 2. Làm tròn lên hàng chục nghìn (ví dụ 355k -> 360k)
+        s[0] = amount;
         s[1] = Math.ceil(amount / 10000.0) * 10000.0;
         if (s[1] <= s[0]) s[1] += 10000.0;
-        
-        // 3. Làm tròn lên hàng trăm nghìn (ví dụ 360k -> 400k hoặc 500k)
         s[2] = Math.ceil(amount / 100000.0) * 100000.0;
         if (s[2] <= s[1]) s[2] += 100000.0;
-        
-        // 4. Mốc chẵn lớn tiếp theo (500k, 1M, 2M, 5M...)
         double[] thresholds = {50000, 100000, 200000, 500000, 1000000, 2000000, 5000000};
-        s[3] = s[2] + 500000.0; // Mặc định
+        s[3] = s[2] + 500000.0;
         for (double t : thresholds) {
             if (t > s[2]) {
                 s[3] = t;
@@ -84,12 +63,11 @@ public class TienMatForm extends javax.swing.JDialog {
         }
         return s;
     }
-    
+
     private String formatShort(double value) {
-        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
-        return nf.format(value);
+        return NumberFormat.getInstance(new Locale("vi", "VN")).format(value);
     }
-    
+
     private void tinhTienThua() {
         try {
             String text = txtSoTienKhachDua.getText().replaceAll("[^0-9]", "");
@@ -102,11 +80,11 @@ public class TienMatForm extends javax.swing.JDialog {
             double thua = khachDua - tongTien;
             if (thua >= 0) {
                 lblTienThua.setText(formatTien.format(thua));
-                lblTienThua.setForeground(new java.awt.Color(0, 153, 51));
+                lblTienThua.setForeground(new Color(0, 153, 51));
                 btnXacNhan.setEnabled(true);
             } else {
                 lblTienThua.setText("Thiếu " + formatTien.format(Math.abs(thua)));
-                lblTienThua.setForeground(new java.awt.Color(220, 53, 69));
+                lblTienThua.setForeground(new Color(220, 53, 69));
                 btnXacNhan.setEnabled(false);
             }
         } catch (Exception e) {
@@ -114,49 +92,36 @@ public class TienMatForm extends javax.swing.JDialog {
             btnXacNhan.setEnabled(false);
         }
     }
-    
-    public boolean isDaThanhToan() {
-        return daThanhToan;
-    }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        pnMain = new JPanel();
+        pnHeader = new JPanel();
+        lblHeaderTitle = new JLabel();
+        pnContent = new JPanel();
+        lblTongTienTitle = new JLabel();
+        txtTongTien = new JTextField();
+        lblNhap = new JLabel();
+        txtSoTienKhachDua = new JTextField();
+        lblGoiY = new JLabel();
+        btnGoiY1 = new JButton();
+        btnGoiY2 = new JButton();
+        btnGoiY3 = new JButton();
+        btnGoiY4 = new JButton();
+        lblTienThuaTitle = new JLabel();
+        lblTienThua = new JLabel();
+        btnHuy = new JButton();
+        btnXacNhan = new JButton();
 
-        pnMain = new javax.swing.JPanel();
-        pnHeader = new javax.swing.JPanel();
-        lblHeaderTitle = new javax.swing.JLabel();
-        pnContent = new javax.swing.JPanel();
-        lblTongTienTitle = new javax.swing.JLabel();
-        txtTongTien = new javax.swing.JTextField();
-        lblNhap = new javax.swing.JLabel();
-        txtSoTienKhachDua = new javax.swing.JTextField();
-        lblGoiY = new javax.swing.JLabel();
-        btnGoiY1 = new javax.swing.JButton();
-        btnGoiY2 = new javax.swing.JButton();
-        btnGoiY3 = new javax.swing.JButton();
-        btnGoiY4 = new javax.swing.JButton();
-        lblTienThuaTitle = new javax.swing.JLabel();
-        lblTienThua = new javax.swing.JLabel();
-        btnHuy = new javax.swing.JButton();
-        btnXacNhan = new javax.swing.JButton();
-
-        setPreferredSize(new java.awt.Dimension(560, 600));
-
-        pnMain.setBackground(new java.awt.Color(254, 248, 250));
+        setPreferredSize(new Dimension(560, 600));
+        pnMain.setBackground(new Color(254, 248, 250));
         pnMain.setLayout(null);
 
-        pnHeader.setBackground(new java.awt.Color(235, 94, 141));
+        pnHeader.setBackground(new Color(235, 94, 141));
         pnHeader.setLayout(null);
 
-        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
-        lblHeaderTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblHeaderTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblHeaderTitle.setFont(new Font("Segoe UI", 1, 20));
+        lblHeaderTitle.setForeground(Color.WHITE);
+        lblHeaderTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblHeaderTitle.setText("THANH TOÁN TIỀN MẶT");
         pnHeader.add(lblHeaderTitle);
         lblHeaderTitle.setBounds(0, 0, 560, 50);
@@ -164,101 +129,99 @@ public class TienMatForm extends javax.swing.JDialog {
         pnMain.add(pnHeader);
         pnHeader.setBounds(0, 0, 560, 50);
 
-        pnContent.setBackground(new java.awt.Color(255, 255, 255));
-        pnContent.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
+        pnContent.setBackground(Color.WHITE);
+        pnContent.setBorder(BorderFactory.createMatteBorder(4, 0, 0, 0, new Color(235, 94, 141)));
         pnContent.setLayout(null);
 
-        lblTongTienTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblTongTienTitle.setForeground(new java.awt.Color(136, 136, 136));
+        lblTongTienTitle.setFont(new Font("Segoe UI", 1, 14));
+        lblTongTienTitle.setForeground(new Color(136, 136, 136));
         lblTongTienTitle.setText("Tổng tiền hóa đơn");
         pnContent.add(lblTongTienTitle);
         lblTongTienTitle.setBounds(20, 20, 200, 30);
 
         txtTongTien.setEditable(false);
-        txtTongTien.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        txtTongTien.setForeground(new java.awt.Color(235, 94, 141));
+        txtTongTien.setFont(new Font("Segoe UI", 1, 24));
+        txtTongTien.setForeground(new Color(235, 94, 141));
         txtTongTien.setBorder(null);
         txtTongTien.setText("0 VNĐ");
         pnContent.add(txtTongTien);
         txtTongTien.setBounds(20, 45, 460, 35);
 
-        lblNhap.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblNhap.setForeground(new java.awt.Color(136, 136, 136));
+        lblNhap.setFont(new Font("Segoe UI", 1, 14));
+        lblNhap.setForeground(new Color(136, 136, 136));
         lblNhap.setText("Số tiền khách đưa");
         pnContent.add(lblNhap);
         lblNhap.setBounds(20, 100, 200, 30);
 
-        txtSoTienKhachDua.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        txtSoTienKhachDua.setFont(new Font("Segoe UI", 1, 20));
         pnContent.add(txtSoTienKhachDua);
         txtSoTienKhachDua.setBounds(20, 125, 460, 45);
 
-        lblGoiY.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblGoiY.setForeground(new java.awt.Color(136, 136, 136));
+        lblGoiY.setFont(new Font("Segoe UI", 1, 13));
+        lblGoiY.setForeground(new Color(136, 136, 136));
         lblGoiY.setText("Gợi ý mệnh giá");
         pnContent.add(lblGoiY);
         lblGoiY.setBounds(20, 190, 200, 30);
 
-        btnGoiY1.setBackground(new java.awt.Color(254, 248, 250));
-        btnGoiY1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnGoiY1.setForeground(new java.awt.Color(235, 94, 141));
+        btnGoiY1.setBackground(new Color(254, 248, 250));
+        btnGoiY1.setFont(new Font("Segoe UI", 1, 14));
+        btnGoiY1.setForeground(new Color(235, 94, 141));
         btnGoiY1.setText("50.000");
         pnContent.add(btnGoiY1);
         btnGoiY1.setBounds(20, 215, 105, 40);
 
-        btnGoiY2.setBackground(new java.awt.Color(254, 248, 250));
-        btnGoiY2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnGoiY2.setForeground(new java.awt.Color(235, 94, 141));
+        btnGoiY2.setBackground(new Color(254, 248, 250));
+        btnGoiY2.setFont(new Font("Segoe UI", 1, 14));
+        btnGoiY2.setForeground(new Color(235, 94, 141));
         btnGoiY2.setText("100.000");
         pnContent.add(btnGoiY2);
         btnGoiY2.setBounds(135, 215, 105, 40);
 
-        btnGoiY3.setBackground(new java.awt.Color(254, 248, 250));
-        btnGoiY3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnGoiY3.setForeground(new java.awt.Color(235, 94, 141));
+        btnGoiY3.setBackground(new Color(254, 248, 250));
+        btnGoiY3.setFont(new Font("Segoe UI", 1, 14));
+        btnGoiY3.setForeground(new Color(235, 94, 141));
         btnGoiY3.setText("200.000");
         pnContent.add(btnGoiY3);
         btnGoiY3.setBounds(250, 215, 105, 40);
 
-        btnGoiY4.setBackground(new java.awt.Color(254, 248, 250));
-        btnGoiY4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnGoiY4.setForeground(new java.awt.Color(235, 94, 141));
+        btnGoiY4.setBackground(new Color(254, 248, 250));
+        btnGoiY4.setFont(new Font("Segoe UI", 1, 14));
+        btnGoiY4.setForeground(new Color(235, 94, 141));
         btnGoiY4.setText("500.000");
         pnContent.add(btnGoiY4);
         btnGoiY4.setBounds(365, 215, 115, 40);
 
-        lblTienThuaTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblTienThuaTitle.setForeground(new java.awt.Color(136, 136, 136));
+        lblTienThuaTitle.setFont(new Font("Segoe UI", 1, 14));
+        lblTienThuaTitle.setForeground(new Color(136, 136, 136));
         lblTienThuaTitle.setText("Tiền thừa trả khách");
         pnContent.add(lblTienThuaTitle);
         lblTienThuaTitle.setBounds(20, 280, 200, 30);
 
-        lblTienThua.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        lblTienThua.setForeground(new java.awt.Color(0, 153, 51));
+        lblTienThua.setFont(new Font("Segoe UI", 1, 24));
+        lblTienThua.setForeground(new Color(0, 153, 51));
         lblTienThua.setText("0 VNĐ");
         pnContent.add(lblTienThua);
         lblTienThua.setBounds(20, 305, 460, 35);
 
-        btnHuy.setBackground(new java.awt.Color(220, 53, 69));
-        btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+        btnHuy.setBackground(new Color(220, 53, 69));
+        btnHuy.setFont(new Font("Segoe UI", 1, 14));
+        btnHuy.setForeground(Color.WHITE);
         btnHuy.setText("Hủy bỏ");
-        btnHuy.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnHuyActionPerformed(evt);
-            }
+        btnHuy.addActionListener(e -> {
+            daThanhToan = false;
+            dispose();
         });
         pnContent.add(btnHuy);
         btnHuy.setBounds(20, 400, 130, 45);
 
-        btnXacNhan.setBackground(new java.awt.Color(0, 153, 51));
-        btnXacNhan.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
+        btnXacNhan.setBackground(new Color(0, 153, 51));
+        btnXacNhan.setFont(new Font("Segoe UI", 1, 16));
+        btnXacNhan.setForeground(Color.WHITE);
         btnXacNhan.setText("Xác nhận & Thanh toán");
         btnXacNhan.setEnabled(false);
-        btnXacNhan.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnXacNhanActionPerformed(evt);
-            }
+        btnXacNhan.addActionListener(e -> {
+            daThanhToan = true;
+            dispose();
         });
         pnContent.add(btnXacNhan);
         btnXacNhan.setBounds(165, 400, 315, 45);
@@ -266,73 +229,10 @@ public class TienMatForm extends javax.swing.JDialog {
         pnMain.add(pnContent);
         pnContent.setBounds(30, 80, 500, 470);
 
-        getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
-        daThanhToan = false;
-        dispose();
+        getContentPane().add(pnMain, BorderLayout.CENTER);
     }
 
-    private void btnXacNhanActionPerformed(java.awt.event.ActionEvent evt) {
-        daThanhToan = true;
-        dispose();
+    public boolean isDaThanhToan() {
+        return daThanhToan;
     }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                TienMatForm dialog = new TienMatForm(new javax.swing.JFrame(), true, 0);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnGoiY1;
-    private javax.swing.JButton btnGoiY2;
-    private javax.swing.JButton btnGoiY3;
-    private javax.swing.JButton btnGoiY4;
-    private javax.swing.JButton btnHuy;
-    private javax.swing.JButton btnXacNhan;
-    private javax.swing.JLabel lblGoiY;
-    private javax.swing.JLabel lblHeaderTitle;
-    private javax.swing.JLabel lblNhap;
-    private javax.swing.JLabel lblTienThua;
-    private javax.swing.JLabel lblTienThuaTitle;
-    private javax.swing.JLabel lblTongTienTitle;
-    private javax.swing.JPanel pnContent;
-    private javax.swing.JPanel pnHeader;
-    private javax.swing.JPanel pnMain;
-    private javax.swing.JTextField txtSoTienKhachDua;
-    private javax.swing.JTextField txtTongTien;
-    // End of variables declaration//GEN-END:variables
 }

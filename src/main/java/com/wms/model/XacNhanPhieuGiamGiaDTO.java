@@ -1,5 +1,7 @@
 package com.wms.model;
 
+import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
+
 public class XacNhanPhieuGiamGiaDTO {
     private boolean isValid;
     private String message;

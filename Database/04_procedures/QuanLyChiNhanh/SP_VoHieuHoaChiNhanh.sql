@@ -34,11 +34,6 @@ BEGIN
     SET TrangThai = 'Ngừng hoạt động'
     WHERE MaCN = p_MaCN;
 
-    -- Vô hiệu hóa toàn bộ không gian thuộc chi nhánh này
-    UPDATE KHONGGIAN
-    SET TrangThaiKG = 'Bảo trì'
-    WHERE MaCN = p_MaCN;
-
     COMMIT;
     p_outMessage := 'Vô hiệu hóa chi nhánh [' || p_MaCN
                     || '] thành công! Toàn bộ không gian thuộc chi nhánh đã được vô hiệu hóa.';

@@ -11,13 +11,15 @@ import java.util.List;
 
 public class HoaDonDAO {
 
+    private static final long MILLIS_IN_HOUR = 3600000;
+
     public List<HoaDonDTO> layDanhSachHoaDon(String searchText, String statusFilter) {
         List<HoaDonDTO> list = new ArrayList<>();
         Connection conn = DatabaseConnection.getInstance().getConnection();
         if (conn == null) return list;
 
         StringBuilder sql = new StringBuilder(
-            "SELECT h.*, kh.HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc " +
+            "SELECT h.*, kh.HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc " +
             "FROM HOADON h " +
             "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
             "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
@@ -44,10 +46,8 @@ public class HoaDonDAO {
                 ps.setString(idx++, q);
                 ps.setString(idx++, q);
             }
-            if (statusFilter != null && !statusFilter.equals("Tất cả")) {
-                if (!statusFilter.equals("Chưa thanh toán")) {
-                    ps.setString(idx++, statusFilter);
-                }
+            if (statusFilter != null && !statusFilter.equals("Tất cả") && !statusFilter.equals("Chưa thanh toán")) {
+                ps.setString(idx++, statusFilter);
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -55,8 +55,13 @@ public class HoaDonDAO {
                     HoaDonDTO hd = new HoaDonDTO();
                     hd.setMaHoaDon(rs.getString("MaHoaDon"));
                     hd.setSoHD(rs.getString("SoHD"));
-                    hd.setTongTien(rs.getDouble("TongTien"));
-                    hd.setThanhTien(rs.getDouble("ThanhTien"));
+                    
+                    double tt = rs.getDouble("TongTien");
+                    double thanh = rs.getDouble("ThanhTien");
+                    if (tt == 0 && thanh > 0) tt = thanh;
+                    
+                    hd.setTongTien(tt);
+                    hd.setThanhTien(thanh);
                     hd.setNgayLapHoaDon(rs.getTimestamp("NgayLapHoaDon"));
                     hd.setPhuongThucThanhToan(rs.getString("PhuongThucThanhToan"));
                     hd.setTrangThaiThanhToan(rs.getString("TrangThaiThanhToan"));
@@ -66,16 +71,9 @@ public class HoaDonDAO {
                     hd.setHoTenKH(rs.getString("HoTenKH"));
                     hd.setMaDatCho(rs.getString("MaDatCho"));
                     hd.setTrangThaiPhien(rs.getString("TrangThaiPhien"));
-                    
-                    double tt = rs.getDouble("TongTien");
-                    double thanh = rs.getDouble("ThanhTien");
-                    // Patch cho trường hợp trigger tính toán lệch hoặc chưa cập nhật TongTien
-                    if (tt == 0 && thanh > 0) tt = thanh;
-                    
-                    hd.setTongTien(tt);
-                    hd.setThanhTien(thanh);
                     hd.setThoiGianBatDauPhien(rs.getTimestamp("ThoiGianBatDau"));
                     hd.setThoiGianKetThucPhien(rs.getTimestamp("ThoiGianKetThuc"));
+                    hd.setThoiGianDuKienKetThucPhien(rs.getTimestamp("ThoiGianDuKienKetThuc"));
                     list.add(hd);
                 }
             }
@@ -85,7 +83,6 @@ public class HoaDonDAO {
         return list;
     }
 
-    // Hàm lưu hóa đơn đang chờ thanh toán vào Database
     public boolean taoHoaDonMoi(HoaDonDTO hd) {
         Connection conn = DatabaseConnection.getInstance().getConnection();
         if (conn == null) return false;
@@ -101,8 +98,7 @@ public class HoaDonDAO {
             pstmt.setString(5, hd.getTrangThaiThanhToan());
             pstmt.setString(6, hd.getMaPhien());
 
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
+            return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -119,7 +115,6 @@ public class HoaDonDAO {
             pstmt.setString(2, maPhien);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("[HoaDonDAO] Lỗi cập nhật trạng thái hóa đơn: " + e.getMessage());
             return false;
         }
     }
@@ -130,7 +125,7 @@ public class HoaDonDAO {
         if (conn == null) return null;
 
         String sqlChung = "SELECT h.MaHoaDon, h.TongTien, h.ThanhTien, p.MaPhien, " +
-                          "p.ThoiGianBatDau, p.ThoiGianKetThuc, " +
+                          "p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, " +
                           "kh.HoTenKH, kg.TenKG " +
                           "FROM HOADON h " +
                           "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
@@ -152,38 +147,36 @@ public class HoaDonDAO {
                     thongTin.setHoTenKH(rsChung.getString("HoTenKH"));
                     thongTin.setTenKhongGian(rsChung.getString("TenKG"));
                     
-                    double tt_ct = rsChung.getDouble("TongTien");
-                    double thanh_ct = rsChung.getDouble("ThanhTien");
-                    if (tt_ct == 0 && thanh_ct > 0) tt_ct = thanh_ct;
+                    double tt = rsChung.getDouble("TongTien");
+                    double thanh = rsChung.getDouble("ThanhTien");
+                    if (tt == 0 && thanh > 0) tt = thanh;
                     
-                    thongTin.setTongTien(tt_ct);
-                    thongTin.setThanhTien(thanh_ct);
-
-                    String maPhien = rsChung.getString("MaPhien");
-                    Timestamp tBĐ = rsChung.getTimestamp("ThoiGianBatDau");
+                    thongTin.setTongTien(tt);
+                    thongTin.setThanhTien(thanh);
+                    thongTin.setMaPhien(rsChung.getString("MaPhien"));
+                    thongTin.setTrangThaiPhien(rsChung.getString("TrangThaiPhien"));
+                    
+                    Timestamp tBD = rsChung.getTimestamp("ThoiGianBatDau");
                     Timestamp tKT = rsChung.getTimestamp("ThoiGianKetThuc");
 
-                    if (tBĐ != null && tKT != null) {
+                    if (tBD != null && tKT != null) {
                         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
                         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-                        String chuoiThoiGian = timeFormat.format(tBĐ) + " - " + timeFormat.format(tKT) + " (" + dateFormat.format(tBĐ) + ")";
-                        thongTin.setThoiGianSửDung(chuoiThoiGian);
+                        thongTin.setThoiGianSửDung(timeFormat.format(tBD) + " - " + timeFormat.format(tKT) + " (" + dateFormat.format(tBD) + ")");
                         
-                        long diffMillis = tKT.getTime() - tBĐ.getTime();
-                        double soGio = (double) diffMillis / (1000 * 60 * 60);
+                        double soGio = (double) (tKT.getTime() - tBD.getTime()) / MILLIS_IN_HOUR;
                         thongTin.setTongSoGio(Math.round(soGio * 10.0) / 10.0);
                     }
 
                     try (PreparedStatement psDV = conn.prepareStatement(sqlDichVu)) {
-                        psDV.setString(1, maPhien);
+                        psDV.setString(1, thongTin.getMaPhien());
                         try (ResultSet rsDV = psDV.executeQuery()) {
                             while (rsDV.next()) {
-                                DichVuDaDungDTO dv = new DichVuDaDungDTO(
+                                thongTin.getDanhSachDichVu().add(new DichVuDaDungDTO(
                                     rsDV.getString("TenDV"),
                                     rsDV.getInt("SoLuong"),
                                     rsDV.getDouble("DonGia")
-                                );
-                                thongTin.getDanhSachDichVu().add(dv);
+                                ));
                             }
                         }
                     }
@@ -206,7 +199,6 @@ public class HoaDonDAO {
             pstmt.setString(2, maNV);
             pstmt.setString(3, maPGG);
             pstmt.setString(4, maHoaDon);
-            
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

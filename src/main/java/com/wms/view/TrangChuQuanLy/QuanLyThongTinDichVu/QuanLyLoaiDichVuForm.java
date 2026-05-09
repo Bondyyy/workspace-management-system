@@ -1,43 +1,36 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JDialog.java to edit this template
- */
 package com.wms.view.TrangChuQuanLy.QuanLyThongTinDichVu;
 
-import com.wms.controller.DichVuController;
+import com.wms.controller.TrangChuQuanLy.DichVuController;
+import com.wms.model.LoaiDichVuDTO;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.util.List;
 
-import com.wms.dao.LoaiDichVuDAO;
-
-/**
- *
- * @author Thinkapd T14s
- */
 public class QuanLyLoaiDichVuForm extends javax.swing.JDialog {
 
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(QuanLyLoaiDichVuForm.class.getName());
-
-    private final com.wms.controller.DichVuController controller;
-    private javax.swing.table.DefaultTableModel tableModel;
+    private final DichVuController controller = new DichVuController();
 
     public QuanLyLoaiDichVuForm(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        controller = new com.wms.controller.DichVuController();
-        tableModel = (javax.swing.table.DefaultTableModel) tblLoaiDichVu.getModel();
         loadData();
-        txtMaLoaiDV.setText(generateMaLoai());
+        txtMaLoaiDV.setText(controller.generateMaLoai());
     }
 
     private void loadData() {
-        tableModel.setRowCount(0);
-        java.util.List<com.wms.model.LoaiDichVuDTO> list = controller.layDanhSachLoai();
-        for (com.wms.model.LoaiDichVuDTO l : list) {
-            tableModel.addRow(new Object[]{l.getMaLoaiDV(), l.getTenLoaiDV(), l.getTrangThaiLDV()});
+        DefaultTableModel model = (DefaultTableModel) tblLoaiDichVu.getModel();
+        model.setRowCount(0);
+        List<LoaiDichVuDTO> list = controller.layDanhSachLoai();
+        for (LoaiDichVuDTO l : list) {
+            model.addRow(new Object[]{l.getMaLoaiDV(), l.getTenLoaiDV(), l.getTrangThaiLDV()});
         }
     }
 
-    private String generateMaLoai() {
-        return "LDV" + (System.currentTimeMillis() % 1000000);
+    private void lamMoiForm() {
+        txtMaLoaiDV.setText(controller.generateMaLoai());
+        txtTenLoaiDV.setText("");
+        cbxTrangThaiLDV.setSelectedIndex(0);
+        tblLoaiDichVu.clearSelection();
     }
 
     /**
@@ -139,7 +132,7 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JDialog {
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
-        btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
+        btnThemMoi.addActionListener(e -> btnThemMoiActionPerformed());
         pnLeft.add(btnThemMoi);
         btnThemMoi.setBounds(20, 340, 125, 35);
 
@@ -147,14 +140,14 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JDialog {
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
-        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
+        btnCapNhat.addActionListener(e -> btnCapNhatActionPerformed());
         pnLeft.add(btnCapNhat);
         btnCapNhat.setBounds(155, 340, 125, 35);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
-        btnHuy.addActionListener(this::btnHuyActionPerformed);
+        btnHuy.addActionListener(e -> lamMoiForm());
         pnLeft.add(btnHuy);
         btnHuy.setBounds(20, 390, 260, 35);
 
@@ -179,25 +172,16 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JDialog {
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setText("Tìm");
-        btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
+        btnTimKiem.addActionListener(e -> loadData());
         pnRight.add(btnTimKiem);
         btnTimKiem.setBounds(380, 60, 90, 35);
 
         tblLoaiDichVu.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Mã Loại", "Tên loại", "Trạng thái"
-            }
+            new Object [][] {},
+            new String [] { "Mã Loại", "Tên loại", "Trạng thái" }
         ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
+            boolean[] canEdit = new boolean [] { false, false, false };
+            public boolean isCellEditable(int rowIndex, int columnIndex) { return canEdit [columnIndex]; }
         });
         tblLoaiDichVu.setRowHeight(30);
         tblLoaiDichVu.setSelectionBackground(new java.awt.Color(235, 94, 141));
@@ -215,94 +199,51 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JDialog {
         pnRight.setBounds(340, 70, 490, 450);
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
+        pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnThemMoiActionPerformed() {
         if (txtTenLoaiDV.getText().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng nhập tên loại dịch vụ!");
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên loại dịch vụ!");
             return;
         }
-        com.wms.model.LoaiDichVuDTO l = new com.wms.model.LoaiDichVuDTO();
+        LoaiDichVuDTO l = new LoaiDichVuDTO();
         l.setMaLoaiDV(txtMaLoaiDV.getText());
-        l.setTenLoaiDV(txtTenLoaiDV.getText());
-        l.setTrangThaiLDV(cbxTrangThaiLDV.getSelectedItem().toString());
+        l.setTenLoaiDV(txtTenLoaiDV.getText().trim());
+        l.setTrangThaiLDV((String) cbxTrangThaiLDV.getSelectedItem());
 
-        if (new com.wms.dao.LoaiDichVuDAO().them(l)) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Thêm thành công!");
+        if (controller.themLoai(l)) {
+            JOptionPane.showMessageDialog(this, "Thêm thành công!");
             loadData();
-            btnHuyActionPerformed(null);
+            lamMoiForm();
+        } else {
+            JOptionPane.showMessageDialog(this, "Thêm thất bại!");
         }
     }
 
-    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCapNhatActionPerformed() {
         if (txtMaLoaiDV.getText().isEmpty()) return;
-        com.wms.model.LoaiDichVuDTO l = new com.wms.model.LoaiDichVuDTO();
+        LoaiDichVuDTO l = new LoaiDichVuDTO();
         l.setMaLoaiDV(txtMaLoaiDV.getText());
-        l.setTenLoaiDV(txtTenLoaiDV.getText());
-        l.setTrangThaiLDV(cbxTrangThaiLDV.getSelectedItem().toString());
+        l.setTenLoaiDV(txtTenLoaiDV.getText().trim());
+        l.setTrangThaiLDV((String) cbxTrangThaiLDV.getSelectedItem());
 
-        if (new com.wms.dao.LoaiDichVuDAO().capNhat(l)) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+        if (controller.capNhatLoai(l)) {
+            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
             loadData();
+        } else {
+            JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
         }
-    }
-
-    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
-        txtMaLoaiDV.setText(generateMaLoai());
-        txtTenLoaiDV.setText("");
-        cbxTrangThaiLDV.setSelectedIndex(0);
-        tblLoaiDichVu.clearSelection();
-    }
-
-    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
-        // Tạm thời load lại toàn bộ vì SP chưa hỗ trợ search loại
-        loadData();
     }
 
     private void tblLoaiDichVuMouseClicked(java.awt.event.MouseEvent evt) {
         int row = tblLoaiDichVu.getSelectedRow();
         if (row >= 0) {
-            txtMaLoaiDV.setText(tableModel.getValueAt(row, 0).toString());
-            txtTenLoaiDV.setText(tableModel.getValueAt(row, 1).toString());
-            cbxTrangThaiLDV.setSelectedItem(tableModel.getValueAt(row, 2).toString());
+            txtMaLoaiDV.setText(tblLoaiDichVu.getValueAt(row, 0).toString());
+            txtTenLoaiDV.setText(tblLoaiDichVu.getValueAt(row, 1).toString());
+            cbxTrangThaiLDV.setSelectedItem(tblLoaiDichVu.getValueAt(row, 2).toString());
         }
-    }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                QuanLyLoaiDichVuForm dialog = new QuanLyLoaiDichVuForm(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -328,6 +269,3 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JDialog {
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
 }
-
-
-

@@ -6,7 +6,7 @@ public class NguoiDungDTO {
     private String maND;
     private String tenTaiKhoan;
     private String matKhauMaHoa;
-    private String anhDaiDien;
+    private byte[] anhDaiDien;
     private String gioiTinh;
     private String email;
     private String sdt;
@@ -17,6 +17,8 @@ public class NguoiDungDTO {
     private String hoTen;
     private String trangThaiND;
     private List<String> vaiTro;
+    private List<String> chucNang; // Danh sách MaChucNang được phép truy cập
+    private String maNV;
 
     public NguoiDungDTO() {}
 
@@ -52,11 +54,11 @@ public class NguoiDungDTO {
         this.matKhauMaHoa = matKhauMaHoa;
     }
 
-    public String getAnhDaiDien() {
+    public byte[] getAnhDaiDien() {
         return anhDaiDien;
     }
 
-    public void setAnhDaiDien(String anhDaiDien) {
+    public void setAnhDaiDien(byte[] anhDaiDien) {
         this.anhDaiDien = anhDaiDien;
     }
 
@@ -138,5 +140,40 @@ public class NguoiDungDTO {
             if (r != null && r.trim().equalsIgnoreCase(roleName.trim())) return true;
         }
         return false;
+    }
+
+    public List<String> getChucNang() {
+        return chucNang;
+    }
+
+    public void setChucNang(List<String> chucNang) {
+        this.chucNang = chucNang;
+    }
+
+    /**
+     * Kiểm tra người dùng có quyền truy cập chức năng theo MaChucNang không.
+     * Nếu danh sách chucNang null/rỗng thì coi là chưa cấu hình → trả về false.
+     */
+    public boolean hasChucNang(String maChucNang) {
+        if (chucNang == null || chucNang.isEmpty()) return false;
+        for (String cn : chucNang) {
+            if (cn != null && cn.trim().equalsIgnoreCase(maChucNang.trim())) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Kiểm tra xem người dùng có bất kỳ chức năng nào (tức là đã được phân quyền).
+     */
+    public boolean daPhanQuyen() {
+        return chucNang != null && !chucNang.isEmpty();
+    }
+
+    public String getMaNV() {
+        return maNV;
+    }
+
+    public void setMaNV(String maNV) {
+        this.maNV = maNV;
     }
 }

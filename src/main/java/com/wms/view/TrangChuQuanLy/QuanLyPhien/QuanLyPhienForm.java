@@ -1,32 +1,35 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package com.wms.view.TrangChuQuanLy.QuanLyPhien;
 
-import com.wms.controller.QuanLyPhienController;
-
-/**
- *
- * @author Thinkapd T14s
- */
+import com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController;
 public class QuanLyPhienForm extends javax.swing.JPanel {
 
     /**
      * Creates new form QuanLyPhienForm
      */
-    private final com.wms.controller.QuanLyPhienController controller;
+    private final com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController controller;
     private java.util.List<com.wms.model.PhienLamViecFullDTO> currentList;
     private final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy");
     private javax.swing.Timer realTimeTimer;
 
     public QuanLyPhienForm() {
         initComponents();
-        controller = new com.wms.controller.QuanLyPhienController(this);
+        setupTable();
+        controller = new com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController(this);
         loadChiNhanhData();
         kiemTraQuyen();
         loadData("");
         initRealTimeTimer();
+    }
+
+    private void setupTable() {
+        javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        
+        // Căn lề cho các cột: Mã Phiên, Bắt đầu, Kết thúc, Trạng thái, Thanh toán, Hình thức
+        int[] centerCols = {0, 3, 4, 5, 6, 7};
+        for (int col : centerCols) {
+            tblPhienLamViec.getColumnModel().getColumn(col).setCellRenderer(centerRenderer);
+        }
     }
 
     private void initRealTimeTimer() {
@@ -48,8 +51,6 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                 break;
             com.wms.model.PhienLamViecFullDTO p = currentList.get(i);
 
-            // Chỉ cập nhật nếu phiên đang chạy (không có thời gian kết thúc thực tế)
-            // và thời gian bắt đầu <= hiện tại
             if (p.getThoiGianKetThuc() == null && p.getThoiGianBatDau() != null
                     && !p.getThoiGianBatDau().after(new java.util.Date())) {
                 long start = p.getThoiGianBatDau().getTime();
@@ -60,9 +61,8 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                 long seconds = (diff % (60 * 1000)) / 1000;
 
                 String duration = String.format("%02d:%02d:%02d", hours, minutes, seconds);
-                model.setValueAt("Chạy: " + duration, i, 4); // Cột Kết thúc (index 4)
+                model.setValueAt("Chạy: " + duration, i, 4);
 
-                // Nếu đang chọn dòng này thì cập nhật ô chi tiết
                 int selectedRow = tblPhienLamViec.getSelectedRow();
                 if (selectedRow == i) {
                     if (txtThoiGianDaDung != null) {
@@ -70,14 +70,10 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                         txtThoiGianDaDung.setCaretPosition(0);
                     }
                     if (txtKetThuc != null) {
-                        java.text.SimpleDateFormat currentSdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy");
-                        txtKetThuc.setText(currentSdf.format(new java.util.Date()));
+                        txtKetThuc.setText(new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy").format(new java.util.Date()));
                         txtKetThuc.setCaretPosition(0);
                     }
                 }
-            } else {
-                // Nếu là dòng đang chọn nhưng không chạy (đã kết thúc hoặc chưa bắt đầu)
-                // thì không cập nhật real-time nữa (đã được set trong MouseClicked)
             }
         }
     }
@@ -85,30 +81,22 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     private void loadChiNhanhData() {
         cbxChiNhanh.removeAllItems();
         cbxChiNhanh.addItem("--- Tất cả chi nhánh ---");
-        com.wms.dao.NhanVienDAO nvDAO = new com.wms.dao.NhanVienDAO();
-        java.util.List<String[]> chiNhanhs = nvDAO.layDanhSachChiNhanh();
-        for (String[] cn : chiNhanhs) {
+        for (String[] cn : controller.layDanhSachChiNhanh()) {
             cbxChiNhanh.addItem(cn[1]);
             cbxChiNhanh.putClientProperty("maCN_" + cn[1], cn[0]);
         }
-
         cbxChiNhanh.addActionListener(e -> loadData(txtTimKiem.getText().trim()));
     }
 
     private void kiemTraQuyen() {
         com.wms.model.NguoiDungDTO user = com.wms.controller.DangNhapController.getCurrentUser();
-        if (user == null)
-            return;
+        if (user == null) return;
 
-        boolean isVT1 = user.hasRole("VT1") || user.hasRole("Quản trị hệ thống");
-
-        if (!isVT1) {
-            // Không phải admin, khóa chọn chi nhánh và lọc theo chi nhánh của mình
+        boolean isAdmin = user.hasRole("VT1") || user.hasRole("Quản trị hệ thống");
+        if (!isAdmin) {
             cbxChiNhanh.setEnabled(false);
-            String maCN = new com.wms.dao.NhanVienDAO().layMaCNTuMaND(user.getMaND());
-            if (maCN != null) {
-                setComboByMaCN(maCN);
-            }
+            String maCN = controller.layMaCNNguoiDung(user);
+            if (maCN != null) setComboByMaCN(maCN);
         }
     }
 
@@ -178,7 +166,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -214,14 +202,15 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         tblDichVu = new javax.swing.JTable();
         btnMoPhien = new javax.swing.JButton();
         btnKetThucPhien = new javax.swing.JButton();
-        btnHuy = new javax.swing.JButton();
+        btnCapNhat = new javax.swing.JButton();
         btnXacNhan = new javax.swing.JButton();
-        txtTrangThai = new javax.swing.JTextField();
         lblTrangThai1 = new javax.swing.JLabel();
         txtHinhThuc = new javax.swing.JTextField();
         lblDuKien1 = new javax.swing.JLabel();
         txtThoiGianDaDung = new javax.swing.JTextField();
         lblDuKien2 = new javax.swing.JLabel();
+        btnXoa = new javax.swing.JButton();
+        cbxTrangThai = new javax.swing.JComboBox<>();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -274,19 +263,19 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         btnTaiLai.setBounds(500, 60, 95, 35);
 
         tblPhienLamViec.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][] {
+            new Object [][] {
 
-                },
-                new String[] {
-                        "Mã Phiên", "Không Gian", "Khách Hàng", "Bắt đầu", "Kết thúc", "Trạng thái", "Thanh toán",
-                        "Hình thức"
-                }) {
-            boolean[] canEdit = new boolean[] {
-                    false, false, false, false, false, false, false, false
+            },
+            new String [] {
+                "Mã Phiên", "Không Gian", "Khách Hàng", "Bắt đầu", "Kết thúc", "Trạng thái", "Thanh toán", "Hình thức"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
+                return canEdit [columnIndex];
             }
         });
         tblPhienLamViec.setRowHeight(30);
@@ -306,8 +295,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         pnLeft.add(lblChiNhanh);
         lblChiNhanh.setBounds(330, 20, 100, 18);
 
-        cbxChiNhanh.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[] { "Tất cả chi nhánh", "CN001 - Quận 1", "CN002 - Thủ Đức" }));
+        cbxChiNhanh.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tất cả chi nhánh", "CN001 - Quận 1", "CN002 - Thủ Đức" }));
         cbxChiNhanh.addActionListener(this::cbxChiNhanhActionPerformed);
         pnLeft.add(cbxChiNhanh);
         cbxChiNhanh.setBounds(410, 20, 180, 28);
@@ -385,7 +373,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         txtBatDau.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         txtBatDau.setBorder(null);
         pnRight.add(txtBatDau);
-        txtBatDau.setBounds(20, 185, 180, 30);
+        txtBatDau.setBounds(20, 185, 160, 30);
 
         lblDuKien.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblDuKien.setForeground(new java.awt.Color(136, 136, 136));
@@ -398,7 +386,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         txtDuKien.setBorder(null);
         txtDuKien.addActionListener(this::txtDuKienActionPerformed);
         pnRight.add(txtDuKien);
-        txtDuKien.setBounds(20, 300, 180, 30);
+        txtDuKien.setBounds(20, 300, 160, 30);
 
         lblKetThuc.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblKetThuc.setForeground(new java.awt.Color(136, 136, 136));
@@ -412,7 +400,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         txtKetThuc.setText("(Chưa kết thúc)");
         txtKetThuc.setBorder(null);
         pnRight.add(txtKetThuc);
-        txtKetThuc.setBounds(20, 240, 180, 30);
+        txtKetThuc.setBounds(20, 240, 160, 30);
 
         lblDichVu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblDichVu.setForeground(new java.awt.Color(0, 0, 58));
@@ -421,18 +409,19 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         lblDichVu.setBounds(20, 340, 370, 20);
 
         tblDichVu.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][] {
+            new Object [][] {
 
-                },
-                new String[] {
-                        "Tên Dịch Vụ", "SL", "Đơn giá", "Thành tiền"
-                }) {
-            boolean[] canEdit = new boolean[] {
-                    false, false, false, false
+            },
+            new String [] {
+                "Tên Dịch Vụ", "SL", "Đơn giá", "Thành tiền"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
+                return canEdit [columnIndex];
             }
         });
         tblDichVu.setRowHeight(25);
@@ -440,7 +429,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         jScrollPane2.setViewportView(tblDichVu);
 
         pnRight.add(jScrollPane2);
-        jScrollPane2.setBounds(20, 360, 350, 120);
+        jScrollPane2.setBounds(20, 360, 350, 80);
 
         btnMoPhien.setBackground(new java.awt.Color(0, 153, 51));
         btnMoPhien.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
@@ -448,7 +437,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         btnMoPhien.setText("Mở Phiên Mới");
         btnMoPhien.addActionListener(this::btnMoPhienActionPerformed);
         pnRight.add(btnMoPhien);
-        btnMoPhien.setBounds(20, 495, 180, 35);
+        btnMoPhien.setBounds(20, 460, 120, 35);
 
         btnKetThucPhien.setBackground(new java.awt.Color(21, 101, 192));
         btnKetThucPhien.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
@@ -456,15 +445,15 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         btnKetThucPhien.setText("Kết Thúc Phiên");
         btnKetThucPhien.addActionListener(this::btnKetThucPhienActionPerformed);
         pnRight.add(btnKetThucPhien);
-        btnKetThucPhien.setBounds(205, 495, 180, 35);
+        btnKetThucPhien.setBounds(20, 500, 180, 35);
 
-        btnHuy.setBackground(new java.awt.Color(220, 53, 69));
-        btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        btnHuy.setForeground(new java.awt.Color(255, 255, 255));
-        btnHuy.setText("Huỷ phiên");
-        btnHuy.addActionListener(this::btnHuyActionPerformed);
-        pnRight.add(btnHuy);
-        btnHuy.setBounds(20, 540, 180, 35);
+        btnCapNhat.setBackground(new java.awt.Color(220, 53, 69));
+        btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
+        btnCapNhat.setText("Cập nhật phiên");
+        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
+        pnRight.add(btnCapNhat);
+        btnCapNhat.setBounds(250, 460, 130, 35);
 
         btnXacNhan.setBackground(new java.awt.Color(220, 53, 69));
         btnXacNhan.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
@@ -472,27 +461,20 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         btnXacNhan.setText("Xác nhận thanh toán");
         btnXacNhan.addActionListener(this::btnXacNhanActionPerformed);
         pnRight.add(btnXacNhan);
-        btnXacNhan.setBounds(210, 540, 180, 35);
-
-        txtTrangThai.setEditable(false);
-        txtTrangThai.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        txtTrangThai.setForeground(new java.awt.Color(255, 51, 51));
-        txtTrangThai.setBorder(null);
-        pnRight.add(txtTrangThai);
-        txtTrangThai.setBounds(210, 180, 150, 30);
+        btnXacNhan.setBounds(200, 500, 180, 35);
 
         lblTrangThai1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTrangThai1.setForeground(new java.awt.Color(136, 136, 136));
         lblTrangThai1.setText("Trạng thái");
         pnRight.add(lblTrangThai1);
-        lblTrangThai1.setBounds(210, 158, 100, 20);
+        lblTrangThai1.setBounds(210, 160, 100, 20);
 
         txtHinhThuc.setEditable(false);
         txtHinhThuc.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         txtHinhThuc.setBorder(null);
         txtHinhThuc.addActionListener(this::txtHinhThucActionPerformed);
         pnRight.add(txtHinhThuc);
-        txtHinhThuc.setBounds(210, 240, 150, 30);
+        txtHinhThuc.setBounds(210, 240, 160, 30);
 
         lblDuKien1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblDuKien1.setForeground(new java.awt.Color(136, 136, 136));
@@ -513,25 +495,60 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         pnRight.add(lblDuKien2);
         lblDuKien2.setBounds(210, 280, 150, 18);
 
+        btnXoa.setBackground(new java.awt.Color(21, 101, 192));
+        btnXoa.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        btnXoa.setForeground(new java.awt.Color(255, 255, 255));
+        btnXoa.setText("Xoá phiên");
+        btnXoa.addActionListener(this::btnXoaActionPerformed);
+        pnRight.add(btnXoa);
+        btnXoa.setBounds(140, 460, 110, 35);
+
+        cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Đã đặt trước", "Đã kết thúc" }));
+        pnRight.add(cbxTrangThai);
+        cbxTrangThai.setBounds(210, 185, 160, 30);
+
         pnMain.add(pnRight);
-        pnRight.setBounds(650, 70, 380, 590);
+        pnRight.setBounds(650, 70, 380, 550);
 
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cbxChiNhanhActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_cbxChiNhanhActionPerformed
+    private void btnXoaActionPerformed(java.awt.event.ActionEvent evt) {
+        String maPhien = txtMaPhien.getText().trim();
+        if (maPhien.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng chọn một phiên cần xóa từ danh sách!");
+            return;
+        }
+
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, 
+                "Bạn có chắc chắn muốn xóa phiên " + maPhien + "?\nLưu ý: Hóa đơn và các chi tiết dịch vụ liên quan cũng sẽ bị xóa!", 
+                "Xác nhận xóa", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.WARNING_MESSAGE);
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            if (controller.xoaPhien(maPhien)) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Đã xóa phiên thành công!");
+                loadData("");
+                btnHuyActionPerformed();
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Lỗi khi xóa phiên làm việc!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void cbxChiNhanhActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
     }// GEN-LAST:event_cbxChiNhanhActionPerformed
 
-    private void txtTrangThaiThanhToanActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_txtTrangThaiThanhToanActionPerformed
+    private void txtTrangThaiThanhToanActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
     }// GEN-LAST:event_txtTrangThaiThanhToanActionPerformed
 
-    private void txtDuKienActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_txtDuKienActionPerformed
+    private void txtDuKienActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
     }// GEN-LAST:event_txtDuKienActionPerformed
 
-    private void txtThoiGianDaDungActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_txtThoiGianDaDungActionPerformed
+    private void txtThoiGianDaDungActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
     }// GEN-LAST:event_txtThoiGianDaDungActionPerformed
 
@@ -548,33 +565,25 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
 
         com.wms.model.PhienLamViecFullDTO selected = currentList.get(row);
         if (selected.getMaDatCho() == null) {
-            javax.swing.JOptionPane.showMessageDialog(this,
-                    "Đây là phiên khách vào trực tiếp, không cần xác nhận thanh toán đặt trước!");
+            javax.swing.JOptionPane.showMessageDialog(this, "Đây là phiên khách vào trực tiếp, không cần xác nhận thanh toán đặt trước!");
             return;
         }
-
         if (!"Đang chờ thanh toán".equals(selected.getTrangThaiDatCho())) {
             javax.swing.JOptionPane.showMessageDialog(this, "Phiên này không ở trạng thái 'Đang chờ thanh toán'!");
             return;
         }
 
         int confirm = javax.swing.JOptionPane.showConfirmDialog(this,
-                "Xác nhận khách hàng đã thanh toán thành công cho mã đặt " + selected.getMaDatCho() + "?",
+                "Xác nhận khách hàng đã thanh toán cho mã đặt " + selected.getMaDatCho() + "?",
                 "Xác nhận thanh toán", javax.swing.JOptionPane.YES_NO_OPTION);
 
         if (confirm == javax.swing.JOptionPane.YES_OPTION) {
-            com.wms.dao.DatChoDAO dcDAO = new com.wms.dao.DatChoDAO();
-            com.wms.dao.HoaDonDAO hdDAO = new com.wms.dao.HoaDonDAO();
-
-            boolean dcSuccess = dcDAO.xacNhanThanhToan(selected.getMaDatCho());
-            boolean hdSuccess = hdDAO.capNhatTrangThaiThanhToanTheoPhien(selected.getMaPhien(), "Đã thanh toán");
-
-            if (dcSuccess && hdSuccess) {
+            if (controller.xacNhanThanhToanDatTruoc(selected)) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Xác nhận thanh toán thành công!");
-                loadData(""); // Tải lại danh sách
+                loadData("");
             } else {
-                javax.swing.JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi cập nhật trạng thái!", "Lỗi",
-                        javax.swing.JOptionPane.ERROR_MESSAGE);
+                javax.swing.JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi cập nhật trạng thái!",
+                        "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -588,10 +597,34 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         loadData("");
     }
 
-    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
+        String maPhien = txtMaPhien.getText().trim();
+        if (maPhien.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng chọn một phiên cần cập nhật!");
+            return;
+        }
+
+        String trangThai = cbxTrangThai.getSelectedItem().toString();
+        String tenKH = txtKhachHang.getText().trim();
+
+        if (controller.capNhatPhien(maPhien, trangThai, tenKH)) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật thông tin phiên thành công!");
+            loadData("");
+            btnHuyActionPerformed(); // Reset sau khi cập nhật
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật thông tin phiên!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void btnHuyActionPerformed() {
         txtMaPhien.setText("");
         txtKhongGian.setText("");
         txtKhachHang.setText("");
+        txtKhachHang.setEditable(false);
+        txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+        cbxTrangThai.setSelectedIndex(0);
+        cbxTrangThai.setEnabled(false);
+        btnCapNhat.setEnabled(true);
         txtTrangThaiThanhToan.setText("");
         txtBatDau.setText("");
         txtDuKien.setText("");
@@ -607,7 +640,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             return;
         }
 
-        if ("Đã kết thúc".equals(txtTrangThaiThanhToan.getText())) {
+        if ("Đã kết thúc".equals(cbxTrangThai.getSelectedItem().toString())) {
             javax.swing.JOptionPane.showMessageDialog(this, "Phiên này đã kết thúc rồi!");
             return;
         }
@@ -618,7 +651,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             if (controller.ketThucPhien(maPhien)) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Đã kết thúc phiên thành công!");
                 loadData("");
-                btnHuyActionPerformed(null);
+                btnHuyActionPerformed();
             } else {
                 javax.swing.JOptionPane.showMessageDialog(this, "Lỗi khi kết thúc phiên!");
             }
@@ -653,8 +686,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             txtBatDau.setText(tblPhienLamViec.getValueAt(row, 3).toString());
             txtBatDau.setCaretPosition(0);
 
-            // Nếu phiên đang chạy hoặc chưa bắt đầu, hiển thị giờ hiện tại là dự kiến kết
-            // thúc thực tế
+            // Nếu phiên đang chạy hoặc chưa bắt đầu, hiển thị giờ hiện tại là dự kiến kết thúc thực tế
             String ketThucCol = tblPhienLamViec.getValueAt(row, 4).toString();
             if (ketThucCol.startsWith("Chạy:") || ketThucCol.equals("(Chưa bắt đầu)")) {
                 java.text.SimpleDateFormat currentSdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy");
@@ -664,22 +696,47 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             }
             txtKetThuc.setCaretPosition(0);
 
-            txtTrangThai.setText(tblPhienLamViec.getValueAt(row, 5).toString());
+            String trangThaiTable = tblPhienLamViec.getValueAt(row, 5).toString();
+            String hinhThuc = tblPhienLamViec.getValueAt(row, 7).toString();
+            
+            if ("Đã kết thúc".equals(trangThaiTable)) {
+                // Nếu đã kết thúc, khóa toàn bộ việc chỉnh sửa
+                cbxTrangThai.setSelectedItem("Đã kết thúc");
+                cbxTrangThai.setEnabled(false);
+                btnCapNhat.setEnabled(false);
+                txtKhachHang.setEditable(false);
+                txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+            } else {
+                // Nếu chưa kết thúc, cho phép chỉnh sửa trạng thái
+                if ("Đang sử dụng".equals(trangThaiTable)) {
+                    cbxTrangThai.setSelectedItem("Đang hoạt động");
+                } else {
+                    cbxTrangThai.setSelectedItem(trangThaiTable);
+                }
+                cbxTrangThai.setEnabled(true);
+                btnCapNhat.setEnabled(true);
+
+                // Logic sửa tên khách hàng cho phiên trực tiếp
+                if ("Trực tiếp".equals(hinhThuc)) {
+                    txtKhachHang.setEditable(true);
+                    txtKhachHang.setBackground(new java.awt.Color(255, 255, 255));
+                } else {
+                    txtKhachHang.setEditable(false);
+                    txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+                }
+            }
+            
             txtTrangThaiThanhToan.setText(tblPhienLamViec.getValueAt(row, 6).toString());
             if (txtHinhThuc != null) {
-                txtHinhThuc.setText(tblPhienLamViec.getValueAt(row, 7).toString());
+                txtHinhThuc.setText(hinhThuc);
             }
 
             // Hiển thị thời gian dự kiến kết thúc từ danh sách gốc
             com.wms.model.PhienLamViecFullDTO selected = currentList.get(row);
             if (txtDuKien != null) {
-                if (selected.getMaDatCho() == null) {
-                    txtDuKien.setText("");
-                } else {
-                    txtDuKien.setText(selected.getThoiGianDuKienKetThuc() != null
-                            ? sdf.format(selected.getThoiGianDuKienKetThuc())
-                            : "");
-                }
+                txtDuKien.setText(selected.getThoiGianDuKienKetThuc() != null
+                        ? sdf.format(selected.getThoiGianDuKienKetThuc())
+                        : "");
                 txtDuKien.setCaretPosition(0);
             }
 
@@ -708,13 +765,15 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnHuy;
+    private javax.swing.JButton btnCapNhat;
     private javax.swing.JButton btnKetThucPhien;
     private javax.swing.JButton btnMoPhien;
     private javax.swing.JButton btnTaiLai;
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JButton btnXacNhan;
+    private javax.swing.JButton btnXoa;
     private javax.swing.JComboBox<String> cbxChiNhanh;
+    private javax.swing.JComboBox<String> cbxTrangThai;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblBatDau;
@@ -747,7 +806,6 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtMaPhien;
     private javax.swing.JTextField txtThoiGianDaDung;
     private javax.swing.JTextField txtTimKiem;
-    private javax.swing.JTextField txtTrangThai;
     private javax.swing.JTextField txtTrangThaiThanhToan;
     // End of variables declaration//GEN-END:variables
 }

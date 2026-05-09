@@ -1,79 +1,86 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package com.wms.view.TrangChuQuanLy.QuanLyDichVuDat;
 
-import com.wms.controller.QuanLyDichVuDatController;
+import com.wms.controller.TrangChuQuanLy.QuanLyDichVuDat.QuanLyDichVuDatController;
+import com.wms.model.TrangChuQuanLy.QuanLyDichVuDat.DichVuDaDatDTO;
 
-/**
- *
- * @author Thinkapd T14s
- */
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
 public class QuanLyDichVuDatForm extends javax.swing.JPanel {
 
-    /**
-     * Creates new form QuanLyDichVuDatForm
-     */
-    private com.wms.controller.QuanLyDichVuDatController controller;
+    private final QuanLyDichVuDatController controller = new QuanLyDichVuDatController();
+    private final SimpleDateFormat sdfHienThi = new SimpleDateFormat("HH:mm dd/MM/yyyy");
 
     public QuanLyDichVuDatForm() {
         initComponents();
-        controller = new com.wms.controller.QuanLyDichVuDatController(this);
-        
-        // Setup dynamic behavior for ComboBox
         cboLoaiDichVu.addActionListener(e -> updateTenDichVu());
-        
         loadDataLoaiDichVu();
-        controller.loadData("");
+        loadData("");
+    }
+
+    private void loadData(String keyword) {
+        loadDataPhienHoatDong(keyword);
+        hienThiDanhSachDichVu(null); // Xóa bảng bên phải khi load lại
+    }
+
+    private void loadDataPhienHoatDong(String keyword) {
+        List<Object[]> ds = controller.layDanhSachPhienHoatDong(keyword);
+        hienThiPhienHoatDong(ds);
     }
 
     private void loadDataLoaiDichVu() {
-        if (controller == null) return;
-        java.util.List<String> dsLoai = controller.getDanhSachLoaiDichVu();
         cboLoaiDichVu.removeAllItems();
         cboLoaiDichVu.addItem("");
-        for (String loai : dsLoai) {
+        for (String loai : controller.layDanhSachLoaiDichVu()) {
             cboLoaiDichVu.addItem(loai);
         }
     }
 
     private void updateTenDichVu() {
-        if (cboLoaiDichVu.getSelectedItem() == null) return;
-        String loaiDV = cboLoaiDichVu.getSelectedItem().toString().trim();
+        Object sel = cboLoaiDichVu.getSelectedItem();
+        if (sel == null) return;
+        String loaiDV = sel.toString().trim();
         cboTenDichVu.removeAllItems();
-        
-        if (!loaiDV.isEmpty() && controller != null) {
-            java.util.List<String> dsTen = controller.getDanhSachTenDichVu(loaiDV);
+        if (!loaiDV.isEmpty()) {
             cboTenDichVu.addItem("");
-            for (String ten : dsTen) {
+            for (String ten : controller.layDanhSachTenDichVu(loaiDV)) {
                 cboTenDichVu.addItem(ten);
             }
         }
     }
 
-    public void hienThiDuLieu(java.util.List<com.wms.model.DichVuDaDatDTO> danhSach) {
-        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tableDichVu.getModel();
+    private void hienThiPhienHoatDong(List<Object[]> danhSach) {
+        DefaultTableModel model = (DefaultTableModel) tablePhienDangHoatDong.getModel();
         model.setRowCount(0);
-        
-        if (danhSach != null) {
-            for (com.wms.model.DichVuDaDatDTO dto : danhSach) {
-                model.addRow(new Object[]{
-                    dto.getMaPhien(),
-                    dto.getTenDichVu(),
-                    dto.getSoLuong(),
-                    dto.getThoiGianDat(),
-                    dto.getKhachHang(),
-                    dto.getTenKhongGian(),
-                    dto.getGhiChu()
-                });
-            }
+        if (danhSach == null) return;
+        for (Object[] row : danhSach) {
+            String batDau = row[3] != null ? sdfHienThi.format(row[3]) : "-";
+            String ketThuc = row[4] != null ? sdfHienThi.format(row[4]) : "-";
+            model.addRow(new Object[]{
+                row[0], // Mã Phiên
+                row[1], // Khách Hàng
+                row[2], // Không Gian
+                batDau, // Bắt Đầu
+                ketThuc, // Kết Thúc
+                row[5]  // Trạng Thái
+            });
         }
     }
 
-    public void hienThiThongBaoLoi(String thongBao) {
-        javax.swing.JOptionPane.showMessageDialog(this, thongBao, "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+    private void hienThiDanhSachDichVu(String maPhien) {
+        List<DichVuDaDatDTO> ds = controller.layDSDichVuTheoPhien(maPhien);
+        DefaultTableModel model = (DefaultTableModel) tableDichVu.getModel();
+        model.setRowCount(0);
+        if (ds == null) return;
+        for (DichVuDaDatDTO dto : ds) {
+            model.addRow(new Object[]{
+                dto.getMaPhien(), dto.getTenDichVu(), dto.getSoLuong(), dto.getGhiChu()
+            });
+        }
     }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -92,9 +99,8 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         lblTimKiem = new javax.swing.JLabel();
         txtTimKiem = new javax.swing.JTextField();
         btnTraCuu = new javax.swing.JButton();
-        btnTaiLai = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tableDichVu = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tablePhienDangHoatDong = new javax.swing.JTable();
         pnRight = new javax.swing.JPanel();
         lblDetailTitle = new javax.swing.JLabel();
         lblMaPhien = new javax.swing.JLabel();
@@ -109,6 +115,11 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         txtGhiChu = new javax.swing.JTextField();
         btnLuu = new javax.swing.JButton();
         btnHuy = new javax.swing.JButton();
+        txtKhachHang = new javax.swing.JTextField();
+        lblMaPhien1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tableDichVu = new javax.swing.JTable();
+        lblDetailTitle1 = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -135,7 +146,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
 
         lblListTitle.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         lblListTitle.setForeground(new java.awt.Color(48, 30, 35));
-        lblListTitle.setText("DANH SÁCH CÁC DỊCH VỤ");
+        lblListTitle.setText("CÁC PHIÊN ĐANG HOẠT ĐỘNG");
         pnLeft.add(lblListTitle);
         lblListTitle.setBounds(20, 15, 250, 30);
 
@@ -158,24 +169,134 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         pnLeft.add(btnTraCuu);
         btnTraCuu.setBounds(410, 55, 70, 35);
 
-        btnTaiLai.setBackground(new java.awt.Color(235, 94, 141));
-        btnTaiLai.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        btnTaiLai.setForeground(new java.awt.Color(255, 255, 255));
-        btnTaiLai.setText("Tải lại");
-        btnTaiLai.addActionListener(this::btnTaiLaiActionPerformed);
-        pnLeft.add(btnTaiLai);
-        btnTaiLai.setBounds(490, 55, 80, 35);
+        tablePhienDangHoatDong.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Mã Phiên", "Khách Hàng", "Không Gian", "Bắt Đầu", "Dự Kiến Xong", "Trạng Thái"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tablePhienDangHoatDong.setRowHeight(35);
+        tablePhienDangHoatDong.setSelectionBackground(new java.awt.Color(235, 94, 141));
+        tablePhienDangHoatDong.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tablePhienDangHoatDongMouseClicked(evt);
+            }
+        });
+        jScrollPane2.setViewportView(tablePhienDangHoatDong);
+
+        pnLeft.add(jScrollPane2);
+        jScrollPane2.setBounds(20, 110, 550, 410);
+
+        pnMain.add(pnLeft);
+        pnLeft.setBounds(20, 80, 590, 540);
+
+        pnRight.setBackground(new java.awt.Color(255, 255, 255));
+        pnRight.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
+        pnRight.setLayout(null);
+
+        lblDetailTitle.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        lblDetailTitle.setForeground(new java.awt.Color(48, 30, 35));
+        lblDetailTitle.setText("DANH SÁCH CÁC DỊCH VỤ");
+        pnRight.add(lblDetailTitle);
+        lblDetailTitle.setBounds(20, 10, 300, 30);
+
+        lblMaPhien.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblMaPhien.setForeground(new java.awt.Color(35, 30, 48));
+        lblMaPhien.setText("Mã Phiên");
+        pnRight.add(lblMaPhien);
+        lblMaPhien.setBounds(210, 330, 170, 20);
+
+        txtMaPhien.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtMaPhien);
+        txtMaPhien.setBounds(210, 350, 170, 35);
+
+        lblLoaiDichVu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblLoaiDichVu.setForeground(new java.awt.Color(35, 30, 48));
+        lblLoaiDichVu.setText("Loại Dịch Vụ");
+        pnRight.add(lblLoaiDichVu);
+        lblLoaiDichVu.setBounds(20, 390, 180, 20);
+
+        cboLoaiDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(cboLoaiDichVu);
+        cboLoaiDichVu.setBounds(20, 410, 170, 35);
+
+        lblTenDichVu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblTenDichVu.setForeground(new java.awt.Color(35, 30, 48));
+        lblTenDichVu.setText("Tên Dịch Vụ");
+        pnRight.add(lblTenDichVu);
+        lblTenDichVu.setBounds(210, 390, 170, 20);
+
+        cboTenDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(cboTenDichVu);
+        cboTenDichVu.setBounds(210, 410, 170, 35);
+
+        lblSoLuong.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblSoLuong.setForeground(new java.awt.Color(35, 30, 48));
+        lblSoLuong.setText("Số Lượng");
+        pnRight.add(lblSoLuong);
+        lblSoLuong.setBounds(210, 440, 90, 20);
+
+        spinSoLuong.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(spinSoLuong);
+        spinSoLuong.setBounds(210, 460, 170, 35);
+
+        lblGhiChu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblGhiChu.setForeground(new java.awt.Color(35, 30, 48));
+        lblGhiChu.setText("Ghi Chú (Tùy chọn)");
+        pnRight.add(lblGhiChu);
+        lblGhiChu.setBounds(20, 440, 170, 20);
+
+        txtGhiChu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtGhiChu);
+        txtGhiChu.setBounds(20, 460, 170, 35);
+
+        btnLuu.setBackground(new java.awt.Color(235, 94, 141));
+        btnLuu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnLuu.setForeground(new java.awt.Color(255, 255, 255));
+        btnLuu.setText("Thêm Dịch Vụ");
+        btnLuu.addActionListener(this::btnLuuActionPerformed);
+        pnRight.add(btnLuu);
+        btnLuu.setBounds(20, 500, 170, 40);
+
+        btnHuy.setBackground(new java.awt.Color(220, 53, 69));
+        btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+        btnHuy.setText("Làm Mới");
+        btnHuy.addActionListener(this::btnHuyActionPerformed);
+        pnRight.add(btnHuy);
+        btnHuy.setBounds(210, 500, 170, 40);
+
+        txtKhachHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtKhachHang.addActionListener(this::txtKhachHangActionPerformed);
+        pnRight.add(txtKhachHang);
+        txtKhachHang.setBounds(20, 350, 170, 35);
+
+        lblMaPhien1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblMaPhien1.setForeground(new java.awt.Color(35, 30, 48));
+        lblMaPhien1.setText("Khách hàng");
+        pnRight.add(lblMaPhien1);
+        lblMaPhien1.setBounds(20, 330, 180, 20);
 
         tableDichVu.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Mã Phiên", "Tên Dịch Vụ", "SL", "Thời Gian Đặt", "Khách Hàng", "Tên Không Gian", "Ghi Chú"
+                "Mã Phiên", "Tên Dịch Vụ", "SL", "Ghi Chú"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
+                false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -191,87 +312,14 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(tableDichVu);
 
-        pnLeft.add(jScrollPane1);
-        jScrollPane1.setBounds(20, 110, 550, 410);
+        pnRight.add(jScrollPane1);
+        jScrollPane1.setBounds(20, 50, 360, 230);
 
-        pnMain.add(pnLeft);
-        pnLeft.setBounds(20, 80, 590, 540);
-
-        pnRight.setBackground(new java.awt.Color(255, 255, 255));
-        pnRight.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
-        pnRight.setLayout(null);
-
-        lblDetailTitle.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        lblDetailTitle.setForeground(new java.awt.Color(48, 30, 35));
-        lblDetailTitle.setText("THÊM DỊCH VỤ CHO PHIÊN");
-        pnRight.add(lblDetailTitle);
-        lblDetailTitle.setBounds(20, 15, 300, 30);
-
-        lblMaPhien.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblMaPhien.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaPhien.setText("Mã Phiên (*)");
-        pnRight.add(lblMaPhien);
-        lblMaPhien.setBounds(20, 70, 360, 20);
-
-        txtMaPhien.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(txtMaPhien);
-        txtMaPhien.setBounds(20, 90, 360, 35);
-
-        lblLoaiDichVu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblLoaiDichVu.setForeground(new java.awt.Color(35, 30, 48));
-        lblLoaiDichVu.setText("Loại Dịch Vụ");
-        pnRight.add(lblLoaiDichVu);
-        lblLoaiDichVu.setBounds(20, 140, 360, 20);
-
-        cboLoaiDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(cboLoaiDichVu);
-        cboLoaiDichVu.setBounds(20, 160, 360, 35);
-
-        lblTenDichVu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblTenDichVu.setForeground(new java.awt.Color(35, 30, 48));
-        lblTenDichVu.setText("Tên Dịch Vụ");
-        pnRight.add(lblTenDichVu);
-        lblTenDichVu.setBounds(20, 210, 360, 20);
-
-        cboTenDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(cboTenDichVu);
-        cboTenDichVu.setBounds(20, 230, 360, 35);
-
-        lblSoLuong.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblSoLuong.setForeground(new java.awt.Color(35, 30, 48));
-        lblSoLuong.setText("Số Lượng");
-        pnRight.add(lblSoLuong);
-        lblSoLuong.setBounds(20, 280, 360, 20);
-
-        spinSoLuong.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(spinSoLuong);
-        spinSoLuong.setBounds(20, 300, 360, 35);
-
-        lblGhiChu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblGhiChu.setForeground(new java.awt.Color(35, 30, 48));
-        lblGhiChu.setText("Ghi Chú (Tùy chọn)");
-        pnRight.add(lblGhiChu);
-        lblGhiChu.setBounds(20, 350, 360, 20);
-
-        txtGhiChu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(txtGhiChu);
-        txtGhiChu.setBounds(20, 370, 360, 35);
-
-        btnLuu.setBackground(new java.awt.Color(235, 94, 141));
-        btnLuu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnLuu.setForeground(new java.awt.Color(255, 255, 255));
-        btnLuu.setText("Thêm Dịch Vụ");
-        btnLuu.addActionListener(this::btnLuuActionPerformed);
-        pnRight.add(btnLuu);
-        btnLuu.setBounds(20, 440, 170, 40);
-
-        btnHuy.setBackground(new java.awt.Color(220, 53, 69));
-        btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnHuy.setForeground(new java.awt.Color(255, 255, 255));
-        btnHuy.setText("Làm Mới");
-        btnHuy.addActionListener(this::btnHuyActionPerformed);
-        pnRight.add(btnHuy);
-        btnHuy.setBounds(210, 440, 170, 40);
+        lblDetailTitle1.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        lblDetailTitle1.setForeground(new java.awt.Color(48, 30, 35));
+        lblDetailTitle1.setText("THÊM DỊCH VỤ CHO PHIÊN");
+        pnRight.add(lblDetailTitle1);
+        lblDetailTitle1.setBounds(20, 290, 300, 30);
 
         pnMain.add(pnRight);
         pnRight.setBounds(630, 80, 400, 540);
@@ -279,54 +327,61 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void txtKhachHangActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtKhachHangActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtKhachHangActionPerformed
+
+    private void tablePhienDangHoatDongMouseClicked(java.awt.event.MouseEvent evt) {
+        int row = tablePhienDangHoatDong.getSelectedRow();
+        if (row >= 0) {
+            String maPhien = tablePhienDangHoatDong.getValueAt(row, 0).toString();
+            String khachHang = tablePhienDangHoatDong.getValueAt(row, 1).toString();
+            txtMaPhien.setText(maPhien);
+            txtKhachHang.setText(khachHang);
+            hienThiDanhSachDichVu(maPhien);
+        }
+    }
+
     private void txtTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         btnTraCuuActionPerformed(evt);
     }
 
     private void btnTraCuuActionPerformed(java.awt.event.ActionEvent evt) {
-        if (controller != null) {
-            controller.loadData(txtTimKiem.getText().trim());
-        }
+        loadData(txtTimKiem.getText().trim());
     }
 
     private void btnTaiLaiActionPerformed(java.awt.event.ActionEvent evt) {
         txtTimKiem.setText("");
-        if (controller != null) {
-            controller.loadData("");
-        }
+        loadData("");
     }
 
     private void btnLuuActionPerformed(java.awt.event.ActionEvent evt) {
         String maPhien = txtMaPhien.getText().trim();
-        Object loaiSelected = cboLoaiDichVu.getSelectedItem();
-        Object tenSelected = cboTenDichVu.getSelectedItem();
-        String loaiDV = (loaiSelected != null) ? loaiSelected.toString().trim() : "";
-        String tenDV = (tenSelected != null) ? tenSelected.toString().trim() : "";
-        int soLuong = (int) spinSoLuong.getValue();
-        String ghiChu = txtGhiChu.getText().trim();
+        String loaiDV  = cboLoaiDichVu.getSelectedItem() != null ? cboLoaiDichVu.getSelectedItem().toString().trim() : "";
+        String tenDV   = cboTenDichVu.getSelectedItem()  != null ? cboTenDichVu.getSelectedItem().toString().trim()  : "";
+        int soLuong    = (int) spinSoLuong.getValue();
+        String ghiChu  = txtGhiChu.getText().trim();
 
         if (maPhien.isEmpty()) {
-            hienThiThongBaoLoi("Vui lòng nhập Mã Phiên!");
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập Mã Phiên!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
         if (loaiDV.isEmpty() || tenDV.isEmpty()) {
-            hienThiThongBaoLoi("Vui lòng chọn Loại Dịch Vụ và Tên Dịch Vụ!");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn Loại và Tên Dịch Vụ!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         if (soLuong <= 0) {
-            hienThiThongBaoLoi("Số lượng phải lớn hơn 0!");
+            JOptionPane.showMessageDialog(this, "Số lượng phải lớn hơn 0!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        boolean success = controller.themDichVu(maPhien, tenDV, soLuong, ghiChu);
-        if (success) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Thêm dịch vụ thành công!", "Thành công", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        String loi = controller.themDichVu(maPhien, tenDV, soLuong, ghiChu);
+        if (loi == null) {
+            JOptionPane.showMessageDialog(this, "Thêm dịch vụ thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            hienThiDanhSachDichVu(maPhien);
             btnHuyActionPerformed(null);
-            controller.loadData("");
         } else {
-            hienThiThongBaoLoi("Thêm dịch vụ thất bại. Vui lòng kiểm tra lại Mã Phiên.");
+            JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -349,17 +404,19 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnHuy;
     private javax.swing.JButton btnLuu;
-    private javax.swing.JButton btnTaiLai;
     private javax.swing.JButton btnTraCuu;
     private javax.swing.JComboBox<String> cboLoaiDichVu;
     private javax.swing.JComboBox<String> cboTenDichVu;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblDetailTitle;
+    private javax.swing.JLabel lblDetailTitle1;
     private javax.swing.JLabel lblGhiChu;
     private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblListTitle;
     private javax.swing.JLabel lblLoaiDichVu;
     private javax.swing.JLabel lblMaPhien;
+    private javax.swing.JLabel lblMaPhien1;
     private javax.swing.JLabel lblSoLuong;
     private javax.swing.JLabel lblTenDichVu;
     private javax.swing.JLabel lblTimKiem;
@@ -369,7 +426,9 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
     private javax.swing.JPanel pnRight;
     private javax.swing.JSpinner spinSoLuong;
     private javax.swing.JTable tableDichVu;
+    private javax.swing.JTable tablePhienDangHoatDong;
     private javax.swing.JTextField txtGhiChu;
+    private javax.swing.JTextField txtKhachHang;
     private javax.swing.JTextField txtMaPhien;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables

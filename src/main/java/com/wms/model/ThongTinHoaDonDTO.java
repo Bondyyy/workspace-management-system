@@ -11,6 +11,8 @@ public class ThongTinHoaDonDTO {
     private double tongSoGio;
     private double tongTien;
     private double thanhTien;
+    private String maPhien;
+    private String trangThaiPhien;
     private List<DichVuDaDungDTO> danhSachDichVu;
 
     public ThongTinHoaDonDTO() {
@@ -33,4 +35,8 @@ public class ThongTinHoaDonDTO {
     public void setThanhTien(double thanhTien) { this.thanhTien = thanhTien; }
     public List<DichVuDaDungDTO> getDanhSachDichVu() { return danhSachDichVu; }
     public void setDanhSachDichVu(List<DichVuDaDungDTO> danhSachDichVu) { this.danhSachDichVu = danhSachDichVu; }
+    public String getMaPhien() { return maPhien; }
+    public void setMaPhien(String maPhien) { this.maPhien = maPhien; }
+    public String getTrangThaiPhien() { return trangThaiPhien; }
+    public void setTrangThaiPhien(String trangThaiPhien) { this.trangThaiPhien = trangThaiPhien; }
 }

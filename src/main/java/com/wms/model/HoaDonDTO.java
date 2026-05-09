@@ -16,8 +16,17 @@ public class HoaDonDTO {
     private String trangThaiPhien;
     private java.sql.Timestamp thoiGianBatDauPhien;
     private java.sql.Timestamp thoiGianKetThucPhien;
+    private java.sql.Timestamp thoiGianDuKienKetThucPhien;
 
     public HoaDonDTO() {
+    }
+
+    public java.sql.Timestamp getThoiGianDuKienKetThucPhien() {
+        return thoiGianDuKienKetThucPhien;
+    }
+
+    public void setThoiGianDuKienKetThucPhien(java.sql.Timestamp thoiGianDuKienKetThucPhien) {
+        this.thoiGianDuKienKetThucPhien = thoiGianDuKienKetThucPhien;
     }
 
     public java.sql.Timestamp getThoiGianKetThucPhien() {

@@ -3,7 +3,9 @@ CREATE OR REPLACE PROCEDURE SP_NhapKhoDichVu (
     p_TenLoaiDV IN VARCHAR2,
     p_TenDV IN VARCHAR2,
     p_SoLuong IN NUMBER,
-    p_TenFile IN VARCHAR2
+    p_TenFile IN VARCHAR2,
+    p_GiaGoc IN NUMBER,
+    p_NoiDungFile IN BLOB
 ) AS
     v_MaLoaiDV VARCHAR2(50);
     v_MaDV VARCHAR2(50);
@@ -29,25 +31,23 @@ BEGIN
     -- B. Tìm hoặc thêm mới DỊCH VỤ
     BEGIN
         SELECT MaDV INTO v_MaDV FROM DICHVU WHERE LOWER(TenDV) = LOWER(p_TenDV) AND ROWNUM = 1;
-        -- Nếu đã có thì cộng dồn số lượng
-        IF v_SoLuongLuu IS NOT NULL THEN
-            UPDATE DICHVU SET SoLuong = NVL(SoLuong, 0) + v_SoLuongLuu, MaLoaiDV = v_MaLoaiDV WHERE MaDV = v_MaDV;
-        END IF;
+        UPDATE DICHVU 
+        SET SoLuong = NVL(SoLuong, 0) + NVL(v_SoLuongLuu, 0), 
+            MaLoaiDV = v_MaLoaiDV,
+            GiaGoc = p_GiaGoc
+        WHERE MaDV = v_MaDV;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
             v_MaDV := 'DV' || SEQ_DICHVU_NEW.NEXTVAL;
-            -- Tạm set Đơn giá = 0, Hình ảnh default để sau này Admin cập nhật thêm
-            INSERT INTO DICHVU (MaDV, TenDV, HinhAnh, TrangThaiDV, DonGia, MaLoaiDV, SoLuong)
-            VALUES (v_MaDV, p_TenDV, 'default.png', 'Đang hoạt động', 0, v_MaLoaiDV, v_SoLuongLuu);
+            INSERT INTO DICHVU (MaDV, TenDV, HinhAnh, TrangThaiDV, DonGia, MaLoaiDV, SoLuong, GiaGoc)
+            VALUES (v_MaDV, p_TenDV, NULL, 'Đang hoạt động', 0, v_MaLoaiDV, v_SoLuongLuu, p_GiaGoc);
     END;
 
     -- C. Xử lý CHỨNG TỪ NHẬP KHO
-    -- SỬA LỖI Ở ĐÂY: Trong Oracle, '' và NULL là một.
-    -- Chỉ cần kiểm tra IS NOT NULL và LENGTH() > 0 là đủ an toàn.
     IF p_TenFile IS NOT NULL AND LENGTH(TRIM(p_TenFile)) > 0 THEN
         v_MaChungTu := 'CT' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '_' || SEQ_CHUNGTU.NEXTVAL;
-        INSERT INTO CHUNGTUNHAPKHO (MaChungTu, MaDV, TenFile, NgayNhap, NhanVienNhap, SoLuongNhap)
-        VALUES (v_MaChungTu, v_MaDV, p_TenFile, SYSDATE, p_TenNhanVien, v_SoLuongLuu);
+        INSERT INTO CHUNGTUNHAPKHO (MaChungTu, MaDV, TenFile, NoiDungFile, NgayNhap, NhanVienNhap, SoLuongNhap)
+        VALUES (v_MaChungTu, v_MaDV, p_TenFile, p_NoiDungFile, SYSDATE, p_TenNhanVien, v_SoLuongLuu);
     END IF;
 
     COMMIT;

@@ -4,6 +4,9 @@ CREATE OR REPLACE PROCEDURE sp_ThemDichVu (
     p_MaLoaiDV    IN VARCHAR2,
     p_DonGia      IN NUMBER,
     p_TrangThaiDV IN VARCHAR2,
+    p_HinhAnh     IN BLOB,
+    p_SoLuong     IN NUMBER,
+    p_GiaGoc      IN NUMBER,
     p_outMessage  OUT VARCHAR2
 )
 AS
@@ -34,8 +37,8 @@ BEGIN
     END IF;
 
     -- 4. Thêm dịch vụ vào bảng DICHVU
-    INSERT INTO DICHVU (MaDV, TenDV, TrangThaiDV, DonGia, MaLoaiDV)
-    VALUES (p_MaDV, p_TenDV, p_TrangThaiDV, p_DonGia, p_MaLoaiDV);
+    INSERT INTO DICHVU (MaDV, TenDV, TrangThaiDV, DonGia, MaLoaiDV, HinhAnh, SoLuong, GiaGoc)
+    VALUES (p_MaDV, p_TenDV, p_TrangThaiDV, p_DonGia, p_MaLoaiDV, p_HinhAnh, p_SoLuong, p_GiaGoc);
 
     COMMIT;
     p_outMessage := 'Đã thêm dịch vụ mới thành công!';
