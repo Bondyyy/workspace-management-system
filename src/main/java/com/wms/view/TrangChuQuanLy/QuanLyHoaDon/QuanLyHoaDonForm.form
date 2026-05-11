@@ -471,7 +471,7 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="X&#xe1;c nh&#x1ead;n Thanh to&#xe1;n &amp; G&#x1eed;i Mail"/>
+                <Property name="text" type="java.lang.String" value="X&#xe1;c nh&#x1ead;n Thanh to&#xe1;n"/>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
               <Events>

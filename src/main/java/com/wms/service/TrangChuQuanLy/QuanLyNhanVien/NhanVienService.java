@@ -4,9 +4,9 @@ import com.wms.config.AppConstants;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NhanVienDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.VaiTroDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
-import com.wms.model.NguoiDungDTO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
-import com.wms.model.ChucNangDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.ChucNangDTO;
 import java.util.List;
 import java.util.stream.Collectors;
 

@@ -1,14 +1,14 @@
 package com.wms.view.TrangChuHoiVien.TrangChu;
 
-import com.wms.controller.TrangChuController;
+import com.wms.controller.TrangChuHoiVien.TrangChuController;
 
 public class TrangChuForm extends javax.swing.JPanel {
 
-    private com.wms.controller.TrangChuController controller;
+    private com.wms.controller.TrangChuHoiVien.TrangChuController controller;
 
     public TrangChuForm() {
         initComponents();
-        controller = new com.wms.controller.TrangChuController();
+        controller = new com.wms.controller.TrangChuHoiVien.TrangChuController();
         loadData();
     }
 

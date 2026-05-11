@@ -2,7 +2,7 @@ package com.wms.view.TrangChuQuanLy.QuanLyNhanVien;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienController;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
-import com.wms.model.ChucNangDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.ChucNangDTO;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;

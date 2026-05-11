@@ -4,12 +4,12 @@
  */
 package com.wms.view.TrangChuGioiThieu.DangNhap;
 
-import com.wms.controller.DangNhapController;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 
 import javax.swing.JOptionPane;
-import com.wms.service.NguoiDungService;
+import com.wms.service.TrangChuGioiThieu.NguoiDungService;
 import com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm;
-import com.wms.model.NguoiDungDTO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
 
 /**
  *

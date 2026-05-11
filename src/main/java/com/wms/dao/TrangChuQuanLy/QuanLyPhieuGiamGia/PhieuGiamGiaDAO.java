@@ -28,6 +28,22 @@ public class PhieuGiamGiaDAO {
         return null;
     }
 
+    public PhieuGiamGiaDTO timTheoMaChuSo(String maChuSoPGG) {
+        String sql = "SELECT * FROM PHIEUGIAMGIA WHERE UPPER(MaChuSoPGG) = UPPER(?)";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maChuSoPGG.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[PhieuGiamGiaDAO] Lỗi tìm theo mã chữ số: " + e.getMessage());
+        }
+        return null;
+    }
+
     public int demSoLuong() {
         String sql = "SELECT COUNT(*) FROM PHIEUGIAMGIA";
         try (Connection conn = getConn();

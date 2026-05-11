@@ -1,12 +1,12 @@
 package com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan;
 
-import com.wms.controller.ThanhToanController;
+import com.wms.controller.TrangChuQuanLy.QuanLyHoaDon.ThanhToanController;
 import com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.TienMat.TienMatForm;
 import com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.ChuyenKhoan.ChuyenKhoanForm;
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
-import com.wms.model.ThongTinHoaDonDTO;
-import com.wms.model.DichVuDaDungDTO;
-import com.wms.model.XacNhanPhieuGiamGiaDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaDTO;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -69,7 +69,8 @@ public class ThanhToanHoaDonForm extends JPanel {
         if (hoaDon != null) {
             hienThiHoaDon(hoaDon);
         } else {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn: " + maHoaDon, "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn: " + maHoaDon, "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -104,8 +105,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-                new EmptyBorder(25, 25, 25, 25)
-        ));
+                new EmptyBorder(25, 25, 25, 25)));
 
         JLabel lblTieuDe = new JLabel("CHI TIẾT HÓA ĐƠN");
         lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -243,8 +243,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelMaGG.setBackground(Color.WHITE);
         panelMaGG.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-                new EmptyBorder(15, 15, 15, 15)
-        ));
+                new EmptyBorder(15, 15, 15, 15)));
         panelMaGG.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
         panelMaGG.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
@@ -255,22 +254,31 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelMaGG.add(lblMaGG);
         panelMaGG.add(Box.createRigidArea(new Dimension(0, 8)));
 
+        JPanel panelInputGG = new JPanel(new BorderLayout(10, 0));
+        panelInputGG.setBackground(Color.WHITE);
+        panelInputGG.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        panelInputGG.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+
         txtMaGiamGia = new JTextField();
         txtMaGiamGia.setFont(new Font("Segoe UI", Font.BOLD, 15));
         txtMaGiamGia.setForeground(mauXamDam);
         txtMaGiamGia.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
-                new EmptyBorder(10, 12, 10, 12)
-        ));
-        txtMaGiamGia.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
-        txtMaGiamGia.setAlignmentX(JTextField.LEFT_ALIGNMENT);
-        txtMaGiamGia.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void changedUpdate(DocumentEvent e) { kiemTraMaGiamGia(); }
-            @Override public void removeUpdate(DocumentEvent e) { kiemTraMaGiamGia(); }
-            @Override public void insertUpdate(DocumentEvent e) { kiemTraMaGiamGia(); }
-        });
+                new EmptyBorder(10, 12, 10, 12)));
+        txtMaGiamGia.addActionListener(e -> kiemTraMaGiamGia());
 
-        panelMaGG.add(txtMaGiamGia);
+        JButton btnApDung = new JButton("Áp dụng");
+        btnApDung.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnApDung.setForeground(Color.WHITE);
+        btnApDung.setBackground(mauHongChinh);
+        btnApDung.setFocusPainted(false);
+        btnApDung.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnApDung.addActionListener(e -> kiemTraMaGiamGia());
+        
+        panelInputGG.add(txtMaGiamGia, BorderLayout.CENTER);
+        panelInputGG.add(btnApDung, BorderLayout.EAST);
+
+        panelMaGG.add(panelInputGG);
         panelMaGG.add(Box.createRigidArea(new Dimension(0, 6)));
 
         lblTrangThaiMaGG = new JLabel("");
@@ -283,14 +291,20 @@ public class ThanhToanHoaDonForm extends JPanel {
 
         containerTienMat = taoContainerPhuongThuc("TIENMAT", "TIỀN MẶT", "Thanh toán bằng tiền mặt tại quầy");
         containerTienMat.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { moManHinhTienMat(); }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                moManHinhTienMat();
+            }
         });
         panel.add(containerTienMat);
         panel.add(Box.createRigidArea(new Dimension(0, 15)));
 
         containerChuyenKhoan = taoContainerPhuongThuc("CHUYENKHOAN", "CHUYỂN KHOẢN", "Chuyển khoản qua ngân hàng");
         containerChuyenKhoan.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { moManHinhChuyenKhoan(); }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                moManHinhChuyenKhoan();
+            }
         });
         panel.add(containerChuyenKhoan);
         panel.add(Box.createRigidArea(new Dimension(0, 30)));
@@ -314,7 +328,8 @@ public class ThanhToanHoaDonForm extends JPanel {
     private void kiemTraMaGiamGia() {
         String maVoucher = txtMaGiamGia.getText().trim();
         if (maVoucher.isEmpty()) {
-            if (maGiamGiaDangAp != null) xoaMaGiamGia();
+            if (maGiamGiaDangAp != null)
+                xoaMaGiamGia();
             lblTrangThaiMaGG.setText("");
             return;
         }
@@ -334,11 +349,13 @@ public class ThanhToanHoaDonForm extends JPanel {
         lblTrangThaiMaGG.setForeground(mauXanhLa);
 
         JLabel lblMaGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblMaGG");
-        if (lblMaGG != null) lblMaGG.setText(maGiamGiaDangAp.getMaPGG());
+        if (lblMaGG != null)
+            lblMaGG.setText(maGiamGiaDangAp.getMaPGG());
 
         tienGiamGia = validationResult.getDiscountAmount();
         JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
-        if (lblGiaTriGG != null) lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
+        if (lblGiaTriGG != null)
+            lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
 
         tinhLaiTongTien();
         panelHienThiGiamGia.setVisible(true);
@@ -359,10 +376,11 @@ public class ThanhToanHoaDonForm extends JPanel {
             tienGiamGia = maGiamGiaDangAp.getGiaTriGiamGia();
             thanhTien = Math.max(0, tongTienGoc - tienGiamGia);
             JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
-            if (lblGiaTriGG != null) lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
+            if (lblGiaTriGG != null)
+                lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
         } else {
             tienGiamGia = 0;
-            if (thanhTien == 0 && tongTienGoc > 0) thanhTien = tongTienGoc;
+            thanhTien = tongTienGoc;
         }
         lblTongTien.setText(formatTien.format(tongTienGoc));
         lblThanhTien.setText(formatTien.format(thanhTien));
@@ -373,8 +391,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         container.setBackground(Color.WHITE);
         container.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-                new EmptyBorder(20, 20, 20, 20)
-        ));
+                new EmptyBorder(20, 20, 20, 20)));
         container.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
         container.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         container.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -385,8 +402,10 @@ public class ThanhToanHoaDonForm extends JPanel {
         lblCheck.setVisible(false);
         container.add(lblCheck, BorderLayout.WEST);
 
-        if ("TIENMAT".equals(type)) checkTienMat = lblCheck;
-        else checkChuyenKhoan = lblCheck;
+        if ("TIENMAT".equals(type))
+            checkTienMat = lblCheck;
+        else
+            checkChuyenKhoan = lblCheck;
 
         JPanel panelText = new JPanel();
         panelText.setLayout(new BoxLayout(panelText, BoxLayout.Y_AXIS));
@@ -423,15 +442,19 @@ public class ThanhToanHoaDonForm extends JPanel {
         container.add(panelText, BorderLayout.CENTER);
 
         container.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) {
+            @Override
+            public void mouseEntered(MouseEvent e) {
                 if (container.isEnabled()) {
                     container.setBackground(mauXanhNhat);
                     panelText.setBackground(mauXanhNhat);
                 }
             }
-            @Override public void mouseExited(MouseEvent e) {
+
+            @Override
+            public void mouseExited(MouseEvent e) {
                 Color bgColor = (Color) container.getClientProperty("originalBg");
-                if (bgColor == null) bgColor = Color.WHITE;
+                if (bgColor == null)
+                    bgColor = Color.WHITE;
                 container.setBackground(bgColor);
                 panelText.setBackground(bgColor);
             }
@@ -441,7 +464,7 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private JButton taoNutInHoaDon() {
-        JButton btn = new JButton("IN HÓA ĐƠN") {
+        JButton btn = new JButton("XUẤT HOÁ ĐƠN") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -473,7 +496,8 @@ public class ThanhToanHoaDonForm extends JPanel {
         this.hoaDonHienTai = hoaDon;
         this.tongTienGoc = hoaDon.getTongTien();
         this.thanhTien = (hoaDon.getThanhTien() > 0) ? hoaDon.getThanhTien() : tongTienGoc;
-        if (this.tongTienGoc == 0 && this.thanhTien > 0) this.tongTienGoc = this.thanhTien;
+        if (this.tongTienGoc == 0 && this.thanhTien > 0)
+            this.tongTienGoc = this.thanhTien;
 
         lblMaHD.setText(hoaDon.getMaHoaDon() != null ? hoaDon.getMaHoaDon() : "-");
         lblTenKhachHang.setText(hoaDon.getHoTenKH() != null ? hoaDon.getHoTenKH() : "-");
@@ -584,7 +608,8 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void moManHinhTienMat() {
-        if (hoaDonHienTai == null) return;
+        if (hoaDonHienTai == null)
+            return;
         TienMatForm dialog = new TienMatForm(JOptionPane.getFrameForComponent(this), true, thanhTien);
         dialog.setVisible(true);
         if (dialog.isDaThanhToan()) {
@@ -595,8 +620,10 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void moManHinhChuyenKhoan() {
-        if (hoaDonHienTai == null) return;
-        ChuyenKhoanForm dialog = new ChuyenKhoanForm(JOptionPane.getFrameForComponent(this), true, thanhTien, hoaDonHienTai.getMaHoaDon());
+        if (hoaDonHienTai == null)
+            return;
+        ChuyenKhoanForm dialog = new ChuyenKhoanForm(JOptionPane.getFrameForComponent(this), true, thanhTien,
+                hoaDonHienTai.getMaHoaDon());
         dialog.setVisible(true);
         if (dialog.isDaThanhToan()) {
             daDongChuyenKhoan = true;
@@ -607,7 +634,7 @@ public class ThanhToanHoaDonForm extends JPanel {
 
     private void xuLyThanhToan(String phuongThuc) {
         String maPGG = maGiamGiaDangAp != null ? maGiamGiaDangAp.getMaPGG() : null;
-        if (thanhToanController.xacNhanThanhToan(hoaDonHienTai.getMaHoaDon(), phuongThuc, maPGG)) {
+        if (thanhToanController.xacNhanThanhToan(hoaDonHienTai.getMaHoaDon(), phuongThuc, maPGG, thanhTien)) {
             JOptionPane.showMessageDialog(this, "Thanh toán thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật thanh toán", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -625,11 +652,13 @@ public class ThanhToanHoaDonForm extends JPanel {
             disablePaymentMethod(containerChuyenKhoan, true);
             disablePaymentMethod(containerTienMat, false);
         }
-        if (daDongTienMat || daDongChuyenKhoan) nutInHoaDon.setEnabled(true);
+        if (daDongTienMat || daDongChuyenKhoan)
+            nutInHoaDon.setEnabled(true);
     }
 
     private void disablePaymentMethod(JPanel container, boolean isCompleted) {
-        if (container == null) return;
+        if (container == null)
+            return;
         Color bgColor = isCompleted ? mauXanhNhat : new Color(240, 240, 240);
         Color textColor = isCompleted ? new Color(50, 120, 50) : new Color(150, 150, 150);
         container.setBackground(bgColor);
@@ -639,16 +668,20 @@ public class ThanhToanHoaDonForm extends JPanel {
         JLabel lblStatus = (container == containerTienMat) ? lblStatusTienMat : lblStatusChuyenKhoan;
         if (panelText != null) {
             panelText.setBackground(bgColor);
-            if (isCompleted && lblStatus != null) lblStatus.setVisible(true);
+            if (isCompleted && lblStatus != null)
+                lblStatus.setVisible(true);
             for (Component comp : panelText.getComponents()) {
-                if (comp instanceof JLabel) ((JLabel) comp).setForeground(textColor);
+                if (comp instanceof JLabel)
+                    ((JLabel) comp).setForeground(textColor);
             }
         }
         container.setEnabled(false);
     }
 
     private void inHoaDon() {
-        JOptionPane.showMessageDialog(this, "Chức năng in hóa đơn đang được phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        if (hoaDonHienTai == null)
+            return;
+        com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, tienGiamGia);
     }
 
     private void initializeLabels() {
@@ -659,8 +692,3 @@ public class ThanhToanHoaDonForm extends JPanel {
         lblTongGio = new JLabel("-");
     }
 }
-
-
-
-
-

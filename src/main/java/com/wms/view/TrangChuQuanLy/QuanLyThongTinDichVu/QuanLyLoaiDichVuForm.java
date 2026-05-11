@@ -1,7 +1,7 @@
 package com.wms.view.TrangChuQuanLy.QuanLyThongTinDichVu;
 
-import com.wms.controller.TrangChuQuanLy.DichVuController;
-import com.wms.model.LoaiDichVuDTO;
+import com.wms.controller.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuController;
+import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.LoaiDichVuDTO;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;

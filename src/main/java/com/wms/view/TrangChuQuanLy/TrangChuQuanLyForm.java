@@ -4,8 +4,8 @@
  */
 package com.wms.view.TrangChuQuanLy;
 
-import com.wms.model.NguoiDungDTO;
-import com.wms.controller.DangNhapController;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 
 /**
  *

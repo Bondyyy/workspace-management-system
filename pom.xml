@@ -44,6 +44,11 @@
             <artifactId>jakarta.activation-api</artifactId>
             <version>2.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>5.5.13.3</version>
+        </dependency>
         
         <!-- NetBeans AbsoluteLayout -->
         <dependency>

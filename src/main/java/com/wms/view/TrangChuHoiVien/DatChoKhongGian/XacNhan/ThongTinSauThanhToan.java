@@ -2,7 +2,7 @@ package com.wms.view.TrangChuHoiVien.DatChoKhongGian.XacNhan;
 
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import javax.swing.JOptionPane;
-import com.wms.model.HoaDonDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 
 /**
  * Màn hình Thanh Toán Trước (JPanel)

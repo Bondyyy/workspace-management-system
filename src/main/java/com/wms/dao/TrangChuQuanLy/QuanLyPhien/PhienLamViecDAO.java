@@ -1,8 +1,8 @@
 package com.wms.dao.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.DichVuTrongPhienDTO;
-import com.wms.model.PhienLamViecFullDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import java.sql.*;
 import java.util.ArrayList;
@@ -15,8 +15,8 @@ public class PhienLamViecDAO {
     }
 
     public boolean taoPhienLamViecMoi(PhienLamViecDTO phien) {
-        String sql = "INSERT INTO PHIENLAMVIEC (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien, MaKG, MaKH, MaDatCho, GiaThue, CapNhatLanCuoi) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String sql = "INSERT INTO PHIENLAMVIEC (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien, MaKG, MaKH, MaDatCho, CapNhatLanCuoi) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         try (Connection conn = getConn();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -27,7 +27,6 @@ public class PhienLamViecDAO {
             pstmt.setString(5, phien.getMaKG());
             pstmt.setString(6, phien.getMaKH());
             pstmt.setString(7, phien.getMaDatCho());
-            pstmt.setDouble(8, phien.getGiaThue() != null ? phien.getGiaThue() : 0.0);
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -39,9 +38,10 @@ public class PhienLamViecDAO {
     public List<PhienLamViecFullDTO> layDanhSachPhien(String keyword, String maCN) {
         List<PhienLamViecFullDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT p.*, kg.TenKG, kh.HoTenKH, dc.TrangThaiDatTruoc, h.TrangThaiThanhToan " +
+                "SELECT p.*, kg.TenKG, kh.HoTenKH, dc.TrangThaiDatTruoc, h.TrangThaiThanhToan, lkg.DonGiaTheoGio " +
                 "FROM PHIENLAMVIEC p " +
                 "JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                "JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG " +
                 "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
                 "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
                 "LEFT JOIN HOADON h ON p.MaPhien = h.MaPhien " +
@@ -73,7 +73,7 @@ public class PhienLamViecDAO {
                     dto.setMaKG(rs.getString("MaKG"));
                     dto.setMaKH(rs.getString("MaKH"));
                     dto.setMaDatCho(rs.getString("MaDatCho"));
-                    dto.setGiaThue(rs.getDouble("GiaThue"));
+                    dto.setDonGiaTheoGio(rs.getDouble("DonGiaTheoGio"));
                     dto.setTenKhongGian(rs.getString("TenKG"));
                     dto.setTenKhachHang(rs.getString("HoTenKH"));
                     dto.setTrangThaiDatCho(rs.getString("TrangThaiDatTruoc"));
@@ -119,12 +119,12 @@ public class PhienLamViecDAO {
     }
 
     public boolean ketThucPhien(String maPhien) {
-        String sqlPhien = "UPDATE PHIENLAMVIEC SET ThoiGianKetThuc = CURRENT_TIMESTAMP, TrangThaiPhien = 'Đã kết thúc' WHERE MaPhien = ?";
-        String sqlHoaDon = "UPDATE HOADON SET TongTien = 0 WHERE MaPhien = ?"; 
-
+        String sqlPhien = "UPDATE PHIENLAMVIEC SET ThoiGianKetThuc = CURRENT_TIMESTAMP, TrangThaiPhien = 'Đã kết thúc', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?";
+        
         try (Connection conn = getConn()) {
             conn.setAutoCommit(false);
             try {
+                // 1. Cập nhật phiên (Trigger sẽ tự động đổi trạng thái Không gian thành Trống)
                 try (PreparedStatement pstmtPhien = conn.prepareStatement(sqlPhien)) {
                     pstmtPhien.setString(1, maPhien);
                     if (pstmtPhien.executeUpdate() == 0) {
@@ -132,10 +132,18 @@ public class PhienLamViecDAO {
                         return false;
                     }
                 }
+                
+                // 2. Tính toán và cập nhật hóa đơn thủ công (tránh lỗi thiếu hàm/procedure trong Oracle)
+                double tongTien = tinhTongTienPhien(conn, maPhien);
+                
+                String sqlHoaDon = "UPDATE HOADON SET TongTien = ?, ThanhTien = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
                 try (PreparedStatement pstmtHoaDon = conn.prepareStatement(sqlHoaDon)) {
-                    pstmtHoaDon.setString(1, maPhien);
+                    pstmtHoaDon.setDouble(1, tongTien);
+                    pstmtHoaDon.setDouble(2, tongTien);
+                    pstmtHoaDon.setString(3, maPhien);
                     pstmtHoaDon.executeUpdate();
                 }
+
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -146,6 +154,53 @@ public class PhienLamViecDAO {
             System.err.println("[PhienLamViecDAO] Lỗi kết thúc phiên: " + e.getMessage());
             return false;
         }
+    }
+
+    private double tinhTongTienPhien(Connection conn, String maPhien) throws SQLException {
+        double tienKhongGian = 0;
+        double tienDichVu = 0;
+
+        String sqlKg = "SELECT LKG.DonGiaTheoGio, PLV.ThoiGianBatDau, PLV.ThoiGianKetThuc " +
+                       "FROM PHIENLAMVIEC PLV " +
+                       "JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG " +
+                       "JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG " +
+                       "WHERE PLV.MaPhien = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sqlKg)) {
+            ps.setString(1, maPhien);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    double donGia = rs.getDouble("DonGiaTheoGio");
+                    Timestamp batDau = rs.getTimestamp("ThoiGianBatDau");
+                    Timestamp ketThuc = rs.getTimestamp("ThoiGianKetThuc");
+                    if (ketThuc == null) ketThuc = new Timestamp(System.currentTimeMillis());
+                    
+                    if (batDau != null) {
+                        long diffMillis = ketThuc.getTime() - batDau.getTime();
+                        long totalMinutes = diffMillis / 60000;
+                        long hours = totalMinutes / 60;
+                        long minutes = totalMinutes % 60;
+                        long roundedHours = (minutes < 15) ? hours : hours + 1;
+                        
+                        tienKhongGian = donGia * roundedHours;
+                    }
+                }
+            }
+        }
+
+        String sqlDv = "SELECT SUM(CT.SoLuong * DV.DonGia) AS TienDV " +
+                       "FROM CHITIETDICHVU CT " +
+                       "JOIN DICHVU DV ON CT.MaDV = DV.MaDV " +
+                       "WHERE CT.MaPhien = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sqlDv)) {
+            ps.setString(1, maPhien);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    tienDichVu = rs.getDouble("TienDV");
+                }
+            }
+        }
+
+        return Math.round((tienKhongGian + tienDichVu) * 100.0) / 100.0;
     }
 
     public List<DichVuTrongPhienDTO> layDichVuCuaPhien(String maPhien) {

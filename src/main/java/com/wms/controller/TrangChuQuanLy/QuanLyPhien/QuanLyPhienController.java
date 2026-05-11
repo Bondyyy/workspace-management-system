@@ -1,7 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyPhien;
 
-import com.wms.model.NguoiDungDTO;
-import com.wms.model.PhienLamViecFullDTO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyPhien.PhienLamViecService;
 import com.wms.view.TrangChuQuanLy.QuanLyPhien.QuanLyPhienForm;
 

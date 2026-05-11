@@ -1,6 +1,6 @@
 package com.wms.view.TrangChuQuanLy.QuanLyPhien;
 
-import com.wms.controller.DangNhapController;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.controller.TrangChuQuanLy.QuanLyPhien.MoPhienMoiController;
 import java.awt.Color;
 import java.awt.Font;
@@ -21,7 +21,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
     private final MoPhienMoiController controller;
     private String maCNHienTai;
-    private com.wms.view.components.SoDoKhongGianPanel mapPanel;
+    private com.wms.util.SoDoKhongGianPanel mapPanel;
     private com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO khongGianChonDTO = null;
     private List<com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO> dsKGHienTai;
 
@@ -32,7 +32,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         if (maCN != null && !maCN.isEmpty()) {
             this.maCNHienTai = maCN;
         } else {
-            com.wms.model.NguoiDungDTO user = DangNhapController.getCurrentUser();
+            com.wms.model.TrangChuGioiThieu.NguoiDungDTO user = DangNhapController.getCurrentUser();
             this.maCNHienTai = controller.layMaCNNguoiDung(user);
         }
 
@@ -93,7 +93,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
             return;
         }
 
-        mapPanel = new com.wms.view.components.SoDoKhongGianPanel();
+        mapPanel = new com.wms.util.SoDoKhongGianPanel();
         mapPanel.setOnTableClick(kg -> handleTableClick(kg));
         mapPanel.veSoDo(dsKGHienTai, khongGianChonDTO != null ? khongGianChonDTO.getMaKG() : null);
 

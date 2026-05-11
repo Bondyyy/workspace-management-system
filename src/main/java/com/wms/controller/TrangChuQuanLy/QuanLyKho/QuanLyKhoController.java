@@ -1,7 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyKho;
 
-import com.wms.model.DichVuDTO;
-import com.wms.service.QuanKhoService;
+import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
+import com.wms.service.TrangChuQuanLy.QuanLyKho.QuanKhoService;
 import com.wms.view.TrangChuQuanLy.QuanLyKho.QuanLyKhoForm;
 
 import java.util.List;
@@ -26,8 +26,8 @@ public class QuanLyKhoController {
         }
     }
 
-    public boolean nhapKho(String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaGoc, byte[] fileData) {
-        return quanKhoService.nhapKhoDichVu(tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaGoc, fileData);
+    public boolean nhapKho(String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
+        return quanKhoService.nhapKhoDichVu(tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaNhap, fileData);
     }
 
     public List<String> getDSNhanVien() { return quanKhoService.layDSNhanVien(); }

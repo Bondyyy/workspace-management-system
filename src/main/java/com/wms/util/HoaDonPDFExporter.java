@@ -1,0 +1,139 @@
+package com.wms.util;
+
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import java.awt.Component;
+import java.awt.Desktop;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.Normalizer;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+public class HoaDonPDFExporter {
+
+    private static final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+
+    public static void xuatHoaDonPDF(Component parentComponent, ThongTinHoaDonDTO hoaDon, double tienGiamGia) {
+        if (hoaDon == null)
+            return;
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn vị trí lưu file PDF");
+        fileChooser.setSelectedFile(new File("HoaDon_" + hoaDon.getMaHoaDon() + ".pdf"));
+
+        int userSelection = fileChooser.showSaveDialog(parentComponent);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".pdf")) {
+                filePath += ".pdf";
+            }
+
+            try {
+                Document document = new Document();
+                PdfWriter.getInstance(document, new FileOutputStream(filePath));
+                document.open();
+
+                Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
+                Font boldFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+                Font normalFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
+
+                Paragraph title = new Paragraph("HOA DON THANH TOAN", titleFont);
+                title.setAlignment(Element.ALIGN_CENTER);
+                document.add(title);
+                document.add(new Paragraph(" "));
+
+                document.add(new Paragraph("Ma HD: " + hoaDon.getMaHoaDon(), boldFont));
+                document.add(new Paragraph("Khach hang: " + removeAccents(hoaDon.getHoTenKH()), normalFont));
+                document.add(new Paragraph("Khong gian: " + removeAccents(hoaDon.getTenKhongGian()), normalFont));
+                document.add(new Paragraph("Thoi gian: " + removeAccents(hoaDon.getThoiGianSửDung()), normalFont));
+                document.add(new Paragraph(
+                        "So gio tinh tien: " + String.format(Locale.US, "%.1f", hoaDon.getTongSoGio()) + " gio",
+                        normalFont));
+                document.add(new Paragraph(" "));
+
+                PdfPTable table = new PdfPTable(3);
+                table.setWidthPercentage(100);
+                table.addCell(new Phrase("Ten dich vu", boldFont));
+                table.addCell(new Phrase("So luong", boldFont));
+                table.addCell(new Phrase("Don gia (VND)", boldFont));
+
+                double tienDichVu = 0;
+                if (hoaDon.getDanhSachDichVu() != null) {
+                    for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
+                        tienDichVu += dv.getSoLuong() * dv.getDonGia();
+                    }
+                }
+
+                double tongTienGoc = hoaDon.getTongTien();
+                double tienKhongGian = tongTienGoc - tienDichVu;
+
+                if (tienKhongGian > 0) {
+                    double donGiaKg = (hoaDon.getTongSoGio() > 0) ? (tienKhongGian / hoaDon.getTongSoGio()) : 0;
+                    table.addCell(new Phrase("Thue " + removeAccents(hoaDon.getTenKhongGian()), normalFont));
+                    table.addCell(new Phrase(String.format(Locale.US, "%.1f gio", hoaDon.getTongSoGio()), normalFont));
+                    table.addCell(new Phrase(String.format("%,.0f", donGiaKg), normalFont));
+                }
+
+                if (hoaDon.getDanhSachDichVu() != null) {
+                    for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
+                        table.addCell(new Phrase(removeAccents(dv.getTenDichVu()), normalFont));
+                        table.addCell(new Phrase(String.valueOf(dv.getSoLuong()), normalFont));
+                        table.addCell(new Phrase(String.format("%,.0f", dv.getDonGia()), normalFont));
+                    }
+                }
+                document.add(table);
+                document.add(new Paragraph(" "));
+
+                document.add(new Paragraph("TONG CONG: " + formatTien.format(tongTienGoc), boldFont));
+                if (tienGiamGia > 0) {
+                    document.add(new Paragraph("GIAM GIA: " + formatTien.format(tienGiamGia), normalFont));
+                }
+
+                double thanhTien;
+                if (tienGiamGia > 0) {
+                    thanhTien = Math.max(0, tongTienGoc - tienGiamGia);
+                } else {
+                    thanhTien = hoaDon.getThanhTien() > 0 ? hoaDon.getThanhTien() : tongTienGoc;
+                }
+                document.add(new Paragraph("THANH TIEN: " + formatTien.format(thanhTien), boldFont));
+                Paragraph end = new Paragraph("\n      --- CAM ON QUY KHACH ---");
+                end.setAlignment(Element.ALIGN_CENTER);
+                document.add(end);
+                document.close();
+                JOptionPane.showMessageDialog(parentComponent, "Đã xuất PDF thành công: " + filePath, "Thông báo",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                Desktop.getDesktop().open(new File(filePath));
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(parentComponent, "Lỗi khi xuất PDF: " + ex.getMessage(), "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private static String removeAccents(String str) {
+        if (str == null)
+            return "";
+        try {
+            String temp = Normalizer.normalize(str, Normalizer.Form.NFD);
+            Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+            return pattern.matcher(temp).replaceAll("").replace('đ', 'd').replace('Đ', 'D');
+        } catch (Exception e) {
+            return str;
+        }
+    }
+}

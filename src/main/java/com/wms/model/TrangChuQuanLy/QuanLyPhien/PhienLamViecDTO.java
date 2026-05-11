@@ -10,7 +10,7 @@ public class PhienLamViecDTO {
     private String maKG;
     private String maKH;
     private String maDatCho;
-    private Double giaThue;
+    private Double donGiaTheoGio;
 
     public PhienLamViecDTO() {}
 
@@ -86,12 +86,12 @@ public class PhienLamViecDTO {
         this.maDatCho = maDatCho;
     }
 
-    public Double getGiaThue() {
-        return giaThue;
+    public Double getDonGiaTheoGio() {
+        return donGiaTheoGio;
     }
 
-    public void setGiaThue(Double giaThue) {
-        this.giaThue = giaThue;
+    public void setDonGiaTheoGio(Double donGiaTheoGio) {
+        this.donGiaTheoGio = donGiaTheoGio;
     }
 
 }

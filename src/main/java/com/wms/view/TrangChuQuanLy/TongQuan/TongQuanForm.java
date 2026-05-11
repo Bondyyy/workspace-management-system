@@ -8,9 +8,9 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-import com.wms.controller.TongQuanController;
+import com.wms.controller.TrangChuQuanLy.TongQuan.TongQuanController;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
-import com.wms.model.TongQuanDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.TongQuanDTO;
 
 public class TongQuanForm extends javax.swing.JPanel {
 
@@ -357,10 +357,48 @@ public class TongQuanForm extends javax.swing.JPanel {
         JOptionPane.showMessageDialog(this, "Đã cập nhật dữ liệu Tổng quan mới nhất!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }                                            
 
-    private void btnXuatExcelActionPerformed(java.awt.event.ActionEvent evt) {                                             
-        int choice = JOptionPane.showConfirmDialog(this, "Xuất dữ liệu báo cáo hiện tại ra file Excel (.xlsx)?", "Xuất file", JOptionPane.YES_NO_OPTION);
-        if (choice == JOptionPane.YES_OPTION) {
-            JOptionPane.showMessageDialog(this, "Xuất báo cáo thành công!\nĐã lưu tại: D:\\BaoCao_DoanhThu.xlsx", "Hoàn tất", JOptionPane.INFORMATION_MESSAGE);
+    private void btnXuatCSVActionPerformed(java.awt.event.ActionEvent evt) {                                             
+        String tuNgay = txtTuNgay.getText().trim();
+        String denNgay = txtDenNgay.getText().trim();
+        String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
+        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu file CSV");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
+        int userSelection = fileChooser.showSaveDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            java.io.File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".csv")) {
+                filePath += ".csv";
+            }
+
+            try (java.io.BufferedWriter bw = new java.io.BufferedWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(filePath), java.nio.charset.StandardCharsets.UTF_8))) {
+                // Add UTF-8 BOM for Excel to read correctly
+                bw.write('\ufeff');
+                bw.write("Mã Hóa Đơn,Khách Hàng,Ngày Lập,Tổng Tiền,Thành Tiền,Phương Thức,Trạng Thái\n");
+
+                List<Object[]> dsHoaDon = controller.layDanhSachHoaDonTheoDieuKien(tuNgay, denNgay, chiNhanh, loaiDT);
+                for (Object[] row : dsHoaDon) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < row.length; i++) {
+                        String value = row[i] != null ? row[i].toString() : "";
+                        // Escape quotes and commas
+                        if (value.contains(",") || value.contains("\"")) {
+                            value = "\"" + value.replace("\"", "\"\"") + "\"";
+                        }
+                        sb.append(value);
+                        if (i < row.length - 1) sb.append(",");
+                    }
+                    bw.write(sb.toString() + "\n");
+                }
+
+                JOptionPane.showMessageDialog(this, "Xuất dữ liệu CSV thành công!\n" + filePath, "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi xuất file: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }                                          
     @SuppressWarnings("unchecked")
@@ -380,7 +418,7 @@ public class TongQuanForm extends javax.swing.JPanel {
         lblLoaiDichVu = new javax.swing.JLabel();
         cbxLoaiDichVu = new javax.swing.JComboBox<>();
         btnXemBaoCao = new javax.swing.JButton();
-        btnXuatExcel = new javax.swing.JButton();
+        btnXuatCSV = new javax.swing.JButton();
         pnCard1 = new javax.swing.JPanel();
         pnCard2 = new javax.swing.JPanel();
         pnCard3 = new javax.swing.JPanel();
@@ -455,13 +493,13 @@ public class TongQuanForm extends javax.swing.JPanel {
         pnFilter.add(btnXemBaoCao);
         btnXemBaoCao.setBounds(690, 15, 150, 35);
 
-        btnXuatExcel.setBackground(new java.awt.Color(33, 157, 86));
-        btnXuatExcel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnXuatExcel.setForeground(new java.awt.Color(255, 255, 255));
-        btnXuatExcel.setText("Xuất Excel");
-        btnXuatExcel.addActionListener(this::btnXuatExcelActionPerformed);
-        pnFilter.add(btnXuatExcel);
-        btnXuatExcel.setBounds(850, 15, 140, 35);
+        btnXuatCSV.setBackground(new java.awt.Color(33, 157, 86));
+        btnXuatCSV.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnXuatCSV.setForeground(new java.awt.Color(255, 255, 255));
+        btnXuatCSV.setText("Xuất CSV");
+        btnXuatCSV.addActionListener(this::btnXuatCSVActionPerformed);
+        pnFilter.add(btnXuatCSV);
+        btnXuatCSV.setBounds(850, 15, 140, 35);
 
         pnMain.add(pnFilter);
         pnFilter.setBounds(20, 65, 1010, 60);
@@ -502,7 +540,7 @@ public class TongQuanForm extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnXemBaoCao;
-    private javax.swing.JButton btnXuatExcel;
+    private javax.swing.JButton btnXuatCSV;
     private javax.swing.JComboBox<String> cbxChiNhanh;
     private javax.swing.JComboBox<String> cbxLoaiDichVu;
     private javax.swing.JLabel lblChiNhanh;

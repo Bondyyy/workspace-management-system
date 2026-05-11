@@ -2,7 +2,7 @@ package com.wms.view.TrangChuQuanLy.QuanLyPhieuGiamGia;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaController;
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
-import com.wms.model.NguoiDungDTO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import java.text.SimpleDateFormat;
@@ -101,7 +101,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         dto.setNgayBatDauApDung(sdf.parse(txtNgayBatDauApDung.getText().trim()));
         dto.setNgayKetThucApDung(sdf.parse(txtNgayKetThucApDung.getText().trim()));
         
-        NguoiDungDTO user = com.wms.controller.DangNhapController.getCurrentUser();
+        NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
         dto.setMaNV(user != null ? user.getMaNV() : "NV_ADMIN"); 
         return dto;
     }

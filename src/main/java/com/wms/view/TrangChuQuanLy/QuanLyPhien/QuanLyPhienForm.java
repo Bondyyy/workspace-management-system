@@ -7,7 +7,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
      * Creates new form QuanLyPhienForm
      */
     private final com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController controller;
-    private java.util.List<com.wms.model.PhienLamViecFullDTO> currentList;
+    private java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO> currentList;
     private final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy");
     private javax.swing.Timer realTimeTimer;
 
@@ -49,7 +49,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         for (int i = 0; i < model.getRowCount(); i++) {
             if (i >= currentList.size())
                 break;
-            com.wms.model.PhienLamViecFullDTO p = currentList.get(i);
+            com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO p = currentList.get(i);
 
             if (p.getThoiGianKetThuc() == null && p.getThoiGianBatDau() != null
                     && !p.getThoiGianBatDau().after(new java.util.Date())) {
@@ -89,7 +89,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     }
 
     private void kiemTraQuyen() {
-        com.wms.model.NguoiDungDTO user = com.wms.controller.DangNhapController.getCurrentUser();
+        com.wms.model.TrangChuGioiThieu.NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
         if (user == null) return;
 
         boolean isAdmin = user.hasRole("VT1") || user.hasRole("Quản trị hệ thống");
@@ -121,11 +121,11 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         controller.loadDanhSachPhien(keyword, getMaCNDangChon());
     }
 
-    public void hienThiDanhSachPhien(java.util.List<com.wms.model.PhienLamViecFullDTO> list) {
+    public void hienThiDanhSachPhien(java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO> list) {
         this.currentList = list;
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblPhienLamViec.getModel();
         model.setRowCount(0);
-        for (com.wms.model.PhienLamViecFullDTO p : list) {
+        for (com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO p : list) {
             model.addRow(new Object[] {
                     p.getMaPhien(),
                     p.getTenKhongGian(),
@@ -144,11 +144,11 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         }
     }
 
-    public void hienThiDichVuTrongPhien(java.util.List<com.wms.model.DichVuTrongPhienDTO> list) {
+    public void hienThiDichVuTrongPhien(java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO> list) {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblDichVu.getModel();
         model.setRowCount(0);
         java.text.DecimalFormat df = new java.text.DecimalFormat("#,### VNĐ");
-        for (com.wms.model.DichVuTrongPhienDTO dv : list) {
+        for (com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO dv : list) {
             model.addRow(new Object[] {
                     dv.getTenDV(),
                     dv.getSoLuong(),
@@ -563,7 +563,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             return;
         }
 
-        com.wms.model.PhienLamViecFullDTO selected = currentList.get(row);
+        com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO selected = currentList.get(row);
         if (selected.getMaDatCho() == null) {
             javax.swing.JOptionPane.showMessageDialog(this, "Đây là phiên khách vào trực tiếp, không cần xác nhận thanh toán đặt trước!");
             return;
@@ -732,7 +732,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             }
 
             // Hiển thị thời gian dự kiến kết thúc từ danh sách gốc
-            com.wms.model.PhienLamViecFullDTO selected = currentList.get(row);
+            com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO selected = currentList.get(row);
             if (txtDuKien != null) {
                 txtDuKien.setText(selected.getThoiGianDuKienKetThuc() != null
                         ? sdf.format(selected.getThoiGianDuKienKetThuc())

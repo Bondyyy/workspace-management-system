@@ -1,17 +1,17 @@
 package com.wms.service.TrangChuQuanLy.QuanLyPhien;
 
-import com.wms.dao.DatChoDAO;
-import com.wms.dao.HoaDonDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyPhien.DatChoDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyHoaDon.HoaDonDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyHoiVien.KhachHangDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.KhongGianDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NhanVienDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyPhien.PhienLamViecDAO;
-import com.wms.model.DichVuTrongPhienDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
-import com.wms.model.NguoiDungDTO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
-import com.wms.model.PhienLamViecFullDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 
 import java.util.List;
 
@@ -89,7 +89,7 @@ public class PhienLamViecService {
         return null;
     }
 
-    public boolean taoPhienMoi(String maKH, String maKG, int soGioSuDung, double giaThue) {
+    public boolean taoPhienMoi(String maKH, String maKG, int soGioSuDung, double donGiaTheoGio) {
         PhienLamViecDTO phien = new PhienLamViecDTO();
         
         int count = phienDAO.demSoLuong();
@@ -98,7 +98,7 @@ public class PhienLamViecService {
         phien.setMaKH(maKH);
         phien.setMaKG(maKG);
         phien.setTrangThaiPhien("Đang hoạt động");
-        phien.setGiaThue(giaThue);
+        phien.setDonGiaTheoGio(donGiaTheoGio);
         
         long now = System.currentTimeMillis();
         phien.setThoiGianBatDau(new java.sql.Timestamp(now));

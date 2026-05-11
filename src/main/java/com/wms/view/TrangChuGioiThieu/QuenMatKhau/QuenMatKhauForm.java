@@ -47,8 +47,8 @@ public class QuenMatKhauForm extends javax.swing.JPanel {
             return;
         }
 
-        com.wms.controller.QuenMatKhauController controller = new com.wms.controller.QuenMatKhauController();
-        com.wms.service.NguoiDungService.OtpQuenPassResponse response = controller.yeuCauOTP(email);
+        com.wms.controller.TrangChuGioiThieu.QuenMatKhauController controller = new com.wms.controller.TrangChuGioiThieu.QuenMatKhauController();
+        com.wms.service.TrangChuGioiThieu.NguoiDungService.OtpQuenPassResponse response = controller.yeuCauOTP(email);
 
         switch (response.getResult()) {
             case THANH_CONG:
@@ -121,8 +121,8 @@ public class QuenMatKhauForm extends javax.swing.JPanel {
             return;
         }
 
-        com.wms.controller.QuenMatKhauController controller = new com.wms.controller.QuenMatKhauController();
-        com.wms.service.NguoiDungService.ketQuaQuenMatKhau result = controller.datLaiMatKhau(email, newPass);
+        com.wms.controller.TrangChuGioiThieu.QuenMatKhauController controller = new com.wms.controller.TrangChuGioiThieu.QuenMatKhauController();
+        com.wms.service.TrangChuGioiThieu.NguoiDungService.ketQuaQuenMatKhau result = controller.datLaiMatKhau(email, newPass);
 
         switch (result) {
             case THANH_CONG:

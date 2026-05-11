@@ -1,7 +1,7 @@
 package com.wms.dao.TrangChuQuanLy.QuanLyKho;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.DichVuDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -49,7 +49,7 @@ public class QuanLyKhoDao {
         return list;
     }
 
-    public boolean nhapKhoDichVu(String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaGoc, byte[] fileData) {
+    public boolean nhapKhoDichVu(String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
         String sql = "{CALL SP_NhapKhoDichVu(?, ?, ?, ?, ?, ?, ?)}";
         Connection conn = getConn();
         if (conn == null) return false;
@@ -60,7 +60,7 @@ public class QuanLyKhoDao {
             cstmt.setInt(4, soLuong);
             if (tenFile == null || tenFile.trim().isEmpty()) cstmt.setNull(5, Types.VARCHAR);
             else cstmt.setString(5, tenFile);
-            cstmt.setDouble(6, giaGoc);
+            cstmt.setDouble(6, giaNhap);
             if (fileData != null) cstmt.setBytes(7, fileData);
             else cstmt.setNull(7, Types.BLOB);
             cstmt.execute();

@@ -1,10 +1,10 @@
 package com.wms.view.TrangChuGioiThieu.DangKy;
 
-import com.wms.controller.DangKyController;
+import com.wms.controller.TrangChuGioiThieu.DangKyController;
 
 import javax.swing.JOptionPane;
-import com.wms.service.NguoiDungService.ketQuaDangKy;
-import com.wms.service.NguoiDungService.OtpResponse;
+import com.wms.service.TrangChuGioiThieu.NguoiDungService.ketQuaDangKy;
+import com.wms.service.TrangChuGioiThieu.NguoiDungService.OtpResponse;
 
 public class DangKyForm extends javax.swing.JPanel {
 

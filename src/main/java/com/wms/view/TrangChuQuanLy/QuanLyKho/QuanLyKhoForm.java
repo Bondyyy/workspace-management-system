@@ -58,7 +58,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private void loadDataNhanVienVaLoaiDV() {
         if (controller == null) return;
         
-        com.wms.model.NguoiDungDTO currentUser = com.wms.controller.DangNhapController.getCurrentUser();
+        com.wms.model.TrangChuGioiThieu.NguoiDungDTO currentUser = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
         if (currentUser != null) {
             cbNhanVien.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{currentUser.getHoTen()}));
             cbNhanVien.setEnabled(false);
@@ -83,7 +83,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         cbLoaiDichVu.setModel(loaiModel);
         
         cbTenDichVu.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"-- Chọn tên dịch vụ --"}));
-        txtGiaGoc.setText("");
+        txtGiaNhap.setText("");
         txtNiemYet.setText("");
     }
 
@@ -139,7 +139,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         return str.substring(0, half) + "..." + str.substring(str.length() - half);
     }
 
-    public void hienThiDuLieu(java.util.List<com.wms.model.DichVuDTO> danhSach) {
+    public void hienThiDuLieu(java.util.List<com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO> danhSach) {
         if (danhSach != null && !danhSach.isEmpty()) {
             danhSach.sort((d1, d2) -> {
                 boolean isThueGio1 = "Thuê thêm giờ".equalsIgnoreCase(d1.getTenDV());
@@ -164,7 +164,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         java.text.DecimalFormat df = new java.text.DecimalFormat("#,###"); 
 
         if (danhSach != null) {
-            for (com.wms.model.DichVuDTO dv : danhSach) {
+            for (com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO dv : danhSach) {
                 String hienThiSoLuong = (dv.getSoLuong() == null) ? "-" : String.valueOf(dv.getSoLuong());
                 model.addRow(new Object[]{
                     stt++, dv.getMaDV(), dv.getTenDV(), dv.getTenLoaiDV(),
@@ -215,8 +215,8 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         btnLuu = new javax.swing.JButton();
         cbLoaiDichVu1 = new javax.swing.JComboBox<>();
         lblLoaiDichVu1 = new javax.swing.JLabel();
-        txtGiaGoc = new javax.swing.JTextField();
-        lblGiaGoc = new javax.swing.JLabel();
+        txtGiaNhap = new javax.swing.JTextField();
+        lblGiaNhap = new javax.swing.JLabel();
         txtNiemYet = new javax.swing.JTextField();
         lblToaDoX1 = new javax.swing.JLabel();
 
@@ -396,16 +396,16 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         pnRight.add(lblLoaiDichVu1);
         lblLoaiDichVu1.setBounds(20, 135, 360, 20);
 
-        txtGiaGoc.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        txtGiaGoc.setToolTipText("Nhập giá gốc của đợt nhập này (VNĐ)...");
-        pnRight.add(txtGiaGoc);
-        txtGiaGoc.setBounds(20, 310, 170, 30);
+        txtGiaNhap.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        txtGiaNhap.setToolTipText("Nhập giá nhập của đợt nhập này (VNĐ)...");
+        pnRight.add(txtGiaNhap);
+        txtGiaNhap.setBounds(20, 310, 170, 30);
 
-        lblGiaGoc.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblGiaGoc.setForeground(new java.awt.Color(35, 30, 48));
-        lblGiaGoc.setText("Giá gốc");
-        pnRight.add(lblGiaGoc);
-        lblGiaGoc.setBounds(20, 290, 170, 18);
+        lblGiaNhap.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblGiaNhap.setForeground(new java.awt.Color(35, 30, 48));
+        lblGiaNhap.setText("Giá nhập");
+        pnRight.add(lblGiaNhap);
+        lblGiaNhap.setBounds(20, 290, 170, 18);
 
         txtNiemYet.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnRight.add(txtNiemYet);
@@ -439,7 +439,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         if (cbLoaiDichVu.getItemCount() > 0) cbLoaiDichVu.setSelectedIndex(0);
         if (cbTenDichVu.getItemCount() > 0) cbTenDichVu.setSelectedIndex(0);
         spnSoLuong.setValue(0);
-        txtGiaGoc.setText("");
+        txtGiaNhap.setText("");
         txtNiemYet.setText("");
         
         currentSelectedFile = null;
@@ -488,18 +488,18 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             }
         }
         
-        double giaGoc = 0;
+        double GiaNhap = 0;
         try {
-            String giaGocStr = txtGiaGoc.getText().trim().replace(",", "").replace(".", "");
-            if (!giaGocStr.isEmpty()) {
-                giaGoc = Double.parseDouble(giaGocStr);
+            String GiaNhapStr = txtGiaNhap.getText().trim().replace(",", "").replace(".", "");
+            if (!GiaNhapStr.isEmpty()) {
+                GiaNhap = Double.parseDouble(GiaNhapStr);
             }
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Giá gốc không hợp lệ!", "Cảnh báo", javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Giá nhập không hợp lệ!", "Cảnh báo", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        boolean success = controller.nhapKho(nhanVien, loaiDichVu, tenDichVu, soLuong, tenFile, giaGoc, fileData);
+        boolean success = controller.nhapKho(nhanVien, loaiDichVu, tenDichVu, soLuong, tenFile, GiaNhap, fileData);
 
         if (success) {
             javax.swing.JOptionPane.showMessageDialog(this, "Nhập kho dịch vụ thành công!", "Thành công", javax.swing.JOptionPane.INFORMATION_MESSAGE);
@@ -522,7 +522,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblChungTuTitle;
     private javax.swing.JLabel lblDetailTitle;
-    private javax.swing.JLabel lblGiaGoc;
+    private javax.swing.JLabel lblGiaNhap;
     private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblListTitle;
     private javax.swing.JLabel lblLoaiDichVu;
@@ -538,7 +538,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private javax.swing.JPanel pnRight;
     private javax.swing.JSpinner spnSoLuong;
     private javax.swing.JTable tblKho;
-    private javax.swing.JTextField txtGiaGoc;
+    private javax.swing.JTextField txtGiaNhap;
     private javax.swing.JTextField txtNiemYet;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables

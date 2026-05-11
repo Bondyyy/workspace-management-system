@@ -1,7 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
-import com.wms.model.NguoiDungDTO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyPhien.PhienLamViecService;
 import com.wms.view.TrangChuQuanLy.QuanLyPhien.MoPhienMoiForm;
 
@@ -30,10 +30,10 @@ public class MoPhienMoiController {
      * Tìm hoặc tạo khách hàng, rồi tạo phiên mới.
      * Trả về true nếu toàn bộ quy trình thành công.
      */
-    public boolean moPhienMoi(String hoTenKH, String sdt, String maKG, int soGioSuDung, double giaThue) {
+    public boolean moPhienMoi(String hoTenKH, String sdt, String maKG, int soGioSuDung, double donGiaTheoGio) {
         String maKH = service.timHoacTaoKhachHang(hoTenKH, sdt);
         if (maKH == null)
             return false;
-        return service.taoPhienMoi(maKH, maKG, soGioSuDung, giaThue);
+        return service.taoPhienMoi(maKH, maKG, soGioSuDung, donGiaTheoGio);
     }
 }

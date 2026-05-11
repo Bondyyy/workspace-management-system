@@ -1,17 +1,17 @@
 package com.wms.view.TrangChuHoiVien.DatChoKhongGian.XacNhan;
 
-import com.wms.controller.DangNhapController;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyPhien.PhienLamViecDAO;
-import com.wms.model.NguoiDungDTO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
 
-import com.wms.dao.HoaDonDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyHoaDon.HoaDonDAO;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyHoiVien.KhachHangDAO;
-import com.wms.dao.DatChoDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyPhien.DatChoDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
-import com.wms.model.DatChoDTO;
-import com.wms.model.HoaDonDTO;
+import com.wms.model.TrangChuHoiVien.DatChoDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 
 import java.text.DecimalFormat;
 import java.sql.Timestamp;

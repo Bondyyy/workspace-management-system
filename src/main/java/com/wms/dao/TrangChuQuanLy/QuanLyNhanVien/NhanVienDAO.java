@@ -2,9 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyNhanVien;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
-import com.wms.model.NguoiDungDTO;
-import com.wms.dao.NguoiDungDAO;
-import com.wms.dao.NguoiDungDAO;
+import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
 import com.wms.util.PasswordUtil;
 
 import java.sql.*;

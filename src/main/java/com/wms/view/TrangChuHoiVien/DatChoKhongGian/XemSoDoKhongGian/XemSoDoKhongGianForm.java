@@ -34,7 +34,7 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
     private final int MAX_COLS = 12; // Chiều rộng cố định
     private final int MAX_ROWS = 8;  // Chiều dài cố định
 
-    private com.wms.view.components.SoDoKhongGianPanel panelSoDo;
+    private com.wms.util.SoDoKhongGianPanel panelSoDo;
     private KhongGianDTO khongGianDangChon = null;
     private List<KhongGianDTO> danhSachKGHienTai;
     private String maChiNhanhHienTai = "";
@@ -78,7 +78,7 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
         canvas.setOpaque(false);
         canvas.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        panelSoDo = new com.wms.view.components.SoDoKhongGianPanel();
+        panelSoDo = new com.wms.util.SoDoKhongGianPanel();
         panelSoDo.setOnTableClick(kg -> xuLyChon(kg));
         
         canvas.add(panelSoDo, BorderLayout.CENTER);

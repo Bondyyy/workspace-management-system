@@ -1,7 +1,7 @@
 package com.wms.view.TrangChuQuanLy.QuanLyHoaDon;
 
-import com.wms.controller.HoaDonController;
-import com.wms.model.HoaDonDTO;
+import com.wms.controller.TrangChuQuanLy.QuanLyHoaDon.HoaDonController;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 import com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.ThanhToanHoaDonForm;
 
 import java.awt.Window;
@@ -62,7 +62,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         for (HoaDonDTO hd : dsHoaDon) {
             tableModel.addRow(new Object[] {
                     hd.getMaHoaDon(),
-                    sdf.format(hd.getNgayLapHoaDon()),
+                    hd.getTrangThaiPhien() != null ? hd.getTrangThaiPhien() : "N/A",
                     hd.getHoTenKH(),
                     df.format(hd.getThanhTien()),
                     hd.getTrangThaiThanhToan(),
@@ -77,12 +77,13 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
         txtMaHD.setText(maHD);
         txtKhachHang.setText(tableModel.getValueAt(row, 2).toString());
-        txtNgayTao.setText(tableModel.getValueAt(row, 1).toString());
-        txtNgayTao.setCaretPosition(0);
-
+        
         for (HoaDonDTO hd : dsHoaDon) {
             if (!hd.getMaHoaDon().equals(maHD)) continue;
             this.currentHD = hd;
+            
+            txtNgayTao.setText(sdf.format(hd.getNgayLapHoaDon()));
+            txtNgayTao.setCaretPosition(0);
 
             txtThanhToan.setText(hd.getPhuongThucThanhToan() != null ? hd.getPhuongThucThanhToan() : "Chưa chọn");
             txtTruocGiamGia.setText(df.format(hd.getTongTien()));
@@ -126,7 +127,9 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
             boolean choThanhToan = hd.getTrangThaiThanhToan().equals("Chưa thanh toán")
                                 || hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán");
-            btnXacNhan.setEnabled(choThanhToan);
+            boolean phienDaKetThuc = !"Đang hoạt động".equals(hd.getTrangThaiPhien());
+            
+            btnXacNhan.setEnabled(choThanhToan && phienDaKetThuc);
             btnHuy.setEnabled(choThanhToan);
             break;
         }
@@ -356,7 +359,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         btnXacNhan.setBackground(new java.awt.Color(0, 153, 51));
         btnXacNhan.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
-        btnXacNhan.setText("Xác nhận Thanh toán & Gửi Mail");
+        btnXacNhan.setText("Xác nhận Thanh toán");
         btnXacNhan.setEnabled(false);
         btnXacNhan.addActionListener(this::btnXacNhanActionPerformed);
         pnRight.add(btnXacNhan);
@@ -564,7 +567,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             return;
         }
 
-        com.wms.model.ThongTinHoaDonDTO tt = hoaDonController.layChiTietHoaDon(maHD);
+        com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO tt = hoaDonController.layChiTietHoaDon(maHD);
         if (tt == null) {
             JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin chi tiết!");
             return;
@@ -579,7 +582,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         sb.append("Số giờ tính: ").append(tt.getTongSoGio()).append(" giờ\n");
         sb.append("--------------------------------\n");
         sb.append(String.format("%-20s %3s %10s\n", "Dịch vụ", "SL", "Đơn giá"));
-        for (com.wms.model.DichVuDaDungDTO dv : tt.getDanhSachDichVu()) {
+        for (com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO dv : tt.getDanhSachDichVu()) {
             sb.append(String.format("%-20s %3d %,10.0f\n", dv.getTenDichVu(), dv.getSoLuong(), dv.getDonGia()));
         }
         sb.append("--------------------------------\n");
@@ -593,7 +596,18 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
         scrollPane.setPreferredSize(new java.awt.Dimension(400, 500));
 
-        JOptionPane.showMessageDialog(this, scrollPane, "Hóa đơn PDF Preview", JOptionPane.PLAIN_MESSAGE);
+        Object[] options = {"Xuất PDF", "Đóng"};
+        int choice = JOptionPane.showOptionDialog(this, scrollPane, "Hóa đơn PDF Preview",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+
+        if (choice == 0) { // Xuất PDF
+            xuatPDFHoaDon(tt);
+        }
+    }
+
+    private void xuatPDFHoaDon(com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO hoaDonHienTai) {
+        if (hoaDonHienTai == null) return;
+        com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, 0); // No discount context in preview
     }
 
     private void resetForm() {
