@@ -18,7 +18,7 @@ ALTER TABLE KHACHHANG ADD CONSTRAINT CHK_KH_TongChiTieu
 -- 3. Bảng HANGTHANHVIEN
 ALTER TABLE HANGTHANHVIEN ADD CONSTRAINT CHK_HTV_PhanTram 
     CHECK (PhanTramTienGiam >= 0 AND PhanTramTienGiam <= 100);
-
+    
 ALTER TABLE HANGTHANHVIEN ADD CONSTRAINT CHK_HTV_TenHang
     CHECK (TenHangThanhVien IN ('Không có', 'Đồng', 'Bạc', 'Vàng', 'Kim cương'));
 

@@ -1,5 +1,6 @@
 CREATE TABLE CHITIETNHOMCHUCNANG (
     MaVaiTro VARCHAR2(50),
     MaNhomChucNang VARCHAR2(50),
+    MoTa VARCHAR2(255),
     PRIMARY KEY (MaVaiTro, MaNhomChucNang)
 );

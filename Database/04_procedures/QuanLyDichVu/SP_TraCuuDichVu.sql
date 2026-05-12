@@ -15,7 +15,7 @@ BEGIN
     END IF;
 
     OPEN p_Cursor FOR
-    SELECT MaDV, TenDV, HinhAnh, TrangThaiDV, DonGia, MaLoaiDV, SoLuong, GiaGoc
+    SELECT MaDV, TenDV, HinhAnh, TrangThaiDV, DonGia, MaLoaiDV, SoLuong, GiaNhap
     FROM DICHVU
     WHERE (p_MaLoaiDV IS NULL OR MaLoaiDV = p_MaLoaiDV OR p_MaLoaiDV = '')
       AND (p_TrangThaiDV IS NULL OR TrangThaiDV = p_TrangThaiDV OR p_TrangThaiDV = '')

@@ -1,5 +1,6 @@
 CREATE TABLE NGUOIDUNG (
     MaND VARCHAR2(50) PRIMARY KEY,
+    HoTen VARCHAR2(100),
     TenTaiKhoan VARCHAR2(50),
     MatKhauMaHoa VARCHAR2(255),
     AnhDaiDien BLOB,

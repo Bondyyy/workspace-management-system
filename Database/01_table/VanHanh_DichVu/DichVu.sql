@@ -6,8 +6,5 @@ CREATE TABLE DICHVU (
     DonGia NUMBER(18, 2),
     MaLoaiDV VARCHAR2(50),
     SoLuong NUMBER,
-    GiaGoc NUMBER
+    GiaNhap NUMBER
 );
-
-ALTER TABLE DICHVU RENAME COLUMN GiaGoc TO GiaNhap;
-COMMIT;

@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE sp_CapNhatDichVu (
     p_HinhAnh     IN BLOB,
     p_MaLoaiDV    IN VARCHAR2,
     p_SoLuong     IN NUMBER,
-    p_GiaGoc      IN NUMBER,
+    p_GiaNhap     IN NUMBER,
     p_outMessage  OUT VARCHAR2
 )
 AS
@@ -34,7 +34,7 @@ BEGIN
         HinhAnh = NVL(p_HinhAnh, HinhAnh),
         MaLoaiDV = p_MaLoaiDV,
         SoLuong = p_SoLuong,
-        GiaGoc = p_GiaGoc
+        GiaNhap = p_GiaNhap
     WHERE MaDV = p_MaDV;
 
     COMMIT;
