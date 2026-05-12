@@ -8,7 +8,7 @@ BEGIN
     -- p_TuKhoa tìm theo MaKH, HoTenKH, SDT, Email
     OPEN p_outCursor FOR
         SELECT KH.MaKH,
-               KH.HoTenKH,
+               ND.HoTen,
                KH.LoaiKH,
                KH.TongChiTieu,
                KH.CapNhatLanCuoi,
@@ -24,12 +24,12 @@ BEGIN
         JOIN HANGTHANHVIEN HTV ON KH.MaHangThanhVien = HTV.MaHangThanhVien
         WHERE (p_TuKhoa IS NULL
                OR UPPER(KH.MaKH)    LIKE '%' || UPPER(p_TuKhoa) || '%'
-               OR UPPER(KH.HoTenKH) LIKE '%' || UPPER(p_TuKhoa) || '%'
+               OR UPPER(ND.HoTen)   LIKE '%' || UPPER(p_TuKhoa) || '%'
                OR UPPER(ND.SDT)     LIKE '%' || UPPER(p_TuKhoa) || '%'
                OR UPPER(ND.Email)   LIKE '%' || UPPER(p_TuKhoa) || '%')
           AND (p_MaHangThanhVien IS NULL
                OR KH.MaHangThanhVien = p_MaHangThanhVien)
-        ORDER BY KH.HoTenKH;
+        ORDER BY ND.HoTen;
 
     p_outMessage := 'Tra cứu hội viên thành công!';
 

@@ -36,7 +36,7 @@ BEGIN
             HD.MaPGG,
             PGG.MaChuSoPGG,
             PGG.GiaTriGiamGia AS GiaTriGiamGiaPGG,
-            NVL(KH.HoTenKH, 'Khách vãng lai') AS TenKhachHang,
+            NVL(ND.HoTen, 'Khách vãng lai') AS TenKhachHang,
             HTV.TenHangThanhVien,
             HTV.PhanTramTienGiam AS PhanTramGiamHangTV,
             PLV.ThoiGianBatDau,
@@ -46,6 +46,7 @@ BEGIN
         FROM HOADON HD
         JOIN PHIENLAMVIEC PLV ON HD.MaPhien = PLV.MaPhien
         LEFT JOIN KHACHHANG KH ON PLV.MaKH = KH.MaKH
+        LEFT JOIN NGUOIDUNG ND ON KH.MaND = ND.MaND
         LEFT JOIN HANGTHANHVIEN HTV ON KH.MaHangThanhVien = HTV.MaHangThanhVien
         LEFT JOIN PHIEUGIAMGIA PGG ON HD.MaPGG = PGG.MaPGG
         LEFT JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG

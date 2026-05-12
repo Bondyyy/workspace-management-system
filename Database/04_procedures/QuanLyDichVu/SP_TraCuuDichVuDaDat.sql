@@ -19,12 +19,13 @@ BEGIN
             plv.TrangThaiPhien,
             plv.ThoiGianBatDau,
             kg.TenKG AS ViTriKhongGian,
-            NVL(kh.HoTenKH, 'Khách vãng lai') AS TenKhachHang
+            NVL(nd.HoTen, 'Khách vãng lai') AS TenKhachHang
         FROM CHITIETDICHVU ctdv
         INNER JOIN DICHVU dv ON ctdv.MaDV = dv.MaDV
         INNER JOIN PHIENLAMVIEC plv ON ctdv.MaPhien = plv.MaPhien
         LEFT JOIN KHONGGIAN kg ON plv.MaKG = kg.MaKG
         LEFT JOIN KHACHHANG kh ON plv.MaKH = kh.MaKH
+        LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND
         WHERE LOWER(dv.TenDV) LIKE v_TuKhoaTimKiem
         ORDER BY plv.ThoiGianBatDau DESC;
 

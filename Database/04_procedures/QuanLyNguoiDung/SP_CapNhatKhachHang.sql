@@ -18,9 +18,14 @@ BEGIN
             'Hạng thành viên [' || p_MaHangThanhVien || '] không hợp lệ!');
     END IF;
 
+    -- Cập nhật họ tên ở bảng NGUOIDUNG
+    UPDATE NGUOIDUNG
+    SET HoTen = p_HoTenKH
+    WHERE MaND = (SELECT MaND FROM KHACHHANG WHERE MaKH = p_MaKH);
+
+    -- Cập nhật thông tin hội viên ở bảng KHACHHANG
     UPDATE KHACHHANG
-    SET HoTenKH = p_HoTenKH,
-        MaHangThanhVien = p_MaHangThanhVien,
+    SET MaHangThanhVien = p_MaHangThanhVien,
         CapNhatLanCuoi = SYSTIMESTAMP
     WHERE MaKH = p_MaKH;
 

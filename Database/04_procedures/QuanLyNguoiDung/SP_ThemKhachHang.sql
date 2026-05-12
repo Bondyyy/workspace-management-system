@@ -28,11 +28,11 @@ BEGIN
     END IF;
 
     INSERT INTO KHACHHANG (
-        MaKH, HoTenKH, LoaiKH,
+        MaKH, LoaiKH,
         TongChiTieu, CapNhatLanCuoi,
         MaHangThanhVien, MaND
     ) VALUES (
-        p_MaKH, p_HoTenKH, 'Hội viên',
+        p_MaKH, 'Hội viên',
         0, SYSTIMESTAMP,
         p_MaHangThanhVien, p_MaND
     );

@@ -11,7 +11,20 @@ CREATE OR REPLACE PROCEDURE SP_NhapKhoDichVu (
     v_MaDV VARCHAR2(50);
     v_MaChungTu VARCHAR2(50);
     v_SoLuongLuu NUMBER;
+    v_MaNV VARCHAR2(50);
+    v_MaCN VARCHAR2(50);
 BEGIN
+    BEGIN
+        SELECT nv.MaNV, nv.MaCN INTO v_MaNV, v_MaCN 
+        FROM NHANVIEN nv 
+        JOIN KHACHHANG kh ON nv.MaND = kh.MaND 
+        WHERE LOWER(kh.HoTenKH) = LOWER(p_TenNhanVien) AND ROWNUM = 1;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            v_MaNV := NULL;
+            v_MaCN := NULL;
+    END;
+
     -- Logic: Tiện ích thì không quản lý số lượng
     IF LOWER(p_TenLoaiDV) LIKE '%tiện ích%' THEN
         v_SoLuongLuu := NULL;
@@ -46,8 +59,8 @@ BEGIN
     -- C. Xử lý CHỨNG TỪ NHẬP KHO
     IF p_TenFile IS NOT NULL AND LENGTH(TRIM(p_TenFile)) > 0 THEN
         v_MaChungTu := 'CT' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '_' || SEQ_CHUNGTU.NEXTVAL;
-        INSERT INTO CHUNGTUNHAPKHO (MaChungTu, MaDV, TenFile, NoiDungFile, NgayNhap, NhanVienNhap, SoLuongNhap)
-        VALUES (v_MaChungTu, v_MaDV, p_TenFile, p_NoiDungFile, SYSDATE, p_TenNhanVien, v_SoLuongLuu);
+        INSERT INTO CHUNGTUNHAPKHO (MaChungTu, MaDV, MaNV, MaCN, TenFile, NoiDungFile, NgayNhap, SoLuongNhap)
+        VALUES (v_MaChungTu, v_MaDV, v_MaNV, v_MaCN, p_TenFile, p_NoiDungFile, SYSDATE, v_SoLuongLuu);
     END IF;
 
     COMMIT;

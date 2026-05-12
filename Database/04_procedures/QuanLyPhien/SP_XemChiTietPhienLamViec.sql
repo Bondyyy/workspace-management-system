@@ -28,12 +28,13 @@ BEGIN
             p.ThoiGianKetThuc,
             kg.TenKG AS TenKhongGian,
             kg.ViTri,
-            NVL(kh.HoTenKH, 'Khách vãng lai') AS TenKhachHang,
+            NVL(nd.HoTen, 'Khách vãng lai') AS TenKhachHang,
             kh.LoaiKH,
             p.MaDatCho
         FROM PHIENLAMVIEC p
         LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG
         LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH
+        LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND
         WHERE p.MaPhien = p_MaPhien;
 
     OPEN p_RS_ChiTietDichVu FOR
