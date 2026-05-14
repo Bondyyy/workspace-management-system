@@ -13,12 +13,12 @@ AS
     v_countLoaiDV NUMBER;
     v_countDV     NUMBER;
 BEGIN
-    -- 1. Kểm tra điều kiện đơn giá
-    IF p_DonGia <= 0 THEN
-        RAISE_APPLICATION_ERROR(-20001, 'Đơn giá dịch vụ phải lớn hơn 0!');
+    -- [ĐÃ FIX CONSTRAINT]: Sửa thành < 0 thay vì <= 0 để cho phép dịch vụ miễn phí (DonGia >= 0)
+    IF p_DonGia < 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Đơn giá dịch vụ không được âm!');
     END IF;
 
-    -- 2. Kiểm tra tính hợp lệ của Mã loại dịch vụ
+    -- Kiểm tra tính hợp lệ của Mã loại dịch vụ
     SELECT COUNT(*) INTO v_countLoaiDV
     FROM LOAIDICHVU
     WHERE MaLoaiDV = p_MaLoaiDV;
@@ -27,7 +27,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20002, 'Loại dịch vụ không tồn tại trong hệ thống!');
     END IF;
 
-    -- 3. Kiểm tra trùng lặp Mã Dịch Vụ
+    -- Kiểm tra trùng lặp Mã Dịch Vụ
     SELECT COUNT(*) INTO v_countDV
     FROM DICHVU
     WHERE MaDV = p_MaDV;
@@ -36,7 +36,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20003, 'Mã dịch vụ này đã tồn tại, vui lòng sử dụng mã khác!');
     END IF;
 
-    -- 4. Thêm dịch vụ vào bảng DICHVU
+    -- Thêm dịch vụ vào bảng DICHVU
     INSERT INTO DICHVU (MaDV, TenDV, TrangThaiDV, DonGia, MaLoaiDV, HinhAnh, SoLuong, GiaNhap)
     VALUES (p_MaDV, p_TenDV, p_TrangThaiDV, p_DonGia, p_MaLoaiDV, p_HinhAnh, p_SoLuong, p_GiaNhap);
 
