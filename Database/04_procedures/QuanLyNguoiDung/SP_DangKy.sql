@@ -10,6 +10,18 @@ CREATE OR REPLACE PROCEDURE SP_DangKy(
 ) AS
     v_Count NUMBER;
 BEGIN
+    IF p_GioiTinh NOT IN ('Nam', 'Nữ', 'Khác') THEN
+        RAISE_APPLICATION_ERROR(-20023, 'Giới tính phải là Nam, Nữ hoặc Khác!');
+    END IF;
+
+    IF LENGTH(p_SDT) != 10 OR SUBSTR(p_SDT, 1, 1) != '0' OR NOT REGEXP_LIKE(p_SDT, '^[0-9]+$') THEN
+        RAISE_APPLICATION_ERROR(-20024, 'Số điện thoại phải có đúng 10 chữ số và bắt đầu bằng số 0!');
+    END IF;
+
+    IF p_Email NOT LIKE '%@%.%' THEN
+        RAISE_APPLICATION_ERROR(-20025, 'Email không đúng định dạng!');
+    END IF;
+
     SELECT COUNT(*) INTO v_Count FROM NGUOIDUNG WHERE TenTaiKhoan = p_TenTaiKhoan;
     IF v_Count > 0 THEN
         RAISE_APPLICATION_ERROR(-20020, 'Tên tài khoản đã được sử dụng!');
@@ -45,3 +57,6 @@ EXCEPTION
         RAISE;
 END SP_DangKy;
 /
+
+
+
