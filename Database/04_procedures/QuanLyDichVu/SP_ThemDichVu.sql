@@ -13,7 +13,6 @@ AS
     v_countLoaiDV NUMBER;
     v_countDV     NUMBER;
 BEGIN
-    -- [ĐÃ FIX CONSTRAINT]: Sửa thành < 0 thay vì <= 0 để cho phép dịch vụ miễn phí (DonGia >= 0)
     IF p_DonGia < 0 THEN
         RAISE_APPLICATION_ERROR(-20001, 'Đơn giá dịch vụ không được âm!');
     END IF;
