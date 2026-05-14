@@ -17,7 +17,7 @@ BEGIN
 
     SELECT COUNT(*) INTO v_SoHDLienQuan
     FROM HOADON
-    WHERE MaPGG = p_MaPGG AND TrangThaiThanhToan != 'Thành công';
+    WHERE MaPGG = p_MaPGG AND TrangThaiThanhToan = 'Đang chờ thanh toán';
 
     IF v_SoHDLienQuan > 0 THEN
         RAISE_APPLICATION_ERROR(-20161,
