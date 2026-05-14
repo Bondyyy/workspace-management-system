@@ -16,22 +16,26 @@ public class HoaDonDAO {
     public List<HoaDonDTO> layDanhSachHoaDon(String searchText, String statusFilter) {
         List<HoaDonDTO> list = new ArrayList<>();
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) return list;
+        if (conn == null)
+            return list;
 
         StringBuilder sql = new StringBuilder(
-            "SELECT h.*, kh.HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc " +
-            "FROM HOADON h " +
-            "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
-            "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-            "WHERE 1=1 "
-        );
+                "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc "
+                        +
+                        "FROM HOADON h " +
+                        "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
+                        "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                        "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
+                        "WHERE 1=1 ");
 
         if (searchText != null && !searchText.trim().isEmpty()) {
-            sql.append("AND (h.MaHoaDon LIKE ? OR kh.HoTenKH LIKE ? OR h.SoHD LIKE ?) ");
+            sql.append("AND (h.MaHoaDon LIKE ? OR nd.HoTen LIKE ? OR h.SoHD LIKE ?) ");
         }
         if (statusFilter != null && !statusFilter.equals("Tất cả")) {
             if (statusFilter.equals("Chưa thanh toán")) {
-                sql.append("AND h.TrangThaiThanhToan IN ('Chưa thanh toán', 'Đang chờ thanh toán') ");
+                sql.append("AND h.TrangThaiThanhToan = 'Đang chờ thanh toán' ");
+            } else if (statusFilter.equals("Đã thanh toán")) {
+                sql.append("AND h.TrangThaiThanhToan = 'Đã thanh toán thành công' ");
             } else {
                 sql.append("AND h.TrangThaiThanhToan = ? ");
             }
@@ -55,11 +59,12 @@ public class HoaDonDAO {
                     HoaDonDTO hd = new HoaDonDTO();
                     hd.setMaHoaDon(rs.getString("MaHoaDon"));
                     hd.setSoHD(rs.getString("SoHD"));
-                    
+
                     double tt = rs.getDouble("TongTien");
                     double thanh = rs.getDouble("ThanhTien");
-                    if (tt == 0 && thanh > 0) tt = thanh;
-                    
+                    if (tt == 0 && thanh > 0)
+                        tt = thanh;
+
                     hd.setTongTien(tt);
                     hd.setThanhTien(thanh);
                     hd.setNgayLapHoaDon(rs.getTimestamp("NgayLapHoaDon"));
@@ -85,17 +90,19 @@ public class HoaDonDAO {
 
     public boolean taoHoaDonMoi(HoaDonDTO hd) {
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) return false;
+        if (conn == null)
+            return false;
 
-        String sql = "INSERT INTO HOADON (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, TrangThaiThanhToan, MaPhien) " +
-                     "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
+        String sql = "INSERT INTO HOADON (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, TrangThaiThanhToan, MaPhien) "
+                +
+                "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, hd.getMaHoaDon());
             pstmt.setString(2, hd.getSoHD());
             pstmt.setDouble(3, hd.getTongTien());
             pstmt.setDouble(4, hd.getThanhTien());
-            pstmt.setString(5, hd.getTrangThaiThanhToan());
+            pstmt.setString(5, "Đang chờ thanh toán");
             pstmt.setString(6, hd.getMaPhien());
 
             return pstmt.executeUpdate() > 0;
@@ -108,7 +115,8 @@ public class HoaDonDAO {
     public boolean capNhatTrangThaiThanhToanTheoPhien(String maPhien, String trangThai) {
         String sql = "UPDATE HOADON SET TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) return false;
+        if (conn == null)
+            return false;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, trangThai);
@@ -122,21 +130,23 @@ public class HoaDonDAO {
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
         ThongTinHoaDonDTO thongTin = null;
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) return null;
+        if (conn == null)
+            return null;
 
         String sqlChung = "SELECT h.MaHoaDon, h.TongTien, h.ThanhTien, p.MaPhien, " +
-                          "p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, " +
-                          "kh.HoTenKH, kg.TenKG " +
-                          "FROM HOADON h " +
-                          "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
-                          "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-                          "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                          "WHERE h.MaHoaDon = ?";
+                "p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, " +
+                "nd.HoTen AS HoTenKH, kg.TenKG " +
+                "FROM HOADON h " +
+                "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
+                "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
+                "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                "WHERE h.MaHoaDon = ?";
 
         String sqlDichVu = "SELECT dv.TenDV, ct.SoLuong, dv.DonGia " +
-                           "FROM CHITIETDICHVU ct " +
-                           "JOIN DICHVU dv ON ct.MaDV = dv.MaDV " +
-                           "WHERE ct.MaPhien = ?";
+                "FROM CHITIETDICHVU ct " +
+                "JOIN DICHVU dv ON ct.MaDV = dv.MaDV " +
+                "WHERE ct.MaPhien = ?";
 
         try (PreparedStatement psChung = conn.prepareStatement(sqlChung)) {
             psChung.setString(1, maHoaDon);
@@ -146,30 +156,32 @@ public class HoaDonDAO {
                     thongTin.setMaHoaDon(rsChung.getString("MaHoaDon"));
                     thongTin.setHoTenKH(rsChung.getString("HoTenKH"));
                     thongTin.setTenKhongGian(rsChung.getString("TenKG"));
-                    
+
                     double tt = rsChung.getDouble("TongTien");
                     double thanh = rsChung.getDouble("ThanhTien");
-                    if (tt == 0 && thanh > 0) tt = thanh;
-                    
+                    if (tt == 0 && thanh > 0)
+                        tt = thanh;
+
                     thongTin.setTongTien(tt);
                     thongTin.setThanhTien(thanh);
                     thongTin.setMaPhien(rsChung.getString("MaPhien"));
                     thongTin.setTrangThaiPhien(rsChung.getString("TrangThaiPhien"));
-                    
+
                     Timestamp tBD = rsChung.getTimestamp("ThoiGianBatDau");
                     Timestamp tKT = rsChung.getTimestamp("ThoiGianKetThuc");
 
                     if (tBD != null && tKT != null) {
                         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
                         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-                        thongTin.setThoiGianSửDung(timeFormat.format(tBD) + " - " + timeFormat.format(tKT) + " (" + dateFormat.format(tBD) + ")");
-                        
+                        thongTin.setThoiGianSửDung(timeFormat.format(tBD) + " - " + timeFormat.format(tKT) + " ("
+                                + dateFormat.format(tBD) + ")");
+
                         long diffMillis = tKT.getTime() - tBD.getTime();
                         long totalMinutes = diffMillis / 60000;
                         long hours = totalMinutes / 60;
                         long minutes = totalMinutes % 60;
                         long roundedHours = (minutes < 15) ? hours : hours + 1;
-                        
+
                         thongTin.setTongSoGio(roundedHours);
                     }
 
@@ -178,12 +190,28 @@ public class HoaDonDAO {
                         try (ResultSet rsDV = psDV.executeQuery()) {
                             while (rsDV.next()) {
                                 thongTin.getDanhSachDichVu().add(new DichVuDaDungDTO(
-                                    rsDV.getString("TenDV"),
-                                    rsDV.getInt("SoLuong"),
-                                    rsDV.getDouble("DonGia")
-                                ));
+                                        rsDV.getString("TenDV"),
+                                        rsDV.getInt("SoLuong"),
+                                        rsDV.getDouble("DonGia")));
                             }
                         }
+                    }
+
+                    // Tính toán tiền dịch vụ đã load
+                    double tongTienDichVu = 0;
+                    for (DichVuDaDungDTO dv : thongTin.getDanhSachDichVu()) {
+                        tongTienDichVu += dv.getThanhTien();
+                    }
+
+                    // Phần còn lại chính là tiền thuê không gian
+                    double tienKhongGian = thongTin.getTongTien() - tongTienDichVu;
+                    if (tienKhongGian > 0) {
+                        double donGiaKg = (thongTin.getTongSoGio() > 0) ? (tienKhongGian / thongTin.getTongSoGio()) : tienKhongGian;
+                        // Thêm vào đầu danh sách để hiển thị đầu tiên
+                        thongTin.getDanhSachDichVu().add(0, new DichVuDaDungDTO(
+                                "Thuê " + thongTin.getTenKhongGian(),
+                                (int) thongTin.getTongSoGio(),
+                                donGiaKg));
                     }
                 }
             }
@@ -193,12 +221,14 @@ public class HoaDonDAO {
         return thongTin;
     }
 
-    public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG, double thanhTien) {
+    public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG,
+            double thanhTien) {
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) return false;
+        if (conn == null)
+            return false;
 
-        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, ThanhTien = ?, TrangThaiThanhToan = 'Đã thanh toán', NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaHoaDon = ?";
-        
+        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, ThanhTien = ?, TrangThaiThanhToan = 'Đã thanh toán thành công', NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaHoaDon = ?";
+
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, phuongThucThanhToan);
             pstmt.setString(2, maNV);
@@ -214,9 +244,11 @@ public class HoaDonDAO {
 
     public boolean huyHoaDon(String maHoaDon) {
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) return false;
-
-        String sql = "UPDATE HOADON SET TrangThaiThanhToan = 'Đã hủy' WHERE MaHoaDon = ?";
+        if (conn == null)
+            return false;
+        // Vì SQL không có trạng thái 'Đã hủy', tạm thời chuyển về 'Thanh toán không
+        // thành công' hoặc xử lý khác
+        String sql = "UPDATE HOADON SET TrangThaiThanhToan = 'Thanh toán không thành công' WHERE MaHoaDon = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, maHoaDon);
             return pstmt.executeUpdate() > 0;
@@ -228,7 +260,8 @@ public class HoaDonDAO {
 
     public boolean xoaHoaDon(String maHoaDon) {
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) return false;
+        if (conn == null)
+            return false;
 
         String sql = "DELETE FROM HOADON WHERE MaHoaDon = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {

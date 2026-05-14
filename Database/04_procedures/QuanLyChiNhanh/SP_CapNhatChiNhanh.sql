@@ -5,12 +5,10 @@ CREATE OR REPLACE PROCEDURE SP_CapNhatChiNhanh(
     p_ThoiGianMoCua IN VARCHAR2,
     p_ThoiGianDongCua IN VARCHAR2,
     p_DuongDayNong IN VARCHAR2,
-    p_MaNV_QuanLy IN VARCHAR2,
+    p_TrangThai IN VARCHAR2,
     p_outMessage OUT VARCHAR2
 ) AS
     v_Count NUMBER;
-    v_LoaiNV VARCHAR2(50);
-    v_TrangThaiNV VARCHAR2(50);
 BEGIN
     SELECT COUNT(*) INTO v_Count FROM CHINHANH WHERE MaCN = p_MaCN;
     IF v_Count = 0 THEN
@@ -24,41 +22,14 @@ BEGIN
             'Tên "' || p_TenCN || '" đã được dùng bởi chi nhánh khác!');
     END IF;
 
-    IF p_MaNV_QuanLy IS NOT NULL THEN
-        BEGIN
-            SELECT LoaiNV, TrangThaiLamViec
-            INTO v_LoaiNV, v_TrangThaiNV
-            FROM NHANVIEN WHERE MaNV = p_MaNV_QuanLy;
-        EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-                RAISE_APPLICATION_ERROR(-20102,
-                    'Nhân viên [' || p_MaNV_QuanLy || '] không tồn tại!');
-        END;
-
-        IF v_LoaiNV != 'Quản lý' OR v_TrangThaiNV != 'Đang làm việc' THEN
-            RAISE_APPLICATION_ERROR(-20103,
-                'Nhân viên [' || p_MaNV_QuanLy || '] không hợp lệ để làm quản lý chi nhánh!');
-        END IF;
-    END IF;
-
     UPDATE CHINHANH
     SET TenCN = p_TenCN,
         DiaChi = p_DiaChi,
         ThoiGianMoCua = p_ThoiGianMoCua,
         ThoiGianDongCua = p_ThoiGianDongCua,
-        DuongDayNong = p_DuongDayNong
+        DuongDayNong = p_DuongDayNong,
+        TrangThai = p_TrangThai
     WHERE MaCN = p_MaCN;
-
-    -- Cập nhật nhân viên quản lý (nếu có truyền)
-    IF p_MaNV_QuanLy IS NOT NULL THEN
-        -- Gỡ bỏ chi nhánh khỏi quản lý cũ (nếu có)
-        UPDATE NHANVIEN SET MaCN = NULL 
-        WHERE MaCN = p_MaCN AND LoaiNV = 'Quản lý';
-        
-        -- Gán chi nhánh cho quản lý mới
-        UPDATE NHANVIEN SET MaCN = p_MaCN 
-        WHERE MaNV = p_MaNV_QuanLy;
-    END IF;
 
     COMMIT;
     p_outMessage := 'Cập nhật chi nhánh [' || p_MaCN || '] thành công!';

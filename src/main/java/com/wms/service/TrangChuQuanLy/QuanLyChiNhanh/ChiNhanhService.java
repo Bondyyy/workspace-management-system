@@ -22,7 +22,6 @@ public class ChiNhanhService {
         return chiNhanhDAO.timKiemChiNhanh(tuKhoa.trim());
     }
 
-    /** Trả về null nếu thành công, chuỗi lỗi nếu thất bại. */
     public String themMoi(ChiNhanhDTO cn) {
         String loi = validate(cn, false);
         if (loi != null) return loi;
@@ -49,14 +48,12 @@ public class ChiNhanhService {
         return chiNhanhDAO.voHieuHoaChiNhanh(maCN) ? null : "Vô hiệu hóa thất bại, vui lòng thử lại.";
     }
 
-    public List<String[]> layDanhSachQuanLy() {
-        return nhanVienDAO.layDanhSachQuanLy();
+    public String layMaCNTiepTheo() {
+        int count = chiNhanhDAO.demSoLuong();
+        return String.format("CN%03d", count + 1);
     }
 
     private String validate(ChiNhanhDTO cn, boolean isUpdate) {
-        if (cn.getTenCN() == null || cn.getTenCN().trim().isEmpty()) {
-            return "Tên chi nhánh không được để trống!";
-        }
         if (cn.getDiaChi() == null || cn.getDiaChi().trim().isEmpty()) {
             return "Địa chỉ không được để trống!";
         }

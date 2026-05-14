@@ -15,9 +15,9 @@ public class ThongTinHoiVienDAO {
 
     public HoiVienDTO layThongTin(String maND) {
         HoiVienDTO dto = new HoiVienDTO();
-        String sql = "SELECT kh.HoTenKH, nd.SDT, nd.Email, nd.NgaySinh, nd.GioiTinh, nd.ThoiGianTao, nd.AnhDaiDien, h.TenHangThanhVien " +
+        String sql = "SELECT nd.HoTen, nd.SDT, nd.Email, nd.NgaySinh, nd.GioiTinh, nd.ThoiGianTao, nd.AnhDaiDien, h.TenHangThanhVien " +
                      "FROM NGUOIDUNG nd " +
-                     "JOIN KHACHHANG kh ON nd.MaND = kh.MaND " +
+                     "LEFT JOIN KHACHHANG kh ON nd.MaND = kh.MaND " +
                      "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
                      "WHERE nd.MaND = ?";
         try (Connection conn = getConn();
@@ -26,7 +26,7 @@ public class ThongTinHoiVienDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     dto.setMaND(maND);
-                    dto.setHoTen(rs.getString("HoTenKH"));
+                    dto.setHoTen(rs.getString("HoTen"));
                     dto.setSdt(rs.getString("SDT"));
                     dto.setEmail(rs.getString("Email"));
                     dto.setNgaySinh(rs.getDate("NgaySinh"));
@@ -44,31 +44,18 @@ public class ThongTinHoiVienDAO {
     }
 
     public boolean capNhatThongTin(HoiVienDTO dto) {
-        String sqlKH = "UPDATE KHACHHANG SET HoTenKH = ? WHERE MaND = ?";
-        String sqlND = "UPDATE NGUOIDUNG SET SDT = ?, NgaySinh = ?, GioiTinh = ?, AnhDaiDien = ? WHERE MaND = ?";
+        String sqlND = "UPDATE NGUOIDUNG SET HoTen = ?, SDT = ?, NgaySinh = ?, GioiTinh = ?, AnhDaiDien = ? WHERE MaND = ?";
         
-        try (Connection conn = getConn()) {
-            conn.setAutoCommit(false);
-            try {
-                try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
-                    ps.setString(1, dto.getHoTen());
-                    ps.setString(2, dto.getMaND());
-                    ps.executeUpdate();
-                }
-                try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
-                    ps.setString(1, dto.getSdt());
-                    ps.setDate(2, dto.getNgaySinh());
-                    ps.setString(3, dto.getGioiTinh());
-                    ps.setBytes(4, dto.getAnhDaiDien());
-                    ps.setString(5, dto.getMaND());
-                    ps.executeUpdate();
-                }
-                conn.commit();
-                return true;
-            } catch (Exception e) {
-                conn.rollback();
-                e.printStackTrace();
-            }
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sqlND)) {
+            ps.setString(1, dto.getHoTen());
+            ps.setString(2, dto.getSdt());
+            ps.setDate(3, dto.getNgaySinh());
+            ps.setString(4, dto.getGioiTinh());
+            ps.setBytes(5, dto.getAnhDaiDien());
+            ps.setString(6, dto.getMaND());
+            
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMS Booking Portal</title>
+    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+</head>
+<body class="landing-page">
+<header class="site-header">
+    <a class="brand" th:href="@{/}">WMS Booking Portal</a>
+    <nav class="header-actions">
+        <a class="ghost-link" th:if="${user == null}" th:href="@{/login}">Đăng nhập</a>
+        <a class="primary-link" th:if="${user == null}" th:href="@{/register}">Tạo tài khoản</a>
+        <a class="ghost-link" th:if="${user != null and user.staff}" th:href="@{/staff/bookings}">Quản lý yêu cầu</a>
+        <a class="primary-link" th:if="${user != null and !user.staff}" th:href="@{/portal}">Vào trang đặt chỗ</a>
+    </nav>
+</header>
+
+<main class="hero-shell">
+    <section class="hero-panel">
+        <div class="hero-copy">
+            <p class="eyebrow">Đặt chỗ không gian làm việc qua web</p>
+            <h1>Hội viên đặt chỗ trên web, nhân viên xử lý trong hệ thống.</h1>
+            <p class="hero-text">
+                Bản web này dùng lại CSDL Oracle hiện có, thêm cổng đặt chỗ đơn giản cho hội viên:
+                đăng nhập, chọn chi nhánh, chọn không gian, gửi yêu cầu và chờ nhân viên xác nhận.
+            </p>
+            <div class="cta-row">
+                <a class="button-primary" th:if="${user == null}" th:href="@{/login}">Bắt đầu đăng nhập</a>
+                <a class="button-primary" th:if="${user != null and !user.staff}" th:href="@{/portal}">Đặt chỗ ngay</a>
+                <a class="button-primary" th:if="${user != null and user.staff}" th:href="@{/staff/bookings}">Mở bảng điều phối</a>
+                <a class="button-secondary" th:href="@{/register}">Tạo hội viên mới</a>
+            </div>
+        </div>
+        <div class="hero-card-grid">
+            <article class="feature-card accent-card">
+                <span class="feature-label">Hội viên</span>
+                <strong>Đăng nhập và đặt chỗ</strong>
+                <p>Chọn chi nhánh, không gian, giờ đến và thời lượng sử dụng trên một trang duy nhất.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-label">Nhân viên</span>
+                <strong>Xác nhận yêu cầu</strong>
+                <p>Theo dõi danh sách đặt chỗ mới, xác nhận thanh toán và đánh dấu đã sử dụng.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-label">Demo sinh viên</span>
+                <strong>Đủ dùng, không rườm rà</strong>
+                <p>Không cần tải app Java về máy khách. Hội viên chỉ cần trình duyệt và tài khoản web.</p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>

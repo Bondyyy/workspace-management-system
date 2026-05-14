@@ -15,22 +15,32 @@ public class PhienLamViecDAO {
     }
 
     public boolean taoPhienLamViecMoi(PhienLamViecDTO phien) {
-        String sql = "INSERT INTO PHIENLAMVIEC (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien, MaKG, MaKH, MaDatCho, CapNhatLanCuoi) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String sql = "{call sp_MoPhienLamViecTrucTiep(?, ?, ?, ?, ?)}";
 
         try (Connection conn = getConn();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, phien.getMaPhien());
-            pstmt.setTimestamp(2, phien.getThoiGianBatDau());
-            pstmt.setTimestamp(3, phien.getThoiGianDuKienKetThuc());
-            pstmt.setString(4, phien.getTrangThaiPhien());
-            pstmt.setString(5, phien.getMaKG());
-            pstmt.setString(6, phien.getMaKH());
-            pstmt.setString(7, phien.getMaDatCho());
+                CallableStatement cstmt = conn.prepareCall(sql)) {
+            cstmt.setString(1, phien.getMaKG());
+            cstmt.setString(2, phien.getMaKH());
+            cstmt.setTimestamp(3, phien.getThoiGianDuKienKetThuc());
+            
+            // Đăng ký tham số đầu ra
+            cstmt.registerOutParameter(4, java.sql.Types.VARCHAR); // p_MaPhien
+            cstmt.registerOutParameter(5, java.sql.Types.VARCHAR); // p_outMessage
 
-            return pstmt.executeUpdate() > 0;
+            cstmt.execute();
+            
+            String maPhienMoi = cstmt.getString(4);
+            String message = cstmt.getString(5);
+            
+            if (maPhienMoi != null) {
+                phien.setMaPhien(maPhienMoi); // Cập nhật lại mã phiên được sinh từ DB
+                return true;
+            } else {
+                System.err.println("[PhienLamViecDAO] Lỗi từ SP: " + message);
+                return false;
+            }
         } catch (SQLException e) {
-            System.err.println("[PhienLamViecDAO] Lỗi khi tạo phiên mới: " + e.getMessage());
+            System.err.println("[PhienLamViecDAO] Lỗi khi gọi SP tạo phiên: " + e.getMessage());
             return false;
         }
     }
@@ -38,14 +48,15 @@ public class PhienLamViecDAO {
     public List<PhienLamViecFullDTO> layDanhSachPhien(String keyword, String maCN) {
         List<PhienLamViecFullDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT p.*, kg.TenKG, kh.HoTenKH, dc.TrangThaiDatTruoc, h.TrangThaiThanhToan, lkg.DonGiaTheoGio " +
-                "FROM PHIENLAMVIEC p " +
-                "JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                "JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG " +
-                "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-                "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
-                "LEFT JOIN HOADON h ON p.MaPhien = h.MaPhien " +
-                "WHERE (p.MaPhien LIKE ? OR kh.HoTenKH LIKE ? OR kg.TenKG LIKE ?)");
+                "SELECT p.*, kg.TenKG, nd.HoTen AS HoTenKH, dc.TrangThaiDatTruoc, h.TrangThaiThanhToan, lkg.DonGiaTheoGio " +
+                        "FROM PHIENLAMVIEC p " +
+                        "JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                        "JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG " +
+                        "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                        "JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
+                        "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
+                        "LEFT JOIN HOADON h ON p.MaPhien = h.MaPhien " +
+                        "WHERE (p.MaPhien LIKE ? OR nd.HoTen LIKE ? OR kg.TenKG LIKE ?)");
 
         if (maCN != null && !maCN.isEmpty()) {
             sql.append(" AND kg.MaCN = ?");
@@ -53,7 +64,7 @@ public class PhienLamViecDAO {
         sql.append(" ORDER BY p.ThoiGianBatDau DESC");
 
         try (Connection conn = getConn();
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+                PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             String search = "%" + (keyword == null ? "" : keyword) + "%";
             pstmt.setString(1, search);
             pstmt.setString(2, search);
@@ -89,7 +100,7 @@ public class PhienLamViecDAO {
 
     public boolean capNhatPhien(String maPhien, String trangThai, String tenKH) {
         String sqlPhien = "UPDATE PHIENLAMVIEC SET TrangThaiPhien = ? WHERE MaPhien = ?";
-        String sqlKH = "UPDATE KHACHHANG kh SET HoTenKH = ? WHERE MaKH = (SELECT MaKH FROM PHIENLAMVIEC WHERE MaPhien = ?)";
+        String sqlKH = "UPDATE NGUOIDUNG SET HoTen = ? WHERE MaND = (SELECT MaND FROM KHACHHANG WHERE MaKH = (SELECT MaKH FROM PHIENLAMVIEC WHERE MaPhien = ?))";
 
         try (Connection conn = getConn()) {
             conn.setAutoCommit(false);
@@ -120,7 +131,7 @@ public class PhienLamViecDAO {
 
     public boolean ketThucPhien(String maPhien) {
         String sqlPhien = "UPDATE PHIENLAMVIEC SET ThoiGianKetThuc = CURRENT_TIMESTAMP, TrangThaiPhien = 'Đã kết thúc', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?";
-        
+
         try (Connection conn = getConn()) {
             conn.setAutoCommit(false);
             try {
@@ -132,10 +143,11 @@ public class PhienLamViecDAO {
                         return false;
                     }
                 }
-                
-                // 2. Tính toán và cập nhật hóa đơn thủ công (tránh lỗi thiếu hàm/procedure trong Oracle)
+
+                // 2. Tính toán và cập nhật hóa đơn thủ công (tránh lỗi thiếu hàm/procedure
+                // trong Oracle)
                 double tongTien = tinhTongTienPhien(conn, maPhien);
-                
+
                 String sqlHoaDon = "UPDATE HOADON SET TongTien = ?, ThanhTien = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
                 try (PreparedStatement pstmtHoaDon = conn.prepareStatement(sqlHoaDon)) {
                     pstmtHoaDon.setDouble(1, tongTien);
@@ -161,10 +173,10 @@ public class PhienLamViecDAO {
         double tienDichVu = 0;
 
         String sqlKg = "SELECT LKG.DonGiaTheoGio, PLV.ThoiGianBatDau, PLV.ThoiGianKetThuc " +
-                       "FROM PHIENLAMVIEC PLV " +
-                       "JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG " +
-                       "JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG " +
-                       "WHERE PLV.MaPhien = ?";
+                "FROM PHIENLAMVIEC PLV " +
+                "JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG " +
+                "JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG " +
+                "WHERE PLV.MaPhien = ?";
         try (PreparedStatement ps = conn.prepareStatement(sqlKg)) {
             ps.setString(1, maPhien);
             try (ResultSet rs = ps.executeQuery()) {
@@ -172,15 +184,16 @@ public class PhienLamViecDAO {
                     double donGia = rs.getDouble("DonGiaTheoGio");
                     Timestamp batDau = rs.getTimestamp("ThoiGianBatDau");
                     Timestamp ketThuc = rs.getTimestamp("ThoiGianKetThuc");
-                    if (ketThuc == null) ketThuc = new Timestamp(System.currentTimeMillis());
-                    
+                    if (ketThuc == null)
+                        ketThuc = new Timestamp(System.currentTimeMillis());
+
                     if (batDau != null) {
                         long diffMillis = ketThuc.getTime() - batDau.getTime();
                         long totalMinutes = diffMillis / 60000;
                         long hours = totalMinutes / 60;
                         long minutes = totalMinutes % 60;
                         long roundedHours = (minutes < 15) ? hours : hours + 1;
-                        
+
                         tienKhongGian = donGia * roundedHours;
                     }
                 }
@@ -188,9 +201,9 @@ public class PhienLamViecDAO {
         }
 
         String sqlDv = "SELECT SUM(CT.SoLuong * DV.DonGia) AS TienDV " +
-                       "FROM CHITIETDICHVU CT " +
-                       "JOIN DICHVU DV ON CT.MaDV = DV.MaDV " +
-                       "WHERE CT.MaPhien = ?";
+                "FROM CHITIETDICHVU CT " +
+                "JOIN DICHVU DV ON CT.MaDV = DV.MaDV " +
+                "WHERE CT.MaPhien = ?";
         try (PreparedStatement ps = conn.prepareStatement(sqlDv)) {
             ps.setString(1, maPhien);
             try (ResultSet rs = ps.executeQuery()) {
@@ -211,7 +224,7 @@ public class PhienLamViecDAO {
                 "WHERE ct.MaPhien = ?";
 
         try (Connection conn = getConn();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, maPhien);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -230,9 +243,10 @@ public class PhienLamViecDAO {
     public int demSoLuong() {
         String sql = "SELECT COUNT(*) FROM PHIENLAMVIEC";
         try (Connection conn = getConn();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            if (rs.next()) return rs.getInt(1);
+                Statement st = conn.createStatement();
+                ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next())
+                return rs.getInt(1);
         } catch (SQLException e) {
             System.err.println("[PhienLamViecDAO] Lỗi đếm số lượng: " + e.getMessage());
         }

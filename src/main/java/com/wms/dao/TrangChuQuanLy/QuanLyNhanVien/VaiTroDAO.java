@@ -48,7 +48,6 @@ public class VaiTroDAO {
                 vt.setMaVaiTro(maVT);
             }
 
-            // Insert VAITRO
             String sqlVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
                 ps.setString(1, maVT);
@@ -57,7 +56,6 @@ public class VaiTroDAO {
                 ps.executeUpdate();
             }
 
-            // Insert NHOMCHUCNANG (Proxy for UI)
             String sqlNCN = "INSERT INTO NHOMCHUCNANG (MaNhomChucNang, TenNhomChucNang, MoTa) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlNCN)) {
                 ps.setString(1, maVT);
@@ -66,19 +64,21 @@ public class VaiTroDAO {
                 ps.executeUpdate();
             }
 
-            String sqlCTNCN = "INSERT INTO CHITIETNHOMCHUCNANG (MaVaiTro, MaNhomChucNang) VALUES (?, ?)";
+            String sqlCTNCN = "INSERT INTO CHITIETNHOMCHUCNANG (MaVaiTro, MaNhomChucNang, MoTa) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sqlCTNCN)) {
                 ps.setString(1, maVT);
                 ps.setString(2, maVT);
+                ps.setString(3, "Liên kết vai trò với nhóm chức năng mặc định");
                 ps.executeUpdate();
             }
 
             if (danhSachMaChucNang != null && !danhSachMaChucNang.isEmpty()) {
-                String sqlCN = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang) VALUES (?, ?)";
+                String sqlCN = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang, MoTa) VALUES (?, ?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sqlCN)) {
                     for (String maCN : danhSachMaChucNang) {
                         ps.setString(1, maVT);
                         ps.setString(2, maCN);
+                        ps.setString(3, "Cấp quyền chức năng cho nhóm");
                         ps.addBatch();
                     }
                     ps.executeBatch();
@@ -155,7 +155,6 @@ public class VaiTroDAO {
             autoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
-            // Kiểm tra ràng buộc
             String sqlCheck = "SELECT COUNT(*) FROM CHITIETVAITRO WHERE MaVaiTro = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
                 ps.setString(1, maVaiTro);
@@ -234,11 +233,12 @@ public class VaiTroDAO {
             ps.executeUpdate();
         }
         if (dsMaCN != null && !dsMaCN.isEmpty()) {
-            String sql = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang) VALUES (?, ?)";
+            String sql = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang, MoTa) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 for (String maCN : dsMaCN) {
                     ps.setString(1, maVaiTro);
                     ps.setString(2, maCN);
+                    ps.setString(3, "Cập nhật quyền chức năng");
                     ps.addBatch();
                 }
                 ps.executeBatch();
@@ -273,53 +273,8 @@ public class VaiTroDAO {
         }
     }
 
-    public List<ChucNangDTO> getChucNangMacDinh() {
-        List<ChucNangDTO> list = new ArrayList<>();
-        String[][] data = {
-                { "CN01", "Tổng quan", "Xem dashboard thống kê và báo cáo" },
-                { "CN02", "Chi nhánh", "Quản lý thông tin và trạng thái các chi nhánh" },
-                { "CN03", "Không gian", "Quản lý sơ đồ, vị trí và trạng thái chỗ ngồi/phòng" },
-                { "CN04", "Thông tin Dịch vụ", "Quản lý danh mục dịch vụ F&B và tiện ích" },
-                { "CN05", "Kho Dịch vụ", "Quản lý nhập xuất tồn kho hàng hóa dịch vụ" },
-                { "CN06", "Dịch vụ Khách đặt", "Quản lý các yêu cầu dịch vụ từ khách hàng" },
-                { "CN07", "Phiên làm việc", "Theo dõi và quản lý các ca trực, phiên sử dụng" },
-                { "CN08", "Hóa đơn & Thu ngân", "Xử lý thanh toán, xuất hóa đơn và báo cáo doanh thu" },
-                { "CN09", "Khuyến mãi (Voucher)", "Tạo và quản lý các chương trình ưu đãi, mã giảm giá" },
-                { "CN10", "Hội viên / Khách hàng", "Quản lý thông tin, hạng thành viên và lịch sử tích điểm" },
-                { "CN11", "Nhân sự / Phân quyền", "Quản lý tài khoản nhân viên và thiết lập quyền hạn" }
-        };
-        for (String[] row : data) {
-            ChucNangDTO cn = new ChucNangDTO();
-            cn.setMaChucNang(row[0]);
-            cn.setTenChucNang(row[1]);
-            cn.setMoTa(row[2]);
-            list.add(cn);
-        }
-        return list;
+    public void khoiTaoDuLieuChucNang() {
+        com.wms.util.DataInitializer.khoiTaoChucNang(getConn());
     }
 
-    public void khoiTaoDuLieuChucNang() {
-        Connection conn = getConn();
-        if (conn == null) return;
-        try {
-            String mergeSql = "MERGE INTO CHUCNANG dest USING (SELECT ? AS MaChucNang, ? AS TenChucNang, ? AS MoTa FROM DUAL) src ON (dest.MaChucNang = src.MaChucNang) WHEN MATCHED THEN UPDATE SET dest.TenChucNang = src.TenChucNang, dest.MoTa = src.MoTa WHEN NOT MATCHED THEN INSERT (MaChucNang, TenChucNang, MoTa) VALUES (src.MaChucNang, src.TenChucNang, src.MoTa)";
-            try (PreparedStatement ps = conn.prepareStatement(mergeSql)) {
-                for (ChucNangDTO cn : getChucNangMacDinh()) {
-                    ps.setString(1, cn.getMaChucNang());
-                    ps.setString(2, cn.getTenChucNang());
-                    ps.setString(3, cn.getMoTa());
-                    ps.addBatch();
-                }
-                ps.executeBatch();
-            }
-            
-            try (Statement st = conn.createStatement()) {
-                st.executeUpdate("DELETE FROM CHITIETCHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11')");
-                st.executeUpdate("DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11')");
-            }
-            System.out.println("[VaiTroDAO] Đồng bộ dữ liệu bảng CHUCNANG thành công.");
-        } catch (SQLException e) {
-            System.err.println("[VaiTroDAO] Lỗi đồng bộ dữ liệu CHUCNANG: " + e.getMessage());
-        }
-    }
 }

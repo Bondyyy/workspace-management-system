@@ -9,7 +9,7 @@ import com.wms.dao.TrangChuQuanLy.QuanLyPhien.PhienLamViecDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 
@@ -91,21 +91,17 @@ public class PhienLamViecService {
 
     public boolean taoPhienMoi(String maKH, String maKG, int soGioSuDung, double donGiaTheoGio) {
         PhienLamViecDTO phien = new PhienLamViecDTO();
-        
-        int count = phienDAO.demSoLuong();
-        phien.setMaPhien(String.format("PH%04d", count + 1));
-        
         phien.setMaKH(maKH);
         phien.setMaKG(maKG);
         phien.setTrangThaiPhien("Đang hoạt động");
         phien.setDonGiaTheoGio(donGiaTheoGio);
-        
+
         long now = System.currentTimeMillis();
         phien.setThoiGianBatDau(new java.sql.Timestamp(now));
-        
+
         long durationMillis = (long) soGioSuDung * 3600 * 1000;
         phien.setThoiGianDuKienKetThuc(new java.sql.Timestamp(now + durationMillis));
-        
+
         return phienDAO.taoPhienLamViecMoi(phien);
     }
 

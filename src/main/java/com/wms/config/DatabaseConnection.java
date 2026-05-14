@@ -11,15 +11,23 @@ public class DatabaseConnection {
     private Connection conn;
 
     private DatabaseConnection() {
+        connect();
+    }
+
+    private void connect() {
         try (FileInputStream fs = new FileInputStream("db.properties")) {
             Properties p = new Properties();
             p.load(fs);
+
+            if (this.conn != null && !this.conn.isClosed()) {
+                return;
+            }
 
             this.conn = DriverManager.getConnection(
                     p.getProperty("url"),
                     p.getProperty("user"),
                     p.getProperty("pass"));
-            
+
             System.out.println("[DB] Kết nối thành công!");
         } catch (Exception e) {
             System.err.println("[DB] Lỗi kết nối: " + e.getMessage());
@@ -27,18 +35,20 @@ public class DatabaseConnection {
     }
 
     public static synchronized DatabaseConnection getInstance() {
-        try {
-            if (instance == null || instance.conn == null || instance.conn.isClosed()) {
-                instance = new DatabaseConnection();
-            }
-        } catch (SQLException e) {
-            System.err.println("[DB] Kết nối cũ lỗi, đang tạo lại...");
+        if (instance == null) {
             instance = new DatabaseConnection();
         }
         return instance;
     }
 
     public Connection getConnection() {
+        try {
+            if (conn == null || conn.isClosed()) {
+                connect();
+            }
+        } catch (SQLException e) {
+            connect();
+        }
         return conn;
     }
 }

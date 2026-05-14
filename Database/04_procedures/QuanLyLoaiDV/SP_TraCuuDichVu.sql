@@ -15,7 +15,9 @@ BEGIN
                DV.HinhAnh,
                DV.MaLoaiDV,
                LDV.TenLoaiDV,
-               LDV.TrangThaiLDV
+               LDV.TrangThaiLDV,
+               DV.SoLuong,
+               DV.GiaNhap
         FROM DICHVU DV
         JOIN LOAIDICHVU LDV ON DV.MaLoaiDV = LDV.MaLoaiDV
         WHERE (p_MaLoaiDV IS NULL OR DV.MaLoaiDV = p_MaLoaiDV)

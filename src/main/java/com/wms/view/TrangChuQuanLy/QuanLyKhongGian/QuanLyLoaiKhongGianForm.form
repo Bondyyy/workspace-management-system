@@ -126,7 +126,7 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="30" green="1e" red="23" type="rgb"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="M&#xe3; lo&#x1ea1;i KG (T&#x1ef1; &#x111;&#x1ed9;ng)"/>
+                <Property name="text" type="java.lang.String" value="M&#xe3; lo&#x1ea1;i Kh&#xf4;ng gian"/>
               </Properties>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
@@ -286,7 +286,7 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="8d" green="5e" red="eb" type="rgb"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="L&#xe0;m m&#x1edb;i / B&#x1ecf; qua"/>
+                <Property name="text" type="java.lang.String" value="L&#xe0;m m&#x1edb;i"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnHuyActionPerformed"/>

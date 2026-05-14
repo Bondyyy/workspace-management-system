@@ -73,9 +73,9 @@ public class QuanLyKhoDao {
 
     public List<String> layDSNhanVien() {
         List<String> list = new ArrayList<>();
-        String sql = "SELECT kh.HoTenKH FROM NHANVIEN nv JOIN KHACHHANG kh ON nv.MaND = kh.MaND";
+        String sql = "SELECT nd.HoTen FROM NHANVIEN nv JOIN NGUOIDUNG nd ON nv.MaND = nd.MaND";
         try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(rs.getString("HoTenKH"));
+            while (rs.next()) list.add(rs.getString("HoTen"));
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }

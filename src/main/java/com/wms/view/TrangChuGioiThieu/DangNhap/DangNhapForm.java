@@ -9,7 +9,7 @@ import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import javax.swing.JOptionPane;
 import com.wms.service.TrangChuGioiThieu.NguoiDungService;
 import com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 
 /**
  *
@@ -33,6 +33,17 @@ public class DangNhapForm extends javax.swing.JPanel {
             }
         });
         btnShowConfirmPass.addActionListener(e -> toggleShowPassword(txtPassword, btnShowConfirmPass));
+
+        java.awt.event.KeyAdapter enterKeyAdapter = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    btnLogin.doClick();
+                }
+            }
+        };
+        txtUsername.addKeyListener(enterKeyAdapter);
+        txtPassword.addKeyListener(enterKeyAdapter);
     }
 
     private void toggleShowPassword(javax.swing.JPasswordField field, javax.swing.JToggleButton btn) {
@@ -183,9 +194,13 @@ public class DangNhapForm extends javax.swing.JPanel {
                     currentWin.dispose();
                 }
 
-                // Nếu user có bất kỳ vai trò nào khác Hội viên → đây là nhân viên/quản lý
-                boolean laNhanVien = false;
-                if (user.getVaiTro() != null) {
+                // Nếu user có bất kỳ vai trò nào khác Hội viên HOẶC có bản ghi trong bảng NHANVIEN
+                System.out.println("[DEBUG] Login User: " + user.getTenTaiKhoan());
+                System.out.println("[DEBUG] User MaNV: " + user.getMaNV());
+                System.out.println("[DEBUG] User Roles: " + user.getVaiTro());
+                
+                boolean laNhanVien = (user.getMaNV() != null && !user.getMaNV().trim().isEmpty());
+                if (!laNhanVien && user.getVaiTro() != null) {
                     for (String vt : user.getVaiTro()) {
                         if (vt != null && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_NAME)
                                 && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_CODE)) {
@@ -194,6 +209,7 @@ public class DangNhapForm extends javax.swing.JPanel {
                         }
                     }
                 }
+                System.out.println("[DEBUG] laNhanVien: " + laNhanVien);
 
                 if (laNhanVien) {
                     // Nhân viên có bất kỳ vai trò quản lý → vào trang quản lý

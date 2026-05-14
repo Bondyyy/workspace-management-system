@@ -13,11 +13,6 @@ public class TienMatForm extends JDialog {
     private boolean daThanhToan = false;
     private final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
-    private JButton btnGoiY1, btnGoiY2, btnGoiY3, btnGoiY4, btnHuy, btnXacNhan;
-    private JLabel lblGoiY, lblHeaderTitle, lblNhap, lblTienThua, lblTienThuaTitle, lblTongTienTitle;
-    private JPanel pnContent, pnHeader, pnMain;
-    private JTextField txtSoTienKhachDua, txtTongTien;
-
     public TienMatForm(Frame parent, boolean modal, double tongTien) {
         super(parent, modal);
         this.tongTien = tongTien;
@@ -93,6 +88,7 @@ public class TienMatForm extends JDialog {
         }
     }
 
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
         pnMain = new JPanel();
         pnHeader = new JPanel();
@@ -207,9 +203,10 @@ public class TienMatForm extends JDialog {
         btnHuy.setFont(new Font("Segoe UI", 1, 14));
         btnHuy.setForeground(Color.WHITE);
         btnHuy.setText("Hủy bỏ");
-        btnHuy.addActionListener(e -> {
-            daThanhToan = false;
-            dispose();
+        btnHuy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHuyActionPerformed(evt);
+            }
         });
         pnContent.add(btnHuy);
         btnHuy.setBounds(20, 400, 130, 45);
@@ -219,9 +216,10 @@ public class TienMatForm extends JDialog {
         btnXacNhan.setForeground(Color.WHITE);
         btnXacNhan.setText("Xác nhận & Thanh toán");
         btnXacNhan.setEnabled(false);
-        btnXacNhan.addActionListener(e -> {
-            daThanhToan = true;
-            dispose();
+        btnXacNhan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnXacNhanActionPerformed(evt);
+            }
         });
         pnContent.add(btnXacNhan);
         btnXacNhan.setBounds(165, 400, 315, 45);
@@ -230,9 +228,39 @@ public class TienMatForm extends JDialog {
         pnContent.setBounds(30, 80, 500, 470);
 
         getContentPane().add(pnMain, BorderLayout.CENTER);
-    }
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHuyActionPerformed
+        daThanhToan = false;
+        dispose();
+    }//GEN-LAST:event_btnHuyActionPerformed
+
+    private void btnXacNhanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnXacNhanActionPerformed
+        daThanhToan = true;
+        dispose();
+    }//GEN-LAST:event_btnXacNhanActionPerformed
 
     public boolean isDaThanhToan() {
         return daThanhToan;
     }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnGoiY1;
+    private javax.swing.JButton btnGoiY2;
+    private javax.swing.JButton btnGoiY3;
+    private javax.swing.JButton btnGoiY4;
+    private javax.swing.JButton btnHuy;
+    private javax.swing.JButton btnXacNhan;
+    private javax.swing.JLabel lblGoiY;
+    private javax.swing.JLabel lblHeaderTitle;
+    private javax.swing.JLabel lblNhap;
+    private javax.swing.JLabel lblTienThua;
+    private javax.swing.JLabel lblTienThuaTitle;
+    private javax.swing.JLabel lblTongTienTitle;
+    private javax.swing.JPanel pnContent;
+    private javax.swing.JPanel pnHeader;
+    private javax.swing.JPanel pnMain;
+    private javax.swing.JTextField txtSoTienKhachDua;
+    private javax.swing.JTextField txtTongTien;
+    // End of variables declaration//GEN-END:variables
 }

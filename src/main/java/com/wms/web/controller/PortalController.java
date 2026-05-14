@@ -1,0 +1,223 @@
+package com.wms.web.controller;
+
+import com.wms.web.form.BookingForm;
+import com.wms.web.model.BookingView;
+import com.wms.web.model.BranchView;
+import com.wms.web.model.SessionUser;
+import com.wms.web.model.SpaceView;
+import com.wms.web.service.PortalService;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+
+@Controller
+public class PortalController {
+
+    private final PortalService portalService;
+
+    public PortalController(PortalService portalService) {
+        this.portalService = portalService;
+    }
+
+    @GetMapping("/portal")
+    public String dashboard(HttpSession session, Model model) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        List<BookingView> bookings = memberBookings(user.getMaKH());
+        List<SpaceView> spaces = portalService.getSpaces(null);
+        model.addAttribute("user", user);
+        model.addAttribute("activePage", "home");
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("recentBookings", bookings.stream().limit(6).toList());
+        model.addAttribute("bookingCount", bookings.size());
+        model.addAttribute("totalHours", bookings.stream()
+                .map(BookingView::getKhoangThoiGianSuDung)
+                .filter(value -> value != null)
+                .mapToInt(Integer::intValue)
+                .sum());
+        model.addAttribute("totalSpent", bookings.stream()
+                .map(BookingView::getThanhTien)
+                .filter(value -> value != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        model.addAttribute("featuredSpace", spaces.stream().findFirst().orElse(null));
+        return "web/portal";
+    }
+
+    @GetMapping("/portal/branches")
+    public String branches(HttpSession session, Model model) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("user", user);
+        model.addAttribute("activePage", "booking");
+        model.addAttribute("branches", portalService.getBranches());
+        return "web/branches";
+    }
+
+    @GetMapping("/portal/branches/{branchId}/spaces")
+    public String branchSpaces(@PathVariable("branchId") String branchId, HttpSession session, Model model) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        BranchView branch = portalService.getBranch(branchId).orElse(null);
+        if (branch == null) {
+            return "redirect:/portal/branches";
+        }
+
+        model.addAttribute("user", user);
+        model.addAttribute("activePage", "booking");
+        model.addAttribute("branch", branch);
+        model.addAttribute("spaces", portalService.getSpaces(branchId));
+        model.addAttribute("today", LocalDate.now());
+        return "web/space-map";
+    }
+
+    @GetMapping("/portal/checkout")
+    public String checkout(@RequestParam("maKG") String maKG,
+                           @RequestParam("arrivalTime") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime arrivalTime,
+                           @RequestParam("durationHours") Integer durationHours,
+                           @RequestParam(name = "voucherCode", required = false) String voucherCode,
+                           @RequestParam(name = "note", required = false) String note,
+                           HttpSession session,
+                           Model model,
+                           RedirectAttributes redirectAttributes) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        SpaceView space = portalService.getSpace(maKG);
+        if (space == null || durationHours == null || durationHours < 1) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng chọn không gian và khung giờ hợp lệ.");
+            return "redirect:/portal/branches";
+        }
+
+        BigDecimal subtotal = portalService.calculateAmount(space, durationHours);
+        BigDecimal discount = portalService.calculateDiscount(subtotal, voucherCode);
+        model.addAttribute("user", user);
+        model.addAttribute("activePage", "booking");
+        model.addAttribute("space", space);
+        model.addAttribute("arrivalTime", arrivalTime);
+        model.addAttribute("arrivalTimeValue", arrivalTime.toString());
+        model.addAttribute("endTime", arrivalTime.plusHours(durationHours));
+        model.addAttribute("durationHours", durationHours);
+        model.addAttribute("note", note == null ? "" : note);
+        model.addAttribute("voucherCode", voucherCode == null ? "" : voucherCode.trim());
+        model.addAttribute("vouchers", portalService.getActiveVouchers());
+        model.addAttribute("subtotal", subtotal);
+        model.addAttribute("discount", discount);
+        model.addAttribute("totalAmount", subtotal.subtract(discount));
+        return "web/checkout";
+    }
+
+    @PostMapping("/portal/bookings")
+    public String createBooking(@Valid @ModelAttribute("bookingForm") BookingForm bookingForm,
+                                BindingResult bindingResult,
+                                HttpSession session,
+                                RedirectAttributes redirectAttributes) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (user.getMaKH() == null || user.getMaKH().isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Tài khoản này chưa có hồ sơ hội viên, nên chưa thể đặt chỗ.");
+            return "redirect:/portal/branches";
+        }
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng kiểm tra lại thông tin đặt chỗ.");
+            return "redirect:/portal/branches";
+        }
+
+        try {
+            portalService.createBooking(user, bookingForm);
+            redirectAttributes.addFlashAttribute("success", "Đặt chỗ thành công. Nhân viên sẽ kiểm tra và xác nhận yêu cầu của bạn.");
+            return "redirect:/portal";
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/portal/branches";
+        }
+    }
+
+    @GetMapping("/portal/benefits")
+    public String benefits(@RequestParam(name = "keyword", required = false) String keyword,
+                           HttpSession session,
+                           Model model) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("user", user);
+        model.addAttribute("activePage", "benefits");
+        var vouchers = portalService.getActiveVouchers();
+        if (keyword != null && !keyword.isBlank()) {
+            String normalizedKeyword = keyword.trim().toLowerCase();
+            vouchers = vouchers.stream()
+                    .filter(voucher -> voucher.getMaChuSoPGG() != null
+                            && voucher.getMaChuSoPGG().toLowerCase().contains(normalizedKeyword))
+                    .toList();
+        }
+        model.addAttribute("vouchers", vouchers);
+        model.addAttribute("keyword", keyword == null ? "" : keyword.trim());
+        model.addAttribute("expiringVoucherCount", vouchers.stream()
+                .filter(voucher -> voucher.getNgayKetThucApDung() != null)
+                .filter(voucher -> voucher.getNgayKetThucApDung().isBefore(LocalDateTime.now().plusDays(3)))
+                .count());
+        return "web/benefits";
+    }
+
+    @GetMapping("/portal/account")
+    public String account(HttpSession session, Model model) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        List<BookingView> bookings = memberBookings(user.getMaKH());
+        model.addAttribute("user", user);
+        model.addAttribute("activePage", "account");
+        model.addAttribute("joinDate", LocalDate.now());
+        model.addAttribute("bookingCount", bookings.size());
+        model.addAttribute("lastBooking", bookings.stream()
+                .filter(booking -> booking.getThoiGianDuKienToi() != null)
+                .max(Comparator.comparing(BookingView::getThoiGianDuKienToi))
+                .orElse(null));
+        return "web/account";
+    }
+
+    private SessionUser currentMember(HttpSession session) {
+        SessionUser user = (SessionUser) session.getAttribute("user");
+        if (user == null) {
+            return null;
+        }
+        if (user.isStaff()) {
+            return null;
+        }
+        return user;
+    }
+
+    private List<BookingView> memberBookings(String maKH) {
+        if (maKH == null || maKH.isBlank()) {
+            return List.of();
+        }
+        return portalService.getMemberBookings(maKH);
+    }
+}

@@ -1,155 +1,288 @@
 package com.wms.util;
 
+import com.wms.config.DatabaseConnection;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.VaiTroDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
-import com.wms.config.DatabaseConnection;
 
 import java.io.InputStream;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SuperAdminCreator {
+
     public static void initialize() {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            VaiTroDAO vtDao = new VaiTroDAO();
-
-            vtDao.khoiTaoDuLieuChucNang();
-
-            List<String> fullQuyen = new ArrayList<>();
-            for (int i = 1; i <= 11; i++) {
-                fullQuyen.add(String.format("CN%02d", i));
+            if (conn == null) {
+                throw new IllegalStateException("Không thể kết nối CSDL.");
             }
 
-            boolean roleExists = false;
-            try (PreparedStatement ps = conn.prepareStatement("SELECT MaVaiTro FROM VAITRO WHERE MaVaiTro = 'VT01'");
-                    ResultSet rs = ps.executeQuery()) {
-                roleExists = rs.next();
-            }
+            boolean autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
 
-            if (!roleExists) {
-                System.out.println("Dang tao vai tro VT01...");
-                VaiTroDTO adminRole = new VaiTroDTO();
-                adminRole.setMaVaiTro("VT01");
-                adminRole.setTenVaiTro("Quản trị hệ thống");
-                adminRole.setMoTa("Toàn quyền quản lý hệ thống");
-                vtDao.themVaiTro(adminRole, fullQuyen);
-            } else {
-                try (Statement st = conn.createStatement()) {
-                    st.executeUpdate("UPDATE VAITRO SET TenVaiTro = 'Quản trị hệ thống' WHERE MaVaiTro = 'VT01'");
-                }
-                vtDao.capNhatChucNangCuaVaiTro("VT01", fullQuyen);
-            }
+            try {
+                DataInitializer.initializeAll(conn);
+                ensureAdminRole(conn);
 
-            String username;
-            String password;
+                Properties config = loadConfig();
+                String username = config.getProperty("superadmin.username");
+                String password = config.getProperty("superadmin.password");
 
-            try (InputStream input = SuperAdminCreator.class.getClassLoader()
-                    .getResourceAsStream("config.properties")) {
-                if (input == null) {
-                    throw new RuntimeException("Không tìm thấy file config.properties!");
+                if (username == null || username.isBlank() || password == null || password.isBlank()) {
+                    throw new IllegalStateException(
+                            "Thiếu superadmin.username hoặc superadmin.password trong config.properties.");
                 }
 
-                Properties prop = new Properties();
-                prop.load(input);
+                DbLabels labels = loadDbLabels(conn);
 
-                username = prop.getProperty("superadmin.username");
-                password = prop.getProperty("superadmin.password");
+                String maND = upsertAdminUser(conn, username.trim(), password.trim(), labels);
+                ensureAdminCustomer(conn, maND);
+                ensureAdminEmployee(conn, maND, labels);
+                ensureAdminRoleMapping(conn, maND);
 
-                if (username == null || username.trim().isEmpty() ||
-                        password == null || password.trim().isEmpty()) {
-                    throw new RuntimeException(
-                            "Thiếu thông tin superadmin.username hoặc superadmin.password trong file config!");
-                }
-
+                conn.commit();
+                System.out.println("[SuperAdminCreator] Đã sẵn sàng tài khoản admin: " + username);
             } catch (Exception ex) {
-                System.err.println("LỖI: " + ex.getMessage());
-                return;
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(autoCommit);
             }
-            String hashedPassword = PasswordUtil.hash(password);
-            String maND = null;
-
-            try (PreparedStatement ps = conn.prepareStatement("SELECT MaND FROM NGUOIDUNG WHERE TenTaiKhoan = ?")) {
-                ps.setString(1, username);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next())
-                        maND = rs.getString("MaND");
-                }
-            }
-
-            if (maND != null) {
-                try (PreparedStatement psUp = conn
-                        .prepareStatement("UPDATE NGUOIDUNG SET MatKhauMaHoa = ?, Email = 'admin@spring.com', SDT = '0000000000', GioiTinh = 'Khác' WHERE MaND = ?")) {
-                    psUp.setString(1, hashedPassword);
-                    psUp.setString(2, maND);
-                    psUp.executeUpdate();
-                }
-            } else {
-                maND = "ND_ADMIN_" + System.currentTimeMillis();
-                String sqlInsUser = "INSERT INTO NGUOIDUNG (MaND, TenTaiKhoan, MatKhauMaHoa, Email, SDT, GioiTinh, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
-                        +
-                        "VALUES (?, ?, ?, 'admin@spring.com', '0000000000', 'Khác', 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-                try (PreparedStatement psIU = conn.prepareStatement(sqlInsUser)) {
-                    psIU.setString(1, maND);
-                    psIU.setString(2, username);
-                    psIU.setString(3, hashedPassword);
-                    psIU.executeUpdate();
-                }
-            }
-
-            // Đảm bảo có bản ghi KHACHHANG (để lấy tên hiển thị)
-            boolean khExists = false;
-            try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM KHACHHANG WHERE MaND = ?")) {
-                ps.setString(1, maND);
-                try (ResultSet rs = ps.executeQuery()) { khExists = rs.next(); }
-            }
-            if (!khExists) {
-                String sqlInsKH = "INSERT INTO KHACHHANG (MaKH, HoTenKH, LoaiKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, ?, 'VIP', 'HTV00', 0, CURRENT_TIMESTAMP, ?)";
-                try (PreparedStatement psKH = conn.prepareStatement(sqlInsKH)) {
-                    psKH.setString(1, "KH_ADMIN_" + System.currentTimeMillis());
-                    psKH.setString(2, "Spring Admin");
-                    psKH.setString(3, maND);
-                    psKH.executeUpdate();
-                }
-            } else {
-                try (PreparedStatement psUpKH = conn.prepareStatement("UPDATE KHACHHANG SET HoTenKH = 'Spring Admin' WHERE MaND = ?")) {
-                    psUpKH.setString(1, maND);
-                    psUpKH.executeUpdate();
-                }
-            }
-
-            // Đảm bảo có bản ghi NHANVIEN (để tránh lỗi FK khi thêm PGG, hóa đơn...)
-            boolean nvExists = false;
-            try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM NHANVIEN WHERE MaND = ?")) {
-                ps.setString(1, maND);
-                try (ResultSet rs = ps.executeQuery()) { nvExists = rs.next(); }
-            }
-            if (!nvExists) {
-                String sqlInsNV = "INSERT INTO NHANVIEN (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, CaLamViec, LuongCoBan, MaND, MaCN) VALUES (?, 'Quản lý', CURRENT_DATE, 'Đang làm việc', 'Hành chính', 99999999, ?, 'CN001')";
-                try (PreparedStatement psNV = conn.prepareStatement(sqlInsNV)) {
-                    psNV.setString(1, "NV_ADMIN");
-                    psNV.setString(2, maND);
-                    psNV.executeUpdate();
-                }
-            }
-
-            try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
-                psDel.setString(1, maND);
-                psDel.executeUpdate();
-            }
-            try (PreparedStatement psIL = conn
-                    .prepareStatement("INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, 'VT01')")) {
-                psIL.setString(1, maND);
-                psIL.executeUpdate();
-            }
-
         } catch (Exception e) {
-            System.err.println("[!] LOI KHOI TAO: " + e.getMessage());
+            System.err.println("[!] LỖI KHỞI TẠO SUPER ADMIN: " + e.getMessage());
+        }
+    }
+
+    private static Properties loadConfig() throws Exception {
+        try (InputStream input = SuperAdminCreator.class.getClassLoader()
+                .getResourceAsStream("config.properties")) {
+            if (input == null) {
+                throw new IllegalStateException("Không tìm thấy file config.properties!");
+            }
+
+            Properties prop = new Properties();
+            prop.load(input);
+            return prop;
+        }
+    }
+
+    private static void ensureAdminRole(Connection conn) throws Exception {
+        VaiTroDAO vtDao = new VaiTroDAO();
+        List<String> fullQuyen = new ArrayList<>();
+        for (int i = 1; i <= 11; i++) {
+            fullQuyen.add(String.format("CN%02d", i));
+        }
+
+        boolean roleExists;
+        try (PreparedStatement ps = conn.prepareStatement("SELECT MaVaiTro FROM VAITRO WHERE MaVaiTro = 'VT01'");
+             ResultSet rs = ps.executeQuery()) {
+            roleExists = rs.next();
+        }
+
+        if (!roleExists) {
+            VaiTroDTO adminRole = new VaiTroDTO();
+            adminRole.setMaVaiTro("VT01");
+            adminRole.setTenVaiTro(Normalizer.normalize("Quản trị Viên hệ thống", Normalizer.Form.NFC));
+            adminRole.setMoTa(Normalizer.normalize("Toàn quyền quản lý hệ thống", Normalizer.Form.NFC));
+            vtDao.themVaiTro(adminRole, fullQuyen);
+        } else {
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate("UPDATE VAITRO SET TenVaiTro = 'Quản trị Viên hệ thống' WHERE MaVaiTro = 'VT01'");
+            }
+            vtDao.capNhatChucNangCuaVaiTro("VT01", fullQuyen);
+        }
+    }
+
+    private static String upsertAdminUser(Connection conn, String username, String password, DbLabels labels)
+            throws Exception {
+        String hashedPassword = PasswordUtil.hash(password);
+        String maND = null;
+
+        try (PreparedStatement ps = conn.prepareStatement("SELECT MaND FROM NGUOIDUNG WHERE TenTaiKhoan = ?")) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    maND = rs.getString("MaND");
+                }
+            }
+        }
+
+        if (maND != null) {
+            try (PreparedStatement ps = conn.prepareStatement("""
+                    UPDATE NGUOIDUNG
+                    SET HoTen = ?, MatKhauMaHoa = ?, Email = ?, SDT = ?, GioiTinh = ?, TrangThaiND = ?,
+                        CapNhatLanCuoi = CURRENT_TIMESTAMP
+                    WHERE MaND = ?
+                    """)) {
+                ps.setString(1, "Spring Admin");
+                ps.setString(2, hashedPassword);
+                ps.setString(3, "springchaonhe@gmail.com");
+                ps.setString(4, "0000000000");
+                ps.setString(5, labels.gioiTinhKhac());
+                ps.setString(6, labels.trangThaiNguoiDungHoatDong());
+                ps.setString(7, maND);
+                ps.executeUpdate();
+            }
+            return maND;
+        }
+
+        maND = "ND_ADMIN_" + System.currentTimeMillis();
+        try (PreparedStatement ps = conn.prepareStatement("""
+                INSERT INTO NGUOIDUNG
+                    (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, Email, SDT, GioiTinh, TrangThaiND,
+                     ThoiGianTao, CapNhatLanCuoi)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """)) {
+            ps.setString(1, maND);
+            ps.setString(2, "Spring Admin");
+            ps.setString(3, username);
+            ps.setString(4, hashedPassword);
+            ps.setString(5, "springchaonhe@gmail.com");
+            ps.setString(6, "0000000000");
+            ps.setString(7, labels.gioiTinhKhac());
+            ps.setString(8, labels.trangThaiNguoiDungHoatDong());
+            ps.executeUpdate();
+        }
+        return maND;
+    }
+
+    private static void ensureAdminCustomer(Connection conn, String maND) throws Exception {
+        boolean exists;
+        try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM KHACHHANG WHERE MaND = ?")) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                exists = rs.next();
+            }
+        }
+
+        if (!exists) {
+            try (PreparedStatement ps = conn.prepareStatement("""
+                    INSERT INTO KHACHHANG
+                        (MaKH, LoaiKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND)
+                    VALUES (?, 'VIP', 'HTV00', 0, CURRENT_TIMESTAMP, ?)
+                    """)) {
+                ps.setString(1, "KH_ADMIN_" + System.currentTimeMillis());
+                ps.setString(2, maND);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    private static void ensureAdminEmployee(Connection conn, String maND, DbLabels labels) throws Exception {
+        boolean exists;
+        try (PreparedStatement ps = conn.prepareStatement("SELECT 1 FROM NHANVIEN WHERE MaND = ?")) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                exists = rs.next();
+            }
+        }
+
+        if (!exists) {
+            try (PreparedStatement ps = conn.prepareStatement("""
+                    INSERT INTO NHANVIEN
+                        (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, CaLamViec, LuongCoBan, MaND, MaCN)
+                    VALUES (?, ?, CURRENT_DATE, ?, ?, 99999999, ?, NULL)
+                    """)) {
+                ps.setString(1, "NV_ADMIN");
+                ps.setString(2, labels.loaiNhanVienQuanLy());
+                ps.setString(3, "Đang làm việc");
+                ps.setString(4, "Hành chính");
+                ps.setString(5, maND);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    private static void ensureAdminRoleMapping(Connection conn, String maND) throws Exception {
+        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
+            ps.setString(1, maND);
+            ps.executeUpdate();
+        }
+
+        try (PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro, MoTa) VALUES (?, 'VT01', ?)")) {
+            ps.setString(1, maND);
+            ps.setString(2, "Quyền quản trị tối cao của hệ thống");
+            ps.executeUpdate();
         }
     }
 
     public static void main(String[] args) {
         initialize();
+    }
+
+    private static DbLabels loadDbLabels(Connection conn) {
+        List<String> trangThaiND = constraintValues(conn, "CHK_ND_TRANGTHAI");
+        List<String> gioiTinh = constraintValues(conn, "CHK_ND_GIOITINH");
+        List<String> loaiNV = constraintValues(conn, "CHK_NV_LOAINV");
+
+        return new DbLabels(
+                pick(trangThaiND, "dang hoat dong", 0, "Đang hoạt động"),
+                pick(gioiTinh, "khac", Math.max(0, gioiTinh.size() - 1), "Khác"),
+                pick(loaiNV, "quan ly", Math.min(1, Math.max(0, loaiNV.size() - 1)), "Quản lý")
+        );
+    }
+
+    private static List<String> constraintValues(Connection conn, String constraintName) {
+        List<String> values = new ArrayList<>();
+        String sql = """
+                SELECT search_condition_vc
+                FROM user_constraints
+                WHERE constraint_name = ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, constraintName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Matcher matcher = Pattern.compile("'([^']*)'").matcher(rs.getString(1));
+                    while (matcher.find()) {
+                        values.add(matcher.group(1));
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("[SuperAdminCreator] Không đọc được constraint " + constraintName + ": " + ex.getMessage());
+        }
+        return values;
+    }
+
+    private static String pick(List<String> values, String normalizedNeedle, int fallbackIndex, String fallbackValue) {
+        for (String value : values) {
+            if (normalize(value).contains(normalizedNeedle)) {
+                return value;
+            }
+        }
+        if (!values.isEmpty()) {
+            int index = Math.max(0, Math.min(fallbackIndex, values.size() - 1));
+            return values.get(index);
+        }
+        return fallbackValue;
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replace('đ', 'd')
+                .replaceAll("[^a-z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private record DbLabels(
+            String trangThaiNguoiDungHoatDong,
+            String gioiTinhKhac,
+            String loaiNhanVienQuanLy
+    ) {
     }
 }

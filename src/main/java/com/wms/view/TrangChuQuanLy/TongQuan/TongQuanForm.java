@@ -485,7 +485,7 @@ public class TongQuanForm extends javax.swing.JPanel {
         pnFilter.add(cbxLoaiDichVu);
         cbxLoaiDichVu.setBounds(475, 25, 180, 28);
 
-        btnXemBaoCao.setBackground(new java.awt.Color(235, 94, 141));
+        btnXemBaoCao.setBackground(new java.awt.Color(255, 82, 82));
         btnXemBaoCao.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnXemBaoCao.setForeground(new java.awt.Color(255, 255, 255));
         btnXemBaoCao.setText("Lọc Kết Quả");
@@ -493,7 +493,7 @@ public class TongQuanForm extends javax.swing.JPanel {
         pnFilter.add(btnXemBaoCao);
         btnXemBaoCao.setBounds(690, 15, 150, 35);
 
-        btnXuatCSV.setBackground(new java.awt.Color(33, 157, 86));
+        btnXuatCSV.setBackground(new java.awt.Color(235, 94, 141));
         btnXuatCSV.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnXuatCSV.setForeground(new java.awt.Color(255, 255, 255));
         btnXuatCSV.setText("Xuất CSV");

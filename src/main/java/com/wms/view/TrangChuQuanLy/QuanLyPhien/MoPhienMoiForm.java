@@ -32,7 +32,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         if (maCN != null && !maCN.isEmpty()) {
             this.maCNHienTai = maCN;
         } else {
-            com.wms.model.TrangChuGioiThieu.NguoiDungDTO user = DangNhapController.getCurrentUser();
+            com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO user = DangNhapController.getCurrentUser();
             this.maCNHienTai = controller.layMaCNNguoiDung(user);
         }
 
@@ -108,7 +108,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
     private void initLegend() {
         pnChuThich.removeAll();
         pnChuThich.add(createLegendItem(COLOR_AVAILABLE, "Trống"));
-        pnChuThich.add(createLegendItem(COLOR_IN_USE, "Đang sử dụng"));
+        pnChuThich.add(createLegendItem(COLOR_IN_USE, "Đang hoạt động"));
         pnChuThich.add(createLegendItem(COLOR_MAINTENANCE, "Bảo trì"));
         pnChuThich.revalidate();
         pnChuThich.repaint();
@@ -296,7 +296,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         pnChuThich.setBounds(20, 470, 610, 50);
 
         add(pnLeftMap);
-        pnLeftMap.setBounds(20, 80, 650, 530);
+        pnLeftMap.setBounds(390, 70, 650, 530);
 
         pnRightForm.setBackground(new java.awt.Color(255, 255, 255));
         pnRightForm.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
@@ -322,17 +322,17 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         lblSDT.setForeground(new java.awt.Color(35, 30, 48));
         lblSDT.setText("Số điện thoại (*)");
         pnRightForm.add(lblSDT);
-        lblSDT.setBounds(20, 130, 150, 20);
+        lblSDT.setBounds(20, 120, 150, 20);
 
         txtSoDienThoai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         pnRightForm.add(txtSoDienThoai);
-        txtSoDienThoai.setBounds(20, 150, 150, 35);
+        txtSoDienThoai.setBounds(20, 140, 150, 35);
 
         lblKhongGianChon.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblKhongGianChon.setForeground(new java.awt.Color(35, 30, 48));
-        lblKhongGianChon.setText("Không gian ");
+        lblKhongGianChon.setText("Tên Không gian ");
         pnRightForm.add(lblKhongGianChon);
-        lblKhongGianChon.setBounds(20, 195, 150, 20);
+        lblKhongGianChon.setBounds(20, 180, 150, 20);
 
         txtKhongGianChon.setEditable(false);
         txtKhongGianChon.setBackground(new java.awt.Color(240, 240, 240));
@@ -340,48 +340,47 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtKhongGianChon.setForeground(new java.awt.Color(235, 94, 141));
         txtKhongGianChon.addActionListener(this::txtKhongGianChonActionPerformed);
         pnRightForm.add(txtKhongGianChon);
-        txtKhongGianChon.setBounds(20, 215, 150, 35);
+        txtKhongGianChon.setBounds(20, 200, 150, 35);
 
         lblLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian.setForeground(new java.awt.Color(35, 30, 48));
-        lblLoaiKhongGian.setText("Loại không gian");
+        lblLoaiKhongGian.setText("Tên Loại không gian");
         pnRightForm.add(lblLoaiKhongGian);
-        lblLoaiKhongGian.setBounds(20, 265, 130, 20);
+        lblLoaiKhongGian.setBounds(20, 240, 130, 20);
 
         txtLoaiKhongGian.setEditable(false);
         txtLoaiKhongGian.setBackground(new java.awt.Color(240, 240, 240));
         txtLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         pnRightForm.add(txtLoaiKhongGian);
-        txtLoaiKhongGian.setBounds(20, 285, 150, 35);
+        txtLoaiKhongGian.setBounds(20, 260, 150, 35);
 
         lblThoiGianBatDau.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThoiGianBatDau.setForeground(new java.awt.Color(35, 30, 48));
         lblThoiGianBatDau.setText("Thời gian bắt đầu phiên");
         pnRightForm.add(lblThoiGianBatDau);
-        lblThoiGianBatDau.setBounds(20, 335, 150, 20);
+        lblThoiGianBatDau.setBounds(20, 300, 310, 20);
 
         txtThoiGianBatDau.setEditable(false);
         txtThoiGianBatDau.setBackground(new java.awt.Color(240, 240, 240));
         txtThoiGianBatDau.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
         txtThoiGianBatDau.setForeground(new java.awt.Color(102, 102, 102));
         pnRightForm.add(txtThoiGianBatDau);
-        txtThoiGianBatDau.setBounds(20, 355, 150, 35);
+        txtThoiGianBatDau.setBounds(20, 320, 310, 35);
 
-        btnLamMoi.setBackground(new java.awt.Color(220, 53, 69));
         btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnLamMoi.setForeground(new java.awt.Color(255, 255, 255));
+        btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
         btnLamMoi.setText("Làm mới form");
         btnLamMoi.addActionListener(this::btnLamMoiActionPerformed);
         pnRightForm.add(btnLamMoi);
-        btnLamMoi.setBounds(20, 420, 300, 35);
+        btnLamMoi.setBounds(20, 480, 300, 35);
 
         btnMoPhien.setBackground(new java.awt.Color(235, 94, 141));
         btnMoPhien.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         btnMoPhien.setForeground(new java.awt.Color(255, 255, 255));
-        btnMoPhien.setText("TẠO KHÁCH VÀ MỞ PHIÊN");
+        btnMoPhien.setText("Mở phiên cho khách");
         btnMoPhien.addActionListener(this::btnMoPhienActionPerformed);
         pnRightForm.add(btnMoPhien);
-        btnMoPhien.setBounds(20, 465, 300, 45);
+        btnMoPhien.setBounds(20, 430, 300, 40);
 
         txtThoiGianKetThuc.setEditable(false);
         txtThoiGianKetThuc.setBackground(new java.awt.Color(240, 240, 240));
@@ -389,39 +388,39 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtThoiGianKetThuc.setForeground(new java.awt.Color(102, 102, 102));
         txtThoiGianKetThuc.addActionListener(this::txtThoiGianKetThucActionPerformed);
         pnRightForm.add(txtThoiGianKetThuc);
-        txtThoiGianKetThuc.setBounds(180, 355, 150, 35);
+        txtThoiGianKetThuc.setBounds(20, 380, 310, 35);
 
         lblThoiGianBatDau1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThoiGianBatDau1.setForeground(new java.awt.Color(35, 30, 48));
         lblThoiGianBatDau1.setText("Thời gian kết thúc");
         pnRightForm.add(lblThoiGianBatDau1);
-        lblThoiGianBatDau1.setBounds(180, 335, 150, 20);
+        lblThoiGianBatDau1.setBounds(20, 360, 310, 20);
 
         lblLoaiKhongGian1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian1.setForeground(new java.awt.Color(35, 30, 48));
-        lblLoaiKhongGian1.setText("Thời gian sử dụng");
+        lblLoaiKhongGian1.setText("Thời gian sử dụng (*)");
         pnRightForm.add(lblLoaiKhongGian1);
-        lblLoaiKhongGian1.setBounds(180, 265, 130, 20);
+        lblLoaiKhongGian1.setBounds(180, 240, 130, 20);
 
         txtThoiGianSuDung.setEditable(false);
         txtThoiGianSuDung.setBackground(new java.awt.Color(240, 240, 240));
         txtThoiGianSuDung.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtThoiGianSuDung.addActionListener(this::txtThoiGianSuDungActionPerformed);
         pnRightForm.add(txtThoiGianSuDung);
-        txtThoiGianSuDung.setBounds(180, 285, 150, 35);
+        txtThoiGianSuDung.setBounds(180, 260, 150, 35);
 
         txtMaKGian.setEditable(false);
         txtMaKGian.setBackground(new java.awt.Color(240, 240, 240));
         txtMaKGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtMaKGian.addActionListener(this::txtMaKGianActionPerformed);
         pnRightForm.add(txtMaKGian);
-        txtMaKGian.setBounds(180, 150, 150, 35);
+        txtMaKGian.setBounds(180, 140, 150, 35);
 
         lblLoaiKhongGian2.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian2.setForeground(new java.awt.Color(35, 30, 48));
         lblLoaiKhongGian2.setText("Mã không gian");
         pnRightForm.add(lblLoaiKhongGian2);
-        lblLoaiKhongGian2.setBounds(180, 130, 130, 20);
+        lblLoaiKhongGian2.setBounds(180, 120, 130, 20);
 
         txtGiaTien.setEditable(false);
         txtGiaTien.setBackground(new java.awt.Color(240, 240, 240));
@@ -429,16 +428,16 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtGiaTien.setForeground(new java.awt.Color(235, 94, 141));
         txtGiaTien.addActionListener(this::txtGiaTienActionPerformed);
         pnRightForm.add(txtGiaTien);
-        txtGiaTien.setBounds(180, 215, 150, 35);
+        txtGiaTien.setBounds(180, 200, 150, 35);
 
         lblKhongGianChon1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblKhongGianChon1.setForeground(new java.awt.Color(35, 30, 48));
         lblKhongGianChon1.setText("Phí mỗi một giờ");
         pnRightForm.add(lblKhongGianChon1);
-        lblKhongGianChon1.setBounds(180, 200, 150, 20);
+        lblKhongGianChon1.setBounds(180, 180, 150, 20);
 
         add(pnRightForm);
-        pnRightForm.setBounds(690, 80, 340, 530);
+        pnRightForm.setBounds(10, 70, 340, 530);
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtThoiGianSuDungActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtThoiGianSuDungActionPerformed

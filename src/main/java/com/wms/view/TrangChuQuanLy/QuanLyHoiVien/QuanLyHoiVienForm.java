@@ -1,5 +1,6 @@
 package com.wms.view.TrangChuQuanLy.QuanLyHoiVien;
 
+import com.wms.view.TrangChuQuanLy.QuanLyNhanVien.QuanLyHangTVForm;
 import com.wms.controller.TrangChuQuanLy.QuanLyHoiVien.QuanLyHoiVienController;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import javax.swing.*;
@@ -120,14 +121,12 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         cbxHangTV = new javax.swing.JComboBox<>();
         btnThemMoi = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
-        btnQuanLyHang = new javax.swing.JButton();
         btnHuy = new javax.swing.JButton();
         lblTimKiem = new javax.swing.JLabel();
         txtTimKiem = new javax.swing.JTextField();
         btnTimKiem = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblHoiVien = new javax.swing.JTable();
-        btnXoa = new javax.swing.JButton();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -152,14 +151,14 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         lblAnhDaiDien.setText("[Ảnh 3x4]");
         lblAnhDaiDien.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         pnMain.add(lblAnhDaiDien);
-        lblAnhDaiDien.setBounds(20, 70, 130, 160);
+        lblAnhDaiDien.setBounds(20, 100, 130, 160);
 
         btnDoiAnh.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnDoiAnh.setForeground(new java.awt.Color(235, 94, 141));
         btnDoiAnh.setText("Đổi ảnh");
         btnDoiAnh.addActionListener(this::btnDoiAnhActionPerformed);
         pnMain.add(btnDoiAnh);
-        btnDoiAnh.setBounds(20, 240, 130, 30);
+        btnDoiAnh.setBounds(20, 270, 130, 30);
 
         lblMaHV.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaHV.setForeground(new java.awt.Color(35, 30, 48));
@@ -168,8 +167,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         lblMaHV.setBounds(170, 70, 100, 18);
 
         txtMaHV.setEditable(false);
-        txtMaHV.setBackground(new java.awt.Color(240, 240, 240));
         txtMaHV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        txtMaHV.setBackground(new java.awt.Color(240, 240, 240));
         pnMain.add(txtMaHV);
         txtMaHV.setBounds(170, 90, 100, 30);
 
@@ -179,6 +178,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         pnMain.add(lblGioiTinh);
         lblGioiTinh.setBounds(290, 70, 100, 18);
 
+        cbxGioiTinh.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cbxGioiTinh.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Nam", "Nữ", "Khác" }));
         pnMain.add(cbxGioiTinh);
         cbxGioiTinh.setBounds(290, 90, 100, 30);
@@ -207,53 +207,56 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         lblEmail.setForeground(new java.awt.Color(35, 30, 48));
         lblEmail.setText("Email (*)");
         pnMain.add(lblEmail);
-        lblEmail.setBounds(20, 280, 170, 18);
+        lblEmail.setBounds(170, 250, 170, 18);
 
         txtEmail.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtEmail);
-        txtEmail.setBounds(20, 300, 170, 30);
+        txtEmail.setBounds(170, 270, 220, 30);
 
         lblNgaySinh.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgaySinh.setForeground(new java.awt.Color(35, 30, 48));
         lblNgaySinh.setText("Ngày sinh (dd/MM/yyyy)");
         pnMain.add(lblNgaySinh);
-        lblNgaySinh.setBounds(220, 280, 170, 18);
+        lblNgaySinh.setBounds(220, 320, 170, 18);
 
         txtNgaySinh.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtNgaySinh);
-        txtNgaySinh.setBounds(220, 300, 170, 30);
+        txtNgaySinh.setBounds(220, 340, 170, 30);
 
         lblTongChiTieu.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTongChiTieu.setForeground(new java.awt.Color(35, 30, 48));
         lblTongChiTieu.setText("Tổng chi tiêu (VNĐ)");
         pnMain.add(lblTongChiTieu);
-        lblTongChiTieu.setBounds(20, 340, 170, 18);
+        lblTongChiTieu.setBounds(20, 380, 170, 18);
 
         txtTongChiTieu.setEditable(false);
-        txtTongChiTieu.setBackground(new java.awt.Color(240, 240, 240));
         txtTongChiTieu.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        txtTongChiTieu.setBackground(new java.awt.Color(240, 240, 240));
         pnMain.add(txtTongChiTieu);
-        txtTongChiTieu.setBounds(20, 360, 170, 30);
+        txtTongChiTieu.setBounds(20, 400, 170, 30);
 
         lblTrangThai.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTrangThai.setForeground(new java.awt.Color(35, 30, 48));
         lblTrangThai.setText("Trạng thái hoạt động");
         pnMain.add(lblTrangThai);
-        lblTrangThai.setBounds(220, 340, 170, 18);
+        lblTrangThai.setBounds(220, 380, 170, 18);
 
+        cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Bị khóa" }));
         pnMain.add(cbxTrangThai);
-        cbxTrangThai.setBounds(220, 360, 170, 30);
+        cbxTrangThai.setBounds(220, 400, 170, 30);
 
         lblHangTV.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblHangTV.setForeground(new java.awt.Color(35, 30, 48));
         lblHangTV.setText("Hạng thành viên hiện tại (*)");
         pnMain.add(lblHangTV);
-        lblHangTV.setBounds(20, 400, 370, 18);
+        lblHangTV.setBounds(20, 320, 180, 18);
 
+        cbxHangTV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cbxHangTV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Không có", "Đồng", "Bạc", "Vàng", "Kim cương" }));
+        cbxHangTV.addActionListener(this::cbxHangTVActionPerformed);
         pnMain.add(cbxHangTV);
-        cbxHangTV.setBounds(20, 420, 170, 40);
+        cbxHangTV.setBounds(20, 340, 170, 30);
 
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -261,7 +264,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnThemMoi.setText("Thêm mới");
         btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(220, 420, 170, 40);
+        btnThemMoi.setBounds(210, 460, 180, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -269,22 +272,14 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnCapNhat.setText("Cập nhật");
         btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnMain.add(btnCapNhat);
-        btnCapNhat.setBounds(220, 470, 170, 40);
-
-        btnQuanLyHang.setBackground(new java.awt.Color(35, 30, 48));
-        btnQuanLyHang.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnQuanLyHang.setForeground(new java.awt.Color(255, 255, 255));
-        btnQuanLyHang.setText("Q.lý Hạng TV");
-        btnQuanLyHang.addActionListener(this::btnQuanLyHangActionPerformed);
-        pnMain.add(btnQuanLyHang);
-        btnQuanLyHang.setBounds(20, 520, 170, 40);
+        btnCapNhat.setBounds(20, 460, 180, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
         btnHuy.addActionListener(this::btnHuyActionPerformed);
         pnMain.add(btnHuy);
-        btnHuy.setBounds(220, 520, 170, 40);
+        btnHuy.setBounds(20, 510, 370, 40);
 
         lblTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTimKiem.setForeground(new java.awt.Color(35, 30, 48));
@@ -305,13 +300,20 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnTimKiem.setBounds(920, 80, 100, 35);
 
         tblHoiVien.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {},
+            new Object [][] {
+
+            },
             new String [] {
                 "Mã HV", "Họ và tên", "SĐT", "Email", "Tổng chi tiêu", "Hạng TV", "Trạng thái"
             }
         ) {
-            boolean[] canEdit = new boolean [] { false, false, false, false, false, false, false };
-            public boolean isCellEditable(int rowIndex, int columnIndex) { return canEdit [columnIndex]; }
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
         });
         tblHoiVien.setRowHeight(30);
         tblHoiVien.setSelectionBackground(new java.awt.Color(235, 94, 141));
@@ -325,16 +327,12 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         pnMain.add(jScrollPane1);
         jScrollPane1.setBounds(420, 130, 600, 480);
 
-        btnXoa.setBackground(new java.awt.Color(220, 53, 69));
-        btnXoa.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnXoa.setForeground(new java.awt.Color(255, 255, 255));
-        btnXoa.setText("Xoá");
-        btnXoa.addActionListener(this::btnXoaActionPerformed);
-        pnMain.add(btnXoa);
-        btnXoa.setBounds(20, 470, 170, 40);
-
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cbxHangTVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxHangTVActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxHangTVActionPerformed
 
     private void btnQuanLyHangActionPerformed(java.awt.event.ActionEvent evt) {
         Window parentWindow = SwingUtilities.getWindowAncestor(this);
@@ -451,10 +449,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private javax.swing.JButton btnCapNhat;
     private javax.swing.JButton btnDoiAnh;
     private javax.swing.JButton btnHuy;
-    private javax.swing.JButton btnQuanLyHang;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
-    private javax.swing.JButton btnXoa;
     private javax.swing.JComboBox<String> cbxGioiTinh;
     private javax.swing.JComboBox<String> cbxHangTV;
     private javax.swing.JComboBox<String> cbxTrangThai;

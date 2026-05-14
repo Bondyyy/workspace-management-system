@@ -17,10 +17,11 @@ public class ThongKeDAO {
         if (conn == null)
             return list;
 
-        String sql = "SELECT h.MaHoaDon, kh.HoTenKH, h.ThanhTien, h.TrangThaiThanhToan " +
+        String sql = "SELECT h.MaHoaDon, nd.HoTen AS HoTenKH, h.ThanhTien, h.TrangThaiThanhToan " +
                 "FROM HOADON h " +
                 "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                 "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                 "ORDER BY h.NgayLapHoaDon DESC " +
                 "FETCH FIRST 5 ROWS ONLY";
 
@@ -191,17 +192,20 @@ public class ThongKeDAO {
         }
     }
 
-    public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String maChiNhanh, String loaiDT) {
+    public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String maChiNhanh,
+            String loaiDT) {
         List<Object[]> list = new ArrayList<>();
         Connection conn = DatabaseConnection.getInstance().getConnection();
         if (conn == null)
             return list;
 
         StringBuilder sql = new StringBuilder(
-                "SELECT h.MaHoaDon, kh.HoTenKH, h.NgayLapHoaDon, h.TongTien, h.ThanhTien, h.PhuongThucThanhToan, h.TrangThaiThanhToan " +
+                "SELECT h.MaHoaDon, nd.HoTen AS HoTenKH, h.NgayLapHoaDon, h.TongTien, h.ThanhTien, h.PhuongThucThanhToan, h.TrangThaiThanhToan "
+                        +
                         "FROM HOADON h " +
                         "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                         "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                        "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                         "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
                         "WHERE h.TrangThaiThanhToan LIKE 'Đã thanh toán%' ");
 
@@ -235,7 +239,8 @@ public class ThongKeDAO {
                     list.add(new Object[] {
                             rs.getString("MaHoaDon"),
                             rs.getString("HoTenKH") == null ? "Khách vãng lai" : rs.getString("HoTenKH"),
-                            rs.getTimestamp("NgayLapHoaDon") != null ? sdf.format(rs.getTimestamp("NgayLapHoaDon")) : "",
+                            rs.getTimestamp("NgayLapHoaDon") != null ? sdf.format(rs.getTimestamp("NgayLapHoaDon"))
+                                    : "",
                             df.format(rs.getDouble("TongTien")),
                             df.format(rs.getDouble("ThanhTien")),
                             rs.getString("PhuongThucThanhToan"),

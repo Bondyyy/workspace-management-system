@@ -28,7 +28,9 @@ BEGIN
         RETURN;
     END IF;
 
-    v_NewMaPhien := 'PLV_' || TO_CHAR(SYSTIMESTAMP, 'YYYYMMDD_HH24MISS') || '_' || DBMS_RANDOM.STRING('U', 4);
+    -- Sinh mã phiên dạng PH + số thứ tự (tương tự logic Java cũ)
+    SELECT 'PH' || LPAD(COUNT(*) + 1, 4, '0') INTO v_NewMaPhien
+    FROM PHIENLAMVIEC;
 
     INSERT INTO PHIENLAMVIEC (
         MaPhien,
@@ -37,7 +39,8 @@ BEGIN
         TrangThaiPhien,
         MaKG,
         MaKH,
-        MaDatCho
+        MaDatCho,
+        CapNhatLanCuoi
     ) VALUES (
         v_NewMaPhien,
         SYSTIMESTAMP,
@@ -45,7 +48,8 @@ BEGIN
         'Đang hoạt động',
         p_MaKG,
         p_MaKH,
-        NULL
+        NULL,
+        SYSTIMESTAMP
     );
 
     UPDATE KHONGGIAN

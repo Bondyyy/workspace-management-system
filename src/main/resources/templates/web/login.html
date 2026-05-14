@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập</title>
+    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+</head>
+<body class="auth-page">
+<main class="auth-shell">
+    <section class="auth-copy">
+        <p class="eyebrow">WMS Portal</p>
+        <h1>Đăng nhập để đặt chỗ và theo dõi yêu cầu.</h1>
+        <p>Hội viên chọn không gian trực tiếp trên web. Nhân viên đăng nhập để xem, xác nhận và quản lý các phiên đặt trước.</p>
+    </section>
+
+    <section class="auth-panel">
+        <h2>Đăng nhập</h2>
+        <p class="flash success" th:if="${success}" th:text="${success}"></p>
+        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+        <form th:action="@{/login}" th:object="${loginForm}" method="post" class="form-grid">
+            <label>
+                Tài khoản / Email / Số điện thoại
+                <input type="text" th:field="*{username}" placeholder="Nhập tài khoản">
+                <span class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+            </label>
+            <label>
+                Mật khẩu
+                <input type="password" th:field="*{password}" placeholder="Nhập mật khẩu">
+                <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+            </label>
+            <button type="submit" class="button-primary full-width">Đăng nhập</button>
+        </form>
+        <p class="auth-footnote">Chưa có tài khoản? <a th:href="@{/register}">Đăng ký hội viên</a></p>
+    </section>
+</main>
+</body>
+</html>

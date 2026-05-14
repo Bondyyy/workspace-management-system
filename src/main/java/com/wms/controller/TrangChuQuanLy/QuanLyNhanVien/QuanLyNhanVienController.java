@@ -1,7 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyNhanVien;
 
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.ChucNangDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyNhanVien.NhanVienService;
@@ -15,36 +15,24 @@ public class QuanLyNhanVienController {
         this.service = new NhanVienService();
     }
 
-    public List<Object[]> layDanhSachNhanVien() {
-        return service.layDanhSachNhanVien();
+    public List<Object[]> layDanhSachNhanVien(String maCN) {
+        return service.layDanhSachNhanVien(maCN);
     }
 
-    public List<Object[]> timKiemNhanVien(String tuKhoa) {
-        return service.timKiemNhanVien(tuKhoa);
+    public List<Object[]> timKiemNhanVien(String tuKhoa, String maCN) {
+        return service.timKiemNhanVien(tuKhoa, maCN);
     }
 
-    public boolean themNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) {
-        try {
-            return service.themNhanVien(nv, nd, hoTen, maVaiTro, matKhau);
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean themNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) throws Exception {
+        return service.themNhanVien(nv, nd, hoTen, maVaiTro, matKhau);
     }
 
-    public boolean capNhatNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) {
-        try {
-            return service.capNhatNhanVien(nv, nd, hoTen, maVaiTro, matKhau);
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean capNhatNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) throws Exception {
+        return service.capNhatNhanVien(nv, nd, hoTen, maVaiTro, matKhau);
     }
 
-    public boolean xoaNhanVien(String maNV, String maND) {
-        try {
-            return service.xoaNhanVien(maNV, maND);
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean xoaNhanVien(String maNV, String maND) throws Exception {
+        return service.xoaNhanVien(maNV, maND);
     }
 
     public List<String[]> layDanhSachChiNhanh() {
@@ -67,20 +55,12 @@ public class QuanLyNhanVienController {
         return service.layChucNangCuaVaiTro(maVaiTro);
     }
 
-    public boolean themVaiTro(VaiTroDTO vt, List<String> dsMaCN) {
-        try {
-            return service.themVaiTro(vt, dsMaCN);
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean themVaiTro(VaiTroDTO vt, List<String> dsMaCN) throws Exception {
+        return service.themVaiTro(vt, dsMaCN);
     }
 
-    public boolean capNhatVaiTro(VaiTroDTO vt, List<String> dsMaCN) {
-        try {
-            return service.capNhatVaiTro(vt, dsMaCN);
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean capNhatVaiTro(VaiTroDTO vt, List<String> dsMaCN) throws Exception {
+        return service.capNhatVaiTro(vt, dsMaCN);
     }
 
     public boolean xoaVaiTro(String maVaiTro) {
@@ -89,6 +69,10 @@ public class QuanLyNhanVienController {
 
     public boolean capNhatChucNangCuaVaiTro(String maVaiTro, List<String> dsMaCN) {
         return service.capNhatChucNangCuaVaiTro(maVaiTro, dsMaCN);
+    }
+
+    public String layMaCNTuMaND(String maND) {
+        return service.layMaCNTuMaND(maND);
     }
 
     public String generateMaNV() {

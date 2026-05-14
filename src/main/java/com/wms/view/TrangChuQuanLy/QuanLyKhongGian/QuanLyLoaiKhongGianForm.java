@@ -18,7 +18,41 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         initComponents();
         taiDanhSach(null);
         txtMaLoaiKG.setText(controller.sinhMaLoaiKG());
-        this.setLocationRelativeTo(parent);
+        
+        txtDonGia.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
+        });
+
+        pack();
+        setLocationRelativeTo(parent);
+    }
+
+    private boolean isFormatting = false;
+
+    private void formatDonGia() {
+        if (isFormatting) return;
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            isFormatting = true;
+            try {
+                String text = txtDonGia.getText().replace(",", "").replace(".", "");
+                if (!text.isEmpty()) {
+                    long value = Long.parseLong(text);
+                    String formatted = FORMAT_TIEN.format(value);
+                    if (!txtDonGia.getText().equals(formatted)) {
+                        txtDonGia.setText(formatted);
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                // Ignore invalid input
+            } finally {
+                isFormatting = false;
+            }
+        });
     }
 
     private void taiDanhSach(String tuKhoa) {
@@ -107,7 +141,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
         lblMaLoaiKG.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaLoaiKG.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaLoaiKG.setText("Mã loại KG (Tự động)");
+        lblMaLoaiKG.setText("Mã loại Không gian");
         pnLeft.add(lblMaLoaiKG);
         lblMaLoaiKG.setBounds(20, 60, 260, 20);
 
@@ -165,7 +199,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
-        btnHuy.setText("Làm mới / Bỏ qua");
+        btnHuy.setText("Làm mới");
         btnHuy.addActionListener(this::btnHuyActionPerformed);
         pnLeft.add(btnHuy);
         btnHuy.setBounds(20, 390, 260, 35);
@@ -227,8 +261,6 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         pnRight.setBounds(340, 70, 490, 450);
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
-
-        pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {

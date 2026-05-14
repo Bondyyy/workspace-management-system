@@ -73,6 +73,25 @@ public class PhieuGiamGiaDAO {
         return list;
     }
 
+    public List<PhieuGiamGiaDTO> timKiem(String keyword) {
+        List<PhieuGiamGiaDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM PHIEUGIAMGIA WHERE UPPER(MaPGG) LIKE UPPER(?) OR UPPER(MaChuSoPGG) LIKE UPPER(?) ORDER BY NgayTaoPGG DESC";
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            String k = "%" + keyword.trim() + "%";
+            ps.setString(1, k);
+            ps.setString(2, k);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[PhieuGiamGiaDAO] Lỗi tìm kiếm: " + e.getMessage());
+        }
+        return list;
+    }
+
     public boolean themMoi(PhieuGiamGiaDTO dto) {
         String sql = "INSERT INTO PHIEUGIAMGIA (MaPGG, MaChuSoPGG, GiaTriGiamGia, GiaTriApDungToiThieu, " +
                      "NgayBatDauApDung, NgayKetThucApDung, SLDaDung, SLToiDa, NgayTaoPGG, MaNV) " +

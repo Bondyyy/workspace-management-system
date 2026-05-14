@@ -30,6 +30,35 @@ public class QuenMatKhauForm extends javax.swing.JPanel {
         btnLogin.addActionListener(this::btnLoginActionPerformed);
         btnShowNewPass.addActionListener(e -> toggleShowPassword(txtNewPass, btnShowNewPass));
         btnShowConfirmPass.addActionListener(e -> toggleShowPassword(txtConfirmPass, btnShowConfirmPass));
+
+        txtEmail.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    btnGuiMa.doClick();
+                }
+            }
+        });
+
+        txtOTP.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    btnXacNhan.doClick();
+                }
+            }
+        });
+
+        java.awt.event.KeyAdapter savePassAdapter = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    btnLuuMatKhau.doClick();
+                }
+            }
+        };
+        txtNewPass.addKeyListener(savePassAdapter);
+        txtConfirmPass.addKeyListener(savePassAdapter);
     }
 
     private void toggleShowPassword(javax.swing.JPasswordField field, javax.swing.JToggleButton btn) {
@@ -122,7 +151,8 @@ public class QuenMatKhauForm extends javax.swing.JPanel {
         }
 
         com.wms.controller.TrangChuGioiThieu.QuenMatKhauController controller = new com.wms.controller.TrangChuGioiThieu.QuenMatKhauController();
-        com.wms.service.TrangChuGioiThieu.NguoiDungService.ketQuaQuenMatKhau result = controller.datLaiMatKhau(email, newPass);
+        com.wms.service.TrangChuGioiThieu.NguoiDungService.ketQuaQuenMatKhau result = controller.datLaiMatKhau(email,
+                newPass);
 
         switch (result) {
             case THANH_CONG:

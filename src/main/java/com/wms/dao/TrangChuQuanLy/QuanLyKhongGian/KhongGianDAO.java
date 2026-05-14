@@ -180,8 +180,18 @@ public class KhongGianDAO {
     }
 
     public String taoMaMoi() {
-        int count = demSoLuong();
-        return String.format("KG%03d", count + 1);
+        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaKG, 3))) FROM KHONGGIAN WHERE MaKG LIKE 'KG%'";
+        try (Connection conn = getConn();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next()) {
+                int maxNum = rs.getInt(1);
+                return String.format("KG%03d", maxNum + 1);
+            }
+        } catch (Exception e) {
+            System.err.println("[KhongGianDAO] Lỗi tạo mã mới: " + e.getMessage());
+        }
+        return "KG" + (System.currentTimeMillis() % 1000);
     }
 
     public boolean kiemTraTinhTrangKhongGian(String tenLoaiKG, String ngayDat, String gioToi) {

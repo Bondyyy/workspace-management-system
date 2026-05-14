@@ -2,7 +2,7 @@ package com.wms.view.TrangChuQuanLy.QuanLyPhieuGiamGia;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaController;
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import java.text.SimpleDateFormat;
@@ -135,7 +135,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         btnThemMoi = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
         btnXoa = new javax.swing.JButton();
-        btnHuy = new javax.swing.JButton();
+        btnLamMoi = new javax.swing.JButton();
         lblTimKiem = new javax.swing.JLabel();
         txtTimKiem = new javax.swing.JTextField();
         btnTimKiem = new javax.swing.JButton();
@@ -163,19 +163,19 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
         lblMaPGG.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaPGG.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaPGG.setText("Mã PGG (Tự động)");
+        lblMaPGG.setText("Mã Phiếu giảm giá");
         pnMain.add(lblMaPGG);
         lblMaPGG.setBounds(20, 70, 170, 18);
 
         txtMaPGG.setEditable(false);
-        txtMaPGG.setBackground(new java.awt.Color(240, 240, 240));
         txtMaPGG.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        txtMaPGG.setBackground(new java.awt.Color(240, 240, 240));
         pnMain.add(txtMaPGG);
         txtMaPGG.setBounds(20, 90, 170, 35);
 
         lblMaChuSoPGG.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaChuSoPGG.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaChuSoPGG.setText("Mã nhập khuyến mãi (*)");
+        lblMaChuSoPGG.setText("Mã số nhập khuyến mãi (*)");
         pnMain.add(lblMaChuSoPGG);
         lblMaChuSoPGG.setBounds(210, 70, 170, 18);
 
@@ -205,64 +205,64 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
         lblNgayBatDauApDung.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgayBatDauApDung.setForeground(new java.awt.Color(35, 30, 48));
-        lblNgayBatDauApDung.setText("Ngày BĐ (dd/MM/yyyy) (*)");
+        lblNgayBatDauApDung.setText("Ngày Bắt đầu (dd/MM/yyyy) (*)");
         pnMain.add(lblNgayBatDauApDung);
-        lblNgayBatDauApDung.setBounds(20, 200, 170, 18);
+        lblNgayBatDauApDung.setBounds(20, 200, 360, 18);
 
         txtNgayBatDauApDung.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtNgayBatDauApDung);
-        txtNgayBatDauApDung.setBounds(20, 220, 170, 35);
+        txtNgayBatDauApDung.setBounds(20, 220, 360, 35);
 
         lblNgayKetThucApDung.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgayKetThucApDung.setForeground(new java.awt.Color(35, 30, 48));
-        lblNgayKetThucApDung.setText("Ngày KT (dd/MM/yyyy) (*)");
+        lblNgayKetThucApDung.setText("Ngày Kết thúc (dd/MM/yyyy) (*)");
         pnMain.add(lblNgayKetThucApDung);
-        lblNgayKetThucApDung.setBounds(210, 200, 170, 18);
+        lblNgayKetThucApDung.setBounds(20, 270, 360, 18);
 
         txtNgayKetThucApDung.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtNgayKetThucApDung);
-        txtNgayKetThucApDung.setBounds(210, 220, 170, 35);
+        txtNgayKetThucApDung.setBounds(20, 290, 360, 35);
 
         lblSLToiDa.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblSLToiDa.setForeground(new java.awt.Color(35, 30, 48));
         lblSLToiDa.setText("Số lượng phát hành (*)");
         pnMain.add(lblSLToiDa);
-        lblSLToiDa.setBounds(20, 265, 360, 18);
+        lblSLToiDa.setBounds(20, 330, 360, 18);
 
         txtSLToiDa.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtSLToiDa);
-        txtSLToiDa.setBounds(20, 285, 360, 35);
+        txtSLToiDa.setBounds(20, 350, 360, 35);
 
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
-        btnThemMoi.addActionListener(e -> btnThemMoiActionPerformed());
+        btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(20, 340, 170, 40);
+        btnThemMoi.setBounds(20, 400, 170, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
-        btnCapNhat.addActionListener(e -> btnCapNhatActionPerformed());
+        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnMain.add(btnCapNhat);
-        btnCapNhat.setBounds(210, 340, 170, 40);
+        btnCapNhat.setBounds(210, 400, 170, 40);
 
         btnXoa.setBackground(new java.awt.Color(220, 53, 69));
         btnXoa.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnXoa.setForeground(new java.awt.Color(255, 255, 255));
         btnXoa.setText("Xóa");
-        btnXoa.addActionListener(e -> btnXoaActionPerformed());
+        btnXoa.addActionListener(this::btnXoaActionPerformed);
         pnMain.add(btnXoa);
-        btnXoa.setBounds(20, 395, 170, 40);
+        btnXoa.setBounds(20, 460, 170, 40);
 
-        btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnHuy.setForeground(new java.awt.Color(235, 94, 141));
-        btnHuy.setText("Làm mới");
-        btnHuy.addActionListener(e -> laMoiForm());
-        pnMain.add(btnHuy);
-        btnHuy.setBounds(210, 395, 170, 40);
+        btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
+        btnLamMoi.setText("Làm mới");
+        btnLamMoi.addActionListener(this::btnLamMoiActionPerformed);
+        pnMain.add(btnLamMoi);
+        btnLamMoi.setBounds(210, 460, 170, 40);
 
         lblTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTimKiem.setForeground(new java.awt.Color(35, 30, 48));
@@ -278,7 +278,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setText("Tìm");
-        btnTimKiem.addActionListener(e -> loadDataToTable());
+        btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
         pnMain.add(btnTimKiem);
         btnTimKiem.setBounds(920, 80, 100, 35);
 
@@ -313,7 +313,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnThemMoiActionPerformed() {
+    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
         try {
             PhieuGiamGiaDTO dto = getFormData();
             if (controller.themMoi(dto)) {
@@ -328,7 +328,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnCapNhatActionPerformed() {
+    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
         try {
             PhieuGiamGiaDTO dto = getFormData();
             if (controller.capNhat(dto)) {
@@ -342,7 +342,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnXoaActionPerformed() {
+    private void btnXoaActionPerformed(java.awt.event.ActionEvent evt) {
         String ma = txtMaPGG.getText();
         if (ma.isEmpty()) return;
         
@@ -355,6 +355,29 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
             } else {
                 JOptionPane.showMessageDialog(this, "Không thể xóa phiếu này!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
+        laMoiForm();
+    }
+
+    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
+        String keyword = txtTimKiem.getText().trim();
+        DefaultTableModel model = (DefaultTableModel) tblPhieuGiamGia.getModel();
+        model.setRowCount(0);
+        List<PhieuGiamGiaDTO> list = controller.timKiem(keyword);
+        for (PhieuGiamGiaDTO dto : list) {
+            model.addRow(new Object[]{
+                dto.getMaPGG(),
+                dto.getMaChuSoPGG(),
+                String.format("%,.0f", dto.getGiaTriGiamGia()),
+                String.format("%,.0f", dto.getGiaTriApDungToiThieu()),
+                sdf.format(dto.getNgayBatDauApDung()),
+                sdf.format(dto.getNgayKetThucApDung()),
+                dto.getSlDaDung(),
+                dto.getSlToiDa()
+            });
         }
     }
 
@@ -377,7 +400,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCapNhat;
-    private javax.swing.JButton btnHuy;
+    private javax.swing.JButton btnLamMoi;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JButton btnXoa;

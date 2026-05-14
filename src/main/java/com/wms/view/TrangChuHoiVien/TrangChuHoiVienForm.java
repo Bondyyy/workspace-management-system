@@ -9,7 +9,7 @@ public class TrangChuHoiVienForm extends javax.swing.JFrame {
         initComponents();
         setupCustomUI();
         
-        com.wms.model.TrangChuGioiThieu.NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
+        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
         if (user != null) {
             lblGreeting.setText("Xin chào " + user.getHoTen() + "!");
         }

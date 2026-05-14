@@ -5,7 +5,7 @@ import com.wms.dao.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyHoaDon.HoaDonDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NhanVienDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyPhien.PhienLamViecDAO;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
 
 public class ThanhToanService {

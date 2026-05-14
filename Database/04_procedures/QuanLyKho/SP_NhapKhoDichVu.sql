@@ -17,8 +17,8 @@ BEGIN
     BEGIN
         SELECT nv.MaNV, nv.MaCN INTO v_MaNV, v_MaCN 
         FROM NHANVIEN nv 
-        JOIN KHACHHANG kh ON nv.MaND = kh.MaND 
-        WHERE LOWER(kh.HoTenKH) = LOWER(p_TenNhanVien) AND ROWNUM = 1;
+        JOIN NGUOIDUNG nd ON nv.MaND = nd.MaND 
+        WHERE LOWER(nd.HoTen) = LOWER(p_TenNhanVien) AND ROWNUM = 1;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
             v_MaNV := NULL;

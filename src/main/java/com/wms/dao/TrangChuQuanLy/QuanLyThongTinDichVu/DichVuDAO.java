@@ -103,4 +103,19 @@ public class DichVuDAO {
             return false;
         }
     }
+
+    public String layMaxMaDV() {
+        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaDV, 3))) FROM DICHVU WHERE MaDV LIKE 'DV%'";
+        try (Connection conn = getConn();
+             java.sql.Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next()) {
+                int maxNum = rs.getInt(1);
+                return String.format("DV%03d", maxNum);
+            }
+        } catch (Exception e) {
+            System.err.println("[DichVuDAO] Lỗi lấy mã MAX: " + e.getMessage());
+        }
+        return null;
+    }
 }

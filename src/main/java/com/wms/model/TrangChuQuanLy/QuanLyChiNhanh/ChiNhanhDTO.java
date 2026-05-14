@@ -8,7 +8,6 @@ public class ChiNhanhDTO {
     private String duongDayNong;
     private String trangThai;
     private String diaChi;
-    private String maNV_QuanLy;
 
     public ChiNhanhDTO() {
     }
@@ -68,13 +67,4 @@ public class ChiNhanhDTO {
     public void setDiaChi(String diaChi) {
         this.diaChi = diaChi;
     }
-
-    public String getMaNV_QuanLy() {
-        return maNV_QuanLy;
-    }
-
-    public void setMaNV_QuanLy(String maNV_QuanLy) {
-        this.maNV_QuanLy = maNV_QuanLy;
-    }
-
 }

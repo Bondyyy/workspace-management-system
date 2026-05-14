@@ -1,8 +1,14 @@
 package com.wms.util;
 
-import jakarta.mail.*;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.Random;
@@ -33,8 +39,9 @@ public class EmailUtil {
 
     public static boolean sendOTP(String toEmail, String otp) {
         System.out.println("[EmailUtil] Đang gửi OTP tới: " + toEmail);
-        if (SENDER_EMAIL == null || SENDER_APP_PASSWORD == null) {
-            System.err.println("[EmailUtil] Lỗi: SENDER_EMAIL hoặc SENDER_APP_PASSWORD chưa được cấu hình!");
+        if (SENDER_EMAIL == null || SENDER_EMAIL.isBlank()
+                || SENDER_APP_PASSWORD == null || SENDER_APP_PASSWORD.isBlank()) {
+            System.err.println("[EmailUtil] Lỗi: email gửi hoặc app password chưa được cấu hình!");
             return false;
         }
 
@@ -43,9 +50,9 @@ public class EmailUtil {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(SENDER_EMAIL));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            message.setSubject("Mã OTP Đăng Ký Hệ Thống WMS");
-            
-            String content = "<h3>WMS Xin Chào</h3><p>Mã OTP của bạn là: <b>" + otp + "</b></p>";
+            message.setSubject("Mã OTP đăng ký hệ thống WMS");
+
+            String content = "<h3>WMS xin chào</h3><p>Mã OTP của bạn là: <b>" + otp + "</b></p>";
             message.setContent(content, "text/html; charset=utf-8");
 
             Transport.send(message);
@@ -65,7 +72,7 @@ public class EmailUtil {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.ssl.protocols", "TLSv1.2");
-        props.put("mail.smtp.timeout", "10000"); // 10s timeout
+        props.put("mail.smtp.timeout", "10000");
         props.put("mail.smtp.connectiontimeout", "10000");
 
         return Session.getInstance(props, new Authenticator() {

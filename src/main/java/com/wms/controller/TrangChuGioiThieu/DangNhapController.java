@@ -1,6 +1,6 @@
 package com.wms.controller.TrangChuGioiThieu;
 
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.service.TrangChuGioiThieu.NguoiDungService;
 
 public class DangNhapController {

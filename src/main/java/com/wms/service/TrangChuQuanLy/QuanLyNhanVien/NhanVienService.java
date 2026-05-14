@@ -4,7 +4,7 @@ import com.wms.config.AppConstants;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NhanVienDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.VaiTroDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.ChucNangDTO;
 import java.util.List;
@@ -14,12 +14,12 @@ public class NhanVienService {
     private final NhanVienDAO nhanVienDAO = new NhanVienDAO();
     private final VaiTroDAO vaiTroDAO = new VaiTroDAO();
 
-    public List<Object[]> layDanhSachNhanVien() {
-        return nhanVienDAO.layDanhSachNhanVien();
+    public List<Object[]> layDanhSachNhanVien(String maCN) {
+        return nhanVienDAO.layDanhSachNhanVien(maCN);
     }
 
-    public List<Object[]> timKiemNhanVien(String tuKhoa) {
-        return nhanVienDAO.timKiemNhanVien(tuKhoa != null ? tuKhoa.trim() : null);
+    public List<Object[]> timKiemNhanVien(String tuKhoa, String maCN) {
+        return nhanVienDAO.timKiemNhanVien(tuKhoa != null ? tuKhoa.trim() : null, maCN);
     }
 
     public boolean themNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) throws Exception {
@@ -97,5 +97,9 @@ public class NhanVienService {
     public boolean xoaVaiTro(String maVaiTro) {
         if (AppConstants.ROLE_CUSTOMER_CODE.equals(maVaiTro) || AppConstants.ROLE_ADMIN_CODE.equals(maVaiTro)) return false;
         return vaiTroDAO.xoaVaiTro(maVaiTro);
+    }
+
+    public String layMaCNTuMaND(String maND) {
+        return nhanVienDAO.layMaCNTuMaND(maND);
     }
 }

@@ -36,4 +36,13 @@ public class QuanLyDichVuDatService {
     public List<String> layDanhSachTenDichVu(String tenLoaiDV) {
         return dao.getDanhSachTenDichVu(tenLoaiDV);
     }
+    public String xoaDichVu(String maPhien, String tenDV) {
+        boolean ok = dao.xoaDichVu(maPhien, tenDV);
+        return ok ? null : "Xóa dịch vụ thất bại!";
+    }
+
+    public String capNhatDichVu(String maPhien, String tenDV, int soLuong, String ghiChu) {
+        boolean ok = dao.capNhatDichVu(maPhien, tenDV, soLuong, ghiChu);
+        return ok ? null : "Cập nhật dịch vụ thất bại!";
+    }
 }

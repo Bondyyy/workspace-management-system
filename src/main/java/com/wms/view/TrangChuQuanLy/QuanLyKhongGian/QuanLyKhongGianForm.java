@@ -143,7 +143,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
 
         lblMaKhongGian.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaKhongGian.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaKhongGian.setText("Mã không gian (Tự động)");
+        lblMaKhongGian.setText("Mã không gian");
         pnMain.add(lblMaKhongGian);
         lblMaKhongGian.setBounds(20, 110, 170, 18);
 
@@ -178,54 +178,54 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         lblChiNhanh.setForeground(new java.awt.Color(35, 30, 48));
         lblChiNhanh.setText("Thuộc Chi nhánh (*)");
         pnMain.add(lblChiNhanh);
-        lblChiNhanh.setBounds(20, 250, 170, 18);
+        lblChiNhanh.setBounds(20, 250, 360, 18);
 
         cbxChiNhanh.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cbxChiNhanh.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CN001 - Q.1", "CN002 - Thủ Đức" }));
         pnMain.add(cbxChiNhanh);
-        cbxChiNhanh.setBounds(20, 270, 170, 35);
+        cbxChiNhanh.setBounds(20, 270, 360, 35);
 
         lblLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian.setForeground(new java.awt.Color(35, 30, 48));
         lblLoaiKhongGian.setText("Loại không gian (*)");
         pnMain.add(lblLoaiKhongGian);
-        lblLoaiKhongGian.setBounds(210, 250, 170, 18);
+        lblLoaiKhongGian.setBounds(20, 320, 360, 18);
 
         cbxLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cbxLoaiKhongGian.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn loại --", "Chỗ ngồi cá nhân", "Phòng họp" }));
         pnMain.add(cbxLoaiKhongGian);
-        cbxLoaiKhongGian.setBounds(210, 270, 170, 35);
+        cbxLoaiKhongGian.setBounds(20, 340, 360, 35);
 
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
-        btnThemMoi.addActionListener(e -> btnThemMoiActionPerformed());
+        btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(20, 340, 170, 40);
+        btnThemMoi.setBounds(20, 390, 120, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
-        btnCapNhat.addActionListener(e -> btnCapNhatActionPerformed());
+        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnMain.add(btnCapNhat);
-        btnCapNhat.setBounds(210, 340, 170, 40);
+        btnCapNhat.setBounds(150, 390, 110, 40);
 
-        btnLoaiKGian.setBackground(new java.awt.Color(220, 53, 69));
+        btnLoaiKGian.setBackground(new java.awt.Color(35, 30, 48));
         btnLoaiKGian.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnLoaiKGian.setForeground(new java.awt.Color(255, 255, 255));
-        btnLoaiKGian.setText("Q.Lý loại K.Gian");
-        btnLoaiKGian.addActionListener(e -> btnLoaiKGianActionPerformed());
+        btnLoaiKGian.setText("Quản lý Loại không gian");
+        btnLoaiKGian.addActionListener(this::btnLoaiKGianActionPerformed);
         pnMain.add(btnLoaiKGian);
-        btnLoaiKGian.setBounds(20, 390, 170, 40);
+        btnLoaiKGian.setBounds(20, 440, 360, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
-        btnHuy.addActionListener(e -> btnHuyActionPerformed());
+        btnHuy.addActionListener(this::btnHuyActionPerformed);
         pnMain.add(btnHuy);
-        btnHuy.setBounds(210, 390, 170, 40);
+        btnHuy.setBounds(270, 390, 110, 40);
 
         lblTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTimKiem.setForeground(new java.awt.Color(35, 30, 48));
@@ -241,7 +241,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setText("Tìm");
-        btnTimKiem.addActionListener(e -> btnTimKiemActionPerformed());
+        btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
         pnMain.add(btnTimKiem);
         btnTimKiem.setBounds(920, 80, 100, 35);
 
@@ -276,7 +276,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnThemMoiActionPerformed() {
+    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
         String tenKG = txtTenKhongGian.getText().trim();
         if (tenKG.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập Tên không gian!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -310,7 +310,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnCapNhatActionPerformed() {
+    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
         String maKG = txtMaKhongGian.getText().trim();
         if (maKG.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 không gian từ bảng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
@@ -353,7 +353,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnLoaiKGianActionPerformed() {
+    private void btnLoaiKGianActionPerformed(java.awt.event.ActionEvent evt) {
         java.awt.Window parentWindow = javax.swing.SwingUtilities.getWindowAncestor(this);
         QuanLyLoaiKhongGianForm dialog = new QuanLyLoaiKhongGianForm(
                 parentWindow instanceof java.awt.Frame ? (java.awt.Frame) parentWindow : null, true);
@@ -362,11 +362,11 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         taiDanhSach(null);
     }
 
-    private void btnHuyActionPerformed() {
+    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         laMoiForm();
     }
 
-    private void btnTimKiemActionPerformed() {
+    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         String keyword = txtTimKiem.getText().trim();
         taiDanhSach(keyword.isEmpty() ? null : keyword);
     }

@@ -89,8 +89,7 @@ public class KhongGianService {
     }
 
     public String sinhMaKG() {
-        int count = kgDAO.demSoLuong();
-        return String.format("KG%03d", count + 1);
+        return kgDAO.taoMaMoi();
     }
 
     public String sinhMaLoaiKG() {

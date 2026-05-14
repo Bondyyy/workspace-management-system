@@ -22,6 +22,38 @@ public class DangKyForm extends javax.swing.JPanel {
         btnRegister.addActionListener(this::btnRegisterActionPerformed);
         btnShowPass.addActionListener(e -> toggleShowPassword(txtPassword, btnShowPass));
         btnShowConfirmPass.addActionListener(e -> toggleShowPassword(txtConfirmPassword, btnShowConfirmPass));
+
+        java.awt.event.KeyAdapter guiMaAdapter = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    btnGuiMa.doClick();
+                }
+            }
+        };
+        txtUsername.addKeyListener(guiMaAdapter);
+        txtFullname.addKeyListener(guiMaAdapter);
+        txtEmail.addKeyListener(guiMaAdapter);
+
+        txtOTP.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    btnXacNhanOTP.doClick();
+                }
+            }
+        });
+
+        java.awt.event.KeyAdapter registerAdapter = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    btnRegister.doClick();
+                }
+            }
+        };
+        txtPassword.addKeyListener(registerAdapter);
+        txtConfirmPassword.addKeyListener(registerAdapter);
     }
 
     private void toggleShowPassword(javax.swing.JPasswordField field, javax.swing.JToggleButton btn) {

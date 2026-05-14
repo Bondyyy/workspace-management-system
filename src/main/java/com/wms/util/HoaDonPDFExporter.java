@@ -69,32 +69,23 @@ public class HoaDonPDFExporter {
                 table.addCell(new Phrase("So luong", boldFont));
                 table.addCell(new Phrase("Don gia (VND)", boldFont));
 
-                double tienDichVu = 0;
-                if (hoaDon.getDanhSachDichVu() != null) {
-                    for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
-                        tienDichVu += dv.getSoLuong() * dv.getDonGia();
-                    }
-                }
-
-                double tongTienGoc = hoaDon.getTongTien();
-                double tienKhongGian = tongTienGoc - tienDichVu;
-
-                if (tienKhongGian > 0) {
-                    double donGiaKg = (hoaDon.getTongSoGio() > 0) ? (tienKhongGian / hoaDon.getTongSoGio()) : 0;
-                    table.addCell(new Phrase("Thue " + removeAccents(hoaDon.getTenKhongGian()), normalFont));
-                    table.addCell(new Phrase(String.format(Locale.US, "%.1f gio", hoaDon.getTongSoGio()), normalFont));
-                    table.addCell(new Phrase(String.format("%,.0f", donGiaKg), normalFont));
-                }
-
+                // Danh sách dịch vụ (đã bao gồm tiền thuê không gian từ DAO)
                 if (hoaDon.getDanhSachDichVu() != null) {
                     for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
                         table.addCell(new Phrase(removeAccents(dv.getTenDichVu()), normalFont));
-                        table.addCell(new Phrase(String.valueOf(dv.getSoLuong()), normalFont));
+                        // Nếu là tiền thuê, hiển thị đơn vị 'gio'
+                        String slStr = String.valueOf(dv.getSoLuong());
+                        if (dv.getTenDichVu().startsWith("Thuê")) {
+                             slStr += " gio";
+                        }
+                        table.addCell(new Phrase(slStr, normalFont));
                         table.addCell(new Phrase(String.format("%,.0f", dv.getDonGia()), normalFont));
                     }
                 }
                 document.add(table);
                 document.add(new Paragraph(" "));
+
+                double tongTienGoc = hoaDon.getTongTien();
 
                 document.add(new Paragraph("TONG CONG: " + formatTien.format(tongTienGoc), boldFont));
                 if (tienGiamGia > 0) {

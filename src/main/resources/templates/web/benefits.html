@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ưu đãi - Spring MNGT</title>
+    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+</head>
+<body class="member-page">
+<aside class="member-sidebar">
+    <a class="member-brand" th:href="@{/portal}">
+        <strong>SPRING MNGT</strong>
+        <span>MEMBER PORTAL</span>
+    </a>
+    <nav class="member-nav">
+        <a th:href="@{/portal}">Trang chủ</a>
+        <a th:href="@{/portal/branches}">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/benefits}" class="active">Ưu đãi của tôi</a>
+        <a th:href="@{/portal/account}">Thông tin tài khoản</a>
+    </nav>
+    <form th:action="@{/logout}" method="post" class="member-logout">
+        <button type="submit">← Đăng xuất</button>
+    </form>
+</aside>
+
+<main class="member-main">
+    <header class="member-topbar">
+        <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
+        <strong>Hạng: VIP Kim Cương</strong>
+    </header>
+
+    <section class="member-content">
+        <div class="section-title">
+            <p>Ưu đãi & Đặc quyền của tôi</p>
+            <h2>Đặc quyền hạng thành viên</h2>
+        </div>
+
+        <section class="rank-banner compact-banner">
+            <div>
+                <span>Đặc quyền hạng thành viên</span>
+                <strong>VIP Kim Cương</strong>
+            </div>
+            <ul>
+                <li>Giảm trực tiếp 15% trên tổng hóa đơn dịch vụ</li>
+                <li>Ưu tiên xử lý yêu cầu đặt chỗ vào khung giờ cao điểm</li>
+            </ul>
+        </section>
+
+        <div class="benefit-grid">
+            <section class="member-panel">
+                <h3>Lưu mã khuyến mãi</h3>
+                <form th:action="@{/portal/benefits}" method="get" class="form-grid">
+                    <input type="text" name="keyword" placeholder="Nhập mã ưu đãi" th:value="${keyword}">
+                    <button type="submit" class="button-primary full-width">Tra cứu mã</button>
+                </form>
+                <hr>
+                <h3>Thống kê ưu đãi</h3>
+                <p th:text="'• Số mã voucher khả dụng: ' + ${#lists.size(vouchers)}">• Số mã voucher khả dụng: 0</p>
+                <p class="danger-text" th:text="'• Sắp hết hạn trong 3 ngày: ' + ${expiringVoucherCount}">• Sắp hết hạn trong 3 ngày: 0</p>
+            </section>
+
+            <section class="member-panel">
+                <div class="panel-head">
+                    <h3>Voucher trong ví của bạn</h3>
+                    <span class="subtle-text" th:text="${#lists.size(vouchers)} + ' mã'">0 mã</span>
+                </div>
+                <div class="voucher-list">
+                    <article th:each="voucher : ${vouchers}">
+                        <strong th:text="${voucher.maChuSoPGG}">SPRING</strong>
+                        <span th:text="'Giảm ' + ${#numbers.formatDecimal(voucher.giaTriGiamGia, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">Giảm 0 VNĐ</span>
+                        <small th:text="${voucher.ngayKetThucApDung != null ? 'Hiệu lực đến ' + #temporals.format(voucher.ngayKetThucApDung, 'dd/MM/yyyy') : 'Đang có hiệu lực'}">Đang có hiệu lực</small>
+                    </article>
+                    <article th:if="${#lists.isEmpty(vouchers)}" class="voucher-empty">
+                        <strong>Chưa có voucher khả dụng</strong>
+                        <span>Nhân viên có thể tạo trong module Khuyến mãi</span>
+                        <small>Bảng PHIEUGIAMGIA hiện chưa có phiếu còn hiệu lực</small>
+                    </article>
+                </div>
+            </section>
+        </div>
+    </section>
+</main>
+</body>
+</html>

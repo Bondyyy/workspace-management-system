@@ -3,7 +3,7 @@ package com.wms.view.TrangChuHoiVien.DatChoKhongGian.XacNhan;
 import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyPhien.PhienLamViecDAO;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyHoaDon.HoaDonDAO;
 

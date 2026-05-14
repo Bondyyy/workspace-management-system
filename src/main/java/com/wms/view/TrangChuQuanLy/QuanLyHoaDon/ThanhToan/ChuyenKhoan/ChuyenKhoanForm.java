@@ -12,12 +12,6 @@ public class ChuyenKhoanForm extends JDialog {
     private boolean daThanhToan = false;
     private final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
-    private JButton btnHuy, btnXacNhan;
-    private JLabel lblChuTK, lblHD, lblHeaderTitle, lblNganHang, lblNoiDung, lblQRCode, lblSoTK, lblSub, lblTongTienTitle;
-    private JPanel pnContent, pnHeader, pnInfo, pnMain;
-    private JLabel txtChuTK, txtNganHang, txtNoiDung, txtSoTK;
-    private JTextField txtTongTien;
-
     public ChuyenKhoanForm(Frame parent, boolean modal, double tongTien, String maHoaDon) {
         super(parent, modal);
         this.tongTien = tongTien;
@@ -29,6 +23,7 @@ public class ChuyenKhoanForm extends JDialog {
         setLocationRelativeTo(parent);
     }
 
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
         pnMain = new JPanel();
         pnHeader = new JPanel();
@@ -169,9 +164,10 @@ public class ChuyenKhoanForm extends JDialog {
         btnHuy.setFont(new Font("Segoe UI", 1, 15));
         btnHuy.setForeground(Color.WHITE);
         btnHuy.setText("Hủy bỏ");
-        btnHuy.addActionListener(e -> {
-            daThanhToan = false;
-            dispose();
+        btnHuy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHuyActionPerformed(evt);
+            }
         });
         pnContent.add(btnHuy);
         btnHuy.setBounds(25, 520, 130, 45);
@@ -180,9 +176,10 @@ public class ChuyenKhoanForm extends JDialog {
         btnXacNhan.setFont(new Font("Segoe UI", 1, 16));
         btnXacNhan.setForeground(Color.WHITE);
         btnXacNhan.setText("XÁC NHẬN ĐÃ NHẬN TIỀN");
-        btnXacNhan.addActionListener(e -> {
-            daThanhToan = true;
-            dispose();
+        btnXacNhan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnXacNhanActionPerformed(evt);
+            }
         });
         pnContent.add(btnXacNhan);
         btnXacNhan.setBounds(165, 520, 310, 45);
@@ -191,9 +188,42 @@ public class ChuyenKhoanForm extends JDialog {
         pnContent.setBounds(30, 85, 500, 580);
 
         getContentPane().add(pnMain, BorderLayout.CENTER);
-    }
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHuyActionPerformed
+        daThanhToan = false;
+        dispose();
+    }//GEN-LAST:event_btnHuyActionPerformed
+
+    private void btnXacNhanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnXacNhanActionPerformed
+        daThanhToan = true;
+        dispose();
+    }//GEN-LAST:event_btnXacNhanActionPerformed
 
     public boolean isDaThanhToan() {
         return daThanhToan;
     }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnHuy;
+    private javax.swing.JButton btnXacNhan;
+    private javax.swing.JLabel lblChuTK;
+    private javax.swing.JLabel lblHD;
+    private javax.swing.JLabel lblHeaderTitle;
+    private javax.swing.JLabel lblNganHang;
+    private javax.swing.JLabel lblNoiDung;
+    private javax.swing.JLabel lblQRCode;
+    private javax.swing.JLabel lblSoTK;
+    private javax.swing.JLabel lblSub;
+    private javax.swing.JLabel lblTongTienTitle;
+    private javax.swing.JPanel pnContent;
+    private javax.swing.JPanel pnHeader;
+    private javax.swing.JPanel pnInfo;
+    private javax.swing.JPanel pnMain;
+    private javax.swing.JLabel txtChuTK;
+    private javax.swing.JLabel txtNganHang;
+    private javax.swing.JLabel txtNoiDung;
+    private javax.swing.JLabel txtSoTK;
+    private javax.swing.JTextField txtTongTien;
+    // End of variables declaration//GEN-END:variables
 }

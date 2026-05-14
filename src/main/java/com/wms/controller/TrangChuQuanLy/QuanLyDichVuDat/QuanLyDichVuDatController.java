@@ -32,4 +32,11 @@ public class QuanLyDichVuDatController {
     public List<String> layDanhSachTenDichVu(String tenLoaiDV) {
         return service.layDanhSachTenDichVu(tenLoaiDV);
     }
+    public String xoaDichVu(String maPhien, String tenDV) {
+        return service.xoaDichVu(maPhien, tenDV);
+    }
+
+    public String capNhatDichVu(String maPhien, String tenDV, int soLuong, String ghiChu) {
+        return service.capNhatDichVu(maPhien, tenDV, soLuong, ghiChu);
+    }
 }

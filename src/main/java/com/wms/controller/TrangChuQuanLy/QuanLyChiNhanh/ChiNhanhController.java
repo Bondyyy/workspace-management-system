@@ -17,7 +17,6 @@ public class ChiNhanhController {
         return service.timKiem(tuKhoa);
     }
 
-    /** Trả về null nếu thành công, chuỗi lỗi nếu thất bại. */
     public String themMoi(ChiNhanhDTO cn) {
         return service.themMoi(cn);
     }
@@ -30,7 +29,7 @@ public class ChiNhanhController {
         return service.voHieuHoa(maCN);
     }
 
-    public List<String[]> layDanhSachQuanLy() {
-        return service.layDanhSachQuanLy();
+    public String layMaCNTiepTheo() {
+        return service.layMaCNTiepTheo();
     }
 }

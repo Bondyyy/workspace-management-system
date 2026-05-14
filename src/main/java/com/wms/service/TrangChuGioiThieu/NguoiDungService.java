@@ -1,19 +1,17 @@
 package com.wms.service.TrangChuGioiThieu;
 
-import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NguoiDungDAO;
-
-import com.wms.util.PasswordUtil;
+import com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDAO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.util.EmailUtil;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
-
+import com.wms.util.PasswordUtil;
 
 import java.sql.SQLException;
+import java.text.Normalizer;
 
 public class NguoiDungService {
 
     private final NguoiDungDAO nguoiDungDAO = new NguoiDungDAO();
-    
-    // ĐĂNG NHẬP
+
     public enum ketQuaDangNhap {
         THANH_CONG,
         SAI_MAT_KHAU,
@@ -21,6 +19,7 @@ public class NguoiDungService {
         TAI_KHOAN_KHONG_HOAT_DONG,
         LOI_CSDL
     }
+
     public static class AuthResponse {
         private final ketQuaDangNhap result;
         private final NguoiDungDTO user;
@@ -30,8 +29,13 @@ public class NguoiDungService {
             this.user = user;
         }
 
-        public ketQuaDangNhap getResult() { return result; }
-        public NguoiDungDTO getUser() { return user; }
+        public ketQuaDangNhap getResult() {
+            return result;
+        }
+
+        public NguoiDungDTO getUser() {
+            return user;
+        }
     }
 
     public AuthResponse authenticate(String tenTaiKhoan, String matKhau) {
@@ -42,7 +46,7 @@ public class NguoiDungService {
                 return new AuthResponse(ketQuaDangNhap.KHONG_THAY_TAI_KHOAN, null);
             }
 
-            if (!"Đang hoạt động".equalsIgnoreCase(user.getTrangThaiND())) {
+            if (!isActive(user.getTrangThaiND())) {
                 return new AuthResponse(ketQuaDangNhap.TAI_KHOAN_KHONG_HOAT_DONG, null);
             }
 
@@ -51,16 +55,13 @@ public class NguoiDungService {
             }
 
             nguoiDungDAO.updateLastLogin(user.getMaND());
-            
             return new AuthResponse(ketQuaDangNhap.THANH_CONG, user);
-
         } catch (SQLException e) {
-            System.err.println("[Service] Lỗi SQL: " + e.getMessage());
+            System.err.println("[Service] Lỗi SQL khi đăng nhập: " + e.getMessage());
             return new AuthResponse(ketQuaDangNhap.LOI_CSDL, null);
         }
     }
-    
-    // ĐĂNG KÝ
+
     public enum ketQuaDangKy {
         THANH_CONG,
         TAI_KHOAN_DA_TON_TAI,
@@ -68,9 +69,9 @@ public class NguoiDungService {
         LOI_CSDL,
         YEU_CAU_OTP_THANH_CONG,
         EMAIL_DA_TON_TAI,
-        LOI_GUI_MAIL,
+        LOI_GUI_MAIL
     }
-    
+
     public static class OtpResponse {
         private final ketQuaDangKy result;
         private final String otp;
@@ -80,13 +81,17 @@ public class NguoiDungService {
             this.otp = otp;
         }
 
-        public ketQuaDangKy getResult() { return result; }
-        public String getOtp() { return otp; }
+        public ketQuaDangKy getResult() {
+            return result;
+        }
+
+        public String getOtp() {
+            return otp;
+        }
     }
-    
+
     public OtpResponse yeuCauOTP(String tenTaiKhoan, String email) {
-        if (tenTaiKhoan == null || tenTaiKhoan.trim().isEmpty() ||
-            email == null || email.trim().isEmpty()) {
+        if (isBlank(tenTaiKhoan) || isBlank(email)) {
             return new OtpResponse(ketQuaDangKy.DU_LIEU_KHONG_HOP_LE, null);
         }
 
@@ -99,24 +104,17 @@ public class NguoiDungService {
             }
 
             String otp = EmailUtil.generateRandomOTP();
-            boolean isSent = EmailUtil.sendOTP(email.trim(), otp);
-
-            if (isSent) {
-                return new OtpResponse(ketQuaDangKy.YEU_CAU_OTP_THANH_CONG, otp);
-            } else {
-                return new OtpResponse(ketQuaDangKy.LOI_GUI_MAIL, null);
-            }
-
+            return EmailUtil.sendOTP(email.trim(), otp)
+                    ? new OtpResponse(ketQuaDangKy.YEU_CAU_OTP_THANH_CONG, otp)
+                    : new OtpResponse(ketQuaDangKy.LOI_GUI_MAIL, null);
         } catch (SQLException e) {
             System.err.println("[Service] Lỗi SQL khi yêu cầu OTP: " + e.getMessage());
             return new OtpResponse(ketQuaDangKy.LOI_CSDL, null);
         }
     }
-    
+
     public ketQuaDangKy register(String tenTaiKhoan, String hoTen, String email, String matKhau) {
-        if (tenTaiKhoan == null || tenTaiKhoan.trim().isEmpty() ||
-            matKhau == null || matKhau.trim().isEmpty() ||
-            email == null || email.trim().isEmpty()) {
+        if (isBlank(tenTaiKhoan) || isBlank(hoTen) || isBlank(email) || isBlank(matKhau)) {
             return ketQuaDangKy.DU_LIEU_KHONG_HOP_LE;
         }
 
@@ -131,20 +129,16 @@ public class NguoiDungService {
             NguoiDungDTO newUser = new NguoiDungDTO();
             newUser.setTenTaiKhoan(tenTaiKhoan.trim());
             newUser.setEmail(email.trim());
-            
-            String matKhauMaHoa = PasswordUtil.hash(matKhau);
-            newUser.setMatKhauMaHoa(matKhauMaHoa);
-            
+            newUser.setMatKhauMaHoa(PasswordUtil.hash(matKhau));
+
             nguoiDungDAO.themNguoiDung(newUser, hoTen.trim());
             return ketQuaDangKy.THANH_CONG;
-
         } catch (SQLException e) {
-            System.err.println("[Service] Lỗi SQL: " + e.getMessage());
+            System.err.println("[Service] Lỗi SQL khi đăng ký: " + e.getMessage());
             return ketQuaDangKy.LOI_CSDL;
         }
     }
 
-    // QUÊN MẬT KHẨU
     public enum ketQuaQuenMatKhau {
         THANH_CONG,
         EMAIL_KHONG_TON_TAI,
@@ -162,12 +156,17 @@ public class NguoiDungService {
             this.otp = otp;
         }
 
-        public ketQuaQuenMatKhau getResult() { return result; }
-        public String getOtp() { return otp; }
+        public ketQuaQuenMatKhau getResult() {
+            return result;
+        }
+
+        public String getOtp() {
+            return otp;
+        }
     }
 
     public OtpQuenPassResponse yeuCauOtpQuenMatKhau(String email) {
-        if (email == null || email.trim().isEmpty()) {
+        if (isBlank(email)) {
             return new OtpQuenPassResponse(ketQuaQuenMatKhau.DU_LIEU_KHONG_HOP_LE, null);
         }
 
@@ -177,14 +176,9 @@ public class NguoiDungService {
             }
 
             String otp = EmailUtil.generateRandomOTP();
-            boolean isSent = EmailUtil.sendOTP(email.trim(), otp);
-
-            if (isSent) {
-                return new OtpQuenPassResponse(ketQuaQuenMatKhau.THANH_CONG, otp);
-            } else {
-                return new OtpQuenPassResponse(ketQuaQuenMatKhau.LOI_GUI_MAIL, null);
-            }
-
+            return EmailUtil.sendOTP(email.trim(), otp)
+                    ? new OtpQuenPassResponse(ketQuaQuenMatKhau.THANH_CONG, otp)
+                    : new OtpQuenPassResponse(ketQuaQuenMatKhau.LOI_GUI_MAIL, null);
         } catch (SQLException e) {
             System.err.println("[Service] Lỗi SQL khi yêu cầu OTP quên mật khẩu: " + e.getMessage());
             return new OtpQuenPassResponse(ketQuaQuenMatKhau.LOI_CSDL, null);
@@ -192,7 +186,7 @@ public class NguoiDungService {
     }
 
     public ketQuaQuenMatKhau datLaiMatKhau(String email, String matKhauMoi) {
-        if (email == null || email.trim().isEmpty() || matKhauMoi == null || matKhauMoi.trim().isEmpty()) {
+        if (isBlank(email) || isBlank(matKhauMoi)) {
             return ketQuaQuenMatKhau.DU_LIEU_KHONG_HOP_LE;
         }
 
@@ -201,17 +195,36 @@ public class NguoiDungService {
                 return ketQuaQuenMatKhau.EMAIL_KHONG_TON_TAI;
             }
 
-            String matKhauMaHoa = PasswordUtil.hash(matKhauMoi);
-            nguoiDungDAO.capNhatMatKhauTheoEmail(email.trim(), matKhauMaHoa);
+            nguoiDungDAO.capNhatMatKhauTheoEmail(email.trim(), PasswordUtil.hash(matKhauMoi));
             return ketQuaQuenMatKhau.THANH_CONG;
-
         } catch (SQLException e) {
             System.err.println("[Service] Lỗi SQL khi đặt lại mật khẩu: " + e.getMessage());
             return ketQuaQuenMatKhau.LOI_CSDL;
         }
     }
+
+    private boolean isActive(String status) {
+        String normalized = normalize(status);
+        return !normalized.isBlank()
+                && !normalized.contains("khong hoat dong")
+                && !normalized.contains("ngung hoat dong")
+                && !normalized.contains("khoa");
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replace('đ', 'd')
+                .replaceAll("[^a-z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
 }
-
-
-
-

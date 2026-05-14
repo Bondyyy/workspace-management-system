@@ -4,7 +4,7 @@
  */
 package com.wms.view.TrangChuQuanLy;
 
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 
 /**
@@ -23,7 +23,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
 
         NguoiDungDTO user = DangNhapController.getCurrentUser();
         if (user != null) {
-            String name = (user.getHoTen() != null && !user.getHoTen().isEmpty()) ? user.getHoTen() : user.getTenTaiKhoan();
+            String name = (user.getHoTen() != null && !user.getHoTen().isEmpty()) ? user.getHoTen()
+                    : user.getTenTaiKhoan();
             lblGreeting.setText("Xin chào " + (name != null ? name : "Admin") + "!");
             // Xác định tên hiển thị vai trò cho header
             String roleDisplay = "Nhân viên";
@@ -54,8 +55,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
 
         javax.swing.JButton[] menuButtons = {
                 btnMenuTongQuan, btnMenuChiNhanh, btnMenuKhongGian,
-                btnMenuDichVu, btnMenuKho, btnMenuPhien, btnMenuDichVuDat,
-                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuNhanVien
+                btnMenuDichVu, btnMenuLoaiDichVu, btnMenuKho, btnMenuPhien, btnMenuDichVuDat,
+                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuNhanVien, btnMenuNguoiDung
         };
 
         for (javax.swing.JButton b : menuButtons) {
@@ -74,8 +75,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         // Thiết lập hiệu ứng Hover màu trắng - hồng cho thanh Menu
         javax.swing.JButton[] menuButtons = {
                 btnMenuTongQuan, btnMenuChiNhanh, btnMenuKhongGian,
-                btnMenuDichVu, btnMenuKho, btnMenuPhien, btnMenuDichVuDat,
-                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuNhanVien
+                btnMenuDichVu, btnMenuLoaiDichVu, btnMenuKho, btnMenuPhien, btnMenuDichVuDat,
+                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuNhanVien, btnMenuNguoiDung
         };
 
         java.awt.Color defaultColor = new java.awt.Color(255, 255, 255);
@@ -108,7 +109,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     // Hàm phân quyền động dựa vào MaChucNang từ DB
     public void phanQuyenTheoDB(NguoiDungDTO user) {
         // Kiểm tra xem có phải Quản trị hệ thống không (luôn có toàn quyền)
-        boolean laAdminHT = user.hasRole("Quản trị hệ thống") || user.hasRole("VT01");
+        boolean laAdminHT = user.hasRole("Quản trị Viên hệ thống") || user.hasRole("VT01");
 
         if (laAdminHT) {
             // Admin hệ thống: hiện tất cả
@@ -123,11 +124,13 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
             btnMenuGiamGia.setVisible(true);
             btnMenuHoiVien.setVisible(true);
             btnMenuNhanVien.setVisible(true);
+            btnMenuLoaiDichVu.setVisible(true);
+            btnMenuNguoiDung.setVisible(true);
         } else if (user.daPhanQuyen()) {
             // Nhân viên đã được phân quyền: chỉ hiện menu có MaChucNang tương ứng
             // Mapping: CN01→Tổng quan, CN02→Chi nhánh, CN03→Không gian, CN04→DịchVụ,
-            //          CN05→Kho, CN06→DịchVuDat, CN07→Phiên, CN08→HóaĐơn,
-            //          CN09→Giảm giá, CN10→HộiViên, CN11→Nhân sự
+            // CN05→Kho, CN06→DịchVuDat, CN07→Phiên, CN08→HóaĐơn,
+            // CN09→Giảm giá, CN10→HộiViên, CN11→Nhân sự
             btnMenuTongQuan.setVisible(user.hasChucNang("CN01"));
             btnMenuChiNhanh.setVisible(user.hasChucNang("CN02"));
             btnMenuKhongGian.setVisible(user.hasChucNang("CN03"));
@@ -139,6 +142,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
             btnMenuGiamGia.setVisible(user.hasChucNang("CN09"));
             btnMenuHoiVien.setVisible(user.hasChucNang("CN10"));
             btnMenuNhanVien.setVisible(user.hasChucNang("CN11"));
+            btnMenuLoaiDichVu.setVisible(laAdminHT); // Mặc định cho Admin
+            btnMenuNguoiDung.setVisible(laAdminHT); // Mặc định cho Admin
 
             // Đảm bảo Tổng quan luôn hiện (ít nhất 1 menu phải có)
             boolean anyVisible = user.hasChucNang("CN01") || user.hasChucNang("CN02")
@@ -152,7 +157,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
                 btnMenuTongQuan.setVisible(true);
             }
         } else {
-            // Có vai trò nhưng chưa cấu hình chức năng cụ thể → hiện tổng quan + phiên làm việc tối thiểu
+            // Có vai trò nhưng chưa cấu hình chức năng cụ thể → hiện tổng quan + phiên làm
+            // việc tối thiểu
             btnMenuTongQuan.setVisible(true);
             btnMenuChiNhanh.setVisible(false);
             btnMenuKhongGian.setVisible(false);
@@ -164,6 +170,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
             btnMenuGiamGia.setVisible(false);
             btnMenuHoiVien.setVisible(false);
             btnMenuNhanVien.setVisible(false);
+            btnMenuLoaiDichVu.setVisible(false);
+            btnMenuNguoiDung.setVisible(false);
         }
 
         pnMenuContainer.revalidate();
@@ -211,7 +219,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated
+    // Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -231,6 +240,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuGiamGia = new javax.swing.JButton();
         btnMenuHoiVien = new javax.swing.JButton();
         btnMenuNhanVien = new javax.swing.JButton();
+        btnMenuLoaiDichVu = new javax.swing.JButton();
+        btnMenuNguoiDung = new javax.swing.JButton();
         pnLogout = new javax.swing.JPanel();
         btnDangXuat = new javax.swing.JButton();
         pnRightMain = new javax.swing.JPanel();
@@ -322,6 +333,17 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuDichVu.addActionListener(this::btnMenuDichVuActionPerformed);
         pnMenuContainer.add(btnMenuDichVu);
 
+        btnMenuLoaiDichVu.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        btnMenuLoaiDichVu.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuLoaiDichVu.setText("●  Loại Dịch vụ");
+        btnMenuLoaiDichVu.setBorderPainted(false);
+        btnMenuLoaiDichVu.setContentAreaFilled(false);
+        btnMenuLoaiDichVu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnMenuLoaiDichVu.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuLoaiDichVu.setMaximumSize(new java.awt.Dimension(32767, 45));
+        btnMenuLoaiDichVu.addActionListener(this::btnMenuLoaiDichVuActionPerformed);
+        pnMenuContainer.add(btnMenuLoaiDichVu);
+
         btnMenuKho.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         btnMenuKho.setForeground(new java.awt.Color(48, 30, 35));
         btnMenuKho.setText("●  Kho Dịch vụ");
@@ -398,6 +420,17 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuNhanVien.setMaximumSize(new java.awt.Dimension(32767, 45));
         btnMenuNhanVien.addActionListener(this::btnMenuNhanVienActionPerformed);
         pnMenuContainer.add(btnMenuNhanVien);
+
+        btnMenuNguoiDung.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        btnMenuNguoiDung.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuNguoiDung.setText("●  Người dùng");
+        btnMenuNguoiDung.setBorderPainted(false);
+        btnMenuNguoiDung.setContentAreaFilled(false);
+        btnMenuNguoiDung.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnMenuNguoiDung.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuNguoiDung.setMaximumSize(new java.awt.Dimension(32767, 45));
+        btnMenuNguoiDung.addActionListener(this::btnMenuNguoiDungActionPerformed);
+        pnMenuContainer.add(btnMenuNguoiDung);
 
         pnSidebar.add(pnMenuContainer, java.awt.BorderLayout.CENTER);
 
@@ -522,6 +555,16 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         setActiveMenu(btnMenuNhanVien);
     }
 
+    private void btnMenuLoaiDichVuActionPerformed(java.awt.event.ActionEvent evt) {
+        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyLoaiDichVu.QuanLyLoaiDichVuForm());
+        setActiveMenu(btnMenuLoaiDichVu);
+    }
+
+    private void btnMenuNguoiDungActionPerformed(java.awt.event.ActionEvent evt) {
+        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyNguoiDung.QuanLyNguoiDungForm());
+        setActiveMenu(btnMenuNguoiDung);
+    }
+
     private void btnDangXuatActionPerformed(java.awt.event.ActionEvent evt) {
         this.dispose();
         DangNhapController.logout();
@@ -573,6 +616,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     private javax.swing.JButton btnMenuKhongGian;
     private javax.swing.JButton btnMenuNhanVien;
     private javax.swing.JButton btnMenuPhien;
+    private javax.swing.JButton btnMenuLoaiDichVu;
+    private javax.swing.JButton btnMenuNguoiDung;
     private javax.swing.JButton btnMenuTongQuan;
     private javax.swing.JLabel lblGreeting;
     private javax.swing.JLabel lblLogo;

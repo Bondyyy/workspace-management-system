@@ -20,13 +20,13 @@ import javax.swing.event.DocumentListener;
 public class ThanhToanHoaDonForm extends JPanel {
 
     private final Color mauNenChinh = Color.decode("#FAFAFA");
-    private final Color mauHongChinh = Color.decode("#D81B60");
+    private final Color mauHongChinh = new java.awt.Color(235, 94, 141);
     private final Color mauHongNhat = Color.decode("#FCE4EC");
     private final Color mauXamDam = Color.decode("#212529");
     private final Color mauXamNhat = Color.decode("#757575");
     private final Color mauXanhNhat = Color.decode("#E3F2FD");
     private final Color mauXanhLa = Color.decode("#4CAF50");
-    private final Color mauDo = Color.decode("#F44336");
+    private final Color mauDo = new java.awt.Color(255, 82, 82);
 
     private JPanel panelChiTietHD;
     private JLabel lblTongTien, lblThanhTien;
@@ -270,7 +270,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         JButton btnApDung = new JButton("Áp dụng");
         btnApDung.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnApDung.setForeground(Color.WHITE);
-        btnApDung.setBackground(mauHongChinh);
+        btnApDung.setBackground(mauDo);
         btnApDung.setFocusPainted(false);
         btnApDung.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnApDung.addActionListener(e -> kiemTraMaGiamGia());
@@ -526,7 +526,8 @@ public class ThanhToanHoaDonForm extends JPanel {
 
         if (hoaDon.getDanhSachDichVu() != null && !hoaDon.getDanhSachDichVu().isEmpty()) {
             for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
-                panelChiTietHD.add(taoDichVuRow(dv.getTenDichVu(), "x" + dv.getSoLuong(), dv.getThanhTien()));
+                String hienThiSL = dv.getTenDichVu().startsWith("Thuê") ? dv.getSoLuong() + " giờ" : "x" + dv.getSoLuong();
+                panelChiTietHD.add(taoDichVuRow(dv.getTenDichVu(), hienThiSL, dv.getThanhTien()));
                 panelChiTietHD.add(taoKhoangCach(8));
             }
         } else {

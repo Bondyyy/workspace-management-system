@@ -2,7 +2,8 @@ package com.wms.view.TrangChuQuanLy.QuanLyThongTinDichVu;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuController;
 import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.LoaiDichVuDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyLoaiDichVu.LoaiDichVuDTO;
+import com.wms.view.TrangChuQuanLy.QuanLyLoaiDichVu.QuanLyLoaiDichVuForm;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -19,6 +20,39 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         loadLoaiDV();
         loadData(null);
         txtMaDV.setText(controller.generateMaDV());
+        
+        txtDonGia.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
+        });
+    }
+
+    private boolean isFormattingDonGia = false;
+
+    private void formatDonGia() {
+        if (isFormattingDonGia) return;
+        SwingUtilities.invokeLater(() -> {
+            isFormattingDonGia = true;
+            try {
+                String text = txtDonGia.getText().replace(",", "").replace(".", "");
+                if (!text.isEmpty()) {
+                    long value = Long.parseLong(text);
+                    java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
+                    String formatted = df.format(value);
+                    if (!txtDonGia.getText().equals(formatted)) {
+                        txtDonGia.setText(formatted);
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                // Ignore invalid input
+            } finally {
+                isFormattingDonGia = false;
+            }
+        });
     }
 
     private void loadLoaiDV() {
@@ -86,7 +120,6 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         txtDonGia = new javax.swing.JTextField();
         btnThemMoi = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
-        btnQuanLyLoaiDV = new javax.swing.JButton();
         btnHuy = new javax.swing.JButton();
         lblTimKiem = new javax.swing.JLabel();
         txtTimKiem = new javax.swing.JTextField();
@@ -122,42 +155,42 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnDoiAnh.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnDoiAnh.setForeground(new java.awt.Color(235, 94, 141));
         btnDoiAnh.setText("Chọn ảnh");
-        btnDoiAnh.addActionListener(e -> btnDoiAnhActionPerformed());
+        btnDoiAnh.addActionListener(this::btnDoiAnhActionPerformed);
         pnMain.add(btnDoiAnh);
         btnDoiAnh.setBounds(20, 220, 140, 30);
 
         lblMaDV.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaDV.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaDV.setText("Mã DV (Tự động)");
+        lblMaDV.setText("Mã Dịch vụ");
         pnMain.add(lblMaDV);
-        lblMaDV.setBounds(180, 70, 100, 18);
+        lblMaDV.setBounds(180, 70, 100, 20);
 
         txtMaDV.setEditable(false);
         txtMaDV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         txtMaDV.setBackground(new java.awt.Color(240, 240, 240));
         pnMain.add(txtMaDV);
-        txtMaDV.setBounds(180, 90, 100, 35);
+        txtMaDV.setBounds(180, 90, 210, 35);
 
         lblTrangThai.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTrangThai.setForeground(new java.awt.Color(35, 30, 48));
         lblTrangThai.setText("Trạng thái (*)");
         pnMain.add(lblTrangThai);
-        lblTrangThai.setBounds(290, 70, 100, 18);
+        lblTrangThai.setBounds(180, 140, 100, 18);
 
         cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng kinh doanh" }));
         pnMain.add(cbxTrangThai);
-        cbxTrangThai.setBounds(290, 90, 100, 35);
+        cbxTrangThai.setBounds(180, 160, 210, 35);
 
         lblTenDV.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTenDV.setForeground(new java.awt.Color(35, 30, 48));
         lblTenDV.setText("Tên dịch vụ (*)");
         pnMain.add(lblTenDV);
-        lblTenDV.setBounds(180, 140, 210, 18);
+        lblTenDV.setBounds(180, 280, 210, 18);
 
         txtTenDV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtTenDV);
-        txtTenDV.setBounds(180, 160, 210, 35);
+        txtTenDV.setBounds(180, 300, 210, 35);
 
         lblLoaiDV.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiDV.setForeground(new java.awt.Color(35, 30, 48));
@@ -166,7 +199,8 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         lblLoaiDV.setBounds(180, 210, 210, 18);
 
         cbxLoaiDV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxLoaiDV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn loại DV --" }));
+        cbxLoaiDV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn loại Dịch vụ --", "Nước uống", "Thức ăn nhẹ" }));
+        cbxLoaiDV.addActionListener(this::cbxLoaiDVActionPerformed);
         pnMain.add(cbxLoaiDV);
         cbxLoaiDV.setBounds(180, 230, 210, 35);
 
@@ -174,17 +208,17 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         lblDonGia.setForeground(new java.awt.Color(35, 30, 48));
         lblDonGia.setText("Đơn giá (VNĐ) (*)");
         pnMain.add(lblDonGia);
-        lblDonGia.setBounds(20, 280, 370, 18);
+        lblDonGia.setBounds(20, 280, 150, 18);
 
         txtDonGia.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtDonGia);
-        txtDonGia.setBounds(20, 300, 370, 35);
+        txtDonGia.setBounds(20, 300, 150, 35);
 
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
-        btnThemMoi.addActionListener(e -> btnThemMoiActionPerformed());
+        btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
         btnThemMoi.setBounds(20, 360, 180, 40);
 
@@ -192,24 +226,16 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
-        btnCapNhat.addActionListener(e -> btnCapNhatActionPerformed());
+        btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnMain.add(btnCapNhat);
         btnCapNhat.setBounds(210, 360, 180, 40);
-
-        btnQuanLyLoaiDV.setBackground(new java.awt.Color(35, 30, 48));
-        btnQuanLyLoaiDV.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnQuanLyLoaiDV.setForeground(new java.awt.Color(255, 255, 255));
-        btnQuanLyLoaiDV.setText("Q.Lý Loại Dịch vụ");
-        btnQuanLyLoaiDV.addActionListener(e -> btnQuanLyLoaiDVActionPerformed());
-        pnMain.add(btnQuanLyLoaiDV);
-        btnQuanLyLoaiDV.setBounds(20, 415, 180, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
-        btnHuy.addActionListener(e -> lamMoiForm());
+        btnHuy.addActionListener(this::btnHuyActionPerformed);
         pnMain.add(btnHuy);
-        btnHuy.setBounds(210, 415, 180, 40);
+        btnHuy.setBounds(20, 415, 370, 40);
 
         lblTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTimKiem.setForeground(new java.awt.Color(35, 30, 48));
@@ -225,20 +251,25 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setText("Tìm");
-        btnTimKiem.addActionListener(e -> {
-            loadData(txtTimKiem.getText().trim());
-        });
+        btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
         pnMain.add(btnTimKiem);
         btnTimKiem.setBounds(920, 80, 100, 35);
 
         tblDichVu.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {},
+            new Object [][] {
+
+            },
             new String [] {
                 "Mã DV", "Tên dịch vụ", "Loại dịch vụ", "Đơn giá", "Trạng thái"
             }
         ) {
-            boolean[] canEdit = new boolean [] { false, false, false, false, false };
-            public boolean isCellEditable(int rowIndex, int columnIndex) { return canEdit [columnIndex]; }
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
         });
         tblDichVu.setRowHeight(30);
         tblDichVu.setSelectionBackground(new java.awt.Color(235, 94, 141));
@@ -255,7 +286,11 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnDoiAnhActionPerformed() {
+    private void cbxLoaiDVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxLoaiDVActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxLoaiDVActionPerformed
+
+    private void btnDoiAnhActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser chooser = new JFileChooser();
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = chooser.getSelectedFile().getAbsolutePath();
@@ -265,7 +300,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnThemMoiActionPerformed() {
+    private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
         try {
             DichVuDTO dv = getFormData();
             if (controller.themMoi(dv)) {
@@ -280,9 +315,16 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnCapNhatActionPerformed() {
+    private void btnCapNhatActionPerformed(java.awt.event.ActionEvent evt) {
         try {
             DichVuDTO dv = getFormData();
+            
+            // Không cho phép thay đổi trạng thái của dịch vụ hệ thống
+            if ("DV000".equals(dv.getMaDV()) && !"Đang hoạt động".equals(dv.getTrangThaiDV())) {
+                JOptionPane.showMessageDialog(this, "Không thể ngừng kinh doanh dịch vụ hệ thống (Gia hạn giờ)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
             if (controller.capNhat(dv)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                 loadData(null);
@@ -294,11 +336,18 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         }
     }
 
-    private void btnQuanLyLoaiDVActionPerformed() {
-        Frame parent = (Frame) SwingUtilities.getWindowAncestor(this);
-        QuanLyLoaiDichVuForm dialog = new QuanLyLoaiDichVuForm(parent, true);
-        dialog.setVisible(true);
+    private void btnQuanLyLoaiDVActionPerformed(java.awt.event.ActionEvent evt) {
+        JOptionPane.showMessageDialog(this, "Vui lòng chọn mục 'Loại Dịch vụ' ở menu bên trái để quản lý!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         loadLoaiDV();
+    }
+
+    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
+        lamMoiForm();
+        loadData(null);
+    }
+
+    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
+        loadData(txtTimKiem.getText().trim());
     }
 
     private void lamMoiForm() {
@@ -371,7 +420,6 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
     private javax.swing.JButton btnCapNhat;
     private javax.swing.JButton btnDoiAnh;
     private javax.swing.JButton btnHuy;
-    private javax.swing.JButton btnQuanLyLoaiDV;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JComboBox<String> cbxLoaiDV;

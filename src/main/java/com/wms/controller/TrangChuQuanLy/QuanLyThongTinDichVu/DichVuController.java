@@ -1,7 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyThongTinDichVu;
 
 import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.LoaiDichVuDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyLoaiDichVu.LoaiDichVuDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuService;
 import java.util.List;
 

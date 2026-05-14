@@ -1,9 +1,9 @@
 package com.wms.service.TrangChuQuanLy.QuanLyThongTinDichVu;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDAO;
-import com.wms.dao.TrangChuQuanLy.QuanLyThongTinDichVu.LoaiDichVuDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyLoaiDichVu.LoaiDichVuDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.LoaiDichVuDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyLoaiDichVu.LoaiDichVuDTO;
 import java.util.List;
 
 public class DichVuService {
@@ -38,18 +38,34 @@ public class DichVuService {
     }
 
     public String generateMaDV() {
-        return "DV" + (System.currentTimeMillis() % 1000000);
+        String maxMa = dichVuDAO.layMaxMaDV();
+        if (maxMa == null || !maxMa.startsWith("DV")) return "DV001";
+        try {
+            int num = Integer.parseInt(maxMa.substring(2)) + 1;
+            return String.format("DV%03d", num);
+        } catch (Exception e) {
+            return "DV" + (System.currentTimeMillis() % 1000);
+        }
     }
 
     // Quản lý Loại dịch vụ
     public List<LoaiDichVuDTO> layTatCaLoai() {
-        return loaiDichVuDAO.layTatCa();
+        try {
+            return loaiDichVuDAO.layTatCa();
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+            return new java.util.ArrayList<>();
+        }
     }
 
     public boolean themLoaiDichVu(LoaiDichVuDTO l) throws Exception {
         if (l.getTenLoaiDV() == null || l.getTenLoaiDV().isBlank())
             throw new Exception("Tên loại không được để trống!");
-        return loaiDichVuDAO.them(l);
+        try {
+            return loaiDichVuDAO.them(l);
+        } catch (java.sql.SQLException e) {
+            throw new Exception("Lỗi khi thêm loại dịch vụ: " + e.getMessage());
+        }
     }
 
     public boolean capNhatLoaiDichVu(LoaiDichVuDTO l) throws Exception {
@@ -57,10 +73,21 @@ public class DichVuService {
             throw new Exception("Mã loại không hợp lệ!");
         if (l.getTenLoaiDV() == null || l.getTenLoaiDV().isBlank())
             throw new Exception("Tên loại không được để trống!");
-        return loaiDichVuDAO.capNhat(l);
+        try {
+            return loaiDichVuDAO.capNhat(l);
+        } catch (java.sql.SQLException e) {
+            throw new Exception("Lỗi khi cập nhật loại dịch vụ: " + e.getMessage());
+        }
     }
 
     public String generateMaLoai() {
-        return "LDV" + (System.currentTimeMillis() % 1000000);
+        try {
+            String maxMa = loaiDichVuDAO.layMaxMaLoaiDV();
+            if (maxMa == null || !maxMa.startsWith("LDV")) return "LDV001";
+            int num = Integer.parseInt(maxMa.substring(3)) + 1;
+            return String.format("LDV%03d", num);
+        } catch (Exception e) {
+            return "LDV" + (System.currentTimeMillis() % 1000);
+        }
     }
 }

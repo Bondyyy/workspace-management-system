@@ -28,7 +28,7 @@ public class ChiNhanhDAO {
             cs.setString(4, chiNhanh.getThoiGianMoCua());
             cs.setString(5, chiNhanh.getThoiGianDongCua());
             cs.setString(6, chiNhanh.getDuongDayNong());
-            cs.setString(7, chiNhanh.getMaNV_QuanLy()); // Cần truyền mã quản lý
+            cs.setString(7, chiNhanh.getTrangThai());
             cs.registerOutParameter(8, java.sql.Types.VARCHAR);
             
             cs.execute();
@@ -51,7 +51,7 @@ public class ChiNhanhDAO {
             cs.setString(4, chiNhanh.getThoiGianMoCua());
             cs.setString(5, chiNhanh.getThoiGianDongCua());
             cs.setString(6, chiNhanh.getDuongDayNong());
-            cs.setString(7, chiNhanh.getMaNV_QuanLy());
+            cs.setString(7, chiNhanh.getTrangThai());
             cs.registerOutParameter(8, java.sql.Types.VARCHAR);
             
             cs.execute();
@@ -84,7 +84,6 @@ public class ChiNhanhDAO {
                     cn.setThoiGianMoCua(rs.getString("ThoiGianMoCua"));
                     cn.setThoiGianDongCua(rs.getString("ThoiGianDongCua"));
                     cn.setTrangThai(rs.getString("TrangThai"));
-                    cn.setMaNV_QuanLy(rs.getString("MaNV_QuanLy"));
                     list.add(cn);
                 }
             }

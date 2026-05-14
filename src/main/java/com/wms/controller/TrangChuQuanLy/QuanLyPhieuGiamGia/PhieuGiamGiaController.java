@@ -31,6 +31,10 @@ public class PhieuGiamGiaController {
         return service.timTheoMa(maPGG);
     }
 
+    public List<PhieuGiamGiaDTO> timKiem(String keyword) {
+        return service.timKiem(keyword);
+    }
+
     public String sinhMaMoi() {
         return service.sinhMaMoi();
     }

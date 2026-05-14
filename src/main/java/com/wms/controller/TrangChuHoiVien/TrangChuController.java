@@ -2,7 +2,7 @@ package com.wms.controller.TrangChuHoiVien;
 
 import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.dao.TrangChuHoiVien.TrangChuDAO;
-import com.wms.model.TrangChuGioiThieu.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import java.util.ArrayList;
 import java.util.List;
 

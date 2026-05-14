@@ -8,7 +8,7 @@ ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_SDT
 ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_Email 
     CHECK (Email LIKE '%@%.%');
 
-ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_TrangThai 
+ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_TrangThai
     CHECK (TrangThaiND IN ('Đang hoạt động', 'Không hoạt động'));
 
 -- 2. Bảng KHACHHANG (Hội viên)
@@ -31,12 +31,12 @@ ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_TrangThai
         'Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công', 'Đã sử dụng'));
 
 -- 5. Bảng PHIENLAMVIEC
-ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai 
+ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai
     CHECK (TrangThaiPhien IN ('Đang hoạt động', 'Đã đặt trước', 'Đã kết thúc'));
 
 -- 6. Bảng DICHVU & CHITIETDICHVU
 ALTER TABLE DICHVU ADD CONSTRAINT CHK_DV_DonGia 
-    CHECK (DonGia > 0);
+    CHECK (DonGia >= 0);
 
 ALTER TABLE LOAIDICHVU ADD CONSTRAINT CHK_LDV_TrangThai
     CHECK (TrangThaiLDV IN ('Đang hoạt động', 'Tạm ngưng', 'Ngừng kinh doanh'));
@@ -45,7 +45,7 @@ ALTER TABLE CHITIETDICHVU ADD CONSTRAINT CHK_CTDV_SoLuong
     CHECK (SoLuong > 0);
 
 -- 7. Bảng KHONGGIAN & LOAIKHONGGIAN
-ALTER TABLE KHONGGIAN ADD CONSTRAINT CHK_KG_TrangThai 
+ALTER TABLE KHONGGIAN ADD CONSTRAINT CHK_KG_TrangThai
     CHECK (TrangThaiKG IN ('Trống', 'Đã đặt trước', 'Đang hoạt động', 'Dọn dẹp', 'Bảo trì'));
 
 ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_SucChua 
@@ -61,12 +61,12 @@ ALTER TABLE CHINHANH ADD CONSTRAINT CHK_CN_MoCua
 ALTER TABLE CHINHANH ADD CONSTRAINT CHK_CN_DongCua 
     CHECK (REGEXP_LIKE(ThoiGianDongCua, '^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$'));
 
-ALTER TABLE CHINHANH ADD CONSTRAINT CHK_CN_TrangThai 
+ALTER TABLE CHINHANH ADD CONSTRAINT CHK_CN_TrangThai
     CHECK (TrangThai IN ('Đang hoạt động', 'Ngừng hoạt động'));
 
 -- 9. Bảng NHANVIEN (Bao gồm quản lý và lễ tân)
-ALTER TABLE NHANVIEN ADD CONSTRAINT CHK_NV_LoaiNV 
-    CHECK (LoaiNV IN ('Lễ tân', 'Quản lý'));
+ALTER TABLE NHANVIEN ADD CONSTRAINT CHK_NV_LoaiNV
+    CHECK (LoaiNV IN ('Nhân viên', 'Quản lý', 'Quản trị Viên hệ thống'));
 
 ALTER TABLE NHANVIEN ADD CONSTRAINT CHK_NV_LuongCB 
     CHECK (LuongCoBan > 0); 
@@ -75,10 +75,10 @@ ALTER TABLE NHANVIEN ADD CONSTRAINT CHK_NV_PhuCap
     CHECK (PhuCap >= 0);
 
 -- 10. Bảng HOADON
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_PTTT 
+ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_PTTT
     CHECK (PhuongThucThanhToan IN ('Chuyển khoản', 'Tiền mặt'));
 
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TrangThai 
+ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TrangThai
     CHECK (TrangThaiThanhToan IN ('Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
 
 ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TongTien 

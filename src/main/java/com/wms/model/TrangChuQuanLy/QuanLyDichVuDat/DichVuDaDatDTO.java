@@ -8,11 +8,12 @@ public class DichVuDaDatDTO {
     private String khachHang;
     private String tenKhongGian;
     private String ghiChu;
+    private String tenLoaiDV;
 
     public DichVuDaDatDTO() {
     }
 
-    public DichVuDaDatDTO(String maPhien, String tenDichVu, int soLuong, String thoiGianDat, String khachHang, String tenKhongGian, String ghiChu) {
+    public DichVuDaDatDTO(String maPhien, String tenDichVu, int soLuong, String thoiGianDat, String khachHang, String tenKhongGian, String ghiChu, String tenLoaiDV) {
         this.maPhien = maPhien;
         this.tenDichVu = tenDichVu;
         this.soLuong = soLuong;
@@ -20,6 +21,7 @@ public class DichVuDaDatDTO {
         this.khachHang = khachHang;
         this.tenKhongGian = tenKhongGian;
         this.ghiChu = ghiChu;
+        this.tenLoaiDV = tenLoaiDV;
     }
 
     public String getMaPhien() {
@@ -76,5 +78,13 @@ public class DichVuDaDatDTO {
 
     public void setGhiChu(String ghiChu) {
         this.ghiChu = ghiChu;
+    }
+
+    public String getTenLoaiDV() {
+        return tenLoaiDV;
+    }
+
+    public void setTenLoaiDV(String tenLoaiDV) {
+        this.tenLoaiDV = tenLoaiDV;
     }
 }

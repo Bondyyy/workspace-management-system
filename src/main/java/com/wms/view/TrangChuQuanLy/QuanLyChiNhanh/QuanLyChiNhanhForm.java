@@ -18,8 +18,8 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         initComponents();
         setupTable();
         tableModel = (DefaultTableModel) tblChiNhanh.getModel();
-        loadQuanLyData();
         loadTableData(controller.layDanhSach());
+        clearForm();
     }
 
     private void setupTable() {
@@ -34,13 +34,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         }
     }
 
-    private void loadQuanLyData() {
-        cbxQuanLy.removeAllItems();
-        cbxQuanLy.addItem("Không có quản lý");
-        for (String[] m : controller.layDanhSachQuanLy()) {
-            cbxQuanLy.addItem(m[0] + " - " + m[1]);
-        }
-    }
+
 
     private void loadTableData(List<ChiNhanhDTO> list) {
         danhSachHienThi = list;
@@ -49,7 +43,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
             tableModel.addRow(new Object[] {
                     cn.getMaCN(), cn.getTenCN(), cn.getDiaChi(),
                     cn.getThoiGianMoCua(), cn.getThoiGianDongCua(),
-                    cn.getDuongDayNong(), cn.getTrangThai(), cn.getMaNV_QuanLy()
+                    cn.getDuongDayNong(), cn.getTrangThai()
             });
         }
     }
@@ -65,17 +59,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         txtGioDongCua.setText(cn.getThoiGianDongCua());
         txtHotline1.setText(cn.getDuongDayNong());
         cbxTrangThai.setSelectedItem(cn.getTrangThai());
-
-        String maNV = cn.getMaNV_QuanLy();
-        cbxQuanLy.setSelectedIndex(0);
-        if (maNV != null && !maNV.trim().isEmpty()) {
-            for (int i = 1; i < cbxQuanLy.getItemCount(); i++) {
-                if (cbxQuanLy.getItemAt(i).startsWith(maNV + " -")) {
-                    cbxQuanLy.setSelectedIndex(i);
-                    break;
-                }
-            }
-        }
+        txtMaCN.setText(cn.getMaCN());
     }
 
     private void clearForm() {
@@ -86,7 +70,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         txtGioDongCua.setText("");
         txtHotline1.setText("");
         cbxTrangThai.setSelectedIndex(0);
-        cbxQuanLy.setSelectedIndex(0);
+        txtMaCN.setText(controller.layMaCNTiepTheo());
         tblChiNhanh.clearSelection();
     }
 
@@ -100,8 +84,6 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         cn.setTrangThai(cbxTrangThai.getSelectedItem() != null
                 ? cbxTrangThai.getSelectedItem().toString()
                 : "Đang hoạt động");
-        String sel = cbxQuanLy.getSelectedItem() != null ? cbxQuanLy.getSelectedItem().toString() : "";
-        cn.setMaNV_QuanLy(sel.equals("Không có quản lý") ? null : sel.split(" - ")[0]);
         return cn;
     }
 
@@ -164,8 +146,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         }
     }
 
-    private void cbxQuanLyActionPerformed(java.awt.event.ActionEvent evt) {
-    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -174,7 +155,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -184,13 +165,11 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         txtTenChiNhanh = new javax.swing.JTextField();
         lblDiaChi = new javax.swing.JLabel();
         txtDiaChi = new javax.swing.JTextField();
-        lblGioMoCua = new javax.swing.JLabel();
         txtGioMoCua = new javax.swing.JTextField();
         lblGioDongCua = new javax.swing.JLabel();
         txtGioDongCua = new javax.swing.JTextField();
         lblHotline = new javax.swing.JLabel();
         lblTrangThai = new javax.swing.JLabel();
-        cbxQuanLy = new javax.swing.JComboBox<>();
         btnThemMoi = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
         btnSoDo = new javax.swing.JButton();
@@ -203,6 +182,8 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         txtHotline1 = new javax.swing.JTextField();
         lblGioMoCua1 = new javax.swing.JLabel();
         cbxTrangThai = new javax.swing.JComboBox<>();
+        txtMaCN = new javax.swing.JTextField();
+        lblMaCN = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -227,11 +208,12 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         lblTenChiNhanh.setForeground(new java.awt.Color(35, 30, 48));
         lblTenChiNhanh.setText("Tên chi nhánh (*)");
         pnMain.add(lblTenChiNhanh);
-        lblTenChiNhanh.setBounds(20, 70, 360, 18);
+        lblTenChiNhanh.setBounds(130, 70, 250, 18);
 
         txtTenChiNhanh.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        txtTenChiNhanh.addActionListener(this::txtTenChiNhanhActionPerformed);
         pnMain.add(txtTenChiNhanh);
-        txtTenChiNhanh.setBounds(20, 90, 360, 35);
+        txtTenChiNhanh.setBounds(130, 90, 250, 35);
 
         lblDiaChi.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblDiaChi.setForeground(new java.awt.Color(35, 30, 48));
@@ -242,12 +224,6 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         txtDiaChi.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtDiaChi);
         txtDiaChi.setBounds(20, 155, 360, 35);
-
-        lblGioMoCua.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblGioMoCua.setForeground(new java.awt.Color(35, 30, 48));
-        lblGioMoCua.setText("Tên Quản lý chi nhánh");
-        pnMain.add(lblGioMoCua);
-        lblGioMoCua.setBounds(20, 330, 170, 18);
 
         txtGioMoCua.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtGioMoCua);
@@ -275,20 +251,13 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         pnMain.add(lblTrangThai);
         lblTrangThai.setBounds(210, 265, 170, 18);
 
-        cbxQuanLy.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxQuanLy
-                .setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
-        cbxQuanLy.addActionListener(this::cbxQuanLyActionPerformed);
-        pnMain.add(cbxQuanLy);
-        cbxQuanLy.setBounds(20, 350, 360, 40);
-
         btnThemMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnThemMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThemMoi.setForeground(new java.awt.Color(255, 255, 255));
         btnThemMoi.setText("Thêm mới");
         btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(20, 410, 170, 40);
+        btnThemMoi.setBounds(20, 340, 170, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -296,22 +265,22 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         btnCapNhat.setText("Cập nhật");
         btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnMain.add(btnCapNhat);
-        btnCapNhat.setBounds(210, 410, 170, 40);
+        btnCapNhat.setBounds(210, 340, 170, 40);
 
-        btnSoDo.setBackground(new java.awt.Color(220, 53, 69));
+        btnSoDo.setBackground(new java.awt.Color(35, 30, 48));
         btnSoDo.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnSoDo.setForeground(new java.awt.Color(255, 255, 255));
-        btnSoDo.setText("Q.Lý Sơ đồ");
+        btnSoDo.setText("Quản lý sơ đồ chi nhánh");
         btnSoDo.addActionListener(this::btnSoDoActionPerformed);
         pnMain.add(btnSoDo);
-        btnSoDo.setBounds(20, 465, 170, 40);
+        btnSoDo.setBounds(20, 390, 220, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
         btnHuy.addActionListener(this::btnHuyActionPerformed);
         pnMain.add(btnHuy);
-        btnHuy.setBounds(210, 465, 170, 40);
+        btnHuy.setBounds(260, 390, 120, 40);
 
         lblTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTimKiem.setForeground(new java.awt.Color(35, 30, 48));
@@ -332,18 +301,19 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         btnTimKiem.setBounds(920, 80, 100, 35);
 
         tblChiNhanh.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][] {
+            new Object [][] {
 
-                },
-                new String[] {
-                        "Mã CN", "Tên chi nhánh", "Địa chỉ", "Giờ mở", "Giờ đóng", "Hotline", "Trạng thái"
-                }) {
-            boolean[] canEdit = new boolean[] {
-                    false, false, false, false, false, false, false
+            },
+            new String [] {
+                "Mã CN", "Tên chi nhánh", "Địa chỉ", "Giờ mở", "Giờ đóng", "Hotline", "Trạng thái"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
+                return canEdit [columnIndex];
             }
         });
         tblChiNhanh.setRowHeight(30);
@@ -369,14 +339,29 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         lblGioMoCua1.setBounds(20, 200, 170, 18);
 
         cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxTrangThai
-                .setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
+        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
         cbxTrangThai.addActionListener(this::cbxTrangThaiActionPerformed);
         pnMain.add(cbxTrangThai);
         cbxTrangThai.setBounds(210, 285, 170, 35);
 
+        txtMaCN.setEditable(false);
+        txtMaCN.setBackground(new java.awt.Color(240, 240, 240));
+        txtMaCN.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        pnMain.add(txtMaCN);
+        txtMaCN.setBounds(20, 90, 100, 35);
+
+        lblMaCN.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblMaCN.setForeground(new java.awt.Color(35, 30, 48));
+        lblMaCN.setText("Mã Chi Nhánh");
+        pnMain.add(lblMaCN);
+        lblMaCN.setBounds(20, 70, 100, 18);
+
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtTenChiNhanhActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTenChiNhanhActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtTenChiNhanhActionPerformed
 
     private void cbxTrangThaiActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_cbxTrangThaiActionPerformed
         // TODO add your handling code here:
@@ -388,15 +373,14 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
     private javax.swing.JButton btnSoDo;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
-    private javax.swing.JComboBox<String> cbxQuanLy;
     private javax.swing.JComboBox<String> cbxTrangThai;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblDiaChi;
     private javax.swing.JLabel lblGioDongCua;
-    private javax.swing.JLabel lblGioMoCua;
     private javax.swing.JLabel lblGioMoCua1;
     private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblHotline;
+    private javax.swing.JLabel lblMaCN;
     private javax.swing.JLabel lblTenChiNhanh;
     private javax.swing.JLabel lblTimKiem;
     private javax.swing.JLabel lblTrangThai;
@@ -407,6 +391,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtGioDongCua;
     private javax.swing.JTextField txtGioMoCua;
     private javax.swing.JTextField txtHotline1;
+    private javax.swing.JTextField txtMaCN;
     private javax.swing.JTextField txtTenChiNhanh;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables

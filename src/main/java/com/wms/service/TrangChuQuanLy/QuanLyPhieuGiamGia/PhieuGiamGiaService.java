@@ -36,6 +36,11 @@ public class PhieuGiamGiaService {
         return dao.timTheoMa(maPGG);
     }
 
+    public List<PhieuGiamGiaDTO> timKiem(String keyword) {
+        if (keyword == null || keyword.isBlank()) return layDanhSach();
+        return dao.timKiem(keyword);
+    }
+
     private boolean kiemTraHopLe(PhieuGiamGiaDTO dto) {
         if (dto.getMaChuSoPGG() == null || dto.getMaChuSoPGG().isBlank()) {
             System.err.println("Mã nhập khuyến mãi không được để trống.");
