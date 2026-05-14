@@ -5,15 +5,17 @@ AS
     v_DonGiaTheoGio NUMBER(18, 2);
     v_ThoiGianBatDau TIMESTAMP;
     v_ThoiGianKetThuc TIMESTAMP;
+    v_TongPhut NUMBER;
+    v_GioNguyen NUMBER;
+    v_PhutLe NUMBER;
     v_SoGioSuDung NUMBER;
     v_TienKhongGian NUMBER(18, 2);
 BEGIN
-    -- Lấy thông tin phiên và loại không gian
     BEGIN
         SELECT 
             LKG.DonGiaTheoGio,
             PLV.ThoiGianBatDau,
-            NVL(PLV.ThoiGianKetThuc, SYSTIMESTAMP) -- Nếu chưa kết thúc thì tính đến hiện tại
+            NVL(PLV.ThoiGianKetThuc, SYSTIMESTAMP) 
         INTO 
             v_DonGiaTheoGio,
             v_ThoiGianBatDau,
@@ -26,17 +28,21 @@ BEGIN
         WHEN NO_DATA_FOUND THEN
             RETURN 0;
     END;
+
+    v_TongPhut := EXTRACT(DAY FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) * 24 * 60 +
+                  EXTRACT(HOUR FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) * 60 +
+                  EXTRACT(MINUTE FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) +
+                  EXTRACT(SECOND FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) / 60;
+        
+    v_GioNguyen := TRUNC(v_TongPhut / 60);
+    v_PhutLe := MOD(v_TongPhut, 60);
+
+    IF v_PhutLe <= 15 THEN
+        v_SoGioSuDung := v_GioNguyen;
+    ELSE
+        v_SoGioSuDung := v_GioNguyen + 1;
+    END IF;
     
-    -- Tính số giờ sử dụng (làm tròn đến 2 chữ số thập phân)
-    v_SoGioSuDung := ROUND(
-        EXTRACT(DAY FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) * 24 +
-        EXTRACT(HOUR FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) +
-        EXTRACT(MINUTE FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) / 60 +
-        EXTRACT(SECOND FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) / 3600,
-        2
-    );
-    
-    -- Tính tiền không gian
     v_TienKhongGian := v_DonGiaTheoGio * v_SoGioSuDung;
     
     RETURN ROUND(v_TienKhongGian, 2);
