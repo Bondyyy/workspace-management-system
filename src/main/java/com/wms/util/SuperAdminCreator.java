@@ -1,8 +1,8 @@
 package com.wms.util;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.VaiTroDAO;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
+import com.wms.dao.TrangChuQuanLy.QuanLyVaiTro.VaiTroDAO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.VaiTroDTO;
 
 import java.io.InputStream;
 import java.sql.Connection;
@@ -76,8 +76,10 @@ public class SuperAdminCreator {
     private static void ensureAdminRole(Connection conn) throws Exception {
         VaiTroDAO vtDao = new VaiTroDAO();
         List<String> fullQuyen = new ArrayList<>();
-        for (int i = 1; i <= 11; i++) {
-            fullQuyen.add(String.format("CN%02d", i));
+        // Lấy danh sách quyền theo yêu cầu của user cho VT01
+        String[] adminRights = {"CN01", "CN02", "CN09", "CN11", "CN12", "CN13", "CN14"};
+        for (String right : adminRights) {
+            fullQuyen.add(right);
         }
 
         boolean roleExists;
@@ -89,12 +91,12 @@ public class SuperAdminCreator {
         if (!roleExists) {
             VaiTroDTO adminRole = new VaiTroDTO();
             adminRole.setMaVaiTro("VT01");
-            adminRole.setTenVaiTro(Normalizer.normalize("Quản trị Viên hệ thống", Normalizer.Form.NFC));
+            adminRole.setTenVaiTro(Normalizer.normalize("Quản trị viên Hệ thống", Normalizer.Form.NFC));
             adminRole.setMoTa(Normalizer.normalize("Toàn quyền quản lý hệ thống", Normalizer.Form.NFC));
             vtDao.themVaiTro(adminRole, fullQuyen);
         } else {
             try (Statement st = conn.createStatement()) {
-                st.executeUpdate("UPDATE VAITRO SET TenVaiTro = 'Quản trị Viên hệ thống' WHERE MaVaiTro = 'VT01'");
+                st.executeUpdate("UPDATE VAITRO SET TenVaiTro = 'Quản trị viên Hệ thống' WHERE MaVaiTro = 'VT01'");
             }
             vtDao.capNhatChucNangCuaVaiTro("VT01", fullQuyen);
         }

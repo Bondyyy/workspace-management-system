@@ -28,3 +28,5 @@ src/main/resources/config.properties
 .vscode/
 
 .gemini/
+
+./scratch/

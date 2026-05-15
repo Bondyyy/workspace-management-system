@@ -2,11 +2,11 @@ package com.wms.service.TrangChuQuanLy.QuanLyNhanVien;
 
 import com.wms.config.AppConstants;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NhanVienDAO;
-import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.VaiTroDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyVaiTro.VaiTroDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.ChucNangDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.VaiTroDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.ChucNangDTO;
 import java.util.List;
 import java.util.stream.Collectors;
 

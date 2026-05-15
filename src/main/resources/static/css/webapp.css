@@ -662,18 +662,30 @@ hr {
 }
 
 .floor-shell {
+    --unit: 85px;
+    --cell-gap: 5px;
     position: relative;
     width: 100%;
-    height: 462px;
-    min-width: 760px;
-    min-height: 462px;
+    height: 480px;
+    min-width: calc(var(--unit) * 12 + 2px);
+    min-height: calc(var(--unit) * 8 + 2px);
     overflow: auto;
-    padding: 28px;
+    padding: 0;
     border: 1px solid #ffd6e4;
     border-radius: var(--radius);
     background:
         repeating-linear-gradient(45deg, rgba(239, 92, 151, 0.08) 0 1px, transparent 1px 14px),
         #fff;
+}
+
+.floor-shell::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(var(--unit) * 12);
+    height: calc(var(--unit) * 8);
+    pointer-events: none;
 }
 
 .reception,
@@ -686,19 +698,19 @@ hr {
 }
 
 .reception {
-    top: 36px;
-    left: 36px;
-    width: 214px;
-    height: 108px;
+    top: 0;
+    left: 0;
+    width: calc(var(--unit) * 2);
+    height: var(--unit);
     color: #fff;
     background: #31455d;
 }
 
 .entrance {
-    top: 36px;
-    left: 276px;
-    width: 106px;
-    height: 108px;
+    top: 0;
+    left: calc(var(--unit) * 2);
+    width: var(--unit);
+    height: var(--unit);
     color: #999;
     background: #f2f2f2;
     border: 1px solid #d5d5d5;
@@ -706,31 +718,42 @@ hr {
 
 .space-node {
     position: absolute;
-    width: 106px;
-    height: 106px;
+    left: calc(var(--map-pad) + var(--x, 0) * var(--unit));
+    top: calc(var(--map-pad) + var(--y, 1) * var(--unit));
+    width: calc(var(--w, 1) * var(--unit));
+    height: calc(var(--h, 1) * var(--unit));
+    min-height: var(--unit);
     display: inline-grid;
     place-items: center;
     align-content: center;
-    gap: 4px;
-    color: #13652b;
-    background: #e9faed;
-    border: 1px solid #6dc27f;
-    border-radius: var(--radius);
+    gap: 3px;
+    padding: 6px;
+    color: #c73d6e;
+    background: #fff0f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
     cursor: pointer;
 }
 
 .space-node:nth-of-type(1) { left: 145px; top: 170px; }
-.space-node:nth-of-type(2) { left: 290px; top: 170px; }
-.space-node:nth-of-type(3) { left: 435px; top: 170px; }
-.space-node:nth-of-type(4) { left: 580px; top: 170px; }
-.space-node:nth-of-type(5) { left: 145px; top: 300px; }
-.space-node:nth-of-type(6) { left: 290px; top: 300px; }
-.space-node:nth-of-type(7) { left: 435px; top: 300px; }
-.space-node:nth-of-type(8) { left: 580px; top: 300px; }
-.space-node:nth-of-type(9) { left: 145px; top: 430px; }
-.space-node:nth-of-type(10) { left: 290px; top: 430px; }
-.space-node:nth-of-type(11) { left: 435px; top: 430px; }
-.space-node:nth-of-type(12) { left: 580px; top: 430px; }
+.space-node:nth-of-type(2) { left: 330px; top: 170px; }
+.space-node:nth-of-type(3) { left: 515px; top: 170px; }
+.space-node:nth-of-type(4) { left: 700px; top: 170px; }
+.space-node:nth-of-type(5) { left: 145px; top: 320px; }
+.space-node:nth-of-type(6) { left: 330px; top: 320px; }
+.space-node:nth-of-type(7) { left: 515px; top: 320px; }
+.space-node:nth-of-type(8) { left: 700px; top: 320px; }
+.space-node:nth-of-type(9) { left: 145px; top: 470px; }
+.space-node:nth-of-type(10) { left: 330px; top: 470px; }
+.space-node:nth-of-type(11) { left: 515px; top: 470px; }
+.space-node:nth-of-type(12) { left: 700px; top: 470px; }
+
+.floor-shell .space-node {
+    left: calc(var(--x, 0) * var(--unit) + var(--cell-gap));
+    top: calc(var(--y, 1) * var(--unit) + var(--cell-gap));
+    width: calc(var(--w, 1) * var(--unit) - var(--cell-gap) * 2);
+    height: calc(var(--h, 1) * var(--unit) - var(--cell-gap) * 2);
+}
 
 .space-node.node-blue {
     color: #1f4f8a;
@@ -750,14 +773,45 @@ hr {
     border-color: var(--primary-strong);
 }
 
+.space-node.node-locked {
+    color: #7d5214;
+    background: #fff4dc;
+    border-color: #e0ad48;
+    cursor: not-allowed;
+    opacity: 0.95;
+}
+
+.space-node:disabled {
+    opacity: 1;
+}
+
 .space-node span,
 .space-node strong,
-.space-node small {
+.space-node small,
+.space-node em {
     display: block;
-    max-width: 94px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: calc(100% - 8px);
+    overflow-wrap: anywhere;
+    text-align: center;
+    white-space: normal;
+}
+
+.space-node strong {
+    font-size: 0.78rem;
+    line-height: 1.12;
+}
+
+.space-node small {
+    font-size: 0.68rem;
+    line-height: 1.2;
+}
+
+.space-node em {
+    color: #a06613;
+    font-size: 0.62rem;
+    font-style: normal;
+    font-weight: 800;
+    line-height: 1.2;
 }
 
 .map-legend {
@@ -1156,7 +1210,7 @@ hr {
 
 .floor-shell {
     min-height: 400px;
-    padding: 26px;
+    padding: 0;
     border-radius: var(--radius);
 }
 
@@ -1330,11 +1384,6 @@ hr {
         left: 230px;
     }
 
-    .space-node,
-    .space-node:nth-of-type(odd) {
-        margin-left: 24px;
-    }
-
     .span-2 {
         grid-column: auto;
     }
@@ -1345,8 +1394,14 @@ hr {
 .workspace-auth-page {
     min-height: 100vh;
     background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.88) 0 42%, rgba(255, 236, 246, 0.12) 42% 100%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.68) 0 42%, rgba(255, 236, 246, 0.04) 42% 100%),
         url("/images/TrangGioiThieu.png") center / cover fixed no-repeat;
+}
+
+.workspace-auth-page {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
 }
 
 .spring-cover {
@@ -1544,21 +1599,23 @@ hr {
 
 .workspace-auth {
     display: grid;
-    grid-template-columns: 43% 57%;
+    grid-template-columns: minmax(420px, 42%) 1fr;
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .auth-glass {
     min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
     align-content: center;
-    padding: 56px 7vw;
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(3px);
+    padding: clamp(28px, 4vh, 44px) clamp(40px, 6vw, 96px);
+    background: rgba(255, 255, 255, 0.56);
+    backdrop-filter: blur(1.5px);
 }
 
 .register-glass {
-    align-content: start;
-    padding-top: 42px;
+    align-content: center;
 }
 
 .otp-glass {
@@ -1566,14 +1623,14 @@ hr {
 }
 
 .auth-title {
-    margin: 44px 0 28px;
+    margin: clamp(22px, 4vh, 36px) 0 clamp(18px, 3vh, 24px);
     text-align: center;
 }
 
 .auth-title h1 {
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     color: #10172f;
-    font-size: clamp(2.3rem, 3.4vw, 3.5rem);
+    font-size: clamp(2rem, 3vw, 3.1rem);
     line-height: 1.05;
     text-transform: uppercase;
 }
@@ -1586,22 +1643,42 @@ hr {
 
 .workspace-form {
     display: grid;
-    gap: 18px;
+    gap: clamp(10px, 1.45vh, 14px);
+    width: min(100%, 420px);
+    max-width: 420px;
+    margin: 0 auto;
 }
 
 .workspace-form label {
+    gap: 6px;
     color: #151128;
+    font-size: 0.98rem;
+    width: 100%;
 }
 
 .workspace-form input {
-    min-height: 50px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.9);
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid rgba(207, 52, 123, 0.22);
+    border-radius: 6px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 8px 20px rgba(54, 31, 46, 0.04);
+    font-weight: 650;
+}
+
+.workspace-form input:-webkit-autofill,
+.workspace-form input:-webkit-autofill:hover,
+.workspace-form input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--ink);
+    box-shadow:
+        0 0 0 1000px rgba(255, 255, 255, 0.94) inset,
+        0 8px 20px rgba(54, 31, 46, 0.04);
 }
 
 .workspace-form .submit {
-    min-height: 56px;
-    margin-top: 6px;
+    min-height: 52px;
+    margin-top: 4px;
     font-size: 1.08rem;
 }
 
@@ -1615,7 +1692,7 @@ hr {
 }
 
 .auth-switch {
-    margin-top: 24px;
+    margin-top: clamp(14px, 2.4vh, 22px);
     text-align: center;
     color: #8a7b89;
 }
@@ -1628,14 +1705,24 @@ hr {
 .auth-hero-copy {
     display: grid;
     place-items: center;
-    padding: 60px 7vw 60px 4vw;
+    padding: clamp(32px, 7vh, 56px) 7vw clamp(32px, 7vh, 56px) 4vw;
 }
 
 .auth-hero-copy > div {
-    padding: 36px 48px;
+    max-width: 760px;
+    padding: clamp(28px, 4vw, 38px) clamp(34px, 5vw, 52px);
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.54);
-    backdrop-filter: blur(7px);
+    background: rgba(255, 255, 255, 0.38);
+    backdrop-filter: blur(2px);
+    box-shadow: 0 18px 48px rgba(91, 45, 73, 0.1);
+}
+
+.auth-hero-copy h2 {
+    font-size: clamp(2.7rem, 4.4vw, 4.6rem);
+}
+
+.auth-hero-copy p {
+    font-size: clamp(1.05rem, 1.5vw, 1.22rem);
 }
 
 @media (max-width: 980px) {
@@ -1648,6 +1735,11 @@ hr {
     .auth-glass {
         min-height: auto;
         padding: 32px 24px 44px;
+    }
+
+    .workspace-auth-page {
+        height: auto;
+        overflow: auto;
     }
 
     .cover-right,

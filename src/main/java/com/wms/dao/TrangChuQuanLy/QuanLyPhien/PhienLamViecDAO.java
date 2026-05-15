@@ -15,19 +15,13 @@ public class PhienLamViecDAO {
     }
 
     public String generateNextMaPhien() throws SQLException {
-        String sql = "SELECT MAX(MaPhien) FROM PHIENLAMVIEC WHERE MaPhien LIKE 'PH%'";
+        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaPhien, 3))) FROM PHIENLAMVIEC WHERE REGEXP_LIKE(MaPhien, '^PH[0-9]+$')";
         try (Connection conn = getConn();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
-                String maxMa = rs.getString(1);
-                if (maxMa != null) {
-                    try {
-                        int num = Integer.parseInt(maxMa.substring(2)) + 1;
-                        return String.format("PH%04d", num);
-                    } catch (NumberFormatException e) {
-                    }
-                }
+                int maxNum = rs.getInt(1);
+                return String.format("PH%04d", maxNum + 1);
             }
             return "PH0001";
         }
@@ -51,8 +45,8 @@ public class PhienLamViecDAO {
             cstmt.setString(1, phien.getMaKG());
             cstmt.setString(2, phien.getMaKH());
             cstmt.setTimestamp(3, phien.getThoiGianDuKienKetThuc());
-            cstmt.setString(4, phien.getMaPhien()); // p_MaPhien (IN)
-            cstmt.setString(5, phien.getMaDatCho()); // p_MaDatCho (IN)
+            cstmt.setString(4, phien.getMaPhien());
+            cstmt.setString(5, phien.getMaDatCho());
 
             // Đăng ký tham số đầu ra cho message
             cstmt.registerOutParameter(6, java.sql.Types.VARCHAR); // p_outMessage

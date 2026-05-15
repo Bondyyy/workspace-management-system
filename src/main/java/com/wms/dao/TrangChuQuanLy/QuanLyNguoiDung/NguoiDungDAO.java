@@ -256,18 +256,28 @@ public class NguoiDungDAO {
     }
 
     public void updateNguoiDung(NguoiDungDTO user) throws SQLException {
-        String sql = "UPDATE NGUOIDUNG SET HoTen = ?, GioiTinh = ?, Email = ?, SDT = ?, NgaySinh = ?, TrangThaiND = ?, AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP "
-                +
-                "WHERE MaND = ?";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
-            ps.setString(1, user.getHoTen());
-            ps.setString(2, user.getGioiTinh());
-            ps.setString(3, user.getEmail());
-            ps.setString(4, user.getSdt());
-            ps.setDate(5, user.getNgaySinh());
-            ps.setString(6, user.getTrangThaiND());
-            ps.setBytes(7, user.getAnhDaiDien());
-            ps.setString(8, user.getMaND());
+        StringBuilder sql = new StringBuilder("UPDATE NGUOIDUNG SET HoTen = ?, TenTaiKhoan = ?, GioiTinh = ?, Email = ?, SDT = ?, NgaySinh = ?, TrangThaiND = ?, AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP ");
+        boolean updatePassword = user.getMatKhauMaHoa() != null && !user.getMatKhauMaHoa().isEmpty();
+        
+        if (updatePassword) {
+            sql.append(", MatKhauMaHoa = ? ");
+        }
+        sql.append("WHERE MaND = ?");
+
+        try (PreparedStatement ps = getConn().prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setString(idx++, user.getHoTen());
+            ps.setString(idx++, user.getTenTaiKhoan());
+            ps.setString(idx++, user.getGioiTinh());
+            ps.setString(idx++, user.getEmail());
+            ps.setString(idx++, user.getSdt());
+            ps.setDate(idx++, user.getNgaySinh());
+            ps.setString(idx++, user.getTrangThaiND());
+            ps.setBytes(idx++, user.getAnhDaiDien());
+            if (updatePassword) {
+                ps.setString(idx++, user.getMatKhauMaHoa());
+            }
+            ps.setString(idx++, user.getMaND());
             ps.executeUpdate();
         }
     }
@@ -288,19 +298,12 @@ public class NguoiDungDAO {
     }
 
     public String generateNextMaND() throws SQLException {
-        String sql = "SELECT MAX(MaND) FROM NGUOIDUNG WHERE MaND LIKE 'ND%'";
+        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaND, 3))) FROM NGUOIDUNG WHERE REGEXP_LIKE(MaND, '^ND[0-9]+$')";
         try (PreparedStatement ps = getConn().prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
-                String maxMa = rs.getString(1);
-                if (maxMa != null) {
-                    try {
-                        int num = Integer.parseInt(maxMa.substring(2)) + 1;
-                        return String.format("ND%03d", num);
-                    } catch (NumberFormatException e) {
-                        // Nếu không phải dạng số thì quay về mặc định
-                    }
-                }
+                int maxNum = rs.getInt(1);
+                return String.format("ND%03d", maxNum + 1);
             }
         }
         return "ND001";

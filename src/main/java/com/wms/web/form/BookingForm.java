@@ -1,5 +1,6 @@
 package com.wms.web.form;
 
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -9,20 +10,20 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 
 public class BookingForm {
-    @NotBlank(message = "Vui lòng chọn không gian.")
+    @NotBlank(message = "Vui long chon khong gian.")
     private String maKG;
 
-    @NotNull(message = "Vui lòng chọn thời gian đến.")
+    @NotNull(message = "Vui long chon thoi gian den.")
+    @Future(message = "Thoi gian den phai o tuong lai.")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime arrivalTime;
 
-    @NotNull(message = "Vui lòng chọn số giờ sử dụng.")
-    @Min(value = 1, message = "Tối thiểu 1 giờ.")
-    @Max(value = 8, message = "Tối đa 8 giờ cho bản demo.")
+    @NotNull(message = "Vui long chon so gio su dung.")
+    @Min(value = 1, message = "Toi thieu 1 gio.")
+    @Max(value = 8, message = "Toi da 8 gio cho ban demo.")
     private Integer durationHours;
 
     private String voucherCode;
-
     private String note;
 
     public String getMaKG() {

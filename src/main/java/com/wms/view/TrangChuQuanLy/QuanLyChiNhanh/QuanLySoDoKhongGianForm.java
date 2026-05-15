@@ -2,6 +2,7 @@ package com.wms.view.TrangChuQuanLy.QuanLyChiNhanh;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyKhongGian.KhongGianController;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
+import com.wms.util.SoDoKhongGianPanel;
 
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -83,7 +84,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         setResizable(false);
 
         pnMain.setBackground(new java.awt.Color(254, 248, 250));
-        pnMain.setPreferredSize(new java.awt.Dimension(1350, 720));
+        pnMain.setPreferredSize(new java.awt.Dimension(1050, 650));
         pnMain.setLayout(null);
 
         pnHeader.setBackground(new java.awt.Color(35, 30, 48));
@@ -94,10 +95,10 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         lblHeaderTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblHeaderTitle.setText("CẬP NHẬT TỌA ĐỘ SƠ ĐỒ KHÔNG GIAN");
         pnHeader.add(lblHeaderTitle);
-        lblHeaderTitle.setBounds(0, 0, 1350, 50);
+        lblHeaderTitle.setBounds(0, 0, 1050, 50);
 
         pnMain.add(pnHeader);
-        pnHeader.setBounds(0, 0, 1350, 50);
+        pnHeader.setBounds(0, 0, 1050, 50);
 
         pnLeft.setBackground(new java.awt.Color(255, 255, 255));
         pnLeft.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
@@ -135,47 +136,47 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         scrollKhongGian.setViewportView(tblKhongGian);
 
         pnLeft.add(scrollKhongGian);
-        scrollKhongGian.setBounds(15, 50, 320, 350);
+        scrollKhongGian.setBounds(15, 50, 320, 230);
 
         lblToaDoX.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblToaDoX.setForeground(new java.awt.Color(35, 30, 48));
         lblToaDoX.setText("Toạ độ X:");
         pnLeft.add(lblToaDoX);
-        lblToaDoX.setBounds(15, 410, 150, 18);
+        lblToaDoX.setBounds(15, 290, 150, 18);
 
         txtToaDoX.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnLeft.add(txtToaDoX);
-        txtToaDoX.setBounds(15, 430, 150, 30);
+        txtToaDoX.setBounds(15, 310, 150, 30);
 
         lblToaDoY.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblToaDoY.setForeground(new java.awt.Color(35, 30, 48));
         lblToaDoY.setText("Toạ độ Y:");
         pnLeft.add(lblToaDoY);
-        lblToaDoY.setBounds(185, 410, 150, 18);
+        lblToaDoY.setBounds(185, 290, 150, 18);
 
         txtToaDoY.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnLeft.add(txtToaDoY);
-        txtToaDoY.setBounds(185, 430, 150, 30);
+        txtToaDoY.setBounds(185, 310, 150, 30);
 
         lblChieuRong.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblChieuRong.setForeground(new java.awt.Color(35, 30, 48));
         lblChieuRong.setText("Rộng (Ngang):");
         pnLeft.add(lblChieuRong);
-        lblChieuRong.setBounds(15, 470, 150, 18);
+        lblChieuRong.setBounds(15, 350, 150, 18);
 
         txtChieuRong.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnLeft.add(txtChieuRong);
-        txtChieuRong.setBounds(15, 490, 150, 30);
+        txtChieuRong.setBounds(15, 370, 150, 30);
 
         lblChieuDai.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblChieuDai.setForeground(new java.awt.Color(35, 30, 48));
         lblChieuDai.setText("Dài (Dọc):");
         pnLeft.add(lblChieuDai);
-        lblChieuDai.setBounds(185, 470, 150, 18);
+        lblChieuDai.setBounds(185, 350, 150, 18);
 
         txtChieuDai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnLeft.add(txtChieuDai);
-        txtChieuDai.setBounds(185, 490, 150, 30);
+        txtChieuDai.setBounds(185, 370, 150, 30);
 
         btnCapNhatToaDo.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhatToaDo.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -183,18 +184,18 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         btnCapNhatToaDo.setText("Cập nhật trên Sơ đồ");
         btnCapNhatToaDo.addActionListener(this::btnCapNhatToaDoActionPerformed);
         pnLeft.add(btnCapNhatToaDo);
-        btnCapNhatToaDo.setBounds(15, 540, 320, 35);
+        btnCapNhatToaDo.setBounds(15, 420, 320, 35);
 
         btnLuuCSDL.setBackground(new java.awt.Color(220, 53, 69));
         btnLuuCSDL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnLuuCSDL.setForeground(new java.awt.Color(255, 255, 255));
-        btnLuuCSDL.setText("Xoá không gian này");
+        btnLuuCSDL.setText("Lưu Sơ đồ");
         btnLuuCSDL.addActionListener(this::btnLuuCSDLActionPerformed);
         pnLeft.add(btnLuuCSDL);
-        btnLuuCSDL.setBounds(15, 585, 320, 35);
+        btnLuuCSDL.setBounds(15, 465, 320, 35);
 
         pnMain.add(pnLeft);
-        pnLeft.setBounds(20, 70, 350, 650);
+        pnLeft.setBounds(10, 70, 350, 530);
 
         pnRight.setBackground(new java.awt.Color(255, 255, 255));
         pnRight.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
@@ -207,18 +208,20 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         lblDetailTitle.setBounds(20, 15, 300, 30);
 
         scrollSoDo.setBorder(null);
+
+        pnBaoNgoai.setBackground(new java.awt.Color(254, 248, 250));
         scrollSoDo.setViewportView(pnBaoNgoai);
 
         pnRight.add(scrollSoDo);
-        scrollSoDo.setBounds(20, 50, 910, 530);
+        scrollSoDo.setBounds(10, 50, 650, 460);
 
         pnChuThich.setBackground(new java.awt.Color(255, 255, 255));
         pnChuThich.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
         pnRight.add(pnChuThich);
-        pnChuThich.setBounds(20, 590, 910, 50);
+        pnChuThich.setBounds(20, 470, 610, 50);
 
         pnMain.add(pnRight);
-        pnRight.setBounds(380, 70, 950, 650);
+        pnRight.setBounds(370, 70, 670, 530);
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents

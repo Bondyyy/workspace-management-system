@@ -56,7 +56,7 @@ public class NguoiDungController {
         DefaultTableModel model = (DefaultTableModel) view.getTblNguoiDung().getModel();
         model.setRowCount(0);
         for (NguoiDungDTO user : list) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     user.getMaND(),
                     user.getHoTen(),
                     user.getTenTaiKhoan(),
@@ -70,27 +70,30 @@ public class NguoiDungController {
 
     public void displaySelectedUser() {
         int row = view.getTblNguoiDung().getSelectedRow();
-        if (row < 0) return;
+        if (row < 0)
+            return;
 
         NguoiDungDTO user = currentList.get(row);
         view.getTxtMaND().setText(user.getMaND());
         view.getTxtTaiKhoan().setText(user.getTenTaiKhoan());
         view.getTxtHoTen().setText(user.getHoTen());
         view.getCbxGioiTinh().setSelectedItem(user.getGioiTinh());
-        view.getTxtNgaySinh().setText(user.getNgaySinh() != null ? 
-                new java.text.SimpleDateFormat("dd/MM/yyyy").format(user.getNgaySinh()) : "");
+        view.getTxtNgaySinh()
+                .setText(user.getNgaySinh() != null
+                        ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(user.getNgaySinh())
+                        : "");
         view.getTxtSDT().setText(user.getSdt());
         view.getTxtEmail().setText(user.getEmail());
-        
+
         String trangThai = user.getTrangThaiND();
         if ("Đang hoạt động".equals(trangThai)) {
             view.getCbxTrangThai().setSelectedItem("Hoạt động");
         } else {
             view.getCbxTrangThai().setSelectedItem("Đã khóa");
         }
-        
-        // Handle Password
-        view.getTxtMatKhau().setText(user.getMatKhauMaHoa());
+
+        // Không hiển thị mật khẩu đã mã hóa (Vô nghĩa và mất an toàn)
+        view.getTxtMatKhau().setText("");
 
         // Handle Image
         selectedImageData = user.getAnhDaiDien();
@@ -99,8 +102,8 @@ public class NguoiDungController {
                 ByteArrayInputStream bis = new ByteArrayInputStream(user.getAnhDaiDien());
                 BufferedImage bImage = ImageIO.read(bis);
                 if (bImage != null) {
-                    Image scaledImage = bImage.getScaledInstance(view.getLblAnhDaiDien().getWidth(), 
-                                                               view.getLblAnhDaiDien().getHeight(), Image.SCALE_SMOOTH);
+                    Image scaledImage = bImage.getScaledInstance(view.getLblAnhDaiDien().getWidth(),
+                            view.getLblAnhDaiDien().getHeight(), Image.SCALE_SMOOTH);
                     view.getLblAnhDaiDien().setIcon(new ImageIcon(scaledImage));
                     view.getLblAnhDaiDien().setText("");
                 } else {
@@ -120,9 +123,10 @@ public class NguoiDungController {
     public void handleAdd() {
         try {
             NguoiDungDTO user = collectFormData();
-            if (user == null) return;
+            if (user == null)
+                return;
             user.setMaND(view.getTxtMaND().getText()); // Lấy mã hiển thị sẵn
-            
+
             service.addUser(user);
             com.wms.util.MessageUtil.showInfo(view, "Thêm người dùng mới thành công!");
             loadData();
@@ -139,11 +143,12 @@ public class NguoiDungController {
                 showError("Vui lòng chọn người dùng để cập nhật!");
                 return;
             }
-            
+
             NguoiDungDTO user = collectFormData();
-            if (user == null) return;
+            if (user == null)
+                return;
             user.setMaND(maND);
-            
+
             service.updateUser(user);
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật thông tin người dùng thành công!");
             loadData();
@@ -173,16 +178,30 @@ public class NguoiDungController {
     }
 
     private NguoiDungDTO collectFormData() {
+        String taiKhoan = view.getTxtTaiKhoan().getText().trim();
+        String matKhau = view.getTxtMatKhau().getText().trim();
+        String hoTen = view.getTxtHoTen().getText().trim();
+
+        if (taiKhoan.isEmpty() || hoTen.isEmpty()) {
+            showError("Tên tài khoản và Họ tên không được để trống!");
+            return null;
+        }
+
         NguoiDungDTO user = new NguoiDungDTO();
-        user.setTenTaiKhoan(view.getTxtTaiKhoan().getText().trim());
-        user.setHoTen(view.getTxtHoTen().getText().trim());
+        user.setTenTaiKhoan(taiKhoan);
+        user.setHoTen(hoTen);
+
+        if (!matKhau.isEmpty()) {
+            user.setMatKhauMaHoa(com.wms.util.PasswordUtil.hash(matKhau));
+        }
+
         user.setGioiTinh(view.getCbxGioiTinh().getSelectedItem().toString());
         user.setSdt(view.getTxtSDT().getText().trim());
         user.setEmail(view.getTxtEmail().getText().trim());
-        
+
         String uiTrangThai = view.getCbxTrangThai().getSelectedItem().toString();
         user.setTrangThaiND("Hoạt động".equals(uiTrangThai) ? "Đang hoạt động" : "Không hoạt động");
-        
+
         user.setAnhDaiDien(selectedImageData);
 
         try {
@@ -201,21 +220,22 @@ public class NguoiDungController {
 
     public void handleChangeImage() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Hình ảnh", "jpg", "png", "jpeg", "gif"));
+        fileChooser.setFileFilter(
+                new javax.swing.filechooser.FileNameExtensionFilter("Hình ảnh", "jpg", "png", "jpeg", "gif"));
         int result = fileChooser.showOpenDialog(view);
-        
+
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
             try {
                 byte[] imageData = Files.readAllBytes(selectedFile.toPath());
-                
+
                 // Hiển thị ảnh preview
                 ImageIcon icon = new ImageIcon(imageData);
-                Image img = icon.getImage().getScaledInstance(view.getLblAnhDaiDien().getWidth(), 
-                                                            view.getLblAnhDaiDien().getHeight(), Image.SCALE_SMOOTH);
+                Image img = icon.getImage().getScaledInstance(view.getLblAnhDaiDien().getWidth(),
+                        view.getLblAnhDaiDien().getHeight(), Image.SCALE_SMOOTH);
                 view.getLblAnhDaiDien().setIcon(new ImageIcon(img));
                 view.getLblAnhDaiDien().setText("");
-                
+
                 selectedImageData = imageData;
             } catch (IOException e) {
                 showError("Lỗi đọc file ảnh: " + e.getMessage());

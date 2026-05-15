@@ -2,6 +2,9 @@ package com.wms.web.repository;
 
 import com.wms.web.model.BookingView;
 import com.wms.web.model.BranchView;
+import com.wms.web.model.MemberSessionView;
+import com.wms.web.model.ServiceOptionView;
+import com.wms.web.model.SessionServiceView;
 import com.wms.web.model.SessionUser;
 import com.wms.web.model.SpaceView;
 import com.wms.web.model.VoucherView;
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -89,7 +93,7 @@ public class WebPortalRepository {
         );
 
         jdbcTemplate.update(
-                "INSERT INTO KHACHHANG (MaKH, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, 0, CURRENT_TIMESTAMP, ?)",
+                "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?)",
                 maKH,
                 maND
         );
@@ -120,8 +124,11 @@ public class WebPortalRepository {
 
     public List<SpaceView> findSpaces(String branchId) {
         String baseSql = """
-                SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG, cn.TenCN,
-                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio
+                SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
+                       cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
+                       NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
+                       NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong
                 FROM KHONGGIAN kg
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
@@ -142,14 +149,100 @@ public class WebPortalRepository {
                 rs.getString("ViTri"),
                 rs.getString("TrangThaiKG"),
                 rs.getString("TenCN"),
-                rs.getBigDecimal("DonGiaTheoGio")
+                rs.getBigDecimal("DonGiaTheoGio"),
+                rs.getInt("ToaDoX"),
+                rs.getInt("ToaDoY"),
+                rs.getInt("ChieuDai"),
+                rs.getInt("ChieuRong")
         ), params);
+    }
+
+    public List<SpaceView> findSpaces(String branchId, LocalDateTime selectedStart, LocalDateTime selectedEnd) {
+        if (selectedStart == null || selectedEnd == null || !selectedEnd.isAfter(selectedStart)) {
+            return findSpaces(branchId);
+        }
+
+        String baseSql = """
+                SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
+                       cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
+                       NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
+                       NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong,
+                       MAX(CASE
+                           WHEN p.MaPhien IS NOT NULL THEN p.ThoiGianDuKienKetThuc
+                           ELSE NULL
+                       END) AS BusyUntil
+                FROM KHONGGIAN kg
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
+                LEFT JOIN PHIENLAMVIEC p ON p.MaKG = kg.MaKG
+                    AND p.ThoiGianBatDau < ?
+                    AND p.ThoiGianDuKienKetThuc > ?
+                    AND (
+                        p.ThoiGianKetThuc IS NULL
+                        OR p.ThoiGianKetThuc > ?
+                    )
+                """;
+        String sql = baseSql + """
+                WHERE kg.MaCN = ?
+                GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
+                         cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                         lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
+                         NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
+                         NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
+                ORDER BY cn.TenCN, kg.TenKG
+                """;
+        Object[] params = {
+                Timestamp.valueOf(selectedEnd),
+                Timestamp.valueOf(selectedStart),
+                Timestamp.valueOf(selectedStart),
+                branchId
+        };
+        if (branchId == null || branchId.isBlank()) {
+            sql = baseSql + """
+                    GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
+                             cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                             lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
+                             NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
+                             NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
+                    ORDER BY cn.TenCN, kg.TenKG
+                    """;
+            params = new Object[] {
+                    Timestamp.valueOf(selectedEnd),
+                    Timestamp.valueOf(selectedStart),
+                    Timestamp.valueOf(selectedStart)
+            };
+        }
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Timestamp busyUntil = rs.getTimestamp("BusyUntil");
+            return new SpaceView(
+                    rs.getString("MaKG"),
+                    rs.getString("TenKG"),
+                    rs.getString("TenLoaiKG"),
+                    rs.getString("ViTri"),
+                    rs.getString("TrangThaiKG"),
+                    rs.getString("TenCN"),
+                    rs.getString("ThoiGianMoCua"),
+                    rs.getString("ThoiGianDongCua"),
+                    rs.getBigDecimal("DonGiaTheoGio"),
+                    rs.getInt("ToaDoX"),
+                    rs.getInt("ToaDoY"),
+                    rs.getInt("ChieuDai"),
+                    rs.getInt("ChieuRong"),
+                    busyUntil == null,
+                    busyUntil == null ? null : busyUntil.toLocalDateTime()
+            );
+        }, params);
     }
 
     public SpaceView findSpaceById(String maKG) {
         String sql = """
-                SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG, cn.TenCN,
-                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio
+                SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
+                       cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
+                       NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
+                       NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong
                 FROM KHONGGIAN kg
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
@@ -163,11 +256,42 @@ public class WebPortalRepository {
                     rs.getString("ViTri"),
                     rs.getString("TrangThaiKG"),
                     rs.getString("TenCN"),
-                    rs.getBigDecimal("DonGiaTheoGio")
+                    rs.getString("ThoiGianMoCua"),
+                    rs.getString("ThoiGianDongCua"),
+                    rs.getBigDecimal("DonGiaTheoGio"),
+                    rs.getInt("ToaDoX"),
+                    rs.getInt("ToaDoY"),
+                    rs.getInt("ChieuDai"),
+                    rs.getInt("ChieuRong")
             ), maKG);
         } catch (EmptyResultDataAccessException ex) {
             return null;
         }
+    }
+
+    public boolean hasScheduleConflict(String maKG, LocalDateTime selectedStart, LocalDateTime selectedEnd) {
+        if (maKG == null || selectedStart == null || selectedEnd == null || !selectedEnd.isAfter(selectedStart)) {
+            return true;
+        }
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM PHIENLAMVIEC
+                WHERE MaKG = ?
+                  AND ThoiGianBatDau < ?
+                  AND ThoiGianDuKienKetThuc > ?
+                  AND (
+                      ThoiGianKetThuc IS NULL
+                      OR ThoiGianKetThuc > ?
+                  )
+                """,
+                Integer.class,
+                maKG,
+                Timestamp.valueOf(selectedEnd),
+                Timestamp.valueOf(selectedStart),
+                Timestamp.valueOf(selectedStart)
+        );
+        return count != null && count > 0;
     }
 
     public List<VoucherView> findActiveVouchers() {
@@ -214,9 +338,27 @@ public class WebPortalRepository {
         return String.format("DC%06d", next);
     }
 
-    public void createBooking(String maDatCho, SessionUser user, String maKG,
-                              LocalDateTime arrivalTime, Integer durationHours,
-                              BigDecimal totalAmount, String note) {
+    public String nextSessionId() {
+        Integer maxNumber = jdbcTemplate.queryForObject(
+                "SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(MaPhien, '[0-9]+'))), 0) FROM PHIENLAMVIEC",
+                Integer.class
+        );
+        int next = maxNumber == null ? 1 : maxNumber + 1;
+        return String.format("PH%04d", next);
+    }
+
+    public String nextInvoiceId() {
+        Integer maxNumber = jdbcTemplate.queryForObject(
+                "SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(MaHoaDon, '[0-9]+'))), 0) FROM HOADON",
+                Integer.class
+        );
+        int next = maxNumber == null ? 1 : maxNumber + 1;
+        return String.format("HD%06d", next);
+    }
+
+    public void createBooking(String maDatCho, String maPhien, String maHoaDon,
+                              SessionUser user, String maKG, LocalDateTime arrivalTime,
+                              Integer durationHours, BigDecimal totalAmount, String note) {
         jdbcTemplate.update(
                 """
                 INSERT INTO DATCHO
@@ -234,6 +376,95 @@ public class WebPortalRepository {
                 user.getMaKH(),
                 maKG
         );
+
+        jdbcTemplate.update(
+                """
+                INSERT INTO PHIENLAMVIEC
+                    (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
+                     CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                """,
+                maPhien,
+                Timestamp.valueOf(arrivalTime),
+                Timestamp.valueOf(arrivalTime.plusHours(durationHours)),
+                dbValue("CHK_PLV_TRANGTHAI", "da dat truoc", 1, "Đã đặt trước"),
+                maKG,
+                user.getMaKH(),
+                maDatCho
+        );
+
+        jdbcTemplate.update(
+                """
+                INSERT INTO HOADON
+                    (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, TrangThaiThanhToan, MaPhien)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+                """,
+                maHoaDon,
+                maHoaDon,
+                totalAmount,
+                totalAmount,
+                dbValue("CHK_HD_TRANGTHAI", "dang cho thanh toan", 0, "Đang chờ thanh toán"),
+                maPhien
+        );
+    }
+
+    public void createMissingSessionsForBookings() {
+        String sql = """
+                SELECT dc.MaDatCho, dc.MaKG, dc.MaKH, dc.ThoiGianDuKienToi,
+                       dc.KhoangThoiGianSuDung, dc.ThanhTien
+                FROM DATCHO dc
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM PHIENLAMVIEC p WHERE p.MaDatCho = dc.MaDatCho
+                )
+                ORDER BY dc.ThoiGianDat ASC
+                """;
+        List<PendingSessionRow> pendingRows = jdbcTemplate.query(sql, (rs, rowNum) -> new PendingSessionRow(
+                rs.getString("MaDatCho"),
+                rs.getString("MaKG"),
+                rs.getString("MaKH"),
+                rs.getTimestamp("ThoiGianDuKienToi"),
+                rs.getInt("KhoangThoiGianSuDung"),
+                rs.getBigDecimal("ThanhTien")
+        ));
+
+        for (PendingSessionRow row : pendingRows) {
+            int durationHours = Math.max(row.durationHours(), 1);
+            LocalDateTime startTime = row.arrivalTime() == null
+                    ? LocalDateTime.now()
+                    : row.arrivalTime().toLocalDateTime();
+            String maPhien = nextSessionId();
+            String maHoaDon = nextInvoiceId();
+
+            jdbcTemplate.update(
+                    """
+                    INSERT INTO PHIENLAMVIEC
+                        (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
+                         CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
+                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                    """,
+                    maPhien,
+                    Timestamp.valueOf(startTime),
+                    Timestamp.valueOf(startTime.plusHours(durationHours)),
+                    dbValue("CHK_PLV_TRANGTHAI", "da dat truoc", 1, "Đã đặt trước"),
+                    row.maKG(),
+                    row.maKH(),
+                    row.maDatCho()
+            );
+
+            jdbcTemplate.update(
+                    """
+                    INSERT INTO HOADON
+                        (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, TrangThaiThanhToan, MaPhien)
+                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+                    """,
+                    maHoaDon,
+                    maHoaDon,
+                    row.totalAmount() == null ? BigDecimal.ZERO : row.totalAmount(),
+                    row.totalAmount() == null ? BigDecimal.ZERO : row.totalAmount(),
+                    dbValue("CHK_HD_TRANGTHAI", "dang cho thanh toan", 0, "Đang chờ thanh toán"),
+                    maPhien
+            );
+        }
     }
 
     public List<BookingView> findBookingsForMember(String maKH) {
@@ -271,9 +502,175 @@ public class WebPortalRepository {
     public void updateBookingStatus(String maDatCho, String status, String suffixNote) {
         jdbcTemplate.update(
                 "UPDATE DATCHO SET TrangThaiDatTruoc = ?, GhiChu = NVL(GhiChu, '') || ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaDatCho = ?",
-                dbValue("CHK_DC_TRANGTHAI", normalize(status), 0, status),
+                dbBookingStatus(status),
                 suffixNote,
                 maDatCho
+        );
+    }
+
+    public void updateInvoiceStatusByBooking(String maDatCho, String status) {
+        jdbcTemplate.update(
+                """
+                UPDATE HOADON
+                SET TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP
+                WHERE MaPhien IN (SELECT MaPhien FROM PHIENLAMVIEC WHERE MaDatCho = ?)
+                """,
+                dbInvoiceStatus(status),
+                maDatCho
+        );
+    }
+
+    public List<MemberSessionView> findMemberSessions(String maKH) {
+        String sql = """
+                SELECT p.MaPhien, p.MaKG, kg.TenKG, cn.TenCN, p.ThoiGianBatDau,
+                       p.ThoiGianDuKienKetThuc, p.ThoiGianKetThuc, p.TrangThaiPhien,
+                       cn.ThoiGianDongCua
+                FROM PHIENLAMVIEC p
+                JOIN KHONGGIAN kg ON kg.MaKG = p.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                WHERE p.MaKH = ?
+                ORDER BY p.ThoiGianBatDau DESC
+                """;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapMemberSession(rs), maKH);
+    }
+
+    public MemberSessionView findMemberSession(String maKH, String maPhien) {
+        String sql = """
+                SELECT p.MaPhien, p.MaKG, kg.TenKG, cn.TenCN, p.ThoiGianBatDau,
+                       p.ThoiGianDuKienKetThuc, p.ThoiGianKetThuc, p.TrangThaiPhien,
+                       cn.ThoiGianDongCua
+                FROM PHIENLAMVIEC p
+                JOIN KHONGGIAN kg ON kg.MaKG = p.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                WHERE p.MaKH = ? AND p.MaPhien = ?
+                """;
+        try {
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapMemberSession(rs), maKH, maPhien);
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public List<ServiceOptionView> findServiceOptions() {
+        String sql = """
+                SELECT dv.MaDV, dv.TenDV, ldv.TenLoaiDV, NVL(dv.DonGia, 0) AS DonGia, dv.SoLuong
+                FROM DICHVU dv
+                LEFT JOIN LOAIDICHVU ldv ON ldv.MaLoaiDV = dv.MaLoaiDV
+                ORDER BY ldv.TenLoaiDV, dv.TenDV
+                """;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new ServiceOptionView(
+                rs.getString("MaDV"),
+                decodeMojibake(rs.getString("TenDV")),
+                decodeMojibake(rs.getString("TenLoaiDV")),
+                rs.getBigDecimal("DonGia"),
+                rs.getObject("SoLuong") == null ? null : rs.getInt("SoLuong")
+        ));
+    }
+
+    public ServiceOptionView findServiceOption(String maDV) {
+        String sql = """
+                SELECT dv.MaDV, dv.TenDV, ldv.TenLoaiDV, NVL(dv.DonGia, 0) AS DonGia, dv.SoLuong
+                FROM DICHVU dv
+                LEFT JOIN LOAIDICHVU ldv ON ldv.MaLoaiDV = dv.MaLoaiDV
+                WHERE dv.MaDV = ?
+                """;
+        try {
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new ServiceOptionView(
+                    rs.getString("MaDV"),
+                    decodeMojibake(rs.getString("TenDV")),
+                    decodeMojibake(rs.getString("TenLoaiDV")),
+                    rs.getBigDecimal("DonGia"),
+                    rs.getObject("SoLuong") == null ? null : rs.getInt("SoLuong")
+            ), maDV);
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public List<SessionServiceView> findServicesForMemberSession(String maKH, String maPhien) {
+        String sql = """
+                SELECT ct.MaDV, dv.TenDV, ldv.TenLoaiDV, ct.SoLuong,
+                       NVL(dv.DonGia, 0) AS DonGia,
+                       NVL(ct.SoLuong, 0) * NVL(dv.DonGia, 0) AS ThanhTien,
+                       ct.GhiChu
+                FROM CHITIETDICHVU ct
+                JOIN DICHVU dv ON dv.MaDV = ct.MaDV
+                LEFT JOIN LOAIDICHVU ldv ON ldv.MaLoaiDV = dv.MaLoaiDV
+                JOIN PHIENLAMVIEC p ON p.MaPhien = ct.MaPhien
+                WHERE p.MaKH = ? AND ct.MaPhien = ?
+                ORDER BY ldv.TenLoaiDV, dv.TenDV
+                """;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new SessionServiceView(
+                rs.getString("MaDV"),
+                decodeMojibake(rs.getString("TenDV")),
+                decodeMojibake(rs.getString("TenLoaiDV")),
+                rs.getInt("SoLuong"),
+                rs.getBigDecimal("DonGia"),
+                rs.getBigDecimal("ThanhTien"),
+                rs.getString("GhiChu")
+        ), maKH, maPhien);
+    }
+
+    public void addPaidServiceToSession(String maPhien, ServiceOptionView service,
+                                        int quantity, String note, BigDecimal totalAmount) {
+        jdbcTemplate.update(
+                """
+                MERGE INTO CHITIETDICHVU dest
+                USING (SELECT ? AS MaPhien, ? AS MaDV, ? AS SoLuong, ? AS GhiChu FROM DUAL) src
+                ON (dest.MaPhien = src.MaPhien AND dest.MaDV = src.MaDV)
+                WHEN MATCHED THEN
+                    UPDATE SET dest.SoLuong = dest.SoLuong + src.SoLuong,
+                               dest.GhiChu = NVL(src.GhiChu, dest.GhiChu)
+                WHEN NOT MATCHED THEN
+                    INSERT (MaPhien, MaDV, SoLuong, GhiChu)
+                    VALUES (src.MaPhien, src.MaDV, src.SoLuong, src.GhiChu)
+                """,
+                maPhien,
+                service.getMaDV(),
+                quantity,
+                note
+        );
+
+        if (isExtensionService(service)) {
+            jdbcTemplate.update(
+                    "UPDATE PHIENLAMVIEC SET ThoiGianDuKienKetThuc = ThoiGianDuKienKetThuc + INTERVAL '1' HOUR * ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?",
+                    quantity,
+                    maPhien
+            );
+        }
+
+        jdbcTemplate.update(
+                """
+                UPDATE HOADON
+                SET TongTien = NVL(TongTien, 0) + ?,
+                    ThanhTien = NVL(ThanhTien, 0) + ?,
+                    PhuongThucThanhToan = NVL(PhuongThucThanhToan, ?),
+                    TrangThaiThanhToan = ?,
+                    NgayLapHoaDon = CURRENT_TIMESTAMP
+                WHERE MaPhien = ?
+                """,
+                totalAmount,
+                totalAmount,
+                dbValue("CHK_HD_PTTT", "chuyen khoan", 0, "Chuyển khoản"),
+                dbInvoiceStatus("Da thanh toan thanh cong"),
+                maPhien
+        );
+    }
+
+    private MemberSessionView mapMemberSession(java.sql.ResultSet rs) throws java.sql.SQLException {
+        Timestamp start = rs.getTimestamp("ThoiGianBatDau");
+        Timestamp expectedEnd = rs.getTimestamp("ThoiGianDuKienKetThuc");
+        Timestamp actualEnd = rs.getTimestamp("ThoiGianKetThuc");
+        return new MemberSessionView(
+                rs.getString("MaPhien"),
+                rs.getString("MaKG"),
+                rs.getString("TenKG"),
+                rs.getString("TenCN"),
+                start == null ? null : start.toLocalDateTime(),
+                expectedEnd == null ? null : expectedEnd.toLocalDateTime(),
+                actualEnd == null ? null : actualEnd.toLocalDateTime(),
+                displaySessionStatus(rs.getString("TrangThaiPhien")),
+                rs.getString("ThoiGianDongCua")
         );
     }
 
@@ -287,7 +684,7 @@ public class WebPortalRepository {
                 rs.getString("TenCN"),
                 arrivalTime == null ? null : arrivalTime.toLocalDateTime(),
                 rs.wasNull() ? null : durationHours,
-                rs.getString("TrangThaiDatTruoc"),
+                displayStatus(rs.getString("TrangThaiDatTruoc")),
                 rs.getBigDecimal("ThanhTien"),
                 rs.getString("GhiChu")
         );
@@ -324,6 +721,31 @@ public class WebPortalRepository {
         return fallbackValue;
     }
 
+    private String dbBookingStatus(String status) {
+        String normalized = normalize(status);
+        if (normalized.contains("thanh cong")) {
+            return dbValue("CHK_DC_TRANGTHAI", "thanh cong", 1, "Đã thanh toán thành công");
+        }
+        if (normalized.contains("khong thanh cong")) {
+            return dbValue("CHK_DC_TRANGTHAI", "khong thanh cong", 2, "Thanh toán không thành công");
+        }
+        if (normalized.contains("su dung")) {
+            return dbValue("CHK_DC_TRANGTHAI", "su dung", 3, "Đã sử dụng");
+        }
+        return dbValue("CHK_DC_TRANGTHAI", "cho thanh toan", 0, "Đang chờ thanh toán");
+    }
+
+    private String dbInvoiceStatus(String status) {
+        String normalized = normalize(status);
+        if (normalized.contains("thanh cong")) {
+            return dbValue("CHK_HD_TRANGTHAI", "thanh cong", 1, "Đã thanh toán thành công");
+        }
+        if (normalized.contains("khong thanh cong")) {
+            return dbValue("CHK_HD_TRANGTHAI", "khong thanh cong", 2, "Thanh toán không thành công");
+        }
+        return dbValue("CHK_HD_TRANGTHAI", "cho thanh toan", 0, "Đang chờ thanh toán");
+    }
+
     private List<String> constraintValues(String constraintName) {
         List<String> values = new ArrayList<>();
         try {
@@ -357,6 +779,62 @@ public class WebPortalRepository {
                 .trim();
     }
 
+    private String displayStatus(String value) {
+        if (value == null || value.isBlank()) {
+            return "Chưa có trạng thái";
+        }
+
+        String decoded = decodeMojibake(value);
+        String normalized = normalize(decoded);
+        if (normalized.contains("cho thanh toan")) {
+            return "Đang chờ thanh toán";
+        }
+        if (normalized.contains("thanh toan thanh cong")) {
+            return "Đã thanh toán thành công";
+        }
+        if (normalized.contains("thanh toan khong thanh cong")) {
+            return "Thanh toán không thành công";
+        }
+        if (normalized.contains("da su dung")) {
+            return "Đã sử dụng";
+        }
+        return decoded;
+    }
+
+    private String displaySessionStatus(String value) {
+        if (value == null || value.isBlank()) {
+            return "Chua co trang thai";
+        }
+        String decoded = decodeMojibake(value);
+        String normalized = normalize(decoded);
+        if (normalized.contains("dang hoat dong")) {
+            return "Dang hoat dong";
+        }
+        if (normalized.contains("dat tr")) {
+            return "Da dat truoc";
+        }
+        if (normalized.contains("ket thuc")) {
+            return "Da ket thuc";
+        }
+        return decoded;
+    }
+
+    private boolean isExtensionService(ServiceOptionView service) {
+        if (service == null) {
+            return false;
+        }
+        return "DV000".equalsIgnoreCase(service.getMaDV()) || normalize(service.getTenDV()).contains("gia han gio");
+    }
+
+    private String decodeMojibake(String value) {
+        try {
+            String decoded = new String(value.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+            return decoded.indexOf('\uFFFD') >= 0 ? value : decoded;
+        } catch (RuntimeException ex) {
+            return value;
+        }
+    }
+
     public record AuthRecord(
             String maND,
             String hoTen,
@@ -369,5 +847,15 @@ public class WebPortalRepository {
         public boolean isStaff() {
             return maNV != null && !maNV.isBlank();
         }
+    }
+
+    private record PendingSessionRow(
+            String maDatCho,
+            String maKG,
+            String maKH,
+            Timestamp arrivalTime,
+            int durationHours,
+            BigDecimal totalAmount
+    ) {
     }
 }

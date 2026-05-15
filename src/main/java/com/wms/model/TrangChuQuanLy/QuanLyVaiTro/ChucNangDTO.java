@@ -1,4 +1,4 @@
-package com.wms.model.TrangChuQuanLy.QuanLyNhanVien;
+package com.wms.model.TrangChuQuanLy.QuanLyVaiTro;
 
 public class ChucNangDTO {
     private String maChucNang;

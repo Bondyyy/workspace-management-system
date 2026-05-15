@@ -2,8 +2,8 @@ package com.wms.controller.TrangChuQuanLy.QuanLyNhanVien;
 
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.ChucNangDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.VaiTroDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.ChucNangDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyNhanVien.NhanVienService;
 import java.util.List;
 

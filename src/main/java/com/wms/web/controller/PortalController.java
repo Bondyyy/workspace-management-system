@@ -22,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -74,7 +75,15 @@ public class PortalController {
     }
 
     @GetMapping("/portal/branches/{branchId}/spaces")
-    public String branchSpaces(@PathVariable("branchId") String branchId, HttpSession session, Model model) {
+    public String branchSpaces(@PathVariable("branchId") String branchId,
+                               @RequestParam(name = "date", required = false)
+                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bookingDate,
+                               @RequestParam(name = "start", required = false)
+                               @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
+                               @RequestParam(name = "end", required = false)
+                               @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
+                               HttpSession session,
+                               Model model) {
         SessionUser user = currentMember(session);
         if (user == null) {
             return "redirect:/login";
@@ -84,11 +93,36 @@ public class PortalController {
             return "redirect:/portal/branches";
         }
 
+        var defaultWindow = portalService.defaultBookingWindow(branch);
+        List<String> timeOptions = portalService.timeOptions(branch);
+        LocalTime latestEnd = timeOptions.isEmpty()
+                ? defaultWindow.endTime()
+                : LocalTime.parse(timeOptions.get(timeOptions.size() - 1));
+        LocalDate selectedDate = bookingDate == null ? defaultWindow.date() : bookingDate;
+        LocalTime selectedStart = startTime == null ? defaultWindow.startTime() : startTime;
+        LocalTime selectedEnd = endTime == null ? defaultWindow.endTime() : endTime;
+        if (selectedStart.plusHours(1).isAfter(latestEnd)) {
+            selectedStart = latestEnd.minusHours(1);
+            selectedEnd = latestEnd;
+        }
+        if (selectedEnd.isAfter(latestEnd)) {
+            selectedEnd = latestEnd;
+        }
+        if (!selectedEnd.isAfter(selectedStart)) {
+            selectedEnd = selectedStart.plusHours(1);
+        }
+        LocalDateTime selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
+        LocalDateTime selectedEndDateTime = LocalDateTime.of(selectedDate, selectedEnd);
+
         model.addAttribute("user", user);
         model.addAttribute("activePage", "booking");
         model.addAttribute("branch", branch);
-        model.addAttribute("spaces", portalService.getSpaces(branchId));
-        model.addAttribute("today", LocalDate.now());
+        model.addAttribute("spaces", portalService.getSpaces(branchId, selectedStartDateTime, selectedEndDateTime));
+        model.addAttribute("timeOptions", timeOptions);
+        model.addAttribute("selectedDate", selectedDate);
+        model.addAttribute("selectedStart", selectedStart);
+        model.addAttribute("selectedEnd", selectedEnd);
+        model.addAttribute("selectedDuration", Math.max(1, java.time.Duration.between(selectedStart, selectedEnd).toHours()));
         return "web/space-map";
     }
 
@@ -109,6 +143,20 @@ public class PortalController {
         SpaceView space = portalService.getSpace(maKG);
         if (space == null || durationHours == null || durationHours < 1) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng chọn không gian và khung giờ hợp lệ.");
+            return "redirect:/portal/branches";
+        }
+        if (space.getTrangThaiKG() != null
+                && java.text.Normalizer.normalize(space.getTrangThaiKG(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .contains("bao tri")) {
+            redirectAttributes.addFlashAttribute("error", "Khong gian nay dang bao tri.");
+            return "redirect:/portal/branches";
+        }
+        try {
+            portalService.validateCheckout(maKG, arrivalTime, durationHours);
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
             return "redirect:/portal/branches";
         }
 

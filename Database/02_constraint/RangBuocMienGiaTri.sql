@@ -1,5 +1,5 @@
 -- 1. Bảng NGUOIDUNG
-ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_GioiTinh 
+ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_GioiTinh
     CHECK (GioiTinh IN ('Nam', 'Nữ', 'Khác'));
 
 ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_SDT 
@@ -66,7 +66,7 @@ ALTER TABLE CHINHANH ADD CONSTRAINT CHK_CN_TrangThai
 
 -- 9. Bảng NHANVIEN (Bao gồm quản lý và lễ tân)
 ALTER TABLE NHANVIEN ADD CONSTRAINT CHK_NV_LoaiNV
-    CHECK (LoaiNV IN ('Nhân viên', 'Quản lý', 'Quản trị Viên hệ thống'));
+    CHECK (LoaiNV IN ('Nhân viên', 'Quản lý', 'Quản trị viên Hệ thống'));
 
 ALTER TABLE NHANVIEN ADD CONSTRAINT CHK_NV_LuongCB 
     CHECK (LuongCoBan > 0); 

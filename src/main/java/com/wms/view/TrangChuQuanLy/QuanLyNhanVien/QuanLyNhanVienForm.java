@@ -1,10 +1,11 @@
 package com.wms.view.TrangChuQuanLy.QuanLyNhanVien;
 
-import com.wms.view.TrangChuQuanLy.QuanLyNguoiDung.QuanLyVaiTroForm;
+import com.wms.view.TrangChuQuanLy.TrangChuQuanLyForm;
+import com.wms.view.TrangChuQuanLy.QuanLyVaiTro.QuanLyVaiTroForm;
 import com.wms.controller.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienController;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.VaiTroDTO;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -37,8 +38,10 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     }
 
     private void apDungPhanQuyen() {
-        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
-        if (user == null) return;
+        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController
+                .getCurrentUser();
+        if (user == null)
+            return;
 
         // Nếu không phải Admin (VT01)
         if (!user.hasRole(com.wms.config.AppConstants.ROLE_ADMIN_CODE)) {
@@ -59,26 +62,25 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             // 2. Chỉ hiển thị vai trò "Nhân viên" (Lọc bỏ Admin và Quản lý)
             DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
             model.addElement("-- Chọn vai trò --");
-            
+
             // Lấy danh sách gốc để lọc
             List<VaiTroDTO> dsVT = controller.layDanhSachVaiTroNhanVien();
             for (VaiTroDTO vt : dsVT) {
                 String ten = vt.getTenVaiTro().toLowerCase();
                 String ma = vt.getMaVaiTro();
-                
+
                 // Loại bỏ Admin (VT01) và các vai trò có chữ "Quản lý" hoặc "Admin"
-                if (!ma.equals(com.wms.config.AppConstants.ROLE_ADMIN_CODE) 
-                    && !ten.contains("quản lý") 
-                    && !ten.contains("admin")) {
+                if (!ma.equals(com.wms.config.AppConstants.ROLE_ADMIN_CODE)
+                        && !ten.contains("quản lý")
+                        && !ten.contains("admin")) {
                     model.addElement(vt.getTenVaiTro());
                     cbxNhomQuyen.putClientProperty("maVT_" + vt.getTenVaiTro(), vt.getMaVaiTro());
                 }
             }
             cbxNhomQuyen.setModel(model);
-            
-            // 3. Loại NV cũng chỉ để Lễ tân/Nhân viên (nếu có combo này)
-            cbxLoaiNV.removeItem("Quản lý");
-            
+
+            // 3. Loại NV (Đã xóa combo này nên không cần lọc)
+
             // 4. Chỉ Admin mới được quản lý hạng thành viên
             btnQuanLyHang.setVisible(false);
         }
@@ -95,18 +97,18 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         int row = 0;
         for (Object[] r : ds) {
             model.addRow(new Object[] {
-                    r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]
+                    r[0], r[1], r[2], r[4], r[5], r[6], r[7]
             });
-            // Lưu meta-data để dùng khi chọn dòng
-            tblNhanVien.putClientProperty("maCN_" + row, r[11]);
-            tblNhanVien.putClientProperty("maVT_" + row, r[12]);
-            tblNhanVien.putClientProperty("maND_" + row, r[13]);
-            tblNhanVien.putClientProperty("gioiTinh_" + row, r[8]);
-            tblNhanVien.putClientProperty("email_" + row, r[9]);
-            tblNhanVien.putClientProperty("luong_" + row, r[10] != null ? String.valueOf(r[10]) : "");
-            tblNhanVien.putClientProperty("trangThai_" + row, r[7]);
-            tblNhanVien.putClientProperty("ngaySinh_" + row, r[15]); // r[15] là NgaySinh
-            tblNhanVien.putClientProperty("anhData_" + row, r[14]);  // r[14] là AnhDaiDien (byte[])
+            String key = (String) r[0]; // MaNV làm key duy nhất
+            tblNhanVien.putClientProperty("maCN_" + key, r[11]);
+            tblNhanVien.putClientProperty("maVT_" + key, r[12]);
+            tblNhanVien.putClientProperty("maND_" + key, r[13]);
+            tblNhanVien.putClientProperty("gioiTinh_" + key, r[8]);
+            tblNhanVien.putClientProperty("email_" + key, r[9]);
+            tblNhanVien.putClientProperty("luong_" + key, r[10] != null ? String.valueOf(r[10]) : "");
+            tblNhanVien.putClientProperty("trangThai_" + key, r[7]);
+            tblNhanVien.putClientProperty("ngaySinh_" + key, r[15]); // r[15] là NgaySinh
+            tblNhanVien.putClientProperty("anhData_" + key, r[14]); // r[14] là AnhDaiDien (byte[])
             row++;
         }
     }
@@ -139,14 +141,13 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         txtTimKiem.setText("");
         cbxGioiTinh.setSelectedIndex(0);
         cbxCaLam.setSelectedIndex(0);
-        cbxLoaiNV.setSelectedIndex(0);
         cbxTrangThai.setSelectedIndex(0);
-        
+
         // Chỉ reset nếu không bị disable (Admin mới reset được)
         if (cbxChiNhanh.isEnabled()) {
             cbxChiNhanh.setSelectedIndex(0);
         }
-        
+
         cbxNhomQuyen.setSelectedIndex(0);
         lblAnhDaiDien.setIcon(null);
         lblAnhDaiDien.setText("[Ảnh 3x4]");
@@ -176,7 +177,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated
+    // Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -217,8 +219,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         txtNgaySinh = new javax.swing.JTextField();
         lblNgaySinh = new javax.swing.JLabel();
         btnQuanLyHang = new javax.swing.JButton();
-        lblLoaiNV = new javax.swing.JLabel();
-        cbxLoaiNV = new javax.swing.JComboBox<>();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -294,19 +294,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
 
         txtSDT.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnMain.add(txtSDT);
-        txtSDT.setBounds(170, 200, 100, 30);
-
-        lblLoaiNV.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblLoaiNV.setForeground(new java.awt.Color(35, 30, 48));
-        lblLoaiNV.setText("Loại NV (*)");
-        pnMain.add(lblLoaiNV);
-        lblLoaiNV.setBounds(290, 180, 100, 18);
-
-        cbxLoaiNV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxLoaiNV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Lễ tân", "Quản lý" }));
-        cbxLoaiNV.addActionListener(this::cbxLoaiNVActionPerformed);
-        pnMain.add(cbxLoaiNV);
-        cbxLoaiNV.setBounds(290, 200, 100, 30);
+        txtSDT.setBounds(170, 200, 220, 30);
 
         lblEmail.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblEmail.setForeground(new java.awt.Color(35, 30, 48));
@@ -335,7 +323,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         lblCaLam.setBounds(20, 410, 170, 20);
 
         cbxCaLam.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxCaLam.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Ca sáng", "Ca chiều", "Ca tối", "Hành chính" }));
+        cbxCaLam.setModel(
+                new javax.swing.DefaultComboBoxModel<>(new String[] { "Ca sáng", "Ca chiều", "Ca tối", "Hành chính" }));
         pnMain.add(cbxCaLam);
         cbxCaLam.setBounds(20, 430, 180, 30);
 
@@ -346,7 +335,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         lblChiNhanh.setBounds(20, 350, 170, 18);
 
         cbxChiNhanh.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxChiNhanh.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn chi nhánh --", "Chi nhánh Trung tâm" }));
+        cbxChiNhanh.setModel(
+                new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn chi nhánh --", "Chi nhánh Trung tâm" }));
         pnMain.add(cbxChiNhanh);
         cbxChiNhanh.setBounds(20, 370, 180, 30);
 
@@ -357,7 +347,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         lblTrangThai.setBounds(210, 410, 180, 20);
 
         cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang làm việc", "Nghỉ phép", "Đã nghỉ việc" }));
+        cbxTrangThai.setModel(
+                new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang làm việc", "Nghỉ phép", "Đã nghỉ việc" }));
         pnMain.add(cbxTrangThai);
         cbxTrangThai.setBounds(210, 430, 180, 30);
 
@@ -368,7 +359,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         lblNhomQuyen.setBounds(20, 470, 370, 18);
 
         cbxNhomQuyen.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxNhomQuyen.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Admin (Toàn quyền)", "Quản lý Chi nhánh", "Nhân viên phục vụ" }));
+        cbxNhomQuyen.setModel(new javax.swing.DefaultComboBoxModel<>(
+                new String[] { "Admin (Toàn quyền)", "Quản lý Chi nhánh", "Nhân viên phục vụ" }));
         pnMain.add(cbxNhomQuyen);
         cbxNhomQuyen.setBounds(20, 490, 180, 40);
 
@@ -414,19 +406,18 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         btnTimKiem.setBounds(920, 80, 100, 35);
 
         tblNhanVien.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+                new Object[][] {
 
-            },
-            new String [] {
-                "Mã NV", "Họ và tên", "SĐT", "Chức vụ", "Ca làm", "Chi nhánh", "Nhóm quyền", "Trạng thái"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false
+                },
+                new String[] {
+                        "Mã NV", "Họ và tên", "SĐT", "Ca làm", "Chi nhánh", "Vai trò", "Trạng thái"
+                }) {
+            boolean[] canEdit = new boolean[] {
+                    false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
+                return canEdit[columnIndex];
             }
         });
         tblNhanVien.setRowHeight(30);
@@ -529,20 +520,13 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                 lamMoiForm();
                 loadData();
-            } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            String msg = e.getMessage();
+            if (msg == null || msg.isEmpty())
+                msg = "Cập nhật thất bại (Lỗi không xác định)";
+            JOptionPane.showMessageDialog(this, "Lỗi: " + msg, "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-  
-    private void btnPhanQuyenActionPerformed(java.awt.event.ActionEvent evt) {
-        java.awt.Frame parent = (java.awt.Frame) SwingUtilities.getWindowAncestor(this);
-        QuanLyVaiTroForm dialog = new QuanLyVaiTroForm(parent, true);
-        dialog.setVisible(true);
-        loadComboBoxData();
     }
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
@@ -554,16 +538,21 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         hienThiLenBang(controller.timKiemNhanVien(tuKhoa, maCNFilter));
     }
 
-    private void cbxLoaiNVActionPerformed(java.awt.event.ActionEvent evt) {
-    }
-
     private void txtMatKhauActionPerformed(java.awt.event.ActionEvent evt) {
     }
 
     private NhanVienDTO getNVFormData() {
         NhanVienDTO nv = new NhanVienDTO();
         nv.setMaNV(txtMaNV.getText().trim());
-        nv.setLoaiNV((String) cbxLoaiNV.getSelectedItem());
+        String tenVT = (String) cbxNhomQuyen.getSelectedItem();
+        if (tenVT != null && tenVT.toLowerCase().contains("quản lý")) {
+            nv.setLoaiNV("Quản lý");
+        } else if (tenVT != null
+                && (tenVT.toLowerCase().contains("admin") || tenVT.toLowerCase().contains("quản trị"))) {
+            nv.setLoaiNV("Quản trị Viên hệ thống");
+        } else {
+            nv.setLoaiNV("Nhân viên");
+        }
         nv.setCaLamViec((String) cbxCaLam.getSelectedItem());
         nv.setTrangThaiLamViec((String) cbxTrangThai.getSelectedItem());
         nv.setMaCN(getMaCNDangChon());
@@ -580,7 +569,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         nd.setEmail(txtEmail.getText().trim());
         nd.setSdt(txtSDT.getText().trim());
         nd.setGioiTinh((String) cbxGioiTinh.getSelectedItem());
-        
+
         String nsStr = txtNgaySinh.getText().trim();
         if (!nsStr.isEmpty()) {
             try {
@@ -591,7 +580,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
                 // Có thể ném exception hoặc để null
             }
         }
-        
+
         Object data = lblAnhDaiDien.getClientProperty("anhData");
         nd.setAnhDaiDien(data instanceof byte[] ? (byte[]) data : null);
         return nd;
@@ -606,18 +595,27 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         txtMaNV.setText(maNVDangChon);
         txtHoTen.setText((String) model.getValueAt(row, 1));
         txtSDT.setText((String) model.getValueAt(row, 2));
-        cbxLoaiNV.setSelectedItem(model.getValueAt(row, 3));
-        cbxCaLam.setSelectedItem(model.getValueAt(row, 4));
-        cbxChiNhanh.setSelectedItem(model.getValueAt(row, 5));
-        cbxNhomQuyen.setSelectedItem(model.getValueAt(row, 6));
-        cbxTrangThai.setSelectedItem(model.getValueAt(row, 7));
+        // Đã cập nhật index theo cấu trúc 7 cột mới
+        cbxCaLam.setSelectedItem(model.getValueAt(row, 3));
+        cbxChiNhanh.setSelectedItem(model.getValueAt(row, 4));
+        cbxNhomQuyen.setSelectedItem(model.getValueAt(row, 5));
+        cbxTrangThai.setSelectedItem(model.getValueAt(row, 6));
 
-        maNDDangChon = String.valueOf(tblNhanVien.getClientProperty("maND_" + row));
-        txtEmail.setText(String.valueOf(tblNhanVien.getClientProperty("email_" + row)));
-        txtLuong.setText(String.valueOf(tblNhanVien.getClientProperty("luong_" + row)));
-        cbxGioiTinh.setSelectedItem(tblNhanVien.getClientProperty("gioiTinh_" + row));
-        
-        Object ns = tblNhanVien.getClientProperty("ngaySinh_" + row);
+        String key = (String) model.getValueAt(row, 0); // Lấy MaNV của dòng đang chọn
+
+        Object objMaND = tblNhanVien.getClientProperty("maND_" + key);
+        maNDDangChon = (objMaND != null) ? objMaND.toString() : null;
+
+        Object objEmail = tblNhanVien.getClientProperty("email_" + key);
+        txtEmail.setText(objEmail != null ? objEmail.toString() : "");
+
+        Object objLuong = tblNhanVien.getClientProperty("luong_" + key);
+        txtLuong.setText(objLuong != null ? objLuong.toString() : "");
+
+        Object objGioiTinh = tblNhanVien.getClientProperty("gioiTinh_" + key);
+        cbxGioiTinh.setSelectedItem(objGioiTinh);
+
+        Object ns = tblNhanVien.getClientProperty("ngaySinh_" + key);
         if (ns instanceof java.util.Date) {
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
             txtNgaySinh.setText(sdf.format((java.util.Date) ns));
@@ -625,7 +623,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             txtNgaySinh.setText("");
         }
 
-        Object anhData = tblNhanVien.getClientProperty("anhData_" + row);
+        Object anhData = tblNhanVien.getClientProperty("anhData_" + key);
         if (anhData instanceof byte[]) {
             byte[] data = (byte[]) anhData;
             ImageIcon icon = new ImageIcon(data);
@@ -660,7 +658,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblGioiTinh;
     private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblHoTen;
-    private javax.swing.JLabel lblLoaiNV;
     private javax.swing.JLabel lblLuong;
     private javax.swing.JLabel lblMaNV;
     private javax.swing.JLabel lblNgaySinh;
@@ -672,7 +669,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private javax.swing.JPanel pnHeader;
     private javax.swing.JPanel pnMain;
     private javax.swing.JTable tblNhanVien;
-    private javax.swing.JComboBox<String> cbxLoaiNV;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JTextField txtHoTen;
     private javax.swing.JTextField txtLuong;

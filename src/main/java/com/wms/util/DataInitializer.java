@@ -3,6 +3,9 @@ package com.wms.util;
 import com.wms.config.DatabaseConnection;
 import java.sql.*;
 import java.text.Normalizer;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DataInitializer {
 
@@ -15,6 +18,8 @@ public class DataInitializer {
         khoiTaoChucNang(conn);
         khoiTaoHangThanhVien(conn);
         khoiTaoDichVuMacDinh(conn);
+        khoiTaoVaiTroMacDinh(conn);
+        khoiTaoPhanQuyenMacDinh(conn);
         System.out.println("[DataInitializer] Hoàn tất khởi tạo dữ liệu.");
     }
 
@@ -69,7 +74,10 @@ public class DataInitializer {
                 { "CN08", "Hóa đơn & Thu ngân", "Xử lý thanh toán, xuất hóa đơn và báo cáo doanh thu" },
                 { "CN09", "Khuyến mãi (Voucher)", "Tạo và quản lý các chương trình ưu đãi, mã giảm giá" },
                 { "CN10", "Hội viên / Khách hàng", "Quản lý thông tin, hạng thành viên và lịch sử tích điểm" },
-                { "CN11", "Nhân sự / Phân quyền", "Quản lý tài khoản nhân viên và thiết lập quyền hạn" }
+                { "CN11", "Quản lý nhân viên", "Quản lý danh sách nhân viên và hồ sơ" },
+                { "CN12", "Quản lý người dùng", "Quản lý tài khoản đăng nhập hệ thống" },
+                { "CN13", "Quản lý vai trò", "Thiết lập nhóm quyền và phân quyền chức năng" },
+                { "CN14", "Quản lý loại dịch vụ", "Quản lý các danh mục loại dịch vụ" }
         };
 
         try {
@@ -93,9 +101,9 @@ public class DataInitializer {
 
             try (Statement st = conn.createStatement()) {
                 st.executeUpdate(
-                        "DELETE FROM CHITIETCHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11')");
+                        "DELETE FROM CHITIETCHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11','CN12','CN13','CN14')");
                 st.executeUpdate(
-                        "DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11')");
+                        "DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11','CN12','CN13','CN14')");
             }
             System.out.println("[DataInitializer] Đồng bộ dữ liệu bảng CHUCNANG thành công.");
         } catch (SQLException e) {
@@ -137,5 +145,83 @@ public class DataInitializer {
             System.err.println("[DataInitializer] Lỗi đồng bộ dữ liệu HANGTHANHVIEN: " + e.getMessage());
         }
     }
+    
+    public static void khoiTaoVaiTroMacDinh(Connection conn) {
+        String[][] data = {
+            { "VT01", "Quản trị viên Hệ thống", "Toàn quyền quản lý hệ thống" },
+            { "VT02", "Quản lý Chi nhánh", "Quản lý chi nhánh và nhân viên" },
+            { "VT03", "Nhân viên", "Thực hiện các nghiệp vụ hằng ngày" },
+            { "VT00", "Hội viên", "Khách hàng sử dụng dịch vụ" }
+        };
+        try {
+            String mergeSql = "MERGE INTO VAITRO dest USING (SELECT ? AS MaVaiTro, ? AS TenVaiTro, ? AS MoTa FROM DUAL) src " +
+                             "ON (dest.MaVaiTro = src.MaVaiTro) " +
+                             "WHEN NOT MATCHED THEN INSERT (MaVaiTro, TenVaiTro, MoTa) VALUES (src.MaVaiTro, src.TenVaiTro, src.MoTa)";
+            try (PreparedStatement ps = conn.prepareStatement(mergeSql)) {
+                for (String[] row : data) {
+                    ps.setString(1, row[0]);
+                    ps.setString(2, row[1]);
+                    ps.setString(3, row[2]);
+                    ps.executeUpdate();
+                }
+            }
+            // Cũng khởi tạo NHOMCHUCNANG tương ứng vì hệ thống dùng 1-1
+            String mergeNhomSql = "MERGE INTO NHOMCHUCNANG dest USING (SELECT ? AS MaNhomChucNang, ? AS TenNhomChucNang FROM DUAL) src " +
+                                 "ON (dest.MaNhomChucNang = src.MaNhomChucNang) " +
+                                 "WHEN NOT MATCHED THEN INSERT (MaNhomChucNang, TenNhomChucNang) VALUES (src.MaNhomChucNang, src.TenNhomChucNang)";
+            try (PreparedStatement ps = conn.prepareStatement(mergeNhomSql)) {
+                for (String[] row : data) {
+                    ps.setString(1, row[0]);
+                    ps.setString(2, row[1]);
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[DataInitializer] Lỗi khởi tạo vai trò: " + e.getMessage());
+        }
+    }
 
+    public static void khoiTaoPhanQuyenMacDinh(Connection conn) {
+        try {
+            // Xóa chi tiết cũ để reset lại theo chuẩn mới (Hoặc có thể dùng MERGE nếu muốn giữ lại tùy chỉnh)
+            // Tuy nhiên user yêu cầu điều chỉnh mặc định nên ta sẽ sync lại
+            
+            // 1. Admin (VT01)
+            String[] adminRights = {"CN01", "CN02", "CN09", "CN11", "CN12", "CN13", "CN14"};
+            ganQuyen(conn, "VT01", adminRights);
+            
+            // 2. Nhân viên (VT03)
+            String[] staffRights = {"CN05", "CN06", "CN07", "CN08", "CN10"};
+            ganQuyen(conn, "VT03", staffRights);
+            
+            // 3. Quản lý (VT02): CN03, CN11 + staffRights
+            List<String> managerRights = new java.util.ArrayList<>(java.util.Arrays.asList(staffRights));
+            managerRights.add("CN03");
+            managerRights.add("CN11");
+            ganQuyen(conn, "VT02", managerRights.toArray(new String[0]));
+            
+            System.out.println("[DataInitializer] Khởi tạo phân quyền mặc định thành công.");
+        } catch (Exception e) {
+            System.err.println("[DataInitializer] Lỗi phân quyền mặc định: " + e.getMessage());
+        }
+    }
+
+    private static void ganQuyen(Connection conn, String maVT, String[] maCNs) throws SQLException {
+        // Xóa quyền cũ của nhóm này
+        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CHITIETCHUCNANG WHERE MaNhomChucNang = ?")) {
+            ps.setString(1, maVT);
+            ps.executeUpdate();
+        }
+        // Thêm quyền mới
+        String sql = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang, MoTa) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (String maCN : maCNs) {
+                ps.setString(1, maVT);
+                ps.setString(2, maCN);
+                ps.setString(3, "Quyền mặc định hệ thống");
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+    }
 }

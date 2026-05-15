@@ -16,6 +16,7 @@ BEGIN
             d.TenDV,
             NVL(l.TenLoaiDV, 'Chưa phân loại') AS LoaiDV,
             d.DonGia,
+            d.GiaNhap,
             d.SoLuong,
             d.TrangThaiDV,
             d.HinhAnh

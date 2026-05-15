@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +35,10 @@ public class PortalService {
         return repository.findSpaces((branchId == null || branchId.isBlank()) ? null : branchId);
     }
 
+    public List<SpaceView> getSpaces(String branchId, LocalDateTime selectedStart, LocalDateTime selectedEnd) {
+        return repository.findSpaces((branchId == null || branchId.isBlank()) ? null : branchId, selectedStart, selectedEnd);
+    }
+
     public Optional<BranchView> getBranch(String branchId) {
         return getBranches().stream()
                 .filter(branch -> branch.getMaCN().equals(branchId))
@@ -42,11 +49,45 @@ public class PortalService {
         return repository.findSpaceById(maKG);
     }
 
+    public BookingWindow defaultBookingWindow(BranchView branch) {
+        LocalTime openTime = parseBranchTime(branch == null ? null : branch.getThoiGianMoCua(), LocalTime.of(7, 0));
+        LocalTime closeTime = parseBranchTime(branch == null ? null : branch.getThoiGianDongCua(), LocalTime.of(22, 0));
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime roundedStart = now.withMinute(0).withSecond(0).withNano(0);
+        if (now.getMinute() > 0 || now.getSecond() > 0 || now.getNano() > 0) {
+            roundedStart = roundedStart.plusHours(1);
+        }
+
+        if (roundedStart.toLocalTime().isBefore(openTime)) {
+            roundedStart = LocalDateTime.of(today, openTime);
+        }
+
+        if (!roundedStart.toLocalTime().plusHours(2).isAfter(closeTime)) {
+            return new BookingWindow(roundedStart.toLocalDate(), roundedStart.toLocalTime(), roundedStart.toLocalTime().plusHours(2));
+        }
+
+        LocalDateTime tomorrowStart = LocalDateTime.of(today.plusDays(1), openTime);
+        return new BookingWindow(tomorrowStart.toLocalDate(), tomorrowStart.toLocalTime(), tomorrowStart.toLocalTime().plusHours(2));
+    }
+
+    public List<String> timeOptions(BranchView branch) {
+        LocalTime openTime = parseBranchTime(branch == null ? null : branch.getThoiGianMoCua(), LocalTime.of(7, 0));
+        LocalTime closeTime = parseBranchTime(branch == null ? null : branch.getThoiGianDongCua(), LocalTime.of(22, 0));
+        java.util.ArrayList<String> options = new java.util.ArrayList<>();
+        for (LocalTime time = openTime; !time.isAfter(closeTime); time = time.plusHours(1)) {
+            options.add(time.toString());
+        }
+        return options;
+    }
+
     public List<BookingView> getMemberBookings(String maKH) {
+        repository.createMissingSessionsForBookings();
         return repository.findBookingsForMember(maKH);
     }
 
     public List<BookingView> getAllBookings() {
+        repository.createMissingSessionsForBookings();
         return repository.findAllBookings();
     }
 
@@ -61,17 +102,25 @@ public class PortalService {
     @Transactional
     public void createBooking(SessionUser user, BookingForm form) {
         if (user.getMaKH() == null || user.getMaKH().isBlank()) {
-            throw new IllegalArgumentException("Tài khoản này không phải hội viên đặt chỗ.");
+            throw new IllegalArgumentException("Tai khoan nay khong co ho so hoi vien de dat cho.");
         }
 
         SpaceView space = repository.findSpaceById(form.getMaKG());
         if (space == null) {
-            throw new IllegalArgumentException("Không tìm thấy không gian đã chọn.");
+            throw new IllegalArgumentException("Khong tim thay khong gian da chon.");
         }
 
         String normalizedStatus = normalize(space.getTrangThaiKG());
-        if (!(normalizedStatus.contains("trong") || normalizedStatus.contains("dat truoc"))) {
-            throw new IllegalArgumentException("Không gian này hiện chưa sẵn sàng để đặt.");
+        if (normalizedStatus.contains("bao tri")) {
+            throw new IllegalArgumentException("Khong gian nay dang bao tri.");
+        }
+        validateBookingTime(form.getArrivalTime(), form.getDurationHours());
+        validateBranchWindow(space, form.getArrivalTime(), form.getDurationHours());
+        if (repository.hasScheduleConflict(
+                form.getMaKG(),
+                form.getArrivalTime(),
+                form.getArrivalTime().plusHours(form.getDurationHours()))) {
+            throw new IllegalArgumentException("Khung gio nay da co nguoi dat. Vui long chon gio khac.");
         }
 
         BigDecimal beforeDiscount = calculateAmount(space, form.getDurationHours());
@@ -79,11 +128,14 @@ public class PortalService {
         String note = form.getNote();
         if (form.getVoucherCode() != null && !form.getVoucherCode().isBlank()) {
             note = (note == null || note.isBlank())
-                    ? "Mã giảm giá: " + form.getVoucherCode().trim()
-                    : note + " | Mã giảm giá: " + form.getVoucherCode().trim();
+                    ? "Ma giam gia: " + form.getVoucherCode().trim()
+                    : note + " | Ma giam gia: " + form.getVoucherCode().trim();
         }
+
         repository.createBooking(
                 repository.nextBookingId(),
+                repository.nextSessionId(),
+                repository.nextInvoiceId(),
                 user,
                 form.getMaKG(),
                 form.getArrivalTime(),
@@ -124,22 +176,33 @@ public class PortalService {
         return safeSubtotal.subtract(calculateDiscount(safeSubtotal, voucherCode));
     }
 
+    public void validateCheckout(String maKG, LocalDateTime arrivalTime, Integer durationHours) {
+        validateBookingTime(arrivalTime, durationHours);
+        SpaceView space = repository.findSpaceById(maKG);
+        validateBranchWindow(space, arrivalTime, durationHours);
+        if (repository.hasScheduleConflict(maKG, arrivalTime, arrivalTime.plusHours(durationHours))) {
+            throw new IllegalArgumentException("Khong gian nay da duoc dat trong khung gio ban chon.");
+        }
+    }
+
     @Transactional
     public void confirmBooking(String maDatCho) {
         repository.updateBookingStatus(
                 maDatCho,
-                "Đã thanh toán thành công",
-                " | Nhân viên đã xác nhận yêu cầu."
+                "Da thanh toan thanh cong",
+                " | Nhan vien da xac nhan yeu cau."
         );
+        repository.updateInvoiceStatusByBooking(maDatCho, "Da thanh toan thanh cong");
     }
 
     @Transactional
     public void markUsed(String maDatCho) {
         repository.updateBookingStatus(
                 maDatCho,
-                "Đã sử dụng",
-                " | Đã nhận chỗ tại quầy."
+                "Da su dung",
+                " | Da nhan cho tai quay."
         );
+        repository.updateInvoiceStatusByBooking(maDatCho, "Da thanh toan thanh cong");
     }
 
     private String normalize(String value) {
@@ -149,9 +212,48 @@ public class PortalService {
         return Normalizer.normalize(value, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "")
                 .toLowerCase()
-                .replace('đ', 'd')
                 .replaceAll("[^a-z0-9 ]", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    private void validateBookingTime(LocalDateTime arrivalTime, Integer durationHours) {
+        if (arrivalTime == null || durationHours == null || durationHours < 1) {
+            throw new IllegalArgumentException("Vui long chon thoi gian den va thoi gian roi hop le.");
+        }
+        if (arrivalTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Thoi gian den phai o tuong lai.");
+        }
+    }
+
+    private void validateBranchWindow(SpaceView space, LocalDateTime arrivalTime, Integer durationHours) {
+        if (space == null || arrivalTime == null || durationHours == null) {
+            throw new IllegalArgumentException("Vui long chon khong gian va khung gio hop le.");
+        }
+        LocalTime openTime = parseBranchTime(space.getThoiGianMoCua(), LocalTime.of(7, 0));
+        LocalTime closeTime = parseBranchTime(space.getThoiGianDongCua(), LocalTime.of(22, 0));
+        LocalTime start = arrivalTime.toLocalTime();
+        LocalTime end = arrivalTime.plusHours(durationHours).toLocalTime();
+        if (start.isBefore(openTime) || end.isAfter(closeTime) || !end.isAfter(start)) {
+            throw new IllegalArgumentException("Khung gio phai nam trong thoi gian mo cua cua chi nhanh.");
+        }
+    }
+
+    private LocalTime parseBranchTime(String value, LocalTime fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        String normalized = value.trim();
+        if (normalized.length() > 5) {
+            normalized = normalized.substring(0, 5);
+        }
+        try {
+            return LocalTime.parse(normalized);
+        } catch (RuntimeException ex) {
+            return fallback;
+        }
+    }
+
+    public record BookingWindow(LocalDate date, LocalTime startTime, LocalTime endTime) {
     }
 }

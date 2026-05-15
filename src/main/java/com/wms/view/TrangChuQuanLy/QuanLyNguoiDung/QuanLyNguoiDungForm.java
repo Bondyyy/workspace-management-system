@@ -3,6 +3,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package com.wms.view.TrangChuQuanLy.QuanLyNguoiDung;
+import com.wms.view.TrangChuQuanLy.TrangChuQuanLyForm;
+import com.wms.view.TrangChuQuanLy.QuanLyVaiTro.QuanLyVaiTroForm;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -23,8 +26,9 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
 
     private void customInit() {
         txtMaND.setEditable(false);
-        txtTaiKhoan.setEditable(false);
-        txtMatKhau.setEditable(false);
+        // Mở khóa để nhập khi tạo mới
+        txtTaiKhoan.setEditable(true);
+        txtMatKhau.setEditable(true);
     }
 
     private void setupEvents() {
@@ -82,7 +86,6 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         btnThem = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
         btnLamMoi = new javax.swing.JButton();
-        btnPhanQuyen = new javax.swing.JButton();
         lblAnhDaiDien = new javax.swing.JLabel();
         btnDoiAnh = new javax.swing.JButton();
         txtMatKhau = new javax.swing.JTextField();
@@ -267,15 +270,7 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
         btnLamMoi.setText("Làm mới form");
         pnRight.add(btnLamMoi);
-        btnLamMoi.setBounds(210, 440, 170, 40);
-
-        btnPhanQuyen.setBackground(new java.awt.Color(35, 30, 48));
-        btnPhanQuyen.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnPhanQuyen.setForeground(new java.awt.Color(255, 255, 255));
-        btnPhanQuyen.setText("Quản lý Vai trò");
-        btnPhanQuyen.addActionListener(this::btnPhanQuyenActionPerformed);
-        pnRight.add(btnPhanQuyen);
-        btnPhanQuyen.setBounds(20, 440, 170, 40);
+        btnLamMoi.setBounds(20, 440, 360, 40);
 
         lblAnhDaiDien.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblAnhDaiDien.setText("[Ảnh 3x4]");
@@ -308,9 +303,10 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnPhanQuyenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPhanQuyenActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btnPhanQuyenActionPerformed
+    private void btnPhanQuyenActionPerformed(java.awt.event.ActionEvent evt) {
+        TrangChuQuanLyForm mainForm = (TrangChuQuanLyForm) SwingUtilities.getWindowAncestor(this);
+        mainForm.showPanel(new QuanLyVaiTroForm());
+    }
 
     private void btnDoiAnhActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDoiAnhActionPerformed
         // TODO add your handling code here:
@@ -325,7 +321,6 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
     private javax.swing.JButton btnCapNhat;
     private javax.swing.JButton btnDoiAnh;
     private javax.swing.JButton btnLamMoi;
-    private javax.swing.JButton btnPhanQuyen;
     private javax.swing.JButton btnThem;
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JComboBox<String> cbxGioiTinh;

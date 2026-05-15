@@ -34,7 +34,7 @@ public class ThongTinHoiVienDAO {
                     dto.setThoiGianTao(rs.getTimestamp("ThoiGianTao"));
                     dto.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
                     String hang = rs.getString("TenHangThanhVien");
-                    dto.setHangThanhVien(hang != null ? hang : "Thành viên Mới");
+                    dto.setHangThanhVien(hang != null ? hang : "Đồng");
                 }
             }
         } catch (Exception e) {

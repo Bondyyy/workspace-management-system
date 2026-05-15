@@ -298,7 +298,7 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="L&#x1b0;u s&#x1a1; &#x111;&#x1ed3;"/>
+                <Property name="text" type="java.lang.String" value="L&#x1b0;u S&#x1a1; &#x111;&#x1ed3;"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnLuuCSDLActionPerformed"/>

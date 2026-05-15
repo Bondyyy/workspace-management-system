@@ -5,6 +5,8 @@
 package com.wms.view.TrangChuQuanLy.QuanLyKho;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyKho.QuanLyKhoController;
+import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
+import java.util.List;
 
 /**
  *
@@ -122,6 +124,37 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private void setupDynamicBehavior() {
         cbLoaiDichVu.addActionListener(e -> updateTheoLoaiDichVu());
         cbTenDichVu.addActionListener(e -> updateDonGia());
+
+        tblKho.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int row = tblKho.getSelectedRow();
+                if (row >= 0) {
+                    fillDataFromTable(row);
+                }
+            }
+        });
+    }
+
+    private void fillDataFromTable(int row) {
+        try {
+            // Lấy dữ liệu từ bảng
+            String loai = tblKho.getValueAt(row, 3).toString();
+            String ten = tblKho.getValueAt(row, 2).toString();
+            String gia = tblKho.getValueAt(row, 4).toString();
+
+            // Điền vào các ô bên trái
+            cbLoaiDichVu.setSelectedItem(loai);
+            // Sau khi set loại, ComboBox Action sẽ tự chạy load danh sách tên mới
+            cbTenDichVu.setSelectedItem(ten);
+            txtNiemYet.setText(gia);
+
+            // Reset số lượng và giá nhập về mặc định để tránh nhầm lẫn
+            spnSoLuong.setValue(0);
+            txtGiaNhap.setText("");
+        } catch (Exception e) {
+            System.err.println("[QuanLyKhoForm] Lỗi khi điền dữ liệu từ bảng: " + e.getMessage());
+        }
     }
 
     private void updateDonGia() {
@@ -171,7 +204,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         return str.substring(0, half) + "..." + str.substring(str.length() - half);
     }
 
-    public void hienThiDuLieu(java.util.List<com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO> danhSach) {
+    public void hienThiDuLieu(List<DichVuDTO> danhSach) {
         if (danhSach != null && !danhSach.isEmpty()) {
             danhSach.sort((d1, d2) -> {
                 boolean isThueGio1 = "Thuê thêm giờ".equalsIgnoreCase(d1.getTenDV());
@@ -200,7 +233,9 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
                 String hienThiSoLuong = (dv.getSoLuong() == null) ? "-" : String.valueOf(dv.getSoLuong());
                 model.addRow(new Object[]{
                     stt++, dv.getMaDV(), dv.getTenDV(), dv.getTenLoaiDV(),
-                    df.format(dv.getDonGia()), hienThiSoLuong, dv.getTrangThaiDV()
+                    df.format(dv.getDonGia()), 
+                    (dv.getGiaNhap() == null || dv.getGiaNhap() == 0) ? "-" : df.format(dv.getGiaNhap()),
+                    hienThiSoLuong, dv.getTrangThaiDV()
                 });
             }
         }
@@ -241,8 +276,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         lblTrangThaiFile = new javax.swing.JLabel();
         btnSuaFile = new javax.swing.JButton();
         btnLuu = new javax.swing.JButton();
-        cbLoaiDichVu1 = new javax.swing.JComboBox<>();
-        lblLoaiDichVu1 = new javax.swing.JLabel();
         txtGiaNhap = new javax.swing.JTextField();
         lblGiaNhap = new javax.swing.JLabel();
         txtNiemYet = new javax.swing.JTextField();
@@ -285,11 +318,11 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
             },
             new String [] {
-                "STT", "Mã DV", "Tên Dịch Vụ", "Loại DV", "Đơn Giá (VNĐ)", "Số Lượng Tồn", "Trạng thái"
+                "STT", "Mã DV", "Tên Dịch Vụ", "Loại DV", "Giá niêm yết", "Giá nhập", "Số Lượng Tồn", "Trạng thái"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -389,17 +422,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         pnRight.add(btnLuu);
         btnLuu.setBounds(160, 475, 220, 40);
 
-        cbLoaiDichVu1.setEditable(true);
-        cbLoaiDichVu1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(cbLoaiDichVu1);
-        cbLoaiDichVu1.setBounds(20, 160, 360, 35);
-
-        lblLoaiDichVu1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblLoaiDichVu1.setForeground(new java.awt.Color(35, 30, 48));
-        lblLoaiDichVu1.setText("Loại dịch vụ");
-        pnRight.add(lblLoaiDichVu1);
-        lblLoaiDichVu1.setBounds(20, 135, 360, 20);
-
         txtGiaNhap.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnRight.add(txtGiaNhap);
         txtGiaNhap.setBounds(20, 310, 170, 30);
@@ -414,9 +436,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         pnRight.add(txtNiemYet);
         txtNiemYet.setBounds(200, 310, 180, 30);
 
-        lblToaDoX1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblToaDoX1.setForeground(new java.awt.Color(35, 30, 48));
-        lblToaDoX1.setText("Giá niêm yết");
         pnRight.add(lblToaDoX1);
         lblToaDoX1.setBounds(200, 290, 170, 18);
 
@@ -547,7 +566,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private javax.swing.JButton btnSuaFile;
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JComboBox<String> cbLoaiDichVu;
-    private javax.swing.JComboBox<String> cbLoaiDichVu1;
     private javax.swing.JComboBox<String> cbNhanVien;
     private javax.swing.JComboBox<String> cbTenDichVu;
     private javax.swing.JScrollPane jScrollPane1;
@@ -557,7 +575,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblListTitle;
     private javax.swing.JLabel lblLoaiDichVu;
-    private javax.swing.JLabel lblLoaiDichVu1;
     private javax.swing.JLabel lblNhanVien;
     private javax.swing.JLabel lblSoLuong;
     private javax.swing.JLabel lblTenDichVu;

@@ -3,9 +3,10 @@ AFTER INSERT ON PHIENLAMVIEC
 FOR EACH ROW
 WHEN (NEW.MaDatCho IS NOT NULL)
 BEGIN
-    UPDATE DATCHO
-    SET TrangThaiDatTruoc = 'Đã sử dụng'
-    WHERE MaDatCho = :NEW.MaDatCho;
+    IF LOWER(:NEW.TrangThaiPhien) NOT LIKE '%t tr%' THEN
+        UPDATE DATCHO
+        SET TrangThaiDatTruoc = 'Ä?Ã£ sá»­ dá»¥ng'
+        WHERE MaDatCho = :NEW.MaDatCho;
+    END IF;
 END;
 /
-

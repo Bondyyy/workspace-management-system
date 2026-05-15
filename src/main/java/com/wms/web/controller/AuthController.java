@@ -26,7 +26,11 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String loginPage(Model model) {
+    public String loginPage(HttpSession session, Model model) {
+        SessionUser user = (SessionUser) session.getAttribute("user");
+        if (user != null) {
+            return user.isStaff() ? "redirect:/staff/bookings" : "redirect:/portal";
+        }
         if (!model.containsAttribute("loginForm")) {
             model.addAttribute("loginForm", new LoginForm());
         }

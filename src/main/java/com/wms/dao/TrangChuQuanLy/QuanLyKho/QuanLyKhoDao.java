@@ -35,6 +35,7 @@ public class QuanLyKhoDao {
                     dto.setTenDV(rs.getString("TenDV"));
                     dto.setTenLoaiDV(rs.getString("LoaiDV")); 
                     dto.setDonGia(rs.getDouble("DonGia"));
+                    dto.setGiaNhap(rs.getDouble("GiaNhap"));
                     dto.setTrangThaiDV(rs.getString("TrangThaiDV"));
                     dto.setHinhAnh(rs.getBytes("HinhAnh"));
                     Object soLuongObj = rs.getObject("SoLuong");

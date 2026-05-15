@@ -115,7 +115,7 @@ public class KhachHangDAO {
     public String taoMaKHMoi(Connection conn) throws SQLException {
         boolean isStandalone = (conn == null);
         Connection localConn = isStandalone ? getConn() : conn;
-        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaKH, 3))) FROM KHACHHANG WHERE MaKH LIKE 'HV%'";
+        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaKH, 3))) FROM KHACHHANG WHERE REGEXP_LIKE(MaKH, '^HV[0-9]+$')";
         try (PreparedStatement ps = localConn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {

@@ -1,8 +1,8 @@
-package com.wms.dao.TrangChuQuanLy.QuanLyNhanVien;
+package com.wms.dao.TrangChuQuanLy.QuanLyVaiTro;
 
 import com.wms.config.DatabaseConnection;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.VaiTroDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.ChucNangDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.VaiTroDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyVaiTro.ChucNangDTO;
 
 import java.sql.*;
 import java.util.ArrayList;

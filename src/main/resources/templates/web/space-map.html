@@ -35,21 +35,31 @@
 
     <section class="member-content map-layout">
         <div class="map-panel">
-            <h3>Bản đồ không gian</h3>
+            <div class="panel-head compact-head">
+                <h3>Bản đồ không gian</h3>
+                <span class="subtle-text">
+                    <span th:text="${#temporals.format(selectedDate, 'dd/MM/yyyy')}"></span>,
+                    <span th:text="${selectedStart}"></span> - <span th:text="${selectedEnd}"></span>
+                </span>
+            </div>
+
             <div class="floor-shell">
                 <div class="reception">RECEPTION</div>
                 <div class="entrance">ENTRANCE</div>
                 <button type="button"
                         class="space-node"
-                        th:each="space, iter : ${spaces}"
-                        th:classappend="${iter.index % 3 == 1 ? ' node-blue' : (iter.index % 3 == 2 ? ' node-gold' : '')}"
+                        th:each="space : ${spaces}"
+                        th:classappend="${!space.available ? ' node-locked' : ''}"
+                        th:style="|--x:${space.toaDoX}; --y:${space.toaDoY}; --w:${space.chieuDai}; --h:${space.chieuRong};|"
+                        th:disabled="${!space.available}"
                         th:data-id="${space.maKG}"
                         th:data-name="${space.tenKG}"
                         th:data-price="${space.donGiaTheoGio != null ? space.donGiaTheoGio : 0}"
-                        th:data-status="${space.trangThaiKG}">
-                    <span th:text="${space.maKG}">KG001</span>
+                        th:data-available="${space.available}">
                     <strong th:text="${space.tenKG}">Không gian</strong>
                     <small th:text="${space.tenLoaiKG}">Loại</small>
+                    <em th:if="${!space.available and space.busyUntil != null}"
+                        th:text="|Trống sau ${#temporals.format(space.busyUntil, 'HH:mm')}|"></em>
                 </button>
             </div>
             <div class="map-legend">
@@ -63,57 +73,47 @@
 
         <aside class="booking-side">
             <h3>Thông tin đặt chỗ</h3>
-            <form th:action="@{/portal/checkout}" method="get" id="mapBookingForm" class="form-grid">
-                <input type="hidden" name="maKG" id="maKG">
-                <input type="hidden" name="arrivalTime" id="arrivalTime">
-                <input type="hidden" name="durationHours" id="durationHours" value="2">
 
+            <form th:action="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}" method="get" id="timeFilterForm" class="form-grid">
                 <label>
                     Tại chi nhánh
                     <input type="text" th:value="${branch.tenCN}" readonly>
                 </label>
                 <label>
-                    Không gian đã chọn
-                    <input type="text" id="selectedSpaceName" value="Chưa chọn từ bản đồ" readonly>
-                </label>
-                <label>
                     Ngày sử dụng
-                    <input type="date" id="bookingDate" th:value="${today}" required>
+                    <input type="date" name="date" id="bookingDate" th:value="${selectedDate}" required>
                 </label>
                 <div class="time-row">
                     <label>
                         Từ giờ
-                        <select id="startHour">
-                            <option value="07:00">07:00</option>
-                            <option value="08:00" selected>08:00</option>
-                            <option value="09:00">09:00</option>
-                            <option value="10:00">10:00</option>
-                            <option value="11:00">11:00</option>
-                            <option value="13:00">13:00</option>
-                            <option value="14:00">14:00</option>
-                            <option value="15:00">15:00</option>
-                            <option value="16:00">16:00</option>
-                            <option value="18:00">18:00</option>
-                            <option value="19:00">19:00</option>
+                        <select name="start" id="startHour">
+                            <option th:each="time : ${timeOptions}"
+                                    th:value="${time}"
+                                    th:text="${time}"
+                                    th:selected="${time == selectedStart.toString()}"></option>
                         </select>
                     </label>
                     <label>
                         Đến giờ
-                        <select id="endHour">
-                            <option value="08:00">08:00</option>
-                            <option value="09:00">09:00</option>
-                            <option value="10:00" selected>10:00</option>
-                            <option value="11:00">11:00</option>
-                            <option value="12:00">12:00</option>
-                            <option value="14:00">14:00</option>
-                            <option value="15:00">15:00</option>
-                            <option value="16:00">16:00</option>
-                            <option value="17:00">17:00</option>
-                            <option value="20:00">20:00</option>
-                            <option value="21:00">21:00</option>
+                        <select name="end" id="endHour">
+                            <option th:each="time : ${timeOptions}"
+                                    th:value="${time}"
+                                    th:text="${time}"
+                                    th:selected="${time == selectedEnd.toString()}"></option>
                         </select>
                     </label>
                 </div>
+            </form>
+
+            <form th:action="@{/portal/checkout}" method="get" id="mapBookingForm" class="form-grid">
+                <input type="hidden" name="maKG" id="maKG">
+                <input type="hidden" name="arrivalTime" id="arrivalTime">
+                <input type="hidden" name="durationHours" id="durationHours" th:value="${selectedDuration}">
+
+                <label>
+                    Không gian đã chọn
+                    <input type="text" id="selectedSpaceName" value="Chọn một không gian trống trên bản đồ" readonly>
+                </label>
                 <label>
                     Ghi chú
                     <textarea name="note" rows="3" placeholder="Ví dụ: cần phòng yên tĩnh để họp nhóm"></textarea>
@@ -129,7 +129,7 @@
     </section>
 </main>
 
-<script>
+<script th:inline="javascript">
     const nodes = document.querySelectorAll(".space-node");
     const selectedInput = document.getElementById("selectedSpaceName");
     const maKGInput = document.getElementById("maKG");
@@ -138,41 +138,57 @@
     const dateInput = document.getElementById("bookingDate");
     const startInput = document.getElementById("startHour");
     const endInput = document.getElementById("endHour");
+    const timeFilterForm = document.getElementById("timeFilterForm");
     const totalLabel = document.getElementById("estimateTotal");
     const continueButton = document.getElementById("continueButton");
     let selectedPrice = 0;
 
-    function hourValue(value) {
-        return Number(value.split(":")[0]);
+    function minutes(value) {
+        const [hour, minute] = value.split(":").map(Number);
+        return hour * 60 + minute;
     }
 
     function formatMoney(value) {
         return new Intl.NumberFormat("vi-VN").format(value) + " VNĐ";
     }
 
-    function refreshEstimate() {
-        const start = hourValue(startInput.value);
-        const end = hourValue(endInput.value);
-        const duration = Math.max(1, end - start);
+    function syncHiddenTime() {
+        const startMinutes = minutes(startInput.value);
+        const endMinutes = minutes(endInput.value);
+        const duration = Math.max(1, Math.round((endMinutes - startMinutes) / 60));
         durationInput.value = duration;
         arrivalInput.value = dateInput.value + "T" + startInput.value;
         totalLabel.textContent = formatMoney(selectedPrice * duration);
     }
 
+    function reloadForTimeChange() {
+        nodes.forEach((node) => node.disabled = true);
+        continueButton.disabled = true;
+        maKGInput.value = "";
+        selectedInput.value = "Đang cập nhật khung giờ...";
+        if (minutes(endInput.value) <= minutes(startInput.value)) {
+            const options = Array.from(endInput.options);
+            const next = options.find((option) => minutes(option.value) > minutes(startInput.value));
+            if (next) endInput.value = next.value;
+        }
+        timeFilterForm.submit();
+    }
+
     nodes.forEach((node) => {
         node.addEventListener("click", () => {
+            if (node.disabled || node.dataset.available !== "true") return;
             nodes.forEach((item) => item.classList.remove("selected"));
             node.classList.add("selected");
             selectedPrice = Number(node.dataset.price || 0);
             maKGInput.value = node.dataset.id;
             selectedInput.value = node.dataset.name;
             continueButton.disabled = false;
-            refreshEstimate();
+            syncHiddenTime();
         });
     });
 
-    [dateInput, startInput, endInput].forEach((input) => input.addEventListener("change", refreshEstimate));
-    refreshEstimate();
+    [dateInput, startInput, endInput].forEach((input) => input.addEventListener("change", reloadForTimeChange));
+    syncHiddenTime();
 </script>
 </body>
 </html>

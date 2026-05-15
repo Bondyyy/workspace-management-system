@@ -91,8 +91,19 @@ public class NhanVienDAO {
             autoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
-            String maND = java.util.UUID.randomUUID().toString();
-            String maKH = java.util.UUID.randomUUID().toString();
+            String maND = ndDAO.generateNextMaND();
+            
+            // Tạo MaKH tuần tự (giống KhachHangDAO)
+            String maKH = "HV000001";
+            String sqlMaxKH = "SELECT MAX(MaKH) FROM KHACHHANG WHERE MaKH LIKE 'HV%'";
+            try (PreparedStatement psMax = conn.prepareStatement(sqlMaxKH);
+                 ResultSet rsMax = psMax.executeQuery()) {
+                if (rsMax.next() && rsMax.getString(1) != null) {
+                    String max = rsMax.getString(1);
+                    int num = Integer.parseInt(max.substring(2)) + 1;
+                    maKH = String.format("HV%06d", num);
+                }
+            }
             String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau)
                     : PasswordUtil.hash("123456");
 
@@ -164,14 +175,19 @@ public class NhanVienDAO {
         boolean autoCommit = true;
         try {
             // Kiểm tra trùng email/sdt (loại trừ chính nhân viên này)
-            String sqlCheck = "SELECT MaND FROM NGUOIDUNG WHERE (Email = ? OR SDT = ?) AND MaND != ?";
+            String sqlCheck = "SELECT MaND, HoTen FROM NGUOIDUNG WHERE (LOWER(TRIM(Email)) = LOWER(TRIM(?)) OR LOWER(TRIM(SDT)) = LOWER(TRIM(?))) AND LOWER(TRIM(MaND)) != LOWER(TRIM(?))";
             try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
                 ps.setString(1, nd.getEmail());
                 ps.setString(2, nd.getSdt());
                 ps.setString(3, nv.getMaND());
+                
+                System.out.println("[DEBUG] Cập nhật nhân viên: " + nv.getMaNV() + " (MaND=" + (nv.getMaND() != null ? nv.getMaND().trim() : "null") + ")");
+                
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        throw new SQLException("Email hoặc số điện thoại đã tồn tại trên hệ thống!");
+                        String tenTrung = rs.getString("HoTen");
+                        String maTrung = rs.getString("MaND");
+                        throw new SQLException("Email/SĐT đã tồn tại! (Trùng với: " + tenTrung + " [" + maTrung + "], Bạn gửi: [" + nv.getMaND() + "])");
                     }
                 }
             }
@@ -237,7 +253,7 @@ public class NhanVienDAO {
                 conn.rollback();
             } catch (SQLException ex) {
             }
-            return false;
+            throw new RuntimeException(e.getMessage());
         } finally {
             try {
                 conn.setAutoCommit(autoCommit);
