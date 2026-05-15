@@ -57,4 +57,8 @@ public class NguoiDungService {
         
         nguoiDungDAO.themNguoiDung(user, user.getHoTen());
     }
+
+    public String generateNextMaND() throws SQLException {
+        return nguoiDungDAO.generateNextMaND();
+    }
 }

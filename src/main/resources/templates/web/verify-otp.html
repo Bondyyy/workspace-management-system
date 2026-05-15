@@ -3,31 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác thực OTP</title>
-    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+    <title>Xác thực OTP - Spring Workspace</title>
+    <link rel="stylesheet" href="/css/webapp.css">
 </head>
-<body class="auth-page">
-<main class="auth-shell otp-layout">
-    <section class="auth-copy">
-        <p class="eyebrow">Xác thực email</p>
-        <h1>Nhập mã OTP để hoàn tất đăng ký.</h1>
-        <p>Mã OTP có hiệu lực trong 5 phút. Sau khi xác thực, hệ thống sẽ tạo tài khoản hội viên cho email này.</p>
-    </section>
+<body class="workspace-auth-page">
+<main class="workspace-auth">
+    <section class="auth-glass otp-glass">
+        <a class="auth-brand" th:href="@{/}">SPRING WORKSPACE</a>
+        <div class="auth-title">
+            <h1>Xác thực OTP</h1>
+            <p>Mã đã gửi tới <strong th:text="${email}"></strong></p>
+        </div>
 
-    <section class="auth-panel">
-        <h2>Nhập mã OTP</h2>
         <p class="flash success" th:if="${success}" th:text="${success}"></p>
         <p class="flash error" th:if="${error}" th:text="${error}"></p>
-        <p class="otp-target">Mã đã gửi tới <strong th:text="${email}"></strong></p>
-        <form th:action="@{/register/verify}" th:object="${otpForm}" method="post" class="form-grid">
+
+        <form th:action="@{/register/verify}" th:object="${otpForm}" method="post" class="workspace-form">
             <label>
-                Mã OTP
+                Nhập mã OTP
                 <input class="otp-input" type="text" inputmode="numeric" maxlength="6" th:field="*{otp}" placeholder="000000">
                 <span class="field-error" th:if="${#fields.hasErrors('otp')}" th:errors="*{otp}"></span>
             </label>
-            <button type="submit" class="button-primary full-width">Xác thực và tạo tài khoản</button>
+            <button type="submit" class="pink-button submit">Xác thực và tạo tài khoản</button>
         </form>
-        <p class="auth-footnote">Sai email? <a th:href="@{/register}">Đăng ký lại</a></p>
+
+        <p class="auth-switch">Sai email? <a th:href="@{/register}">Đăng ký lại</a></p>
+    </section>
+
+    <section class="auth-hero-copy">
+        <div>
+            <h2>SPRING WORKSPACE</h2>
+            <p>Hoàn tất xác thực để bắt đầu đặt chỗ trực tiếp trên web.</p>
+        </div>
     </section>
 </main>
 </body>

@@ -32,6 +32,10 @@ public class LoaiDichVuService {
         return dao.capNhat(loai);
     }
 
+    public String generateNextMa() throws SQLException {
+        return dao.generateNextMa();
+    }
+
     private void validate(LoaiDichVuDTO loai) {
         if (loai.getTenLoaiDV() == null || loai.getTenLoaiDV().trim().isEmpty()) {
             throw new RuntimeException("Tên loại dịch vụ không được để trống!");

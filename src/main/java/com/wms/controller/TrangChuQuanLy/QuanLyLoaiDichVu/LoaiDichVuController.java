@@ -22,6 +22,7 @@ public class LoaiDichVuController {
 
     private void initController() {
         loadData();
+        clearForm();
     }
 
     public void loadData() {
@@ -74,9 +75,10 @@ public class LoaiDichVuController {
         try {
             LoaiDichVuDTO loai = collectFormData();
             if (loai == null) return;
+            loai.setMaLoaiDV(view.getTxtMaLoai().getText()); // Lấy mã từ textfield đã hiển thị sẵn
             
             service.addLoaiDichVu(loai);
-            JOptionPane.showMessageDialog(view, "Thêm loại dịch vụ thành công!");
+            com.wms.util.MessageUtil.showInfo(view, "Thêm loại dịch vụ mới thành công!");
             loadData();
             clearForm();
         } catch (Exception e) {
@@ -97,7 +99,7 @@ public class LoaiDichVuController {
             loai.setMaLoaiDV(ma);
             
             service.updateLoaiDichVu(loai);
-            JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
+            com.wms.util.MessageUtil.showInfo(view, "Cập nhật loại dịch vụ thành công!");
             loadData();
         } catch (Exception e) {
             showError(e.getMessage());
@@ -105,7 +107,11 @@ public class LoaiDichVuController {
     }
 
     public void clearForm() {
-        view.getTxtMaLoai().setText("");
+        try {
+            view.getTxtMaLoai().setText(service.generateNextMa());
+        } catch (SQLException e) {
+            view.getTxtMaLoai().setText("");
+        }
         view.getTxtTenLoai().setText("");
         view.getCbxTrangThai().setSelectedIndex(0);
         view.getTblLoaiDichVu().clearSelection();
@@ -122,6 +128,6 @@ public class LoaiDichVuController {
     }
 
     private void showError(String msg) {
-        JOptionPane.showMessageDialog(view, msg, "Lỗi", JOptionPane.ERROR_MESSAGE);
+        com.wms.util.MessageUtil.showError(view, msg);
     }
 }

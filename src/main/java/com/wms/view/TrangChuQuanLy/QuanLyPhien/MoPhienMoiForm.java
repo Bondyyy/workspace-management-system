@@ -60,6 +60,10 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
     private void updateEndTime() {
         try {
+            Date now = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
+            txtThoiGianBatDau.setText(sdf.format(now));
+
             String suDungStr = txtThoiGianSuDung.getText().trim();
             if (suDungStr.isEmpty()) {
                 txtThoiGianKetThuc.setText("");
@@ -71,9 +75,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                 return;
             }
             
-            long now = System.currentTimeMillis();
-            long end = now + (long) hours * 3600 * 1000;
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
+            long end = now.getTime() + (long) hours * 3600 * 1000;
             txtThoiGianKetThuc.setText(sdf.format(new Date(end)));
         } catch (NumberFormatException e) {
             txtThoiGianKetThuc.setText("Chỉ nhập số nguyên");
@@ -137,11 +139,11 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         String status = kg.getTrangThaiKG() != null ? kg.getTrangThaiKG().trim() : "Trống";
 
         if ("Đang hoạt động".equals(status)) {
-            JOptionPane.showMessageDialog(this, "Không gian này đang có khách sử dụng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            com.wms.util.MessageUtil.showWarning(this, "Không gian này đang có khách sử dụng!");
             return;
         }
         if ("Bảo trì".equals(status)) {
-            JOptionPane.showMessageDialog(this, "Không gian này đang bảo trì!", "Thông báo", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, "Không gian này đang bảo trì, không thể mở phiên!");
             return;
         }
 
@@ -155,8 +157,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
     private void startClock() {
         Timer timer = new Timer(1000, e -> {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
-            txtThoiGianBatDau.setText(sdf.format(new Date()));
+            updateEndTime(); // Hàm này giờ sẽ cập nhật cả 2 ô dựa trên cùng 1 thời điểm 'now'
         });
         timer.start();
     }
@@ -183,13 +184,11 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         String suDungStr = txtThoiGianSuDung.getText().trim();
 
         if (tenKH.isEmpty() || sdt.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập Tên và Số điện thoại khách hàng!", "Lỗi",
-                    JOptionPane.WARNING_MESSAGE);
+            com.wms.util.MessageUtil.showWarning(this, "Vui lòng nhập đầy đủ Tên và Số điện thoại khách hàng!");
             return;
         }
         if (khongGianChonDTO == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn Không gian/Chỗ ngồi trên sơ đồ bên trái!", "Lỗi",
-                    JOptionPane.WARNING_MESSAGE);
+            com.wms.util.MessageUtil.showWarning(this, "Vui lòng chọn một vị trí trên sơ đồ!");
             return;
         }
 
@@ -198,8 +197,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
             soGio = Integer.parseInt(suDungStr);
             if (soGio <= 0) throw new Exception();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Thời gian sử dụng phải là số nguyên dương (giờ)!", "Lỗi",
-                    JOptionPane.WARNING_MESSAGE);
+            com.wms.util.MessageUtil.showWarning(this, "Thời gian sử dụng phải là số nguyên dương (giờ)!");
             return;
         }
 
@@ -212,14 +210,12 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         }
 
         if (controller.moPhienMoi(tenKH, sdt, khongGianChonDTO.getMaKG(), soGio, giaTien)) {
-            JOptionPane.showMessageDialog(this, "Mở phiên thành công cho khách hàng: " + tenKH + "\nTại: " + khongGian,
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            com.wms.util.MessageUtil.showInfo(this, "Mở phiên thành công cho khách: " + tenKH + "\nVị trí: " + khongGian);
             khongGianChonDTO = null;
             initMap();
             btnLamMoiActionPerformed(evt);
         } else {
-            JOptionPane.showMessageDialog(this, "Lỗi khi mở phiên làm việc! Vui lòng thử lại.", "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, "Lỗi khi mở phiên làm việc! Vui lòng kiểm tra lại kết nối hoặc dữ liệu.");
         }
     }
 

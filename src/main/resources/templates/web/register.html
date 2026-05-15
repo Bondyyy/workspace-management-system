@@ -3,49 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký hội viên</title>
-    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+    <title>Tạo tài khoản - Spring Workspace</title>
+    <link rel="stylesheet" href="/css/webapp.css">
 </head>
-<body class="auth-page">
-<main class="auth-shell register-layout">
-    <section class="auth-copy">
-        <p class="eyebrow">Đăng ký hội viên</p>
-        <h1>Tạo tài khoản web cho hội viên mới.</h1>
-        <p>Sau bước này hệ thống sẽ gửi mã OTP đến email. Nhập đúng OTP thì tài khoản mới được tạo trong CSDL.</p>
-    </section>
+<body class="workspace-auth-page">
+<main class="workspace-auth">
+    <section class="auth-glass register-glass">
+        <a class="auth-brand" th:href="@{/}">SPRING WORKSPACE</a>
+        <div class="auth-title">
+            <h1>Tạo tài khoản</h1>
+            <p>Nhập thông tin và xác thực OTP qua email</p>
+        </div>
 
-    <section class="auth-panel">
-        <h2>Tạo tài khoản</h2>
         <p class="flash error" th:if="${error}" th:text="${error}"></p>
-        <form th:action="@{/register}" th:object="${registerForm}" method="post" class="form-grid">
+
+        <form th:action="@{/register}" th:object="${registerForm}" method="post" class="workspace-form">
             <label>
-                Họ tên
-                <input type="text" th:field="*{fullName}" placeholder="Nguyễn Văn A">
-                <span class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></span>
-            </label>
-            <label>
-                Tên tài khoản
-                <input type="text" th:field="*{username}" placeholder="nguyenvana">
+                Tên đăng nhập
+                <input type="text" th:field="*{username}">
                 <span class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
             </label>
             <label>
-                Email nhận OTP
-                <input type="email" th:field="*{email}" placeholder="name@example.com">
+                Họ và tên
+                <input type="text" th:field="*{fullName}">
+                <span class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></span>
+            </label>
+            <label>
+                Email
+                <input type="email" th:field="*{email}">
                 <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
             </label>
             <label>
                 Mật khẩu
-                <input type="password" th:field="*{password}" placeholder="Tối thiểu 6 ký tự">
+                <input type="password" th:field="*{password}">
                 <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
             </label>
             <label>
-                Nhập lại mật khẩu
-                <input type="password" th:field="*{confirmPassword}" placeholder="Nhập lại mật khẩu">
+                Xác nhận mật khẩu
+                <input type="password" th:field="*{confirmPassword}">
                 <span class="field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></span>
             </label>
-            <button type="submit" class="button-primary full-width">Gửi mã OTP</button>
+            <button type="submit" class="pink-button submit">Gửi mã OTP</button>
         </form>
-        <p class="auth-footnote">Đã có tài khoản? <a th:href="@{/login}">Quay về đăng nhập</a></p>
+
+        <p class="auth-switch">Đã có tài khoản? <a th:href="@{/login}">Đăng nhập</a></p>
+    </section>
+
+    <section class="auth-hero-copy">
+        <div>
+            <h2>SPRING WORKSPACE</h2>
+            <p>Tài khoản web giúp hội viên đặt chỗ mà không cần tải app Java về máy khách.</p>
+        </div>
     </section>
 </main>
 </body>

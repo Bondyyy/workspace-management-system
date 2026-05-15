@@ -3,7 +3,7 @@ AFTER INSERT ON PHIENLAMVIEC
 FOR EACH ROW
 -- Chỉ tự động tạo hóa đơn khi mở phiên trực tiếp (Đang hoạt động)
 -- Đối với khách đặt trước, hóa đơn sẽ được xử lý bởi code ứng dụng hoặc procedure thanh toán
-WHEN (NEW.TrangThaiPhien = UNISTR('\0110ang ho\1EA1t \0111\1ED9ng'))
+WHEN (NEW.TrangThaiPhien = 'Đang hoạt động')
 DECLARE
     v_MaHoaDon VARCHAR2(50);
 BEGIN
@@ -24,7 +24,7 @@ BEGIN
         0,  -- Sẽ được cập nhật khi kết thúc phiên
         0,  -- Sẽ được cập nhật khi kết thúc phiên
         SYSTIMESTAMP,
-        UNISTR('\0110ang ch\1EDD thanh to\00E1n'),
+        'Đang chờ thanh toán',
         :NEW.MaPhien,
         NULL
     );

@@ -123,15 +123,19 @@ public class NguoiDungDAO {
     }
 
     public void themNguoiDung(NguoiDungDTO user, String hoTen) throws SQLException {
-        String maND = java.util.UUID.randomUUID().toString();
-        user.setMaND(maND); // Set generated ID
+        String maND = user.getMaND();
+        if (maND == null || maND.isEmpty()) {
+            maND = generateNextMaND();
+            user.setMaND(maND);
+        }
 
         String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, Email, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
                 +
                 "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
-        String sqlKH = "INSERT INTO KHACHHANG (MaKH, TongChiTieu, CapNhatLanCuoi, MaND) " +
-                "VALUES (?, 0, CURRENT_TIMESTAMP, ?)";
+        // Sử dụng mã HV sequential cho hội viên mới
+        String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) " +
+                "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?)";
 
         Connection conn = getConn();
         if (conn == null) {
@@ -153,7 +157,18 @@ public class NguoiDungDAO {
             }
 
             try (PreparedStatement psKH = conn.prepareStatement(sqlKH)) {
-                psKH.setString(1, "KH_" + maND); // Sinh MaKH dựa trên MaND hoặc ngẫu nhiên
+                String maKH = "HV000001";
+                String sqlMaxKH = "SELECT MAX(MaKH) FROM KHACHHANG WHERE MaKH LIKE 'HV%'";
+                try (PreparedStatement psMax = conn.prepareStatement(sqlMaxKH);
+                        ResultSet rsMax = psMax.executeQuery()) {
+                    if (rsMax.next() && rsMax.getString(1) != null) {
+                        String max = rsMax.getString(1);
+                        int num = Integer.parseInt(max.substring(2)) + 1;
+                        maKH = String.format("HV%06d", num);
+                    }
+                }
+
+                psKH.setString(1, maKH);
                 psKH.setString(2, maND);
                 psKH.executeUpdate();
             }
@@ -211,7 +226,7 @@ public class NguoiDungDAO {
         String sql = "SELECT MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, GioiTinh, Email, SDT, NgaySinh, TrangThaiND, AnhDaiDien FROM NGUOIDUNG ORDER BY ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
         try (PreparedStatement ps = getConn().prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(mapResultSetToDTO(rs));
             }
@@ -220,9 +235,10 @@ public class NguoiDungDAO {
     }
 
     public List<NguoiDungDTO> searchNguoiDung(String keyword) throws SQLException {
-        String sql = "SELECT MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, GioiTinh, Email, SDT, NgaySinh, TrangThaiND, AnhDaiDien FROM NGUOIDUNG " +
-                     "WHERE LOWER(HoTen) LIKE ? OR LOWER(TenTaiKhoan) LIKE ? OR SDT LIKE ? OR LOWER(Email) LIKE ? " +
-                     "ORDER BY ThoiGianTao DESC";
+        String sql = "SELECT MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, GioiTinh, Email, SDT, NgaySinh, TrangThaiND, AnhDaiDien FROM NGUOIDUNG "
+                +
+                "WHERE LOWER(HoTen) LIKE ? OR LOWER(TenTaiKhoan) LIKE ? OR SDT LIKE ? OR LOWER(Email) LIKE ? " +
+                "ORDER BY ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
         String searchKey = "%" + keyword.toLowerCase() + "%";
         try (PreparedStatement ps = getConn().prepareStatement(sql)) {
@@ -240,8 +256,9 @@ public class NguoiDungDAO {
     }
 
     public void updateNguoiDung(NguoiDungDTO user) throws SQLException {
-        String sql = "UPDATE NGUOIDUNG SET HoTen = ?, GioiTinh = ?, Email = ?, SDT = ?, NgaySinh = ?, TrangThaiND = ?, AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP " +
-                     "WHERE MaND = ?";
+        String sql = "UPDATE NGUOIDUNG SET HoTen = ?, GioiTinh = ?, Email = ?, SDT = ?, NgaySinh = ?, TrangThaiND = ?, AnhDaiDien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP "
+                +
+                "WHERE MaND = ?";
         try (PreparedStatement ps = getConn().prepareStatement(sql)) {
             ps.setString(1, user.getHoTen());
             ps.setString(2, user.getGioiTinh());
@@ -268,6 +285,25 @@ public class NguoiDungDAO {
         user.setTrangThaiND(rs.getString("TrangThaiND"));
         user.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
         return user;
+    }
+
+    public String generateNextMaND() throws SQLException {
+        String sql = "SELECT MAX(MaND) FROM NGUOIDUNG WHERE MaND LIKE 'ND%'";
+        try (PreparedStatement ps = getConn().prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String maxMa = rs.getString(1);
+                if (maxMa != null) {
+                    try {
+                        int num = Integer.parseInt(maxMa.substring(2)) + 1;
+                        return String.format("ND%03d", num);
+                    } catch (NumberFormatException e) {
+                        // Nếu không phải dạng số thì quay về mặc định
+                    }
+                }
+            }
+        }
+        return "ND001";
     }
 
     public java.util.List<String> layDanhSachChucNangCuaNguoiDung(String maND) {

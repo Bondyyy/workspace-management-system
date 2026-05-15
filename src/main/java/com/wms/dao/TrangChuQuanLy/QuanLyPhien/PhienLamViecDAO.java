@@ -14,26 +14,53 @@ public class PhienLamViecDAO {
         return DatabaseConnection.getInstance().getConnection();
     }
 
+    public String generateNextMaPhien() throws SQLException {
+        String sql = "SELECT MAX(MaPhien) FROM PHIENLAMVIEC WHERE MaPhien LIKE 'PH%'";
+        try (Connection conn = getConn();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String maxMa = rs.getString(1);
+                if (maxMa != null) {
+                    try {
+                        int num = Integer.parseInt(maxMa.substring(2)) + 1;
+                        return String.format("PH%04d", num);
+                    } catch (NumberFormatException e) {
+                    }
+                }
+            }
+            return "PH0001";
+        }
+    }
+
     public boolean taoPhienLamViecMoi(PhienLamViecDTO phien) {
-        String sql = "{call sp_MoPhienLamViecTrucTiep(?, ?, ?, ?, ?)}";
+        // Sinh mã phiên tại Java theo yêu cầu người dùng
+        if (phien.getMaPhien() == null || phien.getMaPhien().isEmpty()) {
+            try {
+                phien.setMaPhien(generateNextMaPhien());
+            } catch (SQLException e) {
+                System.err.println("[PhienLamViecDAO] Lỗi sinh mã phiên: " + e.getMessage());
+                return false;
+            }
+        }
+
+        String sql = "{call sp_MoPhienLamViecTrucTiep(?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = getConn();
                 CallableStatement cstmt = conn.prepareCall(sql)) {
             cstmt.setString(1, phien.getMaKG());
             cstmt.setString(2, phien.getMaKH());
             cstmt.setTimestamp(3, phien.getThoiGianDuKienKetThuc());
-            
-            // Đăng ký tham số đầu ra
-            cstmt.registerOutParameter(4, java.sql.Types.VARCHAR); // p_MaPhien
-            cstmt.registerOutParameter(5, java.sql.Types.VARCHAR); // p_outMessage
+            cstmt.setString(4, phien.getMaPhien()); // p_MaPhien (IN)
+            cstmt.setString(5, phien.getMaDatCho()); // p_MaDatCho (IN)
+
+            // Đăng ký tham số đầu ra cho message
+            cstmt.registerOutParameter(6, java.sql.Types.VARCHAR); // p_outMessage
 
             cstmt.execute();
-            
-            String maPhienMoi = cstmt.getString(4);
-            String message = cstmt.getString(5);
-            
-            if (maPhienMoi != null) {
-                phien.setMaPhien(maPhienMoi); // Cập nhật lại mã phiên được sinh từ DB
+
+            String message = cstmt.getString(6);
+            if (message != null && message.contains("thành công")) {
                 return true;
             } else {
                 System.err.println("[PhienLamViecDAO] Lỗi từ SP: " + message);
@@ -48,7 +75,8 @@ public class PhienLamViecDAO {
     public List<PhienLamViecFullDTO> layDanhSachPhien(String keyword, String maCN) {
         List<PhienLamViecFullDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT p.*, kg.TenKG, nd.HoTen AS HoTenKH, dc.TrangThaiDatTruoc, h.TrangThaiThanhToan, lkg.DonGiaTheoGio " +
+                "SELECT p.*, kg.TenKG, nd.HoTen AS HoTenKH, dc.TrangThaiDatTruoc, h.TrangThaiThanhToan, lkg.DonGiaTheoGio "
+                        +
                         "FROM PHIENLAMVIEC p " +
                         "JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
                         "JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG " +

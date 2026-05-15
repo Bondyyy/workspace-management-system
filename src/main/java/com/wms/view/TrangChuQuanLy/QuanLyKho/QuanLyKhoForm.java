@@ -377,8 +377,9 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         lblTrangThaiFile.setBounds(20, 430, 250, 25);
 
         btnSuaFile.setText("Thay đổi ảnh/ file");
+        btnSuaFile.addActionListener(this::btnSuaFileActionPerformed);
         pnRight.add(btnSuaFile);
-        btnSuaFile.setBounds(190, 430, 150, 25);
+        btnSuaFile.setBounds(230, 390, 150, 35);
 
         btnLuu.setBackground(new java.awt.Color(235, 94, 141));
         btnLuu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -444,6 +445,10 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnSuaFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSuaFileActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnSuaFileActionPerformed
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         if (controller != null) {

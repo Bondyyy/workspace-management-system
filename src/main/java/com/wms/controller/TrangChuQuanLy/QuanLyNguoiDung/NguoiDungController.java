@@ -31,6 +31,7 @@ public class NguoiDungController {
 
     private void initController() {
         loadData();
+        clearForm();
     }
 
     public void loadData() {
@@ -120,9 +121,10 @@ public class NguoiDungController {
         try {
             NguoiDungDTO user = collectFormData();
             if (user == null) return;
+            user.setMaND(view.getTxtMaND().getText()); // Lấy mã hiển thị sẵn
             
             service.addUser(user);
-            JOptionPane.showMessageDialog(view, "Thêm người dùng thành công!");
+            com.wms.util.MessageUtil.showInfo(view, "Thêm người dùng mới thành công!");
             loadData();
             clearForm();
         } catch (Exception e) {
@@ -143,7 +145,7 @@ public class NguoiDungController {
             user.setMaND(maND);
             
             service.updateUser(user);
-            JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
+            com.wms.util.MessageUtil.showInfo(view, "Cập nhật thông tin người dùng thành công!");
             loadData();
         } catch (Exception e) {
             showError(e.getMessage());
@@ -151,7 +153,11 @@ public class NguoiDungController {
     }
 
     public void clearForm() {
-        view.getTxtMaND().setText("");
+        try {
+            view.getTxtMaND().setText(service.generateNextMaND());
+        } catch (SQLException e) {
+            view.getTxtMaND().setText("");
+        }
         view.getTxtTaiKhoan().setText("");
         view.getTxtHoTen().setText("");
         view.getCbxGioiTinh().setSelectedIndex(0);
@@ -218,6 +224,6 @@ public class NguoiDungController {
     }
 
     private void showError(String msg) {
-        JOptionPane.showMessageDialog(view, msg, "Lỗi", JOptionPane.ERROR_MESSAGE);
+        com.wms.util.MessageUtil.showError(view, msg);
     }
 }

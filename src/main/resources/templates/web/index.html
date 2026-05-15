@@ -3,54 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WMS Booking Portal</title>
-    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+    <title>Spring Workspace</title>
+    <link rel="stylesheet" href="/css/webapp.css">
 </head>
-<body class="landing-page">
-<header class="site-header">
-    <a class="brand" th:href="@{/}">WMS Booking Portal</a>
-    <nav class="header-actions">
-        <a class="ghost-link" th:if="${user == null}" th:href="@{/login}">Đăng nhập</a>
-        <a class="primary-link" th:if="${user == null}" th:href="@{/register}">Tạo tài khoản</a>
-        <a class="ghost-link" th:if="${user != null and user.staff}" th:href="@{/staff/bookings}">Quản lý yêu cầu</a>
-        <a class="primary-link" th:if="${user != null and !user.staff}" th:href="@{/portal}">Vào trang đặt chỗ</a>
-    </nav>
-</header>
+<body class="spring-cover-page">
+<main class="spring-cover">
+    <section class="cover-left">
+        <nav class="cover-nav">
+            <a class="cover-brand" th:href="@{/}">SPRING WORKSPACE</a>
+            <div class="cover-actions">
+                <a class="glass-button" th:if="${user == null}" th:href="@{/login}">Đăng nhập</a>
+                <a class="pink-button" th:if="${user == null}" th:href="@{/register}">Tạo tài khoản</a>
+                <a class="glass-button" th:if="${user != null and user.staff}" th:href="@{/staff/bookings}">Bảng nhân viên</a>
+                <a class="pink-button" th:if="${user != null and !user.staff}" th:href="@{/portal}">Vào portal</a>
+            </div>
+        </nav>
 
-<main class="hero-shell">
-    <section class="hero-panel">
-        <div class="hero-copy">
-            <p class="eyebrow">Đặt chỗ không gian làm việc qua web</p>
-            <h1>Hội viên đặt chỗ trên web, nhân viên xử lý trong hệ thống.</h1>
-            <p class="hero-text">
-                Bản web này dùng lại CSDL Oracle hiện có, thêm cổng đặt chỗ đơn giản cho hội viên:
-                đăng nhập, chọn chi nhánh, chọn không gian, gửi yêu cầu và chờ nhân viên xác nhận.
+        <div class="cover-copy">
+            <p class="cover-kicker">Đặt chỗ không gian làm việc qua web</p>
+            <h1>Spring xin chào</h1>
+            <p>
+                Hội viên đăng nhập trên trình duyệt, chọn chi nhánh, chọn chỗ trên sơ đồ và gửi yêu cầu.
+                Nhân viên tiếp nhận trong hệ thống quản lý hiện có.
             </p>
-            <div class="cta-row">
-                <a class="button-primary" th:if="${user == null}" th:href="@{/login}">Bắt đầu đăng nhập</a>
-                <a class="button-primary" th:if="${user != null and !user.staff}" th:href="@{/portal}">Đặt chỗ ngay</a>
-                <a class="button-primary" th:if="${user != null and user.staff}" th:href="@{/staff/bookings}">Mở bảng điều phối</a>
-                <a class="button-secondary" th:href="@{/register}">Tạo hội viên mới</a>
+            <div class="cover-cta">
+                <a class="pink-button large" th:if="${user == null}" th:href="@{/login}">Bắt đầu đặt chỗ</a>
+                <a class="pink-button large" th:if="${user != null and !user.staff}" th:href="@{/portal/branches}">Đặt chỗ ngay</a>
+                <a class="glass-button large" th:href="@{/register}">Tạo hội viên mới</a>
             </div>
         </div>
-        <div class="hero-card-grid">
-            <article class="feature-card accent-card">
-                <span class="feature-label">Hội viên</span>
-                <strong>Đăng nhập và đặt chỗ</strong>
-                <p>Chọn chi nhánh, không gian, giờ đến và thời lượng sử dụng trên một trang duy nhất.</p>
-            </article>
-            <article class="feature-card">
-                <span class="feature-label">Nhân viên</span>
-                <strong>Xác nhận yêu cầu</strong>
-                <p>Theo dõi danh sách đặt chỗ mới, xác nhận thanh toán và đánh dấu đã sử dụng.</p>
-            </article>
-            <article class="feature-card">
-                <span class="feature-label">Demo sinh viên</span>
-                <strong>Đủ dùng, không rườm rà</strong>
-                <p>Không cần tải app Java về máy khách. Hội viên chỉ cần trình duyệt và tài khoản web.</p>
-            </article>
+    </section>
+
+    <section class="cover-right">
+        <div class="cover-title-card">
+            <span>Spring Workspace Cafe</span>
+            <h2>Không gian học tập, làm việc và gặp gỡ</h2>
+            <p>Giao diện web dùng chung dữ liệu Oracle với app, đủ gọn cho đồ án nhưng vẫn có trải nghiệm giống sản phẩm thật.</p>
         </div>
     </section>
 </main>
+
+<section class="team-strip">
+    <div class="team-heading">
+        <p>Về chúng tôi</p>
+        <h2>Đội hình Spring</h2>
+    </div>
+    <div class="team-grid">
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Huy2.png}" alt="Lai Mộc Huy">
+            <strong>Lai Mộc Huy</strong>
+            <span>Nhóm trưởng</span>
+        </article>
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Dung2.png}" alt="Huỳnh Đức Dũng">
+            <strong>Huỳnh Đức Dũng</strong>
+            <span>Nhóm phó</span>
+        </article>
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Duyen2.png}" alt="Sơn Nguyễn Kỳ Duyên">
+            <strong>Sơn Nguyễn Kỳ Duyên</strong>
+            <span>Thư ký</span>
+        </article>
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Duc.png}" alt="Nguyễn Thành Đức">
+            <strong>Nguyễn Thành Đức</strong>
+            <span>Thành viên</span>
+        </article>
+    </div>
+</section>
 </body>
 </html>

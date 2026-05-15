@@ -137,8 +137,8 @@ public class KhachHangDAO {
             throw new SQLException("Số điện thoại " + dto.getSdt() + " đã tồn tại!");
         }
 
-        String maND = java.util.UUID.randomUUID().toString();
-
+        String maND = ndDAO.generateNextMaND();
+        
         Connection conn = getConn();
         if (conn == null)
             throw new SQLException("Lỗi kết nối CSDL!");

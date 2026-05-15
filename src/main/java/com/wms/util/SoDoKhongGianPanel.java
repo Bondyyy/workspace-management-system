@@ -47,7 +47,7 @@ public class SoDoKhongGianPanel extends JPanel {
         this.selectedMaKG = selectedMaKG;
         removeAll();
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10); // Tạo khoảng trống 80% diện tích ô (lối đi)
+        gbc.insets = new Insets(0, 0, 0, 0); // Không dùng insets bên ngoài để tránh lệch lưới
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.NORTHWEST;
 
@@ -123,16 +123,20 @@ public class SoDoKhongGianPanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
+                int margin = 5; // Tạo khoảng trống nhỏ giữa các ô (lối đi)
+                int w = getWidth() - 2 * margin;
+                int h = getHeight() - 2 * margin;
+
                 // Vẽ nền bo góc
                 g2.setColor(getBackground());
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.fillRoundRect(margin, margin, w, h, 15, 15);
                 
                 // Vẽ viền bo góc
                 Color vien = (Color) getClientProperty("mauVien");
                 if (vien != null) {
                     g2.setColor(vien);
                     g2.setStroke(new BasicStroke(isSelected ? 3 : 1));
-                    g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
+                    g2.drawRoundRect(margin, margin, w - 1, h - 1, 15, 15);
                 }
                 
                 g2.dispose();

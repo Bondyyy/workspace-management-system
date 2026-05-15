@@ -24,7 +24,7 @@ BEGIN
     
     -- Mặc định trạng thái thanh toán
     IF :NEW.TrangThaiThanhToan IS NULL THEN
-        :NEW.TrangThaiThanhToan := UNISTR('\0110ang ch\1EDD thanh to\00E1n');
+        :NEW.TrangThaiThanhToan := 'Đang chờ thanh toán';
     END IF;
 END TRG_TaoMaHoaDon;
 /
