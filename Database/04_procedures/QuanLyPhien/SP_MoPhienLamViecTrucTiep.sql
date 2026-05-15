@@ -9,6 +9,10 @@ AS
     v_TrangThaiKG VARCHAR2(50);
     v_NewMaPhien  VARCHAR2(50);
 BEGIN
+    -- t0: Khởi tạo và định danh Transaction
+    SET TRANSACTION NAME 'mo_phien_truc_tiep';
+
+    -- t1: Đọc và giữ khóa dòng
     BEGIN
         SELECT TrangThaiKG INTO v_TrangThaiKG
         FROM KHONGGIAN
@@ -28,34 +32,23 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Sinh mã phiên dạng PH + số thứ tự (tương tự logic Java cũ)
-    SELECT 'PH' || LPAD(COUNT(*) + 1, 4, '0') INTO v_NewMaPhien
-    FROM PHIENLAMVIEC;
+    -- Sinh mã phiên mới
+    v_NewMaPhien := 'PLV_' || TO_CHAR(SYSTIMESTAMP, 'YYYYMMDD_HH24MISS') || '_' || DBMS_RANDOM.STRING('U', 4);
 
+    -- t2: Thêm phiên làm việc vào hệ thống
     INSERT INTO PHIENLAMVIEC (
-        MaPhien,
-        ThoiGianBatDau,
-        ThoiGianDuKienKetThuc,
-        TrangThaiPhien,
-        MaKG,
-        MaKH,
-        MaDatCho,
-        CapNhatLanCuoi
+        MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien, MaKG, MaKH, MaDatCho
     ) VALUES (
-        v_NewMaPhien,
-        SYSTIMESTAMP,
-        p_ThoiGianDuKien,
-        'Đang hoạt động',
-        p_MaKG,
-        p_MaKH,
-        NULL,
-        SYSTIMESTAMP
+        v_NewMaPhien, SYSTIMESTAMP, p_ThoiGianDuKien, 'Đang hoạt động', p_MaKG, p_MaKH, NULL
     );
 
+    -- t3: Cập nhật trạng thái không gian
     UPDATE KHONGGIAN
     SET TrangThaiKG = 'Đang hoạt động'
     WHERE MaKG = p_MaKG;
 
+    -- Nếu mọi lệnh đều suôn sẻ, hệ thống chốt giao dịch, nhả Row Lock
+    DBMS_SESSION.SLEEP(10);
     COMMIT;
 
     p_MaPhien := v_NewMaPhien;
