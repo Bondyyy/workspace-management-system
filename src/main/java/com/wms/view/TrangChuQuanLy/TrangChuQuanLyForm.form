@@ -387,7 +387,7 @@
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="23" green="1e" red="30" type="rgb"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="&#x25cf;  Nh&#xe2;n s&#x1ef1; / Ph&#xe2;n quy&#x1ec1;n"/>
+                    <Property name="text" type="java.lang.String" value="&#x25cf;  Nh&#xe2;n vi&#xea;n"/>
                     <Property name="borderPainted" type="boolean" value="false"/>
                     <Property name="contentAreaFilled" type="boolean" value="false"/>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">

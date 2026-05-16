@@ -179,7 +179,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -293,17 +293,6 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuDichVu.addActionListener(this::btnMenuDichVuActionPerformed);
         pnMenuContainer.add(btnMenuDichVu);
 
-        btnMenuLoaiDichVu.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
-        btnMenuLoaiDichVu.setForeground(new java.awt.Color(48, 30, 35));
-        btnMenuLoaiDichVu.setText("●  Loại Dịch vụ");
-        btnMenuLoaiDichVu.setBorderPainted(false);
-        btnMenuLoaiDichVu.setContentAreaFilled(false);
-        btnMenuLoaiDichVu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btnMenuLoaiDichVu.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnMenuLoaiDichVu.setMaximumSize(new java.awt.Dimension(32767, 45));
-        btnMenuLoaiDichVu.addActionListener(this::btnMenuLoaiDichVuActionPerformed);
-        pnMenuContainer.add(btnMenuLoaiDichVu);
-
         btnMenuKho.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         btnMenuKho.setForeground(new java.awt.Color(48, 30, 35));
         btnMenuKho.setText("●  Kho Dịch vụ");
@@ -372,7 +361,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
 
         btnMenuNhanVien.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         btnMenuNhanVien.setForeground(new java.awt.Color(48, 30, 35));
-        btnMenuNhanVien.setText("●  Nhân sự / Phân quyền");
+        btnMenuNhanVien.setText("●  Nhân viên");
         btnMenuNhanVien.setBorderPainted(false);
         btnMenuNhanVien.setContentAreaFilled(false);
         btnMenuNhanVien.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -380,6 +369,17 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuNhanVien.setMaximumSize(new java.awt.Dimension(32767, 45));
         btnMenuNhanVien.addActionListener(this::btnMenuNhanVienActionPerformed);
         pnMenuContainer.add(btnMenuNhanVien);
+
+        btnMenuLoaiDichVu.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        btnMenuLoaiDichVu.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuLoaiDichVu.setText("●  Loại Dịch vụ");
+        btnMenuLoaiDichVu.setBorderPainted(false);
+        btnMenuLoaiDichVu.setContentAreaFilled(false);
+        btnMenuLoaiDichVu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnMenuLoaiDichVu.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuLoaiDichVu.setMaximumSize(new java.awt.Dimension(32767, 45));
+        btnMenuLoaiDichVu.addActionListener(this::btnMenuLoaiDichVuActionPerformed);
+        pnMenuContainer.add(btnMenuLoaiDichVu);
 
         btnMenuNguoiDung.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         btnMenuNguoiDung.setForeground(new java.awt.Color(48, 30, 35));
@@ -592,10 +592,10 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     private javax.swing.JButton btnMenuKhongGian;
     private javax.swing.JButton btnMenuNhanVien;
     private javax.swing.JButton btnMenuPhien;
+    private javax.swing.JButton btnMenuTongQuan;
     private javax.swing.JButton btnMenuLoaiDichVu;
     private javax.swing.JButton btnMenuNguoiDung;
     private javax.swing.JButton btnMenuVaiTro;
-    private javax.swing.JButton btnMenuTongQuan;
     private javax.swing.JLabel lblGreeting;
     private javax.swing.JLabel lblLogo;
     private javax.swing.JLabel lblLogoSub;

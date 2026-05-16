@@ -26,8 +26,8 @@ public class QuanLyKhoController {
         }
     }
 
-    public boolean nhapKho(String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
-        return quanKhoService.nhapKhoDichVu(tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaNhap, fileData);
+    public boolean nhapKho(String maDV, String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
+        return quanKhoService.nhapKhoDichVu(maDV, tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaNhap, fileData);
     }
 
     public List<String> getDSNhanVien() { return quanKhoService.layDSNhanVien(); }
@@ -39,5 +39,13 @@ public class QuanLyKhoController {
 
     public double layDonGiaDichVu(String tenDV) {
         return quanKhoService.layDonGiaDichVu(tenDV);
+    }
+
+    /**
+     * Lấy dữ liệu hóa đơn mới nhất theo MaDV.
+     * Trả về Object[]{byte[] fileData, String tenFile} hoặc null nếu không có.
+     */
+    public Object[] xemHoaDon(String maDV) {
+        return quanKhoService.layHoaDonMoiNhat(maDV);
     }
 }

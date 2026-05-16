@@ -77,6 +77,7 @@ public class PhienLamViecService {
         newKH.setHoTen(hoTen);
         newKH.setSdt(sdt);
         newKH.setTrangThai("Đang hoạt động");
+        newKH.setLoaiKH("Khách vãng lai");
         try {
             khachHangDAO.insert(newKH);
             ds = khachHangDAO.search(sdt);

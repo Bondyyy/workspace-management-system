@@ -17,6 +17,7 @@ public class ChuyenKhoanForm extends JDialog {
         this.tongTien = tongTien;
         this.maHoaDon = maHoaDon;
         initComponents();
+        loadQRCode();
         txtTongTien.setText(formatTien.format(tongTien));
         txtNoiDung.setText("UIT CW " + maHoaDon);
         pack();
@@ -114,7 +115,7 @@ public class ChuyenKhoanForm extends JDialog {
         txtNganHang.setFont(new Font("Segoe UI", 1, 14));
         txtNganHang.setForeground(new Color(48, 30, 35));
         txtNganHang.setHorizontalAlignment(SwingConstants.TRAILING);
-        txtNganHang.setText("VPBank");
+        txtNganHang.setText("Vietcombank");
         pnInfo.add(txtNganHang);
         txtNganHang.setBounds(150, 15, 280, 20);
 
@@ -127,7 +128,7 @@ public class ChuyenKhoanForm extends JDialog {
         txtSoTK.setFont(new Font("Segoe UI", 1, 14));
         txtSoTK.setForeground(new Color(48, 30, 35));
         txtSoTK.setHorizontalAlignment(SwingConstants.TRAILING);
-        txtSoTK.setText("1234567890");
+        txtSoTK.setText("9375037830");
         pnInfo.add(txtSoTK);
         txtSoTK.setBounds(150, 45, 280, 20);
 
@@ -140,7 +141,7 @@ public class ChuyenKhoanForm extends JDialog {
         txtChuTK.setFont(new Font("Segoe UI", 1, 14));
         txtChuTK.setForeground(new Color(48, 30, 35));
         txtChuTK.setHorizontalAlignment(SwingConstants.TRAILING);
-        txtChuTK.setText("UIT COWORKING SPACE");
+        txtChuTK.setText("LAI MOC HUY");
         pnInfo.add(txtChuTK);
         txtChuTK.setBounds(150, 75, 280, 20);
 
@@ -202,6 +203,22 @@ public class ChuyenKhoanForm extends JDialog {
 
     public boolean isDaThanhToan() {
         return daThanhToan;
+    }
+
+    private void loadQRCode() {
+        try {
+            java.net.URL imgUrl = getClass().getResource("/images/QR_ThanhToan.jpg");
+            if (imgUrl != null) {
+                ImageIcon icon = new ImageIcon(imgUrl);
+                Image img = icon.getImage().getScaledInstance(lblQRCode.getWidth(), lblQRCode.getHeight(), Image.SCALE_SMOOTH);
+                lblQRCode.setIcon(new ImageIcon(img));
+                lblQRCode.setText("");
+            } else {
+                lblQRCode.setText("Không tìm thấy file QR!");
+            }
+        } catch (Exception e) {
+            lblQRCode.setText("Lỗi load QR: " + e.getMessage());
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

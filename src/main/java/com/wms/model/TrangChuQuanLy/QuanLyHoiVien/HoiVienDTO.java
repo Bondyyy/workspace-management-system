@@ -17,6 +17,7 @@ public class HoiVienDTO {
     private byte[] anhDaiDien;
     private String trangThai;
     private Double tongChiTieu;
+    private String loaiKH;
 
     public HoiVienDTO() {}
 
@@ -58,4 +59,7 @@ public class HoiVienDTO {
 
     public Double getTongChiTieu() { return tongChiTieu; }
     public void setTongChiTieu(Double tongChiTieu) { this.tongChiTieu = tongChiTieu; }
+
+    public String getLoaiKH() { return loaiKH; }
+    public void setLoaiKH(String loaiKH) { this.loaiKH = loaiKH; }
 }

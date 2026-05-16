@@ -6,9 +6,9 @@ DECLARE
 BEGIN
     SELECT TenLoaiDV INTO v_TenLoai FROM LOAIDICHVU WHERE MaLoaiDV = :NEW.MaLoaiDV;
 
-    IF (UPPER(v_TenLoai) NOT LIKE UPPER('%đồ ăn%')
-        AND UPPER(v_TenLoai) NOT LIKE UPPER('%thức uống%'))
-    THEN
+    -- Chỉ loại "Tiện ích" mới không quản lý số lượng tồn kho
+    -- Tất cả loại khác (đồ ăn, bim bim, thức uống, v.v.) đều được phép có SoLuong
+    IF LOWER(v_TenLoai) LIKE '%tiện ích%' THEN
         :NEW.SoLuong := NULL;
     ELSE
         IF :NEW.SoLuong IS NULL THEN
@@ -20,4 +20,4 @@ EXCEPTION
     WHEN NO_DATA_FOUND THEN
         :NEW.SoLuong := NULL;
 END;
-/
+/

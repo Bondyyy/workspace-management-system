@@ -182,10 +182,10 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
 
                 },
                 new String[] {
-                        "Mã Phiên", "Tên Dịch Vụ", "SL", "Thời Gian Đặt", "Khách Hàng", "Tên Không Gian", "Ghi Chú"
+                        "Mã Phiên", "Khách Hàng", "Không Gian", "Giờ Bắt Đầu", "Giờ Kết Thúc", "Trạng Thái"
                 }) {
             boolean[] canEdit = new boolean[] {
-                    false, false, false, false, false, false, false
+                    false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -298,10 +298,10 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
 
                 },
                 new String[] {
-                        "Mã Phiên", "Tên Dịch Vụ", "SL", "Thời Gian Đặt", "Khách Hàng", "Tên Không Gian", "Ghi Chú"
+                        "Mã Phiên", "Tên Dịch Vụ", "SL", "Ghi Chú"
                 }) {
             boolean[] canEdit = new boolean[] {
-                    false, false, false, false, false, false, false
+                    false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -475,11 +475,18 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
             txtGhiChu.setText(dto.getGhiChu());
             spinSoLuong.setValue(dto.getSoLuong());
 
-            // Set ComboBoxes
+            // Tạm thời ngắt listener để tránh loop
+            java.awt.event.ActionListener[] listeners = cboLoaiDichVu.getActionListeners();
+            for (java.awt.event.ActionListener l : listeners)
+                cboLoaiDichVu.removeActionListener(l);
+
             cboLoaiDichVu.setSelectedItem(dto.getTenLoaiDV());
-            // Since updateTenDichVu is called on change, we might need to wait or manually
-            // set it
+            updateTenDichVu(); // Cập nhật danh sách tên theo loại
             cboTenDichVu.setSelectedItem(dto.getTenDichVu());
+
+            // Đăng ký lại listener
+            for (java.awt.event.ActionListener l : listeners)
+                cboLoaiDichVu.addActionListener(l);
         }
     }
 

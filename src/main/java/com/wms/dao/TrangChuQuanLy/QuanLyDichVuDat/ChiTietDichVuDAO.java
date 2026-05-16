@@ -65,7 +65,7 @@ public class ChiTietDichVuDAO {
                      "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
                      "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                      "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                     "WHERE p.TrangThaiPhien = 'Đang hoạt động' " +
+                     "WHERE p.TrangThaiPhien <> 'Đã kết thúc' " +
                      "AND (p.MaPhien LIKE ? OR nd.HoTen LIKE ? OR kg.TenKG LIKE ?) " +
                      "ORDER BY p.ThoiGianBatDau DESC";
 

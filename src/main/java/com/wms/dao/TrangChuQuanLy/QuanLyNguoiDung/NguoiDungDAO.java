@@ -134,8 +134,8 @@ public class NguoiDungDAO {
                 "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
         // Sử dụng mã HV sequential cho hội viên mới
-        String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) " +
-                "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?)";
+        String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH) " +
+                "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?, 'Hội viên')";
 
         Connection conn = getConn();
         if (conn == null) {
@@ -158,13 +158,18 @@ public class NguoiDungDAO {
 
             try (PreparedStatement psKH = conn.prepareStatement(sqlKH)) {
                 String maKH = "HV000001";
+                // Tìm mã HV lớn nhất để tăng dần
                 String sqlMaxKH = "SELECT MAX(MaKH) FROM KHACHHANG WHERE MaKH LIKE 'HV%'";
                 try (PreparedStatement psMax = conn.prepareStatement(sqlMaxKH);
                         ResultSet rsMax = psMax.executeQuery()) {
                     if (rsMax.next() && rsMax.getString(1) != null) {
                         String max = rsMax.getString(1);
-                        int num = Integer.parseInt(max.substring(2)) + 1;
-                        maKH = String.format("HV%06d", num);
+                        try {
+                            int num = Integer.parseInt(max.substring(2)) + 1;
+                            maKH = String.format("HV%06d", num);
+                        } catch (Exception e) {
+                            maKH = "HV000001";
+                        }
                     }
                 }
 

@@ -7,6 +7,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,18 +31,26 @@ public class QuanLyKhoDao {
             cstmt.execute();
             try (ResultSet rs = (ResultSet) cstmt.getObject(2)) {
                 while (rs.next()) {
-                    DichVuDTO dto = new DichVuDTO();
-                    dto.setMaDV(rs.getString("MaDV"));
-                    dto.setTenDV(rs.getString("TenDV"));
-                    dto.setTenLoaiDV(rs.getString("LoaiDV")); 
-                    dto.setDonGia(rs.getDouble("DonGia"));
-                    dto.setGiaNhap(rs.getDouble("GiaNhap"));
-                    dto.setTrangThaiDV(rs.getString("TrangThaiDV"));
-                    dto.setHinhAnh(rs.getBytes("HinhAnh"));
-                    Object soLuongObj = rs.getObject("SoLuong");
-                    if (soLuongObj != null) dto.setSoLuong(Integer.parseInt(soLuongObj.toString()));
-                    else dto.setSoLuong(null);
-                    list.add(dto);
+                    try {
+                        DichVuDTO dto = new DichVuDTO();
+                        dto.setMaDV(rs.getString("MADV"));
+                        dto.setTenDV(rs.getString("TENDV"));
+                        dto.setTenLoaiDV(rs.getString("LOAIDV")); 
+                        dto.setDonGia(rs.getDouble("DONGIA"));
+                        dto.setGiaNhap(rs.getDouble("GIANHAP"));
+                        dto.setTrangThaiDV(rs.getString("TRANGTHAIDV"));
+                        dto.setHinhAnh(rs.getBytes("HINHANH"));
+                        
+                        Object soLuongObj = rs.getObject("SOLUONG");
+                        if (soLuongObj != null) {
+                            dto.setSoLuong(Integer.parseInt(soLuongObj.toString()));
+                        } else {
+                            dto.setSoLuong(null);
+                        }
+                        list.add(dto);
+                    } catch (SQLException ex) {
+                        System.err.println("[QuanLyKhoDao] Loi doc dong du lieu: " + ex.getMessage());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -50,23 +59,35 @@ public class QuanLyKhoDao {
         return list;
     }
 
-    public boolean nhapKhoDichVu(String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
-        String sql = "{CALL SP_NhapKhoDichVu(?, ?, ?, ?, ?, ?, ?)}";
+    public boolean nhapKhoDichVu(String maDV, String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
+        String sql = "{CALL SP_NhapKhoDichVu(?, ?, ?, ?, ?, ?, ?, ?)}";
         Connection conn = getConn();
-        if (conn == null) return false;
+        if (conn == null) {
+            System.err.println("[QuanLyKhoDao] Khong co ket noi database!");
+            return false;
+        }
+        System.out.println("[QuanLyKhoDao] Bat dau nhapKhoDichVu: maDV=" + maDV + ", tenDV=" + tenDV + ", tenLoaiDV=" + tenLoaiDV + ", soLuong=" + soLuong + ", giaNhap=" + giaNhap);
         try (CallableStatement cstmt = conn.prepareCall(sql)) {
-            cstmt.setString(1, tenNV);
-            cstmt.setString(2, tenLoaiDV);
-            cstmt.setString(3, tenDV);
-            cstmt.setInt(4, soLuong);
-            if (tenFile == null || tenFile.trim().isEmpty()) cstmt.setNull(5, Types.VARCHAR);
-            else cstmt.setString(5, tenFile);
-            cstmt.setDouble(6, giaNhap);
-            if (fileData != null) cstmt.setBytes(7, fileData);
-            else cstmt.setNull(7, Types.BLOB);
+            if (maDV == null || maDV.trim().isEmpty()) cstmt.setNull(1, Types.VARCHAR);
+            else cstmt.setString(1, maDV.trim());
+            cstmt.setString(2, tenNV);
+            cstmt.setString(3, tenLoaiDV);
+            cstmt.setString(4, tenDV);
+            cstmt.setInt(5, soLuong);
+            if (tenFile == null || tenFile.trim().isEmpty()) cstmt.setNull(6, Types.VARCHAR);
+            else cstmt.setString(6, tenFile);
+            cstmt.setDouble(7, giaNhap);
+            if (fileData != null) cstmt.setBytes(8, fileData);
+            else cstmt.setNull(8, Types.BLOB);
             cstmt.execute();
+            System.out.println("[QuanLyKhoDao] nhapKhoDichVu thanh cong cho maDV=" + maDV);
             return true;
+        } catch (SQLException e) {
+            System.err.println("[QuanLyKhoDao] SQL Error nhapKhoDichVu - Code: " + e.getErrorCode() + ", Message: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         } catch (Exception e) {
+            System.err.println("[QuanLyKhoDao] Error nhapKhoDichVu: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -111,5 +132,31 @@ public class QuanLyKhoDao {
             }
         } catch (Exception e) { e.printStackTrace(); }
         return 0;
+    }
+
+    /**
+     * Lấy thông tin hóa đơn (file + tên file) mới nhất theo MaDV từ CHUNGTUNHAPKHO.
+     * Trả về Object[]{byte[] fileData, String tenFile} hoặc null nếu không có.
+     */
+    public Object[] layHoaDonMoiNhat(String maDV) {
+        String sql = "SELECT TenFile, NoiDungFile FROM CHUNGTUNHAPKHO " +
+                     "WHERE MaDV = ? AND NoiDungFile IS NOT NULL " +
+                     "ORDER BY NgayNhap DESC FETCH FIRST 1 ROWS ONLY";
+        try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maDV);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String tenFile = rs.getString("TenFile");
+                    byte[] fileData = rs.getBytes("NoiDungFile");
+                    if (fileData != null && fileData.length > 0) {
+                        return new Object[]{fileData, tenFile != null ? tenFile : "hoadon"};
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[QuanLyKhoDao] Loi layHoaDonMoiNhat: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
     }
 }

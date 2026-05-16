@@ -150,8 +150,8 @@ public class KhachHangDAO {
         String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email, NgaySinh, GioiTinh, AnhDaiDien, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
                 +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-        String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) " +
-                "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?)";
+        String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH) " +
+                "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?, ?)";
 
         boolean autoCommit = conn.getAutoCommit();
         try {
@@ -173,6 +173,7 @@ public class KhachHangDAO {
             try (PreparedStatement ps2 = conn.prepareStatement(sqlKH)) {
                 ps2.setString(1, maKH);
                 ps2.setString(2, maND);
+                ps2.setString(3, dto.getLoaiKH() != null ? dto.getLoaiKH() : "Hội viên");
                 ps2.executeUpdate();
             }
             conn.commit();
@@ -190,12 +191,14 @@ public class KhachHangDAO {
         String sqlND = "UPDATE NGUOIDUNG SET HoTen = ?, SDT = ?, Email = ?, NgaySinh = ?, GioiTinh = ?, AnhDaiDien = ?, TrangThaiND = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaND = ?";
 
         try (Connection conn = getConn()) {
-            // Kiểm tra trùng email/sdt (loại trừ chính hội viên này)
-            String sqlCheck = "SELECT MaND FROM NGUOIDUNG WHERE (Email = ? OR SDT = ?) AND MaND != ?";
+            // Kiểm tra trùng email/sdt (loại trừ chính hội viên này dựa trên MaKH)
+            String sqlCheck = "SELECT nd.MaND FROM NGUOIDUNG nd " +
+                             "JOIN KHACHHANG kh ON nd.MaND = kh.MaND " +
+                             "WHERE (nd.Email = ? OR nd.SDT = ?) AND kh.MaKH <> ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
                 ps.setString(1, dto.getEmail());
                 ps.setString(2, dto.getSdt());
-                ps.setString(3, dto.getMaND());
+                ps.setString(3, dto.getMaKH());
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         throw new SQLException("Email hoặc số điện thoại đã tồn tại trên hệ thống!");

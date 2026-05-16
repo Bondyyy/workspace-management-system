@@ -264,7 +264,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnThemMoi.setText("Thêm mới");
         btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(210, 460, 180, 40);
+        btnThemMoi.setBounds(20, 460, 180, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -272,7 +272,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnCapNhat.setText("Cập nhật");
         btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnMain.add(btnCapNhat);
-        btnCapNhat.setBounds(20, 460, 180, 40);
+        btnCapNhat.setBounds(210, 460, 180, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));

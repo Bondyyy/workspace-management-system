@@ -630,6 +630,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         txtKhachHang.setText("");
         txtKhachHang.setEditable(false);
         txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Tạm ngừng" }));
         cbxTrangThai.setSelectedIndex(0);
         cbxTrangThai.setEnabled(false);
         btnCapNhat.setEnabled(true);
@@ -709,21 +710,21 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             String hinhThuc = tblPhienLamViec.getValueAt(row, 7).toString();
 
             if ("Đã kết thúc".equals(trangThaiTable)) {
-                // Nếu đã kết thúc, khóa toàn bộ việc chỉnh sửa
+                // Nếu đã kết thúc, hiển thị model có mục "Đã kết thúc" và khóa lại
+                cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đã kết thúc" }));
                 cbxTrangThai.setSelectedItem("Đã kết thúc");
                 cbxTrangThai.setEnabled(false);
                 btnCapNhat.setEnabled(false);
+                btnKetThucPhien.setEnabled(false);
                 txtKhachHang.setEditable(false);
                 txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
             } else {
-                // Nếu chưa kết thúc, cho phép chỉnh sửa trạng thái
-                if ("Đang hoạt động".equals(trangThaiTable)) {
-                    cbxTrangThai.setSelectedItem("Đang hoạt động");
-                } else {
-                    cbxTrangThai.setSelectedItem(trangThaiTable);
-                }
+                // Nếu chưa kết thúc, chỉ cho chọn Đang hoạt động / Tạm ngừng
+                cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Tạm ngừng" }));
+                cbxTrangThai.setSelectedItem(trangThaiTable);
                 cbxTrangThai.setEnabled(true);
                 btnCapNhat.setEnabled(true);
+                btnKetThucPhien.setEnabled(true);
 
                 // Logic sửa tên khách hàng cho phiên trực tiếp
                 if ("Trực tiếp".equals(hinhThuc)) {

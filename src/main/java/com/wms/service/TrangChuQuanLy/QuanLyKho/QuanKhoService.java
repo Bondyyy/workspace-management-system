@@ -17,8 +17,8 @@ public class QuanKhoService {
         return quanLyKhoDao.layDanhSachKho(keyword);
     }
 
-    public boolean nhapKhoDichVu(String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
-        return quanLyKhoDao.nhapKhoDichVu(tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaNhap, fileData);
+    public boolean nhapKhoDichVu(String maDV, String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
+        return quanLyKhoDao.nhapKhoDichVu(maDV, tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaNhap, fileData);
     }
 
     public List<String> layDSNhanVien() { return quanLyKhoDao.layDSNhanVien(); }
@@ -30,6 +30,10 @@ public class QuanKhoService {
 
     public double layDonGiaDichVu(String tenDV) {
         return quanLyKhoDao.layDonGiaDichVu(tenDV);
+    }
+
+    public Object[] layHoaDonMoiNhat(String maDV) {
+        return quanLyKhoDao.layHoaDonMoiNhat(maDV);
     }
 }
 
