@@ -15,6 +15,7 @@
     <nav class="member-nav">
         <a th:href="@{/portal}">Trang chủ</a>
         <a th:href="@{/portal/branches}" class="active">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}">Thông tin tài khoản</a>
     </nav>
@@ -26,7 +27,7 @@
 <main class="member-main">
     <header class="member-topbar">
         <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong>Hạng: VIP Kim Cương</strong>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
     </header>
 
     <section class="map-title">
@@ -43,7 +44,7 @@
                 </span>
             </div>
 
-            <div class="floor-shell">
+            <div class="floor-shell" th:style="|--map-cols:${mapColumns}; --map-rows:${mapRows};|">
                 <div class="reception">RECEPTION</div>
                 <div class="entrance">ENTRANCE</div>
                 <button type="button"
@@ -72,15 +73,15 @@
         </div>
 
         <aside class="booking-side">
-            <h3>Thông tin đặt chỗ</h3>
+            <h3>Đặt chỗ</h3>
 
             <form th:action="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}" method="get" id="timeFilterForm" class="form-grid">
                 <label>
-                    Tại chi nhánh
+                    Chi nhánh
                     <input type="text" th:value="${branch.tenCN}" readonly>
                 </label>
                 <label>
-                    Ngày sử dụng
+                    Ngày
                     <input type="date" name="date" id="bookingDate" th:value="${selectedDate}" required>
                 </label>
                 <div class="time-row">
@@ -111,19 +112,19 @@
                 <input type="hidden" name="durationHours" id="durationHours" th:value="${selectedDuration}">
 
                 <label>
-                    Không gian đã chọn
-                    <input type="text" id="selectedSpaceName" value="Chọn một không gian trống trên bản đồ" readonly>
+                    Chỗ chọn
+                    <input type="text" id="selectedSpaceName" value="Chưa chọn" readonly>
                 </label>
                 <label>
                     Ghi chú
-                    <textarea name="note" rows="3" placeholder="Ví dụ: cần phòng yên tĩnh để họp nhóm"></textarea>
+                    <textarea name="note" rows="2" placeholder="Ví dụ: phòng yên tĩnh"></textarea>
                 </label>
                 <div class="estimate-box">
-                    <span>Tổng tiền dự kiến</span>
+                    <span>Dự kiến</span>
                     <strong id="estimateTotal">0 VNĐ</strong>
                 </div>
-                <button type="submit" class="button-primary full-width" id="continueButton" disabled>Đặt chỗ và Thanh toán</button>
-                <a th:href="@{/portal/branches}" class="button-secondary full-width">Quay lại chọn chi nhánh</a>
+                <button type="submit" class="button-primary full-width" id="continueButton" disabled>Thanh toán</button>
+                <a th:href="@{/portal/branches}" class="button-secondary full-width">Đổi chi nhánh</a>
             </form>
         </aside>
     </section>

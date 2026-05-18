@@ -28,9 +28,9 @@ public class DatabaseConnection {
                     p.getProperty("user"),
                     p.getProperty("pass"));
 
-            System.out.println("[DB] Kết nối thành công!");
+            System.out.println("[DB] Ket noi thanh cong!");
         } catch (Exception e) {
-            System.err.println("[DB] Lỗi kết nối: " + e.getMessage());
+            System.err.println("[DB] Loi ket noi: " + e.getMessage());
         }
     }
 

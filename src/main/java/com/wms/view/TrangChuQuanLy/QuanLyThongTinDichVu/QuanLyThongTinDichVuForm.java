@@ -29,6 +29,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
             @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
         });
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private boolean isFormattingDonGia = false;

@@ -30,8 +30,18 @@ public class NguoiDungController {
     }
 
     private void initController() {
+        loadComboBoxData();
         loadData();
         clearForm();
+    }
+
+    private void loadComboBoxData() {
+        view.getCbxNhomQuyen().removeAllItems();
+        view.getCbxNhomQuyen().addItem("-- Chưa cấp quyền --");
+        for (com.wms.model.TrangChuQuanLy.QuanLyVaiTro.VaiTroDTO vt : service.layTatCaVaiTro()) {
+            view.getCbxNhomQuyen().addItem(vt.getTenVaiTro());
+            view.getCbxNhomQuyen().putClientProperty("maVT_" + vt.getTenVaiTro(), vt.getMaVaiTro());
+        }
     }
 
     public void loadData() {
@@ -94,6 +104,22 @@ public class NguoiDungController {
 
         // Không hiển thị mật khẩu đã mã hóa (Vô nghĩa và mất an toàn)
         view.getTxtMatKhau().setText("");
+
+        // Select matching role in cbxNhomQuyen
+        view.getCbxNhomQuyen().setSelectedIndex(0); // Default to "-- Chưa cấp quyền --"
+        if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
+            String userMaVT = user.getVaiTro().get(0);
+            for (int i = 0; i < view.getCbxNhomQuyen().getItemCount(); i++) {
+                String item = view.getCbxNhomQuyen().getItemAt(i);
+                if (item != null) {
+                    Object itemMaVT = view.getCbxNhomQuyen().getClientProperty("maVT_" + item);
+                    if (itemMaVT != null && itemMaVT.toString().equals(userMaVT)) {
+                        view.getCbxNhomQuyen().setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+        }
 
         // Handle Image
         selectedImageData = user.getAnhDaiDien();
@@ -170,6 +196,7 @@ public class NguoiDungController {
         view.getTxtSDT().setText("");
         view.getTxtEmail().setText("");
         view.getCbxTrangThai().setSelectedIndex(0);
+        view.getCbxNhomQuyen().setSelectedIndex(0);
         view.getTxtMatKhau().setText("");
         view.getLblAnhDaiDien().setIcon(null);
         view.getLblAnhDaiDien().setText("[Ảnh 3x4]");
@@ -203,6 +230,19 @@ public class NguoiDungController {
         user.setTrangThaiND("Hoạt động".equals(uiTrangThai) ? "Đang hoạt động" : "Không hoạt động");
 
         user.setAnhDaiDien(selectedImageData);
+
+        // Đọc nhóm quyền được chọn
+        String selectedRole = null;
+        Object selectedItem = view.getCbxNhomQuyen().getSelectedItem();
+        if (selectedItem != null) {
+            Object objMaVT = view.getCbxNhomQuyen().getClientProperty("maVT_" + selectedItem.toString());
+            if (objMaVT != null) {
+                selectedRole = objMaVT.toString();
+            }
+        }
+        if (selectedRole != null) {
+            user.setVaiTro(java.util.List.of(selectedRole));
+        }
 
         try {
             String birthStr = view.getTxtNgaySinh().getText().trim();

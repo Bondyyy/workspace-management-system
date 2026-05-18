@@ -151,6 +151,49 @@ public class TongQuanForm extends javax.swing.JPanel {
     }
 
     private JPanel taoVungThongTinQuanLy(int ckPercent, int tmPercent) {
+        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
+        String name = "Admin Hệ Thống";
+        String email = "admin@spring.com";
+        String sdt = "0901234567";
+        String role = "Toàn quyền";
+        
+        if (user != null) {
+            name = (user.getHoTen() != null && !user.getHoTen().isEmpty()) ? user.getHoTen() : user.getTenTaiKhoan();
+            email = (user.getEmail() != null && !user.getEmail().isEmpty()) ? user.getEmail() : "";
+            sdt = (user.getSdt() != null && !user.getSdt().isEmpty()) ? user.getSdt() : "";
+            
+            role = "Nhân viên";
+            if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
+                for (String v : user.getVaiTro()) {
+                    if (v != null && !v.startsWith("VT")) {
+                        role = v;
+                        break;
+                    }
+                }
+            }
+            if (user.hasRole(com.wms.config.AppConstants.ROLE_ADMIN_CODE)) {
+                role = "Toàn quyền";
+            }
+        }
+
+        String initial = "QL";
+        if (role != null) {
+            String lr = role.toLowerCase();
+            if (lr.contains("admin") || lr.contains("trị") || lr.contains("toàn")) {
+                initial = "AD";
+            } else if (lr.contains("quản lý")) {
+                initial = "QL";
+            } else if (lr.contains("nhân viên") || lr.contains("lễ tân")) {
+                initial = "NV";
+            }
+        }
+        
+        final String finalInitial = initial;
+        final String finalName = name;
+        final String finalEmail = email;
+        final String finalSdt = sdt;
+        final String finalRole = role;
+
         JPanel pnl = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -171,7 +214,7 @@ public class TongQuanForm extends javax.swing.JPanel {
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString("QL", xAvatar + (avatarSize - fm.stringWidth("QL")) / 2, yAvatar + (avatarSize - fm.getHeight()) / 2 + fm.getAscent());
+                g2.drawString(finalInitial, xAvatar + (avatarSize - fm.stringWidth(finalInitial)) / 2, yAvatar + (avatarSize - fm.getHeight()) / 2 + fm.getAscent());
                 
                 g2.setColor(new Color(235, 235, 235));
                 g2.drawLine(240, 20, 240, getHeight() - 20);
@@ -182,23 +225,23 @@ public class TongQuanForm extends javax.swing.JPanel {
         pnl.setOpaque(false);
         pnl.setLayout(null);
 
-        JLabel lblName = new JLabel("Admin Hệ Thống");
+        JLabel lblName = new JLabel(finalName);
         lblName.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblName.setForeground(mauHong);
         lblName.setBounds(100, 25, 140, 20);
         pnl.add(lblName);
         
-        JLabel lblRole = new JLabel("admin@spring.com");
+        JLabel lblRole = new JLabel(finalEmail);
         lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblRole.setForeground(new Color(150, 150, 150));
         lblRole.setBounds(100, 45, 140, 20);
         pnl.add(lblRole);
 
-        JPanel pnlPhone = taoDongInfo("SĐT:", "0901234567");
+        JPanel pnlPhone = taoDongInfo("SĐT:", finalSdt);
         pnlPhone.setBounds(20, 95, 200, 20);
         pnl.add(pnlPhone);
         
-        JPanel pnlVaiTro = taoDongInfo("Quyền:", "Toàn quyền");
+        JPanel pnlVaiTro = taoDongInfo("Quyền:", finalRole);
         pnlVaiTro.setBounds(20, 125, 200, 20);
         pnl.add(pnlVaiTro);
 
@@ -218,6 +261,7 @@ public class TongQuanForm extends javax.swing.JPanel {
 
         return pnl;
     }
+
     
     private JPanel taoDongInfo(String title, String value) {
         JPanel pnl = new JPanel(new BorderLayout());

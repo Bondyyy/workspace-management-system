@@ -113,7 +113,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         // CN05→Kho, CN06→DịchVuDat, CN07→Phiên, CN08→HóaĐơn,
         // CN09→Giảm giá, CN10→HộiViên, CN11→Nhân sự, CN12→Người dùng, CN13→Vai trò, CN14→Loại dịch vụ
         
-        btnMenuTongQuan.setVisible(user.hasChucNang("CN01"));
+        btnMenuTongQuan.setVisible(user.hasChucNang("CN01") || user.hasRole("VT02") || user.hasRole("Quản lý Chi nhánh") || user.hasRole("Quản lý"));
         btnMenuChiNhanh.setVisible(user.hasChucNang("CN02"));
         btnMenuKhongGian.setVisible(user.hasChucNang("CN03"));
         btnMenuDichVu.setVisible(user.hasChucNang("CN04"));
@@ -130,7 +130,29 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
 
         // Đảm bảo ít nhất Tổng quan luôn hiện nếu chưa được cấu hình gì (Failsafe)
         if (!user.daPhanQuyen()) {
-            btnMenuTongQuan.setVisible(true);
+            boolean isManager = user.hasRole("VT02") || user.hasRole("Quản lý Chi nhánh") || user.hasRole("Quản lý");
+            boolean isAdmin = user.hasRole("VT01") || user.hasRole("Quản trị viên Hệ thống");
+            
+            if (isManager) {
+                btnMenuTongQuan.setVisible(true);
+                btnMenuKhongGian.setVisible(true);
+                btnMenuKho.setVisible(true);
+                btnMenuDichVuDat.setVisible(true);
+                btnMenuPhien.setVisible(true);
+                btnMenuHoaDon.setVisible(true);
+                btnMenuHoiVien.setVisible(true);
+                btnMenuNhanVien.setVisible(true);
+            } else if (isAdmin) {
+                btnMenuTongQuan.setVisible(true);
+                btnMenuChiNhanh.setVisible(true);
+                btnMenuGiamGia.setVisible(true);
+                btnMenuNhanVien.setVisible(true);
+                btnMenuNguoiDung.setVisible(true);
+                btnMenuVaiTro.setVisible(true);
+                btnMenuLoaiDichVu.setVisible(true);
+            } else {
+                btnMenuTongQuan.setVisible(true);
+            }
         }
 
         pnMenuContainer.revalidate();

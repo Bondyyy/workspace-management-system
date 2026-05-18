@@ -40,6 +40,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         initLegend();
         initTimeCalculation();
         startClock();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void initTimeCalculation() {

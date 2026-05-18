@@ -20,6 +20,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         kiemTraQuyen();
         loadData("");
         initRealTimeTimer();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void setupTable() {

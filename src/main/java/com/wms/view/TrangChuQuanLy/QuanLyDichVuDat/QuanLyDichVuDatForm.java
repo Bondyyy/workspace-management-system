@@ -19,6 +19,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         cboLoaiDichVu.addActionListener(e -> updateTenDichVu());
         loadDataLoaiDichVu();
         loadData("");
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void loadData(String keyword) {

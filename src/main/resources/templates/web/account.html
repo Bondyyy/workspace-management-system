@@ -6,7 +6,7 @@
     <title>Tài khoản - Spring MNGT</title>
     <link rel="stylesheet" href="/css/webapp.css">
 </head>
-<body class="member-page">
+<body class="member-page account-page">
 <aside class="member-sidebar">
     <a class="member-brand" th:href="@{/portal}">
         <strong>SPRING MNGT</strong>
@@ -15,6 +15,7 @@
     <nav class="member-nav">
         <a th:href="@{/portal}">Trang chủ</a>
         <a th:href="@{/portal/branches}">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}" class="active">Thông tin tài khoản</a>
     </nav>
@@ -26,10 +27,12 @@
 <main class="member-main">
     <header class="member-topbar">
         <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong>Hạng: VIP Kim Cương</strong>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
     </header>
 
     <section class="member-content">
+        <p class="flash success" th:if="${success}" th:text="${success}"></p>
+        <p class="flash error" th:if="${error}" th:text="${error}"></p>
         <div class="section-title">
             <p>Thông tin tài khoản</p>
             <h2>Hồ sơ cá nhân</h2>
@@ -39,41 +42,44 @@
             <aside class="profile-card">
                 <div class="avatar-box">Ảnh đại diện</div>
                 <button type="button" class="button-secondary full-width">Thay đổi ảnh</button>
-                <h3 th:text="${user.hoTen}">Hội viên</h3>
-                <strong>VIP Kim Cương</strong>
+                <h3 th:text="${profile != null ? profile.hoTen : user.hoTen}">Hội viên</h3>
+                <strong th:text="${rankName}">Không có</strong>
                 <p th:text="'Tham gia từ: ' + ${#temporals.format(joinDate, 'dd/MM/yyyy')}">Tham gia từ</p>
                 <p th:text="'Số yêu cầu đặt chỗ: ' + ${bookingCount}">0</p>
             </aside>
 
             <section class="member-panel account-panel">
                 <h3>Hồ sơ cá nhân</h3>
-                <form class="readonly-grid">
+                <form th:action="@{/portal/account}" method="post" class="readonly-grid account-form">
                     <label>
                         Họ và tên
-                        <input type="text" th:value="${user.hoTen}">
+                        <input type="text" name="hoTen" th:value="${profile != null ? profile.hoTen : user.hoTen}">
                     </label>
                     <label>
                         Số điện thoại
-                        <input type="text" placeholder="Chưa cập nhật">
+                        <input type="text" name="soDienThoai" th:value="${profile != null ? profile.soDienThoai : ''}" placeholder="Chưa cập nhật">
                     </label>
                     <label>
-                        Email hoặc tài khoản
-                        <input type="text" th:value="${user.tenTaiKhoan}" readonly>
+                        Tài khoản
+                        <input type="text" th:value="${profile != null ? profile.tenTaiKhoan : user.tenTaiKhoan}" readonly>
+                    </label>
+                    <label>
+                        Email
+                        <input type="email" name="email" th:value="${profile != null ? profile.email : ''}" placeholder="Chưa cập nhật">
                     </label>
                     <label>
                         Ngày sinh
-                        <input type="text" placeholder="dd/MM/yyyy">
+                        <input type="date" name="ngaySinh" th:value="${profile != null ? profile.ngaySinh : null}">
                     </label>
                     <label>
                         Giới tính
-                        <select>
-                            <option>Nam</option>
-                            <option>Nữ</option>
-                            <option>Khác</option>
+                        <select name="gioiTinh">
+                            <option value="Nam" th:selected="${profile == null or profile.gioiTinh == null or profile.gioiTinh == 'Nam'}">Nam</option>
+                            <option value="Nữ" th:selected="${profile != null and profile.gioiTinh == 'Nữ'}">Nữ</option>
+                            <option value="Khác" th:selected="${profile != null and profile.gioiTinh == 'Khác'}">Khác</option>
                         </select>
                     </label>
-                    <div></div>
-                    <button type="button" class="button-primary">Cập nhật thông tin</button>
+                    <button type="submit" class="button-primary">Cập nhật thông tin</button>
                 </form>
 
                 <hr>

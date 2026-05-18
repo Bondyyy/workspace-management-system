@@ -15,6 +15,7 @@
     <nav class="member-nav">
         <a th:href="@{/portal}">Trang chủ</a>
         <a th:href="@{/portal/branches}">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}" class="active">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}">Thông tin tài khoản</a>
     </nav>
@@ -26,7 +27,7 @@
 <main class="member-main">
     <header class="member-topbar">
         <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong>Hạng: VIP Kim Cương</strong>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
     </header>
 
     <section class="member-content">
@@ -38,7 +39,7 @@
         <section class="rank-banner compact-banner">
             <div>
                 <span>Đặc quyền hạng thành viên</span>
-                <strong>VIP Kim Cương</strong>
+                <strong th:text="${rankName}">Không có</strong>
             </div>
             <ul>
                 <li>Giảm trực tiếp 15% trên tổng hóa đơn dịch vụ</li>

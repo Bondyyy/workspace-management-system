@@ -48,7 +48,7 @@ public class SuperAdminCreator {
                 ensureAdminRoleMapping(conn, maND);
 
                 conn.commit();
-                System.out.println("[SuperAdminCreator] Đã sẵn sàng tài khoản admin: " + username);
+                System.out.println("[SuperAdminCreator] Da san sang tai khoan admin: " + username);
             } catch (Exception ex) {
                 conn.rollback();
                 throw ex;
@@ -56,7 +56,7 @@ public class SuperAdminCreator {
                 conn.setAutoCommit(autoCommit);
             }
         } catch (Exception e) {
-            System.err.println("[!] LỖI KHỞI TẠO SUPER ADMIN: " + e.getMessage());
+            System.err.println("[!] LOI KHOI TAO SUPER ADMIN: " + e.getMessage());
         }
     }
 

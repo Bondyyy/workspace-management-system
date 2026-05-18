@@ -13,6 +13,10 @@ public class VaiTroController {
         return service.layTatCaVaiTro();
     }
 
+    public String sinhMaVT() {
+        return service.sinhMaVT();
+    }
+
     public List<ChucNangDTO> layTatCaChucNang() {
         return service.layTatCaChucNang();
     }

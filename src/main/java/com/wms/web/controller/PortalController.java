@@ -1,6 +1,8 @@
 package com.wms.web.controller;
 
+import com.wms.web.form.AccountProfileForm;
 import com.wms.web.form.BookingForm;
+import com.wms.web.model.AccountProfileView;
 import com.wms.web.model.BookingView;
 import com.wms.web.model.BranchView;
 import com.wms.web.model.SessionUser;
@@ -45,6 +47,7 @@ public class PortalController {
         List<BookingView> bookings = memberBookings(user.getMaKH());
         List<SpaceView> spaces = portalService.getSpaces(null);
         model.addAttribute("user", user);
+        model.addAttribute("rankName", portalService.getMemberRankName(user));
         model.addAttribute("activePage", "home");
         model.addAttribute("bookings", bookings);
         model.addAttribute("recentBookings", bookings.stream().limit(6).toList());
@@ -69,8 +72,10 @@ public class PortalController {
             return "redirect:/login";
         }
         model.addAttribute("user", user);
+        model.addAttribute("rankName", portalService.getMemberRankName(user));
         model.addAttribute("activePage", "booking");
         model.addAttribute("branches", portalService.getBranches());
+        model.addAttribute("missingContactInfo", !portalService.hasCompleteContactInfo(user));
         return "web/branches";
     }
 
@@ -82,11 +87,16 @@ public class PortalController {
                                @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
                                @RequestParam(name = "end", required = false)
                                @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
-                               HttpSession session,
-                               Model model) {
+                              HttpSession session,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
         SessionUser user = currentMember(session);
         if (user == null) {
             return "redirect:/login";
+        }
+        if (!portalService.hasCompleteContactInfo(user)) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng điền đầy đủ email và số điện thoại để đặt trước không gian.");
+            return "redirect:/portal/branches";
         }
         BranchView branch = portalService.getBranch(branchId).orElse(null);
         if (branch == null) {
@@ -114,15 +124,30 @@ public class PortalController {
         LocalDateTime selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
         LocalDateTime selectedEndDateTime = LocalDateTime.of(selectedDate, selectedEnd);
 
+        List<SpaceView> spaces = portalService.getSpaces(branchId, selectedStartDateTime, selectedEndDateTime);
+        int maxSpaceColumn = spaces.stream()
+                .mapToInt(space -> space.getToaDoX() + space.getChieuDai())
+                .max()
+                .orElse(3);
+        int maxSpaceRow = spaces.stream()
+                .mapToInt(space -> space.getToaDoY() + space.getChieuRong())
+                .max()
+                .orElse(2);
+        int mapColumns = Math.min(12, Math.max(6, Math.max(3, maxSpaceColumn) + 3));
+        int mapRows = Math.min(8, Math.max(4, maxSpaceRow + 1));
+
         model.addAttribute("user", user);
+        model.addAttribute("rankName", portalService.getMemberRankName(user));
         model.addAttribute("activePage", "booking");
         model.addAttribute("branch", branch);
-        model.addAttribute("spaces", portalService.getSpaces(branchId, selectedStartDateTime, selectedEndDateTime));
+        model.addAttribute("spaces", spaces);
         model.addAttribute("timeOptions", timeOptions);
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("selectedStart", selectedStart);
         model.addAttribute("selectedEnd", selectedEnd);
         model.addAttribute("selectedDuration", Math.max(1, java.time.Duration.between(selectedStart, selectedEnd).toHours()));
+        model.addAttribute("mapColumns", mapColumns);
+        model.addAttribute("mapRows", mapRows);
         return "web/space-map";
     }
 
@@ -138,6 +163,10 @@ public class PortalController {
         SessionUser user = currentMember(session);
         if (user == null) {
             return "redirect:/login";
+        }
+        if (!portalService.hasCompleteContactInfo(user)) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng điền đầy đủ email và số điện thoại để đặt trước không gian.");
+            return "redirect:/portal/branches";
         }
 
         SpaceView space = portalService.getSpace(maKG);
@@ -163,6 +192,7 @@ public class PortalController {
         BigDecimal subtotal = portalService.calculateAmount(space, durationHours);
         BigDecimal discount = portalService.calculateDiscount(subtotal, voucherCode);
         model.addAttribute("user", user);
+        model.addAttribute("rankName", portalService.getMemberRankName(user));
         model.addAttribute("activePage", "booking");
         model.addAttribute("space", space);
         model.addAttribute("arrivalTime", arrivalTime);
@@ -191,6 +221,10 @@ public class PortalController {
             redirectAttributes.addFlashAttribute("error", "Tài khoản này chưa có hồ sơ hội viên, nên chưa thể đặt chỗ.");
             return "redirect:/portal/branches";
         }
+        if (!portalService.hasCompleteContactInfo(user)) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng điền đầy đủ email và số điện thoại để đặt trước không gian.");
+            return "redirect:/portal/branches";
+        }
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng kiểm tra lại thông tin đặt chỗ.");
             return "redirect:/portal/branches";
@@ -215,6 +249,7 @@ public class PortalController {
             return "redirect:/login";
         }
         model.addAttribute("user", user);
+        model.addAttribute("rankName", portalService.getMemberRankName(user));
         model.addAttribute("activePage", "benefits");
         var vouchers = portalService.getActiveVouchers();
         if (keyword != null && !keyword.isBlank()) {
@@ -233,6 +268,19 @@ public class PortalController {
         return "web/benefits";
     }
 
+    @GetMapping("/portal/history")
+    public String history(HttpSession session, Model model) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("user", user);
+        model.addAttribute("rankName", portalService.getMemberRankName(user));
+        model.addAttribute("activePage", "history");
+        model.addAttribute("histories", portalService.getMemberBookingHistory(user.getMaKH()));
+        return "web/history";
+    }
+
     @GetMapping("/portal/account")
     public String account(HttpSession session, Model model) {
         SessionUser user = currentMember(session);
@@ -240,7 +288,10 @@ public class PortalController {
             return "redirect:/login";
         }
         List<BookingView> bookings = memberBookings(user.getMaKH());
+        AccountProfileView profile = portalService.getAccountProfile(user);
         model.addAttribute("user", user);
+        model.addAttribute("rankName", portalService.getMemberRankName(user));
+        model.addAttribute("profile", profile);
         model.addAttribute("activePage", "account");
         model.addAttribute("joinDate", LocalDate.now());
         model.addAttribute("bookingCount", bookings.size());
@@ -249,6 +300,35 @@ public class PortalController {
                 .max(Comparator.comparing(BookingView::getThoiGianDuKienToi))
                 .orElse(null));
         return "web/account";
+    }
+
+    @PostMapping("/portal/account")
+    public String updateAccount(@ModelAttribute AccountProfileForm form,
+                                HttpSession session,
+                                RedirectAttributes redirectAttributes) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            AccountProfileView profile = portalService.updateAccountProfile(user, form);
+            if (profile != null) {
+                session.setAttribute("user", new SessionUser(
+                        user.getMaND(),
+                        user.getMaKH(),
+                        profile.getHoTen(),
+                        user.getTenTaiKhoan(),
+                        user.isStaff()
+                ));
+            }
+            redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin tài khoản thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", "Không thể cập nhật thông tin. Email hoặc số điện thoại có thể đã được sử dụng.");
+        }
+        return "redirect:/portal/account";
     }
 
     private SessionUser currentMember(HttpSession session) {

@@ -18,6 +18,7 @@ public class QuanLyHangTVForm extends javax.swing.JDialog {
         loadDataToTable();
         pack();
         setLocationRelativeTo(parent);
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void loadDataToTable() {

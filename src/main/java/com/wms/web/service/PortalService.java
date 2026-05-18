@@ -1,6 +1,9 @@
 package com.wms.web.service;
 
 import com.wms.web.form.BookingForm;
+import com.wms.web.form.AccountProfileForm;
+import com.wms.web.model.AccountProfileView;
+import com.wms.web.model.BookingHistoryView;
 import com.wms.web.model.BookingView;
 import com.wms.web.model.BranchView;
 import com.wms.web.model.SessionUser;
@@ -29,6 +32,45 @@ public class PortalService {
 
     public List<BranchView> getBranches() {
         return repository.findActiveBranches();
+    }
+
+    public AccountProfileView getAccountProfile(SessionUser user) {
+        if (user == null) {
+            return null;
+        }
+        return repository.findAccountProfile(user.getMaND());
+    }
+
+    public boolean hasCompleteContactInfo(SessionUser user) {
+        AccountProfileView profile = getAccountProfile(user);
+        return profile != null && profile.hasCompleteContactInfo();
+    }
+
+    public String getMemberRankName(SessionUser user) {
+        AccountProfileView profile = getAccountProfile(user);
+        if (profile == null || profile.getHangThanhVien() == null || profile.getHangThanhVien().isBlank()) {
+            return "Không có";
+        }
+        return profile.getHangThanhVien();
+    }
+
+    @Transactional
+    public AccountProfileView updateAccountProfile(SessionUser user, AccountProfileForm form) {
+        if (user == null) {
+            throw new IllegalArgumentException("Phiên đăng nhập đã hết hạn.");
+        }
+        if (form.getHoTen() == null || form.getHoTen().isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập họ và tên.");
+        }
+        repository.updateAccountProfile(
+                user.getMaND(),
+                form.getHoTen().trim(),
+                form.getEmail(),
+                form.getSoDienThoai(),
+                form.getNgaySinh(),
+                form.getGioiTinh()
+        );
+        return repository.findAccountProfile(user.getMaND());
     }
 
     public List<SpaceView> getSpaces(String branchId) {
@@ -84,6 +126,11 @@ public class PortalService {
     public List<BookingView> getMemberBookings(String maKH) {
         repository.createMissingSessionsForBookings();
         return repository.findBookingsForMember(maKH);
+    }
+
+    public List<BookingHistoryView> getMemberBookingHistory(String maKH) {
+        repository.createMissingSessionsForBookings();
+        return repository.findBookingHistoryForMember(maKH);
     }
 
     public List<BookingView> getAllBookings() {

@@ -30,6 +30,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
         pack();
         setLocationRelativeTo(parent);
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private boolean isFormatting = false;

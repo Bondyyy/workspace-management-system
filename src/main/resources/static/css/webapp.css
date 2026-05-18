@@ -664,11 +664,15 @@ hr {
 .floor-shell {
     --unit: 85px;
     --cell-gap: 5px;
+    --map-cols: 12;
+    --map-rows: 8;
     position: relative;
-    width: 100%;
-    height: 480px;
-    min-width: calc(var(--unit) * 12 + 2px);
-    min-height: calc(var(--unit) * 8 + 2px);
+    width: calc(var(--map-cols) * var(--unit) + 2px);
+    max-width: 100%;
+    height: calc(var(--map-rows) * var(--unit) + 2px);
+    min-width: 0;
+    min-height: 0;
+    margin: 0 auto;
     overflow: auto;
     padding: 0;
     border: 1px solid #ffd6e4;
@@ -683,8 +687,8 @@ hr {
     position: absolute;
     left: 0;
     top: 0;
-    width: calc(var(--unit) * 12);
-    height: calc(var(--unit) * 8);
+    width: calc(var(--map-cols) * var(--unit));
+    height: calc(var(--map-rows) * var(--unit));
     pointer-events: none;
 }
 
@@ -753,6 +757,7 @@ hr {
     top: calc(var(--y, 1) * var(--unit) + var(--cell-gap));
     width: calc(var(--w, 1) * var(--unit) - var(--cell-gap) * 2);
     height: calc(var(--h, 1) * var(--unit) - var(--cell-gap) * 2);
+    min-height: 0;
 }
 
 .space-node.node-blue {
@@ -817,8 +822,10 @@ hr {
 .map-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 18px;
-    margin-top: 16px;
+    justify-content: center;
+    gap: 10px 14px;
+    margin-top: 10px;
+    font-size: 0.86rem;
 }
 
 .map-legend span {
@@ -828,8 +835,8 @@ hr {
 }
 
 .map-legend i {
-    width: 28px;
-    height: 22px;
+    width: 20px;
+    height: 18px;
     display: inline-block;
     border: 1px solid #aeb5bd;
     border-radius: 4px;
@@ -917,22 +924,68 @@ hr {
     margin: 18px 0;
 }
 
-.qr-box {
-    width: 176px;
-    height: 162px;
+.qr-payment {
     display: grid;
-    place-items: center;
-    align-content: center;
-    gap: 10px;
-    margin: 18px auto;
-    border: 1px solid #ffc3d8;
-    color: var(--ink);
+    gap: 14px;
+    margin: 18px 0 22px;
 }
 
-.qr-box span {
-    color: var(--primary);
-    font-size: 2rem;
+.qr-payment p {
+    margin: 0;
+    color: #8b7e87;
+    font-size: 0.9rem;
+    font-style: italic;
+    text-align: center;
+}
+
+.qr-box {
+    width: min(100%, 250px);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #d8d8d8;
+    background: #fff;
+}
+
+.qr-box img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.bank-info {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 16px 18px;
+    background: #e5f4ff;
+}
+
+.bank-info div {
+    display: grid;
+    grid-template-columns: minmax(105px, 1fr) minmax(0, 1.35fr);
+    gap: 12px;
+    align-items: baseline;
+    min-height: 34px;
+}
+
+.bank-info dt,
+.bank-info dd {
+    margin: 0;
+}
+
+.bank-info dt {
+    color: #7f8790;
+}
+
+.bank-info dd {
+    color: #111629;
     font-weight: 900;
+    text-align: right;
+    overflow-wrap: anywhere;
 }
 
 .rank-banner {
@@ -1061,7 +1114,7 @@ hr {
 }
 
 .member-topbar {
-    height: 78px;
+    height: 64px;
     padding: 0 40px;
 }
 
@@ -1072,7 +1125,7 @@ hr {
 .member-content {
     max-width: 1360px;
     margin: 0 auto;
-    padding: 30px 40px 48px;
+    padding: 18px 28px 28px;
 }
 
 .section-title {
@@ -1142,6 +1195,73 @@ hr {
     font-size: 1.08rem;
 }
 
+.map-panel,
+.booking-side {
+    padding: 14px;
+}
+
+.map-panel {
+    min-height: calc(100vh - 210px);
+    display: flex;
+    flex-direction: column;
+}
+
+.map-panel .panel-head {
+    margin-bottom: 10px;
+}
+
+.map-title h2 {
+    font-size: 1.35rem;
+}
+
+.booking-side {
+    font-size: 0.86rem;
+}
+
+.booking-side h3 {
+    margin-bottom: 10px;
+    font-size: 0.96rem;
+}
+
+.booking-side .form-grid {
+    gap: 8px;
+}
+
+.booking-side label {
+    gap: 5px;
+    font-size: 0.82rem;
+}
+
+.booking-side input,
+.booking-side select {
+    min-height: 36px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 0.86rem;
+}
+
+.booking-side textarea {
+    min-height: 48px;
+    max-height: 56px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 0.84rem;
+}
+
+.booking-side .estimate-box {
+    padding: 4px 0;
+}
+
+.booking-side .estimate-box strong {
+    font-size: 1.2rem;
+}
+
+.booking-side .button-primary,
+.booking-side .button-secondary {
+    min-height: 38px;
+    font-size: 0.86rem;
+}
+
 .booking-table {
     overflow: hidden;
     border-radius: var(--radius);
@@ -1200,23 +1320,44 @@ hr {
 
 .map-title,
 .checkout-title {
-    min-height: 72px;
+    min-height: 58px;
 }
 
 .map-layout {
-    grid-template-columns: minmax(560px, 1fr) 360px;
-    gap: 18px;
+    grid-template-columns: minmax(420px, 1fr) 300px;
+    gap: 12px;
+    align-items: stretch;
 }
 
 .floor-shell {
-    min-height: 400px;
+    --unit: 108px;
+    --cell-gap: 6px;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: calc(var(--map-rows) * var(--unit) + 2px);
     padding: 0;
     border-radius: var(--radius);
 }
 
+.floor-shell .space-node {
+    padding: 8px;
+}
+
+.floor-shell .space-node strong {
+    font-size: 0.9rem;
+}
+
+.floor-shell .space-node small {
+    font-size: 0.76rem;
+}
+
+.floor-shell .space-node em {
+    font-size: 0.7rem;
+}
+
 .booking-side {
     position: sticky;
-    top: 96px;
+    top: 76px;
 }
 
 .checkout-grid {
@@ -1242,9 +1383,599 @@ hr {
 }
 
 .qr-box {
-    width: 150px;
-    height: 150px;
+    width: min(100%, 230px);
+}
+
+.checkout-page {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.checkout-page .member-main {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 54px 48px minmax(0, 1fr);
+}
+
+.checkout-page .member-topbar {
+    height: 54px;
+}
+
+.checkout-page .checkout-title {
+    min-height: 48px;
+}
+
+.checkout-page .checkout-title h2 {
+    font-size: 1.5rem;
+}
+
+.checkout-page .member-content {
+    width: 100%;
+    max-width: 1360px;
+    min-height: 0;
+    padding: 12px 24px 14px;
+}
+
+.checkout-page .checkout-grid {
+    grid-template-columns: minmax(500px, 1fr) 390px;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.checkout-page .checkout-panel,
+.checkout-page .payment-panel {
+    min-height: 0;
+    padding: 18px 20px;
+}
+
+.checkout-page .checkout-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.checkout-page .checkout-panel h3,
+.checkout-page .payment-panel h3 {
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.checkout-page .readonly-grid {
+    gap: 10px 14px;
+    align-content: start;
+}
+
+.checkout-page label {
+    gap: 5px;
+    font-size: 0.92rem;
+}
+
+.checkout-page input,
+.checkout-page textarea {
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 0.92rem;
+}
+
+.checkout-page textarea {
+    height: 54px;
+    resize: none;
+}
+
+.checkout-page .button-secondary,
+.checkout-page .button-primary,
+.checkout-page .button-dark {
+    min-height: 38px;
+    font-size: 0.92rem;
+}
+
+.checkout-page .payment-panel {
+    display: grid;
+    grid-template-rows: auto auto auto auto auto auto;
+    align-content: start;
+}
+
+.checkout-page .payment-line {
+    padding: 8px 0;
+}
+
+.checkout-page .voucher-row {
+    grid-template-columns: 1fr 108px;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.checkout-page .payment-total {
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 16px;
+}
+
+.checkout-page .payment-total strong {
+    font-size: 1.55rem;
+}
+
+.checkout-page .qr-payment {
+    gap: 8px;
+    margin: 10px 0 12px;
+}
+
+.checkout-page .qr-box {
+    width: min(100%, 154px);
+}
+
+.checkout-page .qr-payment p {
+    max-width: 300px;
+    margin: 0 auto;
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+.checkout-page .bank-info {
+    gap: 2px 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px 12px;
+}
+
+.checkout-page .bank-info div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+    min-height: 0;
+}
+
+.checkout-page .bank-info dt {
+    font-size: 0.75rem;
+}
+
+.checkout-page .bank-info dd {
+    font-size: 0.82rem;
+    text-align: left;
+}
+
+.portal-page {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.portal-page .member-main {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 56px minmax(0, 1fr);
+}
+
+.portal-page .member-topbar {
+    height: 56px;
+}
+
+.portal-page .member-content {
+    width: 100%;
+    max-width: 1360px;
+    min-height: 0;
+    padding: 12px 24px 16px;
+}
+
+.portal-page .section-title {
+    margin-bottom: 12px;
+}
+
+.portal-page .section-title p {
+    margin-bottom: 2px;
+    font-size: 0.9rem;
+}
+
+.portal-page .section-title h2 {
+    font-size: 1.35rem;
+}
+
+.portal-page .metric-row {
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.portal-page .metric-card {
+    min-height: 98px;
+    gap: 6px;
+    padding: 16px 20px;
+}
+
+.portal-page .metric-card span {
+    font-size: 0.86rem;
+}
+
+.portal-page .metric-card strong {
+    font-size: 1.95rem;
+}
+
+.portal-page .metric-card small {
+    font-size: 0.82rem;
+}
+
+.portal-page .home-layout {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.portal-page .member-panel,
+.portal-page .featured-panel {
+    min-height: 0;
+    padding: 18px 20px;
+}
+
+.portal-page .panel-head {
+    margin-bottom: 12px;
+}
+
+.portal-page .panel-head h3,
+.portal-page .featured-panel h3 {
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+.portal-page .booking-table th,
+.portal-page .booking-table td {
+    padding: 10px 12px;
+}
+
+.portal-page .status-chip {
+    min-height: 30px;
+    padding: 0 11px;
+    font-size: 0.86rem;
+}
+
+.portal-page .featured-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 12px;
+}
+
+.portal-page .featured-room {
+    min-height: 0;
+    align-content: center;
+    gap: 8px;
+    margin-bottom: 0;
+    padding: 18px;
+}
+
+.portal-page .featured-room h4 {
+    font-size: 1.25rem;
+}
+
+.portal-page .featured-room p {
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.portal-page .featured-room strong {
+    font-size: 0.95rem;
+}
+
+.portal-page .featured-panel .button-primary {
+    min-height: 40px;
+}
+
+.account-page .member-content {
+    max-width: 1360px;
+    padding: 18px 28px 28px;
+}
+
+.account-page .section-title {
+    margin-bottom: 18px;
+}
+
+.account-page .section-title p {
+    margin-bottom: 4px;
+}
+
+.account-page .section-title h2 {
+    font-size: 1.55rem;
+}
+
+.account-page .account-grid {
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.account-page .profile-card,
+.account-page .account-panel {
+    padding: 20px 24px;
+}
+
+.account-page .avatar-box {
+    width: 190px;
+}
+
+.account-page .profile-card {
+    gap: 12px;
+}
+
+.account-page .profile-card h3 {
+    margin-top: 8px;
+    font-size: 1.25rem;
+}
+
+.account-page .profile-card p {
+    margin: 6px 0;
+}
+
+.account-page .account-panel h3 {
+    margin-bottom: 14px;
+    font-size: 1.05rem;
+}
+
+.account-page .account-form {
+    gap: 12px 18px;
+}
+
+.account-page .account-form label,
+.account-page .password-row label {
+    gap: 6px;
+    font-size: 0.92rem;
+}
+
+.account-page .account-form input,
+.account-page .account-form select,
+.account-page .password-row input {
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    font-size: 0.95rem;
+}
+
+.account-page .account-form .button-primary {
+    grid-column: 1 / span 2;
+    width: min(100%, 480px);
+    min-height: 42px;
+}
+
+.account-page .account-panel hr {
+    margin: 22px 0;
+}
+
+.account-page .password-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 18px;
+}
+
+.account-page .password-row .button-dark {
+    width: min(100%, 240px);
+    min-height: 42px;
+}
+
+.history-page .member-content {
+    max-width: 1360px;
+    padding: 18px 28px 32px;
+}
+
+.history-content .section-title {
+    margin-bottom: 18px;
+}
+
+.history-list {
+    display: grid;
+    gap: 16px;
+}
+
+.history-card {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid #f1d9e4;
+    border-radius: var(--radius);
+    background: #fff;
+    box-shadow: 0 16px 40px rgba(63, 34, 49, 0.06);
+}
+
+.history-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: start;
+}
+
+.history-code {
+    color: var(--primary);
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.history-main h3 {
+    margin: 6px 0;
+    font-size: 1.35rem;
+}
+
+.history-main p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.history-money {
+    min-width: 190px;
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    text-align: right;
+}
+
+.history-money span,
+.history-money small {
+    color: var(--muted);
+}
+
+.history-money strong {
+    color: var(--primary);
+    font-size: 1.45rem;
+}
+
+.history-meta {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.history-meta span {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid #f1d9e4;
+    border-radius: 7px;
     background: #fff8fb;
+}
+
+.history-meta strong {
+    color: #827381;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.history-meta em {
+    color: var(--ink);
+    font-style: normal;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.service-details {
+    border-top: 1px solid #f1d9e4;
+    padding-top: 14px;
+}
+
+.service-details summary {
+    cursor: pointer;
+    color: var(--primary-strong);
+    font-weight: 900;
+}
+
+.service-list {
+    display: grid;
+    gap: 0;
+    margin-top: 12px;
+    overflow: hidden;
+    border: 1px solid #ead9e2;
+    border-radius: var(--radius);
+}
+
+.service-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 110px 150px 150px;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid #ead9e2;
+}
+
+.service-row:last-child {
+    border-bottom: 0;
+}
+
+.service-head {
+    color: #6f6270;
+    background: #f7f9fb;
+    font-weight: 900;
+}
+
+.service-row strong,
+.service-row small {
+    display: block;
+}
+
+.service-row small {
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+.empty-state.compact {
+    padding: 14px;
+}
+
+.empty-history {
+    display: grid;
+    gap: 12px;
+    justify-items: start;
+}
+
+.empty-history h3,
+.empty-history p {
+    margin: 0;
+}
+
+@media (max-width: 980px) {
+    .history-main {
+        flex-direction: column;
+    }
+
+    .history-money {
+        justify-items: start;
+        text-align: left;
+    }
+
+    .history-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .service-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-height: 760px) and (min-width: 1121px) {
+    .checkout-page .member-main {
+        grid-template-rows: 46px 42px minmax(0, 1fr);
+    }
+
+    .checkout-page .member-topbar,
+    .checkout-page .checkout-title {
+        min-height: 0;
+        height: auto;
+    }
+
+    .checkout-page .member-content {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .checkout-page .checkout-panel,
+    .checkout-page .payment-panel {
+        padding: 14px 18px;
+    }
+
+    .checkout-page .qr-box {
+        width: min(100%, 132px);
+    }
+
+    .checkout-page .bank-info {
+        padding: 8px 10px;
+    }
+}
+
+@media (max-width: 1120px) {
+    .portal-page {
+        height: auto;
+        overflow: auto;
+    }
+
+    .portal-page .member-main {
+        display: block;
+    }
+
+    .portal-page .home-layout,
+    .portal-page .metric-row {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-page {
+        height: auto;
+        overflow: auto;
+    }
+
+    .checkout-page .member-main {
+        display: block;
+    }
+
+    .checkout-page .checkout-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .rank-banner {
@@ -1765,5 +2496,17 @@ hr {
 
     .team-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .account-page .account-grid,
+    .account-page .password-row {
+        grid-template-columns: 1fr;
+    }
+
+    .account-page .account-form .button-primary {
+        grid-column: auto;
+        width: 100%;
     }
 }

@@ -61,4 +61,8 @@ public class NguoiDungService {
     public String generateNextMaND() throws SQLException {
         return nguoiDungDAO.generateNextMaND();
     }
+
+    public List<com.wms.model.TrangChuQuanLy.QuanLyVaiTro.VaiTroDTO> layTatCaVaiTro() {
+        return new com.wms.dao.TrangChuQuanLy.QuanLyVaiTro.VaiTroDAO().layTatCaVaiTro();
+    }
 }

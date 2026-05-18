@@ -20,9 +20,13 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
 
     public QuanLyVaiTroForm() {
         initComponents();
+        txtMaVT.setEditable(false);
+        txtMaVT.setBackground(new java.awt.Color(240, 240, 240));
+        txtMaVT.setText(controller.sinhMaVT());
         loadCbxChucNang();
         loadDanhSachVaiTro();
         initEvents();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void initEvents() {
@@ -71,6 +75,7 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
 
     private void lamMoiPanel() {
         maVaiTroDangChon = null;
+        txtMaVT.setText(controller.sinhMaVT());
         txtTenNhom.setText("");
         txtMoTa.setText("");
         ((DefaultTableModel) tblChucNangDaChon.getModel()).setRowCount(0);
@@ -92,6 +97,7 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
             return;
         VaiTroDTO vt = danhSachVaiTro.get(row);
         maVaiTroDangChon = vt.getMaVaiTro();
+        txtMaVT.setText(maVaiTroDangChon);
         txtTenNhom.setText(vt.getTenVaiTro());
         txtMoTa.setText(vt.getMoTa() != null ? vt.getMoTa() : "");
         loadChucNangCuaVaiTro(maVaiTroDangChon);
@@ -126,6 +132,7 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
             return;
         }
         VaiTroDTO vt = new VaiTroDTO();
+        vt.setMaVaiTro(txtMaVT.getText().trim());
         vt.setTenVaiTro(ten);
         vt.setMoTa(txtMoTa.getText().trim());
         if (controller.themVaiTro(vt, layDanhSachMaCNTuBang())) {
@@ -202,6 +209,8 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         btnCapNhat = new javax.swing.JButton();
         btnXoaNhom = new javax.swing.JButton();
         btnLamMoi = new javax.swing.JButton();
+        txtMaVT = new javax.swing.JTextField();
+        lblTenNhom1 = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(1050, 640));
         setLayout(new java.awt.BorderLayout());
@@ -272,11 +281,12 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         lblTenNhom.setForeground(new java.awt.Color(35, 30, 48));
         lblTenNhom.setText("Tên vai trò (*)");
         pnRight.add(lblTenNhom);
-        lblTenNhom.setBounds(20, 55, 360, 20);
+        lblTenNhom.setBounds(120, 60, 260, 20);
 
         txtTenNhom.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtTenNhom.addActionListener(this::txtTenNhomActionPerformed);
         pnRight.add(txtTenNhom);
-        txtTenNhom.setBounds(20, 75, 360, 35);
+        txtTenNhom.setBounds(120, 80, 260, 35);
 
         lblMoTa.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMoTa.setForeground(new java.awt.Color(35, 30, 48));
@@ -367,11 +377,25 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         pnRight.add(btnLamMoi);
         btnLamMoi.setBounds(205, 485, 175, 35);
 
+        txtMaVT.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtMaVT);
+        txtMaVT.setBounds(20, 80, 90, 35);
+
+        lblTenNhom1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblTenNhom1.setForeground(new java.awt.Color(35, 30, 48));
+        lblTenNhom1.setText("Mã Vai trò");
+        pnRight.add(lblTenNhom1);
+        lblTenNhom1.setBounds(20, 60, 90, 20);
+
         pnMain.add(pnRight);
         pnRight.setBounds(10, 70, 400, 540);
 
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtTenNhomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTenNhomActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtTenNhomActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -388,6 +412,7 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblListTitle;
     private javax.swing.JLabel lblMoTa;
     private javax.swing.JLabel lblTenNhom;
+    private javax.swing.JLabel lblTenNhom1;
     private javax.swing.JPanel pnHeader;
     private javax.swing.JPanel pnLeft;
     private javax.swing.JPanel pnLine;
@@ -397,8 +422,8 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
     private javax.swing.JScrollPane scrollNhomQuyen;
     private javax.swing.JTable tblChucNangDaChon;
     private javax.swing.JTable tblNhomQuyen;
+    private javax.swing.JTextField txtMaVT;
     private javax.swing.JTextField txtMoTa;
     private javax.swing.JTextField txtTenNhom;
     // End of variables declaration//GEN-END:variables
 }
-

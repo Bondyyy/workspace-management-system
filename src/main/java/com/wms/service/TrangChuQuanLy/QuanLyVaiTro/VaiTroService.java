@@ -13,6 +13,10 @@ public class VaiTroService {
         return vaiTroDAO.layTatCaVaiTro();
     }
 
+    public String sinhMaVT() {
+        return vaiTroDAO.sinhMaVT();
+    }
+
     public List<ChucNangDTO> layTatCaChucNang() {
         return vaiTroDAO.layTatCaChucNang();
     }

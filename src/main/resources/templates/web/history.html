@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử đặt chỗ - Spring MNGT</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+</head>
+<body class="member-page history-page">
+<aside class="member-sidebar">
+    <a class="member-brand" th:href="@{/portal}">
+        <strong>SPRING MNGT</strong>
+        <span>MEMBER PORTAL</span>
+    </a>
+    <nav class="member-nav">
+        <a th:href="@{/portal}">Trang chủ</a>
+        <a th:href="@{/portal/branches}">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}" class="active">Lịch sử đặt chỗ</a>
+        <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
+        <a th:href="@{/portal/account}">Thông tin tài khoản</a>
+    </nav>
+    <form th:action="@{/logout}" method="post" class="member-logout">
+        <button type="submit">← Đăng xuất</button>
+    </form>
+</aside>
+
+<main class="member-main">
+    <header class="member-topbar">
+        <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+    </header>
+
+    <section class="member-content history-content">
+        <div class="section-title">
+            <p>Lịch sử đặt chỗ</p>
+            <h2>Các phiên và dịch vụ đã sử dụng</h2>
+        </div>
+
+        <div class="history-list" th:if="${!#lists.isEmpty(histories)}">
+            <article class="history-card" th:each="item : ${histories}">
+                <div class="history-main">
+                    <div>
+                        <span class="history-code" th:text="${item.maPhien}">PH0001</span>
+                        <h3 th:text="${item.tenKhongGian}">Không gian</h3>
+                        <p th:text="${item.tenChiNhanh}">Chi nhánh</p>
+                    </div>
+                    <div class="history-money">
+                        <span>Tổng cộng</span>
+                        <strong th:text="${item.thanhTien != null ? #numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</strong>
+                        <small th:text="${item.trangThaiThanhToan}">Trạng thái</small>
+                    </div>
+                </div>
+
+                <div class="history-meta">
+                    <span>
+                        <strong>Mã đặt chỗ</strong>
+                        <em th:text="${item.maDatCho != null ? item.maDatCho : 'Chưa có'}">DC000001</em>
+                    </span>
+                    <span>
+                        <strong>Mã hóa đơn</strong>
+                        <em th:text="${item.maHoaDon != null ? item.maHoaDon : 'Chưa có'}">HD000001</em>
+                    </span>
+                    <span>
+                        <strong>Bắt đầu</strong>
+                        <em th:text="${item.thoiGianBatDau != null ? #temporals.format(item.thoiGianBatDau, 'dd/MM/yyyy HH:mm') : 'Chưa có'}">--</em>
+                    </span>
+                    <span>
+                        <strong>Kết thúc</strong>
+                        <em th:text="${item.thoiGianKetThuc != null ? #temporals.format(item.thoiGianKetThuc, 'dd/MM/yyyy HH:mm') : (item.thoiGianDuKienKetThuc != null ? #temporals.format(item.thoiGianDuKienKetThuc, 'dd/MM/yyyy HH:mm') : 'Chưa có')}">--</em>
+                    </span>
+                    <span>
+                        <strong>Trạng thái phiên</strong>
+                        <em th:text="${item.trangThaiPhien}">--</em>
+                    </span>
+                </div>
+
+                <details class="service-details">
+                    <summary>Chi tiết dịch vụ đã đặt</summary>
+                    <div class="service-list" th:if="${!#lists.isEmpty(item.dichVuDaDung)}">
+                        <div class="service-row service-head">
+                            <span>Dịch vụ</span>
+                            <span>Số lượng</span>
+                            <span>Đơn giá</span>
+                            <span>Thành tiền</span>
+                        </div>
+                        <div class="service-row" th:each="service : ${item.dichVuDaDung}">
+                            <span>
+                                <strong th:text="${service.tenDV}">Dịch vụ</strong>
+                                <small th:text="${service.tenLoaiDV != null ? service.tenLoaiDV : 'Dịch vụ'}">Loại</small>
+                            </span>
+                            <span th:text="${service.soLuong != null ? service.soLuong : 0}">0</span>
+                            <span th:text="${service.donGia != null ? #numbers.formatDecimal(service.donGia, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
+                            <span th:text="${service.thanhTien != null ? #numbers.formatDecimal(service.thanhTien, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
+                        </div>
+                    </div>
+                    <p class="empty-state compact" th:if="${#lists.isEmpty(item.dichVuDaDung)}">Phiên này chưa phát sinh dịch vụ đi kèm.</p>
+                </details>
+            </article>
+        </div>
+
+        <div class="member-panel empty-history" th:if="${#lists.isEmpty(histories)}">
+            <h3>Chưa có lịch sử đặt chỗ</h3>
+            <p>Bạn chưa có phiên đặt chỗ nào trong hệ thống.</p>
+            <a th:href="@{/portal/branches}" class="button-primary">Đặt chỗ không gian</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

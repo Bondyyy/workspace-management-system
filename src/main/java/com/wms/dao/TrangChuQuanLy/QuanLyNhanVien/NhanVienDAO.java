@@ -26,7 +26,7 @@ public class NhanVienDAO {
                 "SELECT nv.MaNV, nd.HoTen, nd.SDT, nv.LoaiNV, nv.CaLamViec, " +
                         "       cn.TenCN, vt.TenVaiTro, nv.TrangThaiLamViec, " +
                         "       nd.GioiTinh, nd.Email, nv.LuongCoBan, " +
-                        "       nv.MaCN, cvt.MaVaiTro, nv.MaND, nd.AnhDaiDien, nd.NgaySinh " +
+                        "       nv.MaCN, cvt.MaVaiTro, nv.MaND, nd.AnhDaiDien, nd.NgaySinh, nd.TenTaiKhoan " +
                         "FROM NHANVIEN nv " +
                         "JOIN NGUOIDUNG nd ON nv.MaND = nd.MaND " +
                         "LEFT JOIN CHINHANH cn ON nv.MaCN = cn.MaCN " +
@@ -61,7 +61,7 @@ public class NhanVienDAO {
                             rs.getString("TenVaiTro"), rs.getString("TrangThaiLamViec"),
                             rs.getString("GioiTinh"), rs.getString("Email"), rs.getDouble("LuongCoBan"),
                             rs.getString("MaCN"), rs.getString("MaVaiTro"), rs.getString("MaND"),
-                            rs.getBytes("AnhDaiDien"), rs.getDate("NgaySinh")
+                            rs.getBytes("AnhDaiDien"), rs.getDate("NgaySinh"), rs.getString("TenTaiKhoan")
                     });
                 }
             }
@@ -82,6 +82,11 @@ public class NhanVienDAO {
                 throw new SQLException("Email đã tồn tại trên hệ thống!");
             if (ndDAO.kiemTraSdtTonTai(nd.getSdt()))
                 throw new SQLException("Số điện thoại đã tồn tại trên hệ thống!");
+            if (nd.getTenTaiKhoan() != null && !nd.getTenTaiKhoan().trim().isEmpty()) {
+                if (ndDAO.kiemTraTaiKhoanTonTai(nd.getTenTaiKhoan())) {
+                    throw new SQLException("Tên tài khoản đã tồn tại trên hệ thống!");
+                }
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -107,11 +112,15 @@ public class NhanVienDAO {
             String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau)
                     : PasswordUtil.hash("123456");
 
+            String username = (nd.getTenTaiKhoan() != null && !nd.getTenTaiKhoan().trim().isEmpty()) 
+                    ? nd.getTenTaiKhoan().trim() 
+                    : nd.getSdt();
+
             String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email, GioiTinh, AnhDaiDien, NgaySinh, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
             try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
                 ps.setString(1, maND);
                 ps.setString(2, hoTen);
-                ps.setString(3, nd.getSdt());
+                ps.setString(3, username);
                 ps.setString(4, hashedPw);
                 ps.setString(5, nd.getSdt());
                 ps.setString(6, nd.getEmail());
@@ -192,24 +201,39 @@ public class NhanVienDAO {
                 }
             }
 
+            // Kiểm tra trùng TenTaiKhoan (loại trừ chính nhân viên này)
+            if (nd.getTenTaiKhoan() != null && !nd.getTenTaiKhoan().trim().isEmpty()) {
+                String sqlCheckUser = "SELECT MaND, HoTen FROM NGUOIDUNG WHERE LOWER(TRIM(TenTaiKhoan)) = LOWER(TRIM(?)) AND LOWER(TRIM(MaND)) != LOWER(TRIM(?))";
+                try (PreparedStatement ps = conn.prepareStatement(sqlCheckUser)) {
+                    ps.setString(1, nd.getTenTaiKhoan().trim());
+                    ps.setString(2, nv.getMaND());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            throw new SQLException("Tên tài khoản '" + nd.getTenTaiKhoan() + "' đã được sử dụng bởi người dùng khác!");
+                        }
+                    }
+                }
+            }
+
             autoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
             boolean hasNewPw = (matKhau != null && !matKhau.isEmpty());
-            String sqlND = "UPDATE NGUOIDUNG SET HoTen = ?, SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, NgaySinh = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP"
+            String sqlND = "UPDATE NGUOIDUNG SET HoTen = ?, TenTaiKhoan = ?, SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, NgaySinh = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP"
                     + (hasNewPw ? ", MatKhauMaHoa = ?" : "") + " WHERE MaND = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
                 ps.setString(1, hoTen);
-                ps.setString(2, nd.getSdt());
-                ps.setString(3, nd.getEmail());
-                ps.setString(4, nd.getGioiTinh());
-                ps.setBytes(5, nd.getAnhDaiDien());
-                ps.setDate(6, nd.getNgaySinh());
+                ps.setString(2, nd.getTenTaiKhoan());
+                ps.setString(3, nd.getSdt());
+                ps.setString(4, nd.getEmail());
+                ps.setString(5, nd.getGioiTinh());
+                ps.setBytes(6, nd.getAnhDaiDien());
+                ps.setDate(7, nd.getNgaySinh());
                 if (hasNewPw) {
-                    ps.setString(7, PasswordUtil.hash(matKhau));
-                    ps.setString(8, nv.getMaND());
+                    ps.setString(8, PasswordUtil.hash(matKhau));
+                    ps.setString(9, nv.getMaND());
                 } else {
-                    ps.setString(7, nv.getMaND());
+                    ps.setString(8, nv.getMaND());
                 }
                 ps.executeUpdate();
             }

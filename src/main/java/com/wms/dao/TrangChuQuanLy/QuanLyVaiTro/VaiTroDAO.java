@@ -263,6 +263,17 @@ public class VaiTroDAO {
         return "VT01";
     }
 
+    public String sinhMaVT() {
+        Connection conn = getConn();
+        if (conn == null) return "VT01";
+        try {
+            return taoMaVaiTroMoi(conn);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "VT01";
+    }
+
     public boolean capNhatChucNangCuaVaiTro(String maVaiTro, List<String> dsMaCN) {
         try {
             capNhatChucNangInternal(getConn(), maVaiTro, dsMaCN);

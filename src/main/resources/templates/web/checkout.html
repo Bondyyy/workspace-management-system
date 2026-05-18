@@ -6,7 +6,7 @@
     <title>Xác nhận đặt chỗ - Spring MNGT</title>
     <link rel="stylesheet" href="/css/webapp.css">
 </head>
-<body class="member-page">
+<body class="member-page checkout-page">
 <aside class="member-sidebar">
     <a class="member-brand" th:href="@{/portal}">
         <strong>SPRING MNGT</strong>
@@ -15,6 +15,7 @@
     <nav class="member-nav">
         <a th:href="@{/portal}">Trang chủ</a>
         <a th:href="@{/portal/branches}" class="active">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}">Thông tin tài khoản</a>
     </nav>
@@ -26,7 +27,7 @@
 <main class="member-main">
     <header class="member-topbar">
         <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong>Hạng: VIP Kim Cương</strong>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
     </header>
 
     <section class="checkout-title">
@@ -67,7 +68,7 @@
                 </label>
                 <label class="span-2">
                     Ghi chú bổ sung
-                    <textarea rows="4" readonly th:text="${note}"></textarea>
+                    <textarea rows="2" readonly th:text="${note}"></textarea>
                 </label>
             </div>
             <a th:href="@{'/portal/branches'}" class="button-secondary full-width">‹‹ Quay lại tùy chỉnh sơ đồ</a>
@@ -101,9 +102,29 @@
                 <span>Thành tiền</span>
                 <strong th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
             </div>
-            <div class="qr-box">
-                <span>QR</span>
-                <small>SPRING MNGT</small>
+            <div class="qr-payment">
+                <div class="qr-box">
+                    <img src="/images/QR_ThanhToan.jpg" alt="Mã QR thanh toán SPRING MNGT">
+                </div>
+                <p>Mở ứng dụng ngân hàng và quét mã để tiến hành thanh toán</p>
+                <dl class="bank-info">
+                    <div>
+                        <dt>Ngân hàng:</dt>
+                        <dd>Vietcombank</dd>
+                    </div>
+                    <div>
+                        <dt>Số tài khoản:</dt>
+                        <dd>9375037830</dd>
+                    </div>
+                    <div>
+                        <dt>Chủ tài khoản:</dt>
+                        <dd>LAI MOC HUY</dd>
+                    </div>
+                    <div>
+                        <dt>Nội dung CK:</dt>
+                        <dd>UIT CW HD-PH0009</dd>
+                    </div>
+                </dl>
             </div>
             <form th:action="@{/portal/bookings}" method="post">
                 <input type="hidden" name="maKG" th:value="${space.maKG}">

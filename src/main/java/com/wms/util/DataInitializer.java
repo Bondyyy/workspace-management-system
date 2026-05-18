@@ -14,13 +14,13 @@ public class DataInitializer {
     }
 
     public static void initializeAll(Connection conn) {
-        System.out.println("[DataInitializer] Bắt đầu khởi tạo dữ liệu mặc định...");
+        System.out.println("[DataInitializer] Bat dau khoi tao du lieu mac dinh...");
         khoiTaoChucNang(conn);
         khoiTaoHangThanhVien(conn);
         khoiTaoDichVuMacDinh(conn);
         khoiTaoVaiTroMacDinh(conn);
         khoiTaoPhanQuyenMacDinh(conn);
-        System.out.println("[DataInitializer] Hoàn tất khởi tạo dữ liệu.");
+        System.out.println("[DataInitializer] Hoan tat khoi tao du lieu.");
     }
 
     public static void khoiTaoDichVuMacDinh(Connection conn) {
@@ -56,9 +56,9 @@ public class DataInitializer {
                 ps.executeUpdate();
             }
 
-            System.out.println("[DataInitializer] Đồng bộ dữ liệu Dịch vụ mặc định thành công.");
+            System.out.println("[DataInitializer] Dong bo du lieu Dich vu mac dinh thanh cong.");
         } catch (SQLException e) {
-            System.err.println("[DataInitializer] Lỗi đồng bộ dữ liệu Dịch vụ: " + e.getMessage());
+            System.err.println("[DataInitializer] Loi dong bo du lieu Dich vu: " + e.getMessage());
         }
     }
 
@@ -105,9 +105,9 @@ public class DataInitializer {
                 st.executeUpdate(
                         "DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11','CN12','CN13','CN14')");
             }
-            System.out.println("[DataInitializer] Đồng bộ dữ liệu bảng CHUCNANG thành công.");
+            System.out.println("[DataInitializer] Dong bo du lieu bang CHUCNANG thanh cong.");
         } catch (SQLException e) {
-            System.err.println("[DataInitializer] Lỗi đồng bộ dữ liệu CHUCNANG: " + e.getMessage());
+            System.err.println("[DataInitializer] Loi dong bo du lieu CHUCNANG: " + e.getMessage());
         }
     }
 
@@ -140,9 +140,9 @@ public class DataInitializer {
                 }
                 ps.executeBatch();
             }
-            System.out.println("[DataInitializer] Đồng bộ dữ liệu bảng HANGTHANHVIEN thành công.");
+            System.out.println("[DataInitializer] Dong bo du lieu bang HANGTHANHVIEN thanh cong.");
         } catch (SQLException e) {
-            System.err.println("[DataInitializer] Lỗi đồng bộ dữ liệu HANGTHANHVIEN: " + e.getMessage());
+            System.err.println("[DataInitializer] Loi dong bo du lieu HANGTHANHVIEN: " + e.getMessage());
         }
     }
     
@@ -176,8 +176,21 @@ public class DataInitializer {
                     ps.executeUpdate();
                 }
             }
+            
+            // Khởi tạo CHITIETNHOMCHUCNANG tương ứng để kết nối vai trò và nhóm chức năng
+            String mergeCTNCNSql = "MERGE INTO CHITIETNHOMCHUCNANG dest USING (SELECT ? AS MaVaiTro, ? AS MaNhomChucNang, ? AS MoTa FROM DUAL) src " +
+                                   "ON (dest.MaVaiTro = src.MaVaiTro AND dest.MaNhomChucNang = src.MaNhomChucNang) " +
+                                   "WHEN NOT MATCHED THEN INSERT (MaVaiTro, MaNhomChucNang, MoTa) VALUES (src.MaVaiTro, src.MaNhomChucNang, src.MoTa)";
+            try (PreparedStatement ps = conn.prepareStatement(mergeCTNCNSql)) {
+                for (String[] row : data) {
+                    ps.setString(1, row[0]);
+                    ps.setString(2, row[0]);
+                    ps.setString(3, "Liên kết vai trò với nhóm chức năng mặc định");
+                    ps.executeUpdate();
+                }
+            }
         } catch (SQLException e) {
-            System.err.println("[DataInitializer] Lỗi khởi tạo vai trò: " + e.getMessage());
+            System.err.println("[DataInitializer] Loi khoi tao vai tro: " + e.getMessage());
         }
     }
 
@@ -194,15 +207,16 @@ public class DataInitializer {
             String[] staffRights = {"CN05", "CN06", "CN07", "CN08", "CN10"};
             ganQuyen(conn, "VT03", staffRights);
             
-            // 3. Quản lý (VT02): CN03, CN11 + staffRights
+            // 3. Quản lý (VT02): CN01, CN03, CN11 + staffRights
             List<String> managerRights = new java.util.ArrayList<>(java.util.Arrays.asList(staffRights));
+            managerRights.add("CN01");
             managerRights.add("CN03");
             managerRights.add("CN11");
             ganQuyen(conn, "VT02", managerRights.toArray(new String[0]));
             
-            System.out.println("[DataInitializer] Khởi tạo phân quyền mặc định thành công.");
+            System.out.println("[DataInitializer] Khoi tao phan quyen mac dinh thanh cong.");
         } catch (Exception e) {
-            System.err.println("[DataInitializer] Lỗi phân quyền mặc định: " + e.getMessage());
+            System.err.println("[DataInitializer] Loi phan quyen mac dinh: " + e.getMessage());
         }
     }
 

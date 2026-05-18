@@ -27,6 +27,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         setupDynamicBehavior();
         loadDataNhanVienVaLoaiDV();
         controller.loadData("");
+        com.wms.util.TienIchFormQuanLy.apDung(this);
 
         java.awt.event.ActionListener chonFileAction = e -> {
             javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();

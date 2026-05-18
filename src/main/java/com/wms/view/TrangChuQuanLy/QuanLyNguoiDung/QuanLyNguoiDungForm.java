@@ -22,6 +22,7 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         controller = new com.wms.controller.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungController(this);
         setupEvents();
         customInit();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void customInit() {
@@ -90,6 +91,8 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         btnDoiAnh = new javax.swing.JButton();
         txtMatKhau = new javax.swing.JTextField();
         lblNgaySinh1 = new javax.swing.JLabel();
+        cbxNhomQuyen = new javax.swing.JComboBox<>();
+        lblNhomQuyen = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -252,25 +255,35 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         pnRight.add(cbxTrangThai);
         cbxTrangThai.setBounds(20, 340, 170, 30);
 
+        lblNhomQuyen.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblNhomQuyen.setForeground(new java.awt.Color(35, 30, 48));
+        lblNhomQuyen.setText("Nhóm quyền / Vai trò");
+        pnRight.add(lblNhomQuyen);
+        lblNhomQuyen.setBounds(20, 380, 170, 20);
+
+        cbxNhomQuyen.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        pnRight.add(cbxNhomQuyen);
+        cbxNhomQuyen.setBounds(20, 400, 360, 30);
+
         btnThem.setBackground(new java.awt.Color(235, 94, 141));
         btnThem.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnThem.setForeground(new java.awt.Color(255, 255, 255));
         btnThem.setText("Thêm mới");
         pnRight.add(btnThem);
-        btnThem.setBounds(20, 380, 170, 40);
+        btnThem.setBounds(20, 440, 170, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
         pnRight.add(btnCapNhat);
-        btnCapNhat.setBounds(210, 380, 170, 40);
+        btnCapNhat.setBounds(210, 440, 170, 40);
 
         btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
         btnLamMoi.setText("Làm mới form");
         pnRight.add(btnLamMoi);
-        btnLamMoi.setBounds(20, 440, 360, 40);
+        btnLamMoi.setBounds(20, 490, 360, 40);
 
         lblAnhDaiDien.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblAnhDaiDien.setText("[Ảnh 3x4]");
@@ -352,6 +365,8 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtSDT;
     private javax.swing.JTextField txtTaiKhoan;
     private javax.swing.JTextField txtTimKiem;
+    private javax.swing.JComboBox<String> cbxNhomQuyen;
+    private javax.swing.JLabel lblNhomQuyen;
     // End of variables declaration//GEN-END:variables
 
     public javax.swing.JTable getTblNguoiDung() { return tblNguoiDung; }
@@ -365,4 +380,5 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
     public javax.swing.JComboBox<String> getCbxTrangThai() { return cbxTrangThai; }
     public javax.swing.JLabel getLblAnhDaiDien() { return lblAnhDaiDien; }
     public javax.swing.JTextField getTxtMatKhau() { return txtMatKhau; }
+    public javax.swing.JComboBox<String> getCbxNhomQuyen() { return cbxNhomQuyen; }
 }

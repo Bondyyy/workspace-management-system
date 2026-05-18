@@ -1,6 +1,8 @@
 package com.wms.web.repository;
 
 import com.wms.web.model.BookingView;
+import com.wms.web.model.AccountProfileView;
+import com.wms.web.model.BookingHistoryView;
 import com.wms.web.model.BranchView;
 import com.wms.web.model.MemberSessionView;
 import com.wms.web.model.ServiceOptionView;
@@ -13,9 +15,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +106,59 @@ public class WebPortalRepository {
     public void updateLastLogin(String maND) {
         jdbcTemplate.update(
                 "UPDATE NGUOIDUNG SET LanCuoiDangNhap = CURRENT_TIMESTAMP WHERE MaND = ?",
+                maND
+        );
+    }
+
+    public AccountProfileView findAccountProfile(String maND) {
+        if (maND == null || maND.isBlank()) {
+            return null;
+        }
+        String sql = """
+                SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.Email, n.SDT, n.NgaySinh, n.GioiTinh,
+                       NVL(htv.TenHangThanhVien, 'Không có') AS TenHangThanhVien
+                FROM NGUOIDUNG n
+                LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND
+                LEFT JOIN HANGTHANHVIEN htv ON htv.MaHangThanhVien = kh.MaHangThanhVien
+                WHERE n.MaND = ?
+                """;
+        try {
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                java.sql.Date birthDate = rs.getDate("NgaySinh");
+                return new AccountProfileView(
+                        rs.getString("MaND"),
+                        rs.getString("HoTen"),
+                        rs.getString("TenTaiKhoan"),
+                        rs.getString("Email"),
+                        rs.getString("SDT"),
+                        birthDate == null ? null : birthDate.toLocalDate(),
+                        rs.getString("GioiTinh"),
+                        rs.getString("TenHangThanhVien")
+                );
+            }, maND);
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public void updateAccountProfile(String maND, String hoTen, String email, String soDienThoai,
+                                     LocalDate ngaySinh, String gioiTinh) {
+        jdbcTemplate.update(
+                """
+                UPDATE NGUOIDUNG
+                SET HoTen = ?,
+                    Email = ?,
+                    SDT = ?,
+                    NgaySinh = ?,
+                    GioiTinh = ?,
+                    CapNhatLanCuoi = CURRENT_TIMESTAMP
+                WHERE MaND = ?
+                """,
+                hoTen,
+                blankToNull(email),
+                blankToNull(soDienThoai),
+                ngaySinh == null ? null : Date.valueOf(ngaySinh),
+                blankToNull(gioiTinh),
                 maND
         );
     }
@@ -534,6 +591,47 @@ public class WebPortalRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapMemberSession(rs), maKH);
     }
 
+    public List<BookingHistoryView> findBookingHistoryForMember(String maKH) {
+        if (maKH == null || maKH.isBlank()) {
+            return List.of();
+        }
+        String sql = """
+                SELECT p.MaPhien, p.MaDatCho, kg.TenKG, cn.TenCN,
+                       p.ThoiGianBatDau, p.ThoiGianDuKienKetThuc, p.ThoiGianKetThuc,
+                       p.TrangThaiPhien, h.MaHoaDon, h.TongTien, h.ThanhTien,
+                       h.TrangThaiThanhToan, h.NgayLapHoaDon
+                FROM PHIENLAMVIEC p
+                JOIN KHONGGIAN kg ON kg.MaKG = p.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                LEFT JOIN HOADON h ON h.MaPhien = p.MaPhien
+                WHERE p.MaKH = ?
+                ORDER BY p.ThoiGianBatDau DESC
+                """;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Timestamp start = rs.getTimestamp("ThoiGianBatDau");
+            Timestamp expectedEnd = rs.getTimestamp("ThoiGianDuKienKetThuc");
+            Timestamp actualEnd = rs.getTimestamp("ThoiGianKetThuc");
+            Timestamp invoiceDate = rs.getTimestamp("NgayLapHoaDon");
+            String maPhien = rs.getString("MaPhien");
+            return new BookingHistoryView(
+                    maPhien,
+                    rs.getString("MaDatCho"),
+                    rs.getString("MaHoaDon"),
+                    rs.getString("TenKG"),
+                    rs.getString("TenCN"),
+                    start == null ? null : start.toLocalDateTime(),
+                    expectedEnd == null ? null : expectedEnd.toLocalDateTime(),
+                    actualEnd == null ? null : actualEnd.toLocalDateTime(),
+                    displaySessionStatus(rs.getString("TrangThaiPhien")),
+                    displayInvoiceStatus(rs.getString("TrangThaiThanhToan")),
+                    rs.getBigDecimal("TongTien"),
+                    rs.getBigDecimal("ThanhTien"),
+                    invoiceDate == null ? null : invoiceDate.toLocalDateTime(),
+                    findServicesForMemberSession(maKH, maPhien)
+            );
+        }, maKH);
+    }
+
     public MemberSessionView findMemberSession(String maKH, String maPhien) {
         String sql = """
                 SELECT p.MaPhien, p.MaKG, kg.TenKG, cn.TenCN, p.ThoiGianBatDau,
@@ -779,6 +877,10 @@ public class WebPortalRepository {
                 .trim();
     }
 
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
     private String displayStatus(String value) {
         if (value == null || value.isBlank()) {
             return "Chưa có trạng thái";
@@ -815,6 +917,24 @@ public class WebPortalRepository {
         }
         if (normalized.contains("ket thuc")) {
             return "Da ket thuc";
+        }
+        return decoded;
+    }
+
+    private String displayInvoiceStatus(String value) {
+        if (value == null || value.isBlank()) {
+            return "Chưa có hóa đơn";
+        }
+        String decoded = decodeMojibake(value);
+        String normalized = normalize(decoded);
+        if (normalized.contains("cho thanh toan")) {
+            return "Đang chờ thanh toán";
+        }
+        if (normalized.contains("thanh toan thanh cong")) {
+            return "Đã thanh toán thành công";
+        }
+        if (normalized.contains("thanh toan khong thanh cong")) {
+            return "Thanh toán không thành công";
         }
         return decoded;
     }

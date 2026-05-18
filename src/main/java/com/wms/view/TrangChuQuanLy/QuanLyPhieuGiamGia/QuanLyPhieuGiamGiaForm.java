@@ -23,6 +23,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         addCurrencyFormatting(txtGiaTriApDungToiThieu);
         
         loadDataToTable();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void setupTable() {

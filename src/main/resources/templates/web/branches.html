@@ -15,6 +15,7 @@
     <nav class="member-nav">
         <a th:href="@{/portal}">Trang chủ</a>
         <a th:href="@{/portal/branches}" class="active">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}">Thông tin tài khoản</a>
     </nav>
@@ -26,7 +27,7 @@
 <main class="member-main">
     <header class="member-topbar">
         <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong>Hạng: VIP Kim Cương</strong>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
     </header>
 
     <section class="member-content">
@@ -49,11 +50,23 @@
                 </div>
                 <div class="branch-actions">
                     <span class="status-pill">Hoạt động</span>
-                    <a th:href="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}" class="button-primary">Xem sơ đồ</a>
+                    <a th:href="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}"
+                       class="button-primary branch-map-link"
+                       th:data-requires-contact="${missingContactInfo}">Xem sơ đồ</a>
                 </div>
             </article>
         </div>
     </section>
 </main>
+<script>
+    document.querySelectorAll(".branch-map-link").forEach((link) => {
+        link.addEventListener("click", (event) => {
+            if (link.dataset.requiresContact === "true") {
+                event.preventDefault();
+                alert("Vui lòng điền đầy đủ thông tin email, số điện thoại để đặt trước không gian.");
+            }
+        });
+    });
+</script>
 </body>
 </html>

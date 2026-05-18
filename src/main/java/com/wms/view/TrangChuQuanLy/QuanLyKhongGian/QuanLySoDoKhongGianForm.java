@@ -1,4 +1,4 @@
-package com.wms.view.TrangChuQuanLy.QuanLyChiNhanh;
+package com.wms.view.TrangChuQuanLy.QuanLyKhongGian;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyKhongGian.KhongGianController;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;

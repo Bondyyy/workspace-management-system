@@ -22,6 +22,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         setupTierComboBox();
         loadDataToTable();
         laMoiForm();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void setupTierComboBox() {
@@ -127,6 +128,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnTimKiem = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblHoiVien = new javax.swing.JTable();
+        cbxNhomQuyen = new javax.swing.JComboBox<>();
+        lblNhomQuyen = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -264,7 +267,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnThemMoi.setText("Thêm mới");
         btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnMain.add(btnThemMoi);
-        btnThemMoi.setBounds(20, 460, 180, 40);
+        btnThemMoi.setBounds(20, 510, 180, 40);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -272,14 +275,14 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnCapNhat.setText("Cập nhật");
         btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnMain.add(btnCapNhat);
-        btnCapNhat.setBounds(210, 460, 180, 40);
+        btnCapNhat.setBounds(210, 510, 180, 40);
 
         btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnHuy.setForeground(new java.awt.Color(235, 94, 141));
         btnHuy.setText("Làm mới");
         btnHuy.addActionListener(this::btnHuyActionPerformed);
         pnMain.add(btnHuy);
-        btnHuy.setBounds(20, 510, 370, 40);
+        btnHuy.setBounds(20, 560, 370, 40);
 
         lblTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTimKiem.setForeground(new java.awt.Color(35, 30, 48));
@@ -327,12 +330,28 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         pnMain.add(jScrollPane1);
         jScrollPane1.setBounds(420, 130, 600, 480);
 
+        cbxNhomQuyen.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        cbxNhomQuyen.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Admin (Toàn quyền)", "Quản lý Chi nhánh", "Nhân viên phục vụ" }));
+        cbxNhomQuyen.addActionListener(this::cbxNhomQuyenActionPerformed);
+        pnMain.add(cbxNhomQuyen);
+        cbxNhomQuyen.setBounds(20, 460, 370, 40);
+
+        lblNhomQuyen.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblNhomQuyen.setForeground(new java.awt.Color(35, 30, 48));
+        lblNhomQuyen.setText("Vai trò (*)");
+        pnMain.add(lblNhomQuyen);
+        lblNhomQuyen.setBounds(20, 440, 370, 18);
+
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void cbxHangTVActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxHangTVActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cbxHangTVActionPerformed
+
+    private void cbxNhomQuyenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxNhomQuyenActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxNhomQuyenActionPerformed
 
     private void btnQuanLyHangActionPerformed(java.awt.event.ActionEvent evt) {
         Window parentWindow = SwingUtilities.getWindowAncestor(this);
@@ -453,6 +472,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JComboBox<String> cbxGioiTinh;
     private javax.swing.JComboBox<String> cbxHangTV;
+    private javax.swing.JComboBox<String> cbxNhomQuyen;
     private javax.swing.JComboBox<String> cbxTrangThai;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblAnhDaiDien;
@@ -463,6 +483,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblHoTen;
     private javax.swing.JLabel lblMaHV;
     private javax.swing.JLabel lblNgaySinh;
+    private javax.swing.JLabel lblNhomQuyen;
     private javax.swing.JLabel lblSDT;
     private javax.swing.JLabel lblTimKiem;
     private javax.swing.JLabel lblTongChiTieu;

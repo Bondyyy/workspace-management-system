@@ -194,10 +194,15 @@ public class NguoiDungDAO {
                 }
             }
 
+            String selectedRole = com.wms.config.AppConstants.ROLE_CUSTOMER_CODE; // Mặc định là Khách hàng
+            if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
+                selectedRole = user.getVaiTro().get(0);
+            }
+
             String sqlVaiTro = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
             try (PreparedStatement psVT = conn.prepareStatement(sqlVaiTro)) {
                 psVT.setString(1, maND);
-                psVT.setString(2, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
+                psVT.setString(2, selectedRole);
                 psVT.executeUpdate();
             }
 
@@ -228,7 +233,11 @@ public class NguoiDungDAO {
     }
 
     public List<NguoiDungDTO> getAllNguoiDung() throws SQLException {
-        String sql = "SELECT MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, GioiTinh, Email, SDT, NgaySinh, TrangThaiND, AnhDaiDien FROM NGUOIDUNG ORDER BY ThoiGianTao DESC";
+        String sql = "SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.GioiTinh, n.Email, n.SDT, n.NgaySinh, n.TrangThaiND, n.AnhDaiDien, cvt.MaVaiTro, v.TenVaiTro " +
+                     "FROM NGUOIDUNG n " +
+                     "LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND " +
+                     "LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro " +
+                     "ORDER BY n.ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
         try (PreparedStatement ps = getConn().prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -240,10 +249,12 @@ public class NguoiDungDAO {
     }
 
     public List<NguoiDungDTO> searchNguoiDung(String keyword) throws SQLException {
-        String sql = "SELECT MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, GioiTinh, Email, SDT, NgaySinh, TrangThaiND, AnhDaiDien FROM NGUOIDUNG "
-                +
-                "WHERE LOWER(HoTen) LIKE ? OR LOWER(TenTaiKhoan) LIKE ? OR SDT LIKE ? OR LOWER(Email) LIKE ? " +
-                "ORDER BY ThoiGianTao DESC";
+        String sql = "SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.GioiTinh, n.Email, n.SDT, n.NgaySinh, n.TrangThaiND, n.AnhDaiDien, cvt.MaVaiTro, v.TenVaiTro " +
+                     "FROM NGUOIDUNG n " +
+                     "LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND " +
+                     "LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro " +
+                     "WHERE LOWER(n.HoTen) LIKE ? OR LOWER(n.TenTaiKhoan) LIKE ? OR n.SDT LIKE ? OR LOWER(n.Email) LIKE ? " +
+                     "ORDER BY n.ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
         String searchKey = "%" + keyword.toLowerCase() + "%";
         try (PreparedStatement ps = getConn().prepareStatement(sql)) {
@@ -269,21 +280,57 @@ public class NguoiDungDAO {
         }
         sql.append("WHERE MaND = ?");
 
-        try (PreparedStatement ps = getConn().prepareStatement(sql.toString())) {
-            int idx = 1;
-            ps.setString(idx++, user.getHoTen());
-            ps.setString(idx++, user.getTenTaiKhoan());
-            ps.setString(idx++, user.getGioiTinh());
-            ps.setString(idx++, user.getEmail());
-            ps.setString(idx++, user.getSdt());
-            ps.setDate(idx++, user.getNgaySinh());
-            ps.setString(idx++, user.getTrangThaiND());
-            ps.setBytes(idx++, user.getAnhDaiDien());
-            if (updatePassword) {
-                ps.setString(idx++, user.getMatKhauMaHoa());
+        Connection conn = getConn();
+        if (conn == null) {
+            throw new SQLException("Không thể kết nối đến Cơ sở dữ liệu!");
+        }
+
+        boolean autoCommit = conn.getAutoCommit();
+        try {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                int idx = 1;
+                ps.setString(idx++, user.getHoTen());
+                ps.setString(idx++, user.getTenTaiKhoan());
+                ps.setString(idx++, user.getGioiTinh());
+                ps.setString(idx++, user.getEmail());
+                ps.setString(idx++, user.getSdt());
+                ps.setDate(idx++, user.getNgaySinh());
+                ps.setString(idx++, user.getTrangThaiND());
+                ps.setBytes(idx++, user.getAnhDaiDien());
+                if (updatePassword) {
+                    ps.setString(idx++, user.getMatKhauMaHoa());
+                }
+                ps.setString(idx++, user.getMaND());
+                ps.executeUpdate();
             }
-            ps.setString(idx++, user.getMaND());
-            ps.executeUpdate();
+
+            // Xoá vai trò cũ
+            try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
+                psDel.setString(1, user.getMaND());
+                psDel.executeUpdate();
+            }
+
+            // Thêm vai trò mới
+            String selectedRole = com.wms.config.AppConstants.ROLE_CUSTOMER_CODE;
+            if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
+                selectedRole = user.getVaiTro().get(0);
+            }
+
+            String sqlVT = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
+            try (PreparedStatement psVT = conn.prepareStatement(sqlVT)) {
+                psVT.setString(1, user.getMaND());
+                psVT.setString(2, selectedRole);
+                psVT.executeUpdate();
+            }
+
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(autoCommit);
         }
     }
 
@@ -299,6 +346,17 @@ public class NguoiDungDAO {
         user.setNgaySinh(rs.getDate("NgaySinh"));
         user.setTrangThaiND(rs.getString("TrangThaiND"));
         user.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
+        
+        String maVaiTro = rs.getString("MaVaiTro");
+        String tenVaiTro = rs.getString("TenVaiTro");
+        if (maVaiTro != null) {
+            java.util.List<String> vtList = new java.util.ArrayList<>();
+            vtList.add(maVaiTro);
+            if (tenVaiTro != null) {
+                vtList.add(tenVaiTro);
+            }
+            user.setVaiTro(vtList);
+        }
         return user;
     }
 

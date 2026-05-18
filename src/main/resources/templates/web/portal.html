@@ -6,7 +6,7 @@
     <title>Spring MNGT - Hội viên</title>
     <link rel="stylesheet" href="/css/webapp.css">
 </head>
-<body class="member-page">
+<body class="member-page portal-page">
 <aside class="member-sidebar">
     <a class="member-brand" th:href="@{/portal}">
         <strong>SPRING MNGT</strong>
@@ -15,6 +15,7 @@
     <nav class="member-nav">
         <a th:href="@{/portal}" class="active">Trang chủ</a>
         <a th:href="@{/portal/branches}">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}">Thông tin tài khoản</a>
     </nav>
@@ -26,7 +27,7 @@
 <main class="member-main">
     <header class="member-topbar">
         <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong>Hạng: VIP Kim Cương</strong>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
     </header>
 
     <section class="member-content">
@@ -42,7 +43,7 @@
             <article class="metric-card pink-line">
                 <span>Điểm tích lũy</span>
                 <strong th:text="${#numbers.formatDecimal(totalSpent, 0, 'COMMA', 0, 'POINT')}">0</strong>
-                <small>Hạng hiện tại: VIP Kim Cương</small>
+                <small th:text="'Hạng hiện tại: ' + ${rankName}">Hạng hiện tại: Không có</small>
             </article>
             <article class="metric-card blue-line">
                 <span>Tổng giờ sử dụng</span>

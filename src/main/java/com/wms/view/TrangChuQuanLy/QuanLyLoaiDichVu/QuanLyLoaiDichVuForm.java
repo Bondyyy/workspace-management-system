@@ -18,6 +18,7 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
         initComponents();
         controller = new com.wms.controller.TrangChuQuanLy.QuanLyLoaiDichVu.LoaiDichVuController(this);
         setupEvents();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
     private void setupEvents() {
