@@ -13,8 +13,12 @@ public class PhieuGiamGiaDTO {
     private int slToiDa;
     private Date ngayTaoPGG;
     private String maNV;
+    private String trangThai;
 
     public PhieuGiamGiaDTO() {}
+
+    public String getTrangThai() { return trangThai; }
+    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
 
     public String getMaPGG() { return maPGG; }
     public void setMaPGG(String maPGG) { this.maPGG = maPGG; }

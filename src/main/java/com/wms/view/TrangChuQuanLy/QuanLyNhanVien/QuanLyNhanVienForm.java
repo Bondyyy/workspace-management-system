@@ -21,21 +21,10 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     public QuanLyNhanVienForm() {
         initComponents();
         loadComboBoxData();
-        setupListeners();
         apDungPhanQuyen();
         loadData();
         txtMaNV.setText(controller.generateMaNV());
         com.wms.util.TienIchFormQuanLy.apDung(this);
-    }
-
-    private void setupListeners() {
-        btnQuanLyHang.addActionListener(e -> btnQuanLyHangActionPerformed(e));
-    }
-
-    private void btnQuanLyHangActionPerformed(java.awt.event.ActionEvent evt) {
-        java.awt.Frame parent = (java.awt.Frame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        QuanLyHangTVForm dialog = new QuanLyHangTVForm(parent, true);
-        dialog.setVisible(true);
     }
 
     private void apDungPhanQuyen() {
@@ -91,11 +80,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             if (cbxNhomQuyen.getSelectedIndex() <= 0 && cbxNhomQuyen.getItemCount() > 1) {
                 cbxNhomQuyen.setSelectedIndex(1);
             }
-
-            // 3. Loại NV (Đã xóa combo này nên không cần lọc)
-
-            // 4. Chỉ Admin mới được quản lý hạng thành viên
-            btnQuanLyHang.setVisible(false);
         }
     }
 
@@ -108,7 +92,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         DefaultTableModel model = (DefaultTableModel) tblNhanVien.getModel();
         model.setRowCount(0);
 
-        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO currentUser = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
+        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO currentUser = com.wms.controller.TrangChuGioiThieu.DangNhapController
+                .getCurrentUser();
         String currentMaND = (currentUser != null) ? currentUser.getMaND() : null;
 
         int row = 0;
@@ -135,7 +120,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             row++;
         }
     }
-
 
     private void loadComboBoxData() {
         cbxChiNhanh.removeAllItems();
@@ -174,7 +158,8 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         }
 
         cbxNhomQuyen.setSelectedIndex(0);
-        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO currentUser = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
+        com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO currentUser = com.wms.controller.TrangChuGioiThieu.DangNhapController
+                .getCurrentUser();
         if (currentUser != null && !currentUser.hasRole(com.wms.config.AppConstants.ROLE_ADMIN_CODE)) {
             for (int i = 0; i < cbxNhomQuyen.getItemCount(); i++) {
                 String item = cbxNhomQuyen.getItemAt(i);
@@ -217,6 +202,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
+    // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -257,7 +243,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         lblSDT1 = new javax.swing.JLabel();
         txtNgaySinh = new javax.swing.JTextField();
         lblNgaySinh = new javax.swing.JLabel();
-        btnQuanLyHang = new javax.swing.JButton();
         txtTenTaiKhoan = new javax.swing.JTextField();
         lblSDT2 = new javax.swing.JLabel();
 
@@ -491,13 +476,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         pnMain.add(lblNgaySinh);
         lblNgaySinh.setBounds(210, 410, 180, 18);
 
-        btnQuanLyHang.setBackground(new java.awt.Color(35, 30, 48));
-        btnQuanLyHang.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnQuanLyHang.setForeground(new java.awt.Color(255, 255, 255));
-        btnQuanLyHang.setText("Quản lý Hạng Thành viên");
-        pnMain.add(btnQuanLyHang);
-        btnQuanLyHang.setBounds(20, 590, 370, 40);
-
         txtTenTaiKhoan.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         txtTenTaiKhoan.addActionListener(this::txtTenTaiKhoanActionPerformed);
         pnMain.add(txtTenTaiKhoan);
@@ -512,9 +490,9 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txtTenTaiKhoanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTenTaiKhoanActionPerformed
+    private void txtTenTaiKhoanActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_txtTenTaiKhoanActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_txtTenTaiKhoanActionPerformed
+    }// GEN-LAST:event_txtTenTaiKhoanActionPerformed
 
     private void txtHoTenActionPerformed(java.awt.event.ActionEvent evt) {
     }
@@ -699,7 +677,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private javax.swing.JButton btnCapNhat;
     private javax.swing.JButton btnDoiAnh;
     private javax.swing.JButton btnHuy;
-    private javax.swing.JButton btnQuanLyHang;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JComboBox<String> cbxCaLam;

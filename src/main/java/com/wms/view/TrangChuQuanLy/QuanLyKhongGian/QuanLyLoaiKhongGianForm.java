@@ -63,7 +63,8 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         for (LoaiKhongGianDTO dto : list) {
             String sucChua = dto.getSucChua() != null ? String.valueOf(dto.getSucChua()) : "-";
             String donGia = dto.getDonGiaTheoGio() != null ? FORMAT_TIEN.format(dto.getDonGiaTheoGio()) : "-";
-            model.addRow(new Object[]{dto.getMaLoaiKG(), dto.getTenLoaiKG(), sucChua, donGia});
+            String trangThai = dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động";
+            model.addRow(new Object[]{dto.getMaLoaiKG(), dto.getTenLoaiKG(), sucChua, donGia, trangThai});
         }
     }
 
@@ -73,6 +74,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         txtSucChua.setText("");
         txtDonGia.setText("");
         txtTimKiem.setText("");
+        cbxTrangThai.setSelectedIndex(0);
         tblLoaiKhongGian.clearSelection();
     }
 
@@ -100,13 +102,15 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         txtDonGia = new javax.swing.JTextField();
         btnThemMoi = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
-        btnHuy = new javax.swing.JButton();
+        cbxTrangThai = new javax.swing.JComboBox<>();
+        lblTrangThai = new javax.swing.JLabel();
         pnRight = new javax.swing.JPanel();
         lblListTitle = new javax.swing.JLabel();
         txtTimKiem = new javax.swing.JTextField();
         btnTimKiem = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblLoaiKhongGian = new javax.swing.JTable();
+        btnHuy = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Quản lý Loại Không Gian");
@@ -188,7 +192,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         btnThemMoi.setText("Thêm mới");
         btnThemMoi.addActionListener(this::btnThemMoiActionPerformed);
         pnLeft.add(btnThemMoi);
-        btnThemMoi.setBounds(20, 340, 125, 35);
+        btnThemMoi.setBounds(20, 370, 125, 35);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
@@ -196,14 +200,20 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         btnCapNhat.setText("Cập nhật");
         btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         pnLeft.add(btnCapNhat);
-        btnCapNhat.setBounds(155, 340, 125, 35);
+        btnCapNhat.setBounds(150, 370, 125, 35);
 
-        btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        btnHuy.setForeground(new java.awt.Color(235, 94, 141));
-        btnHuy.setText("Làm mới");
-        btnHuy.addActionListener(this::btnHuyActionPerformed);
-        pnLeft.add(btnHuy);
-        btnHuy.setBounds(20, 390, 260, 35);
+        cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
+        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Ngừng hoạt động" }));
+        cbxTrangThai.setToolTipText("");
+        cbxTrangThai.addActionListener(this::cbxTrangThaiActionPerformed);
+        pnLeft.add(cbxTrangThai);
+        cbxTrangThai.setBounds(20, 320, 260, 30);
+
+        lblTrangThai.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblTrangThai.setForeground(new java.awt.Color(35, 30, 48));
+        lblTrangThai.setText("Trạng thái (*)");
+        pnLeft.add(lblTrangThai);
+        lblTrangThai.setBounds(20, 300, 260, 18);
 
         pnMain.add(pnLeft);
         pnLeft.setBounds(20, 70, 300, 450);
@@ -220,7 +230,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
         txtTimKiem.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnRight.add(txtTimKiem);
-        txtTimKiem.setBounds(20, 60, 350, 30);
+        txtTimKiem.setBounds(20, 60, 250, 30);
 
         btnTimKiem.setBackground(new java.awt.Color(235, 94, 141));
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
@@ -228,18 +238,18 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         btnTimKiem.setText("Tìm");
         btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
         pnRight.add(btnTimKiem);
-        btnTimKiem.setBounds(380, 60, 90, 30);
+        btnTimKiem.setBounds(280, 60, 90, 30);
 
         tblLoaiKhongGian.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Mã loại", "Tên loại", "Sức chứa", "Đơn giá/Giờ"
+                "Mã loại", "Tên loại", "Sức chứa", "Đơn giá/Giờ", "Trạng thái"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false
+                false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -258,11 +268,22 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         pnRight.add(jScrollPane1);
         jScrollPane1.setBounds(20, 100, 450, 330);
 
+        btnHuy.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        btnHuy.setForeground(new java.awt.Color(235, 94, 141));
+        btnHuy.setText("Làm mới");
+        btnHuy.addActionListener(this::btnHuyActionPerformed);
+        pnRight.add(btnHuy);
+        btnHuy.setBounds(380, 60, 90, 30);
+
         pnMain.add(pnRight);
         pnRight.setBounds(340, 70, 490, 450);
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cbxTrangThaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTrangThaiActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxTrangThaiActionPerformed
 
     private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
         String tenLoai = txtTenLoaiKG.getText().trim();
@@ -282,6 +303,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
             dto.setTenLoaiKG(tenLoai);
             dto.setSucChua(sucChua);
             dto.setDonGiaTheoGio(donGia);
+            dto.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang hoạt động");
 
             if (controller.themLoai(dto)) {
                 JOptionPane.showMessageDialog(this, "Thêm thành công!");
@@ -308,6 +330,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
             dto.setTenLoaiKG(txtTenLoaiKG.getText().trim());
             dto.setSucChua(txtSucChua.getText().trim().isEmpty() ? null : Integer.parseInt(txtSucChua.getText().trim()));
             dto.setDonGiaTheoGio(Double.parseDouble(txtDonGia.getText().trim().replace(",", "")));
+            dto.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang hoạt động");
 
             if (controller.capNhatLoai(dto)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
@@ -336,6 +359,9 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
             txtTenLoaiKG.setText(tblLoaiKhongGian.getValueAt(row, 1).toString());
             txtSucChua.setText(tblLoaiKhongGian.getValueAt(row, 2).toString().replace("-", ""));
             txtDonGia.setText(tblLoaiKhongGian.getValueAt(row, 3).toString().replace(",", "").replace("-", ""));
+            
+            Object val = tblLoaiKhongGian.getValueAt(row, 4);
+            cbxTrangThai.setSelectedItem(val != null ? val.toString() : "Đang hoạt động");
         }
     }
 
@@ -344,6 +370,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
     private javax.swing.JButton btnHuy;
     private javax.swing.JButton btnThemMoi;
     private javax.swing.JButton btnTimKiem;
+    private javax.swing.JComboBox<String> cbxTrangThai;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblDetailTitle;
     private javax.swing.JLabel lblDonGia;
@@ -352,6 +379,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
     private javax.swing.JLabel lblMaLoaiKG;
     private javax.swing.JLabel lblSucChua;
     private javax.swing.JLabel lblTenLoaiKG;
+    private javax.swing.JLabel lblTrangThai;
     private javax.swing.JPanel pnHeader;
     private javax.swing.JPanel pnLeft;
     private javax.swing.JPanel pnMain;

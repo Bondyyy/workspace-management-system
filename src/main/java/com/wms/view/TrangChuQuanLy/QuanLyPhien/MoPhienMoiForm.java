@@ -2,6 +2,7 @@ package com.wms.view.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.controller.TrangChuQuanLy.QuanLyPhien.MoPhienMoiController;
+import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import java.awt.Color;
 import java.awt.Font;
 import java.text.SimpleDateFormat;
@@ -24,6 +25,8 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
     private com.wms.util.SoDoKhongGianPanel mapPanel;
     private com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO khongGianChonDTO = null;
     private List<com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO> dsKGHienTai;
+    private String soDienThoaiDaXacNhan = "";
+    private boolean tenKhachHangTuDongDien = false;
 
     public MoPhienMoiForm(String maCN) {
         initComponents();
@@ -40,6 +43,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         initLegend();
         initTimeCalculation();
         startClock();
+        initTraCuuKhachHang();
         com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
@@ -163,11 +167,75 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         timer.start();
     }
 
+    private void initTraCuuKhachHang() {
+        txtSoDienThoai.addActionListener(this::btnXacNhanActionPerformed);
+        txtSoDienThoai.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { xuLyThayDoiSoDienThoai(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { xuLyThayDoiSoDienThoai(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { xuLyThayDoiSoDienThoai(); }
+        });
+    }
+
+    private void xuLyThayDoiSoDienThoai() {
+        String sdt = txtSoDienThoai.getText().trim();
+        if (sdt.equals(soDienThoaiDaXacNhan)) {
+            return;
+        }
+
+        if (tenKhachHangTuDongDien) {
+            txtTenKhachHang.setText("");
+        }
+        soDienThoaiDaXacNhan = "";
+        tenKhachHangTuDongDien = false;
+        datTrangThaiNhapTenKhach(true);
+    }
+
+    private void datTrangThaiNhapTenKhach(boolean choNhapThuCong) {
+        txtTenKhachHang.setEditable(choNhapThuCong);
+        txtTenKhachHang.setBackground(choNhapThuCong ? Color.WHITE : new Color(240, 240, 240));
+    }
+
+    private void btnXacNhanActionPerformed(java.awt.event.ActionEvent evt) {
+        String sdt = txtSoDienThoai.getText().trim();
+        if (sdt.isEmpty()) {
+            com.wms.util.MessageUtil.showWarning(this, "Vui lòng nhập số điện thoại trước khi xác nhận!");
+            txtSoDienThoai.requestFocusInWindow();
+            return;
+        }
+
+        HoiVienDTO khachHang = controller.timKhachHangTheoSdt(sdt);
+        soDienThoaiDaXacNhan = sdt;
+        if (khachHang != null) {
+            String hoTen = khachHang.getHoTen() != null ? khachHang.getHoTen().trim() : "";
+            txtTenKhachHang.setText(hoTen);
+            tenKhachHangTuDongDien = !hoTen.isEmpty();
+            datTrangThaiNhapTenKhach(hoTen.isEmpty());
+
+            if (hoTen.isEmpty()) {
+                com.wms.util.MessageUtil.showInfo(this, "Đã tìm thấy khách hàng nhưng chưa có tên. Vui lòng nhập tên khách hàng.");
+                txtTenKhachHang.requestFocusInWindow();
+            } else {
+                com.wms.util.MessageUtil.showInfo(this, "Đã tìm thấy khách hàng: " + hoTen);
+                txtThoiGianSuDung.requestFocusInWindow();
+            }
+            return;
+        }
+
+        tenKhachHangTuDongDien = false;
+        txtTenKhachHang.setText("");
+        datTrangThaiNhapTenKhach(true);
+        com.wms.util.MessageUtil.showInfo(this, "Chưa có khách hàng với số điện thoại này. Vui lòng nhập tên khách vãng lai.");
+        txtTenKhachHang.requestFocusInWindow();
+    }
+
     // === CÁC SỰ KIỆN NÚT BẤM FORM BÊN PHẢI ===
 
     private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
         txtTenKhachHang.setText("");
         txtSoDienThoai.setText("");
+        soDienThoaiDaXacNhan = "";
+        tenKhachHangTuDongDien = false;
+        datTrangThaiNhapTenKhach(true);
         txtKhongGianChon.setText("(Chưa chọn chỗ ngồi)");
         txtLoaiKhongGian.setText("");
         txtMaKGian.setText("");
@@ -175,48 +243,6 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         khongGianChonDTO = null;
         if (mapPanel != null) {
             mapPanel.veSoDo(dsKGHienTai, null);
-        }
-    }
-
-    private void btnMoPhienActionPerformed(java.awt.event.ActionEvent evt) {
-        String tenKH = txtTenKhachHang.getText().trim();
-        String sdt = txtSoDienThoai.getText().trim();
-        String khongGian = txtKhongGianChon.getText();
-        String suDungStr = txtThoiGianSuDung.getText().trim();
-
-        if (tenKH.isEmpty() || sdt.isEmpty()) {
-            com.wms.util.MessageUtil.showWarning(this, "Vui lòng nhập đầy đủ Tên và Số điện thoại khách hàng!");
-            return;
-        }
-        if (khongGianChonDTO == null) {
-            com.wms.util.MessageUtil.showWarning(this, "Vui lòng chọn một vị trí trên sơ đồ!");
-            return;
-        }
-
-        int soGio = 0;
-        try {
-            soGio = Integer.parseInt(suDungStr);
-            if (soGio <= 0) throw new Exception();
-        } catch (Exception e) {
-            com.wms.util.MessageUtil.showWarning(this, "Thời gian sử dụng phải là số nguyên dương (giờ)!");
-            return;
-        }
-
-        double giaTien = 0;
-        try {
-            String giaStr = txtGiaTien.getText().replace(",", "").replace(".", "").trim();
-            giaTien = Double.parseDouble(giaStr);
-        } catch (Exception e) {
-            // Nếu lỗi format thì mặc định = 0 hoặc lấy từ DTO nếu có
-        }
-
-        if (controller.moPhienMoi(tenKH, sdt, khongGianChonDTO.getMaKG(), soGio, giaTien)) {
-            com.wms.util.MessageUtil.showInfo(this, "Mở phiên thành công cho khách: " + tenKH + "\nVị trí: " + khongGian);
-            khongGianChonDTO = null;
-            initMap();
-            btnLamMoiActionPerformed(evt);
-        } else {
-            com.wms.util.MessageUtil.showError(this, "Lỗi khi mở phiên làm việc! Vui lòng kiểm tra lại kết nối hoặc dữ liệu.");
         }
     }
 
@@ -244,7 +270,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         lblThoiGianBatDau = new javax.swing.JLabel();
         txtThoiGianBatDau = new javax.swing.JTextField();
         btnLamMoi = new javax.swing.JButton();
-        btnMoPhien = new javax.swing.JButton();
+        btnXacNhan = new javax.swing.JButton();
         txtThoiGianKetThuc = new javax.swing.JTextField();
         lblThoiGianBatDau1 = new javax.swing.JLabel();
         lblLoaiKhongGian1 = new javax.swing.JLabel();
@@ -253,6 +279,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         lblLoaiKhongGian2 = new javax.swing.JLabel();
         txtGiaTien = new javax.swing.JTextField();
         lblKhongGianChon1 = new javax.swing.JLabel();
+        btnMoPhien = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(254, 248, 250));
         setPreferredSize(new java.awt.Dimension(1050, 640));
@@ -309,27 +336,27 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         lblTenKhachHang.setForeground(new java.awt.Color(35, 30, 48));
         lblTenKhachHang.setText("Tên khách hàng (*)");
         pnRightForm.add(lblTenKhachHang);
-        lblTenKhachHang.setBounds(20, 60, 300, 20);
+        lblTenKhachHang.setBounds(20, 120, 230, 20);
 
         txtTenKhachHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         pnRightForm.add(txtTenKhachHang);
-        txtTenKhachHang.setBounds(20, 80, 300, 35);
+        txtTenKhachHang.setBounds(20, 140, 310, 35);
 
         lblSDT.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblSDT.setForeground(new java.awt.Color(35, 30, 48));
         lblSDT.setText("Số điện thoại (*)");
         pnRightForm.add(lblSDT);
-        lblSDT.setBounds(20, 120, 150, 20);
+        lblSDT.setBounds(20, 50, 310, 20);
 
         txtSoDienThoai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         pnRightForm.add(txtSoDienThoai);
-        txtSoDienThoai.setBounds(20, 140, 150, 35);
+        txtSoDienThoai.setBounds(20, 70, 200, 35);
 
         lblKhongGianChon.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblKhongGianChon.setForeground(new java.awt.Color(35, 30, 48));
         lblKhongGianChon.setText("Tên Không gian ");
         pnRightForm.add(lblKhongGianChon);
-        lblKhongGianChon.setBounds(20, 180, 150, 20);
+        lblKhongGianChon.setBounds(20, 240, 150, 20);
 
         txtKhongGianChon.setEditable(false);
         txtKhongGianChon.setBackground(new java.awt.Color(240, 240, 240));
@@ -337,47 +364,47 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtKhongGianChon.setForeground(new java.awt.Color(235, 94, 141));
         txtKhongGianChon.addActionListener(this::txtKhongGianChonActionPerformed);
         pnRightForm.add(txtKhongGianChon);
-        txtKhongGianChon.setBounds(20, 200, 150, 35);
+        txtKhongGianChon.setBounds(20, 260, 150, 35);
 
         lblLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian.setForeground(new java.awt.Color(35, 30, 48));
         lblLoaiKhongGian.setText("Tên Loại không gian");
         pnRightForm.add(lblLoaiKhongGian);
-        lblLoaiKhongGian.setBounds(20, 240, 130, 20);
+        lblLoaiKhongGian.setBounds(20, 300, 130, 20);
 
         txtLoaiKhongGian.setEditable(false);
         txtLoaiKhongGian.setBackground(new java.awt.Color(240, 240, 240));
         txtLoaiKhongGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         pnRightForm.add(txtLoaiKhongGian);
-        txtLoaiKhongGian.setBounds(20, 260, 150, 35);
+        txtLoaiKhongGian.setBounds(20, 320, 150, 35);
 
         lblThoiGianBatDau.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThoiGianBatDau.setForeground(new java.awt.Color(35, 30, 48));
         lblThoiGianBatDau.setText("Thời gian bắt đầu phiên");
         pnRightForm.add(lblThoiGianBatDau);
-        lblThoiGianBatDau.setBounds(20, 300, 310, 20);
+        lblThoiGianBatDau.setBounds(20, 360, 310, 20);
 
         txtThoiGianBatDau.setEditable(false);
         txtThoiGianBatDau.setBackground(new java.awt.Color(240, 240, 240));
         txtThoiGianBatDau.setFont(new java.awt.Font("Segoe UI", 2, 14)); // NOI18N
         txtThoiGianBatDau.setForeground(new java.awt.Color(102, 102, 102));
         pnRightForm.add(txtThoiGianBatDau);
-        txtThoiGianBatDau.setBounds(20, 320, 310, 35);
+        txtThoiGianBatDau.setBounds(20, 380, 310, 35);
 
         btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
         btnLamMoi.setText("Làm mới form");
         btnLamMoi.addActionListener(this::btnLamMoiActionPerformed);
         pnRightForm.add(btnLamMoi);
-        btnLamMoi.setBounds(20, 480, 300, 35);
+        btnLamMoi.setBounds(20, 540, 300, 35);
 
-        btnMoPhien.setBackground(new java.awt.Color(235, 94, 141));
-        btnMoPhien.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
-        btnMoPhien.setForeground(new java.awt.Color(255, 255, 255));
-        btnMoPhien.setText("Mở phiên cho khách");
-        btnMoPhien.addActionListener(this::btnMoPhienActionPerformed);
-        pnRightForm.add(btnMoPhien);
-        btnMoPhien.setBounds(20, 430, 300, 40);
+        btnXacNhan.setBackground(new java.awt.Color(235, 94, 141));
+        btnXacNhan.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
+        btnXacNhan.setText("Xác nhận");
+        btnXacNhan.addActionListener(this::btnXacNhanActionPerformed);
+        pnRightForm.add(btnXacNhan);
+        btnXacNhan.setBounds(230, 70, 90, 35);
 
         txtThoiGianKetThuc.setEditable(false);
         txtThoiGianKetThuc.setBackground(new java.awt.Color(240, 240, 240));
@@ -385,39 +412,39 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtThoiGianKetThuc.setForeground(new java.awt.Color(102, 102, 102));
         txtThoiGianKetThuc.addActionListener(this::txtThoiGianKetThucActionPerformed);
         pnRightForm.add(txtThoiGianKetThuc);
-        txtThoiGianKetThuc.setBounds(20, 380, 310, 35);
+        txtThoiGianKetThuc.setBounds(20, 440, 310, 35);
 
         lblThoiGianBatDau1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThoiGianBatDau1.setForeground(new java.awt.Color(35, 30, 48));
         lblThoiGianBatDau1.setText("Thời gian kết thúc");
         pnRightForm.add(lblThoiGianBatDau1);
-        lblThoiGianBatDau1.setBounds(20, 360, 310, 20);
+        lblThoiGianBatDau1.setBounds(20, 420, 310, 20);
 
         lblLoaiKhongGian1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian1.setForeground(new java.awt.Color(35, 30, 48));
         lblLoaiKhongGian1.setText("Thời gian sử dụng (*)");
         pnRightForm.add(lblLoaiKhongGian1);
-        lblLoaiKhongGian1.setBounds(180, 240, 130, 20);
+        lblLoaiKhongGian1.setBounds(180, 300, 130, 20);
 
         txtThoiGianSuDung.setEditable(false);
         txtThoiGianSuDung.setBackground(new java.awt.Color(240, 240, 240));
         txtThoiGianSuDung.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtThoiGianSuDung.addActionListener(this::txtThoiGianSuDungActionPerformed);
         pnRightForm.add(txtThoiGianSuDung);
-        txtThoiGianSuDung.setBounds(180, 260, 150, 35);
+        txtThoiGianSuDung.setBounds(180, 320, 150, 35);
 
         txtMaKGian.setEditable(false);
         txtMaKGian.setBackground(new java.awt.Color(240, 240, 240));
         txtMaKGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtMaKGian.addActionListener(this::txtMaKGianActionPerformed);
         pnRightForm.add(txtMaKGian);
-        txtMaKGian.setBounds(180, 140, 150, 35);
+        txtMaKGian.setBounds(20, 200, 310, 35);
 
         lblLoaiKhongGian2.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblLoaiKhongGian2.setForeground(new java.awt.Color(35, 30, 48));
         lblLoaiKhongGian2.setText("Mã không gian");
         pnRightForm.add(lblLoaiKhongGian2);
-        lblLoaiKhongGian2.setBounds(180, 120, 130, 20);
+        lblLoaiKhongGian2.setBounds(20, 180, 290, 20);
 
         txtGiaTien.setEditable(false);
         txtGiaTien.setBackground(new java.awt.Color(240, 240, 240));
@@ -425,13 +452,21 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtGiaTien.setForeground(new java.awt.Color(235, 94, 141));
         txtGiaTien.addActionListener(this::txtGiaTienActionPerformed);
         pnRightForm.add(txtGiaTien);
-        txtGiaTien.setBounds(180, 200, 150, 35);
+        txtGiaTien.setBounds(180, 260, 150, 35);
 
         lblKhongGianChon1.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblKhongGianChon1.setForeground(new java.awt.Color(35, 30, 48));
         lblKhongGianChon1.setText("Phí mỗi một giờ");
         pnRightForm.add(lblKhongGianChon1);
-        lblKhongGianChon1.setBounds(180, 180, 150, 20);
+        lblKhongGianChon1.setBounds(180, 240, 150, 20);
+
+        btnMoPhien.setBackground(new java.awt.Color(235, 94, 141));
+        btnMoPhien.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        btnMoPhien.setForeground(new java.awt.Color(255, 255, 255));
+        btnMoPhien.setText("Mở phiên cho khách");
+        btnMoPhien.addActionListener(this::btnMoPhienActionPerformed);
+        pnRightForm.add(btnMoPhien);
+        btnMoPhien.setBounds(20, 490, 310, 40);
 
         add(pnRightForm);
         pnRightForm.setBounds(10, 70, 340, 530);
@@ -457,9 +492,54 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtGiaTienActionPerformed
 
+    private void btnMoPhienActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMoPhienActionPerformed
+        String tenKH = txtTenKhachHang.getText().trim();
+        String sdt = txtSoDienThoai.getText().trim();
+        String khongGian = txtKhongGianChon.getText();
+        String suDungStr = txtThoiGianSuDung.getText().trim();
+
+        if (tenKH.isEmpty() || sdt.isEmpty()) {
+            com.wms.util.MessageUtil.showWarning(this, "Vui lòng nhập đầy đủ tên và số điện thoại khách hàng!");
+            return;
+        }
+        if (khongGianChonDTO == null) {
+            com.wms.util.MessageUtil.showWarning(this, "Vui lòng chọn một vị trí trên sơ đồ!");
+            return;
+        }
+
+        int soGio = 0;
+        try {
+            soGio = Integer.parseInt(suDungStr);
+            if (soGio <= 0) {
+                throw new NumberFormatException();
+            }
+        } catch (Exception e) {
+            com.wms.util.MessageUtil.showWarning(this, "Thời gian sử dụng phải là số nguyên dương (giờ)!");
+            return;
+        }
+
+        double giaTien = 0;
+        try {
+            String giaStr = txtGiaTien.getText().replace(",", "").replace(".", "").trim();
+            giaTien = Double.parseDouble(giaStr);
+        } catch (Exception e) {
+            // Giữ giá 0 nếu ô giá chưa có dữ liệu hợp lệ.
+        }
+
+        if (controller.moPhienMoi(tenKH, sdt, khongGianChonDTO.getMaKG(), soGio, giaTien)) {
+            com.wms.util.MessageUtil.showInfo(this, "Mở phiên thành công cho khách: " + tenKH + "\nVị trí: " + khongGian);
+            khongGianChonDTO = null;
+            initMap();
+            btnLamMoiActionPerformed(evt);
+        } else {
+            com.wms.util.MessageUtil.showError(this, "Lỗi khi mở phiên làm việc! Vui lòng kiểm tra lại kết nối hoặc dữ liệu.");
+        }
+    }//GEN-LAST:event_btnMoPhienActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLamMoi;
     private javax.swing.JButton btnMoPhien;
+    private javax.swing.JButton btnXacNhan;
     private javax.swing.JLabel lblFormTitle;
     private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblKhongGianChon;

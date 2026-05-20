@@ -12,7 +12,13 @@ import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
+import com.wms.util.EmailUtil;
+import com.wms.util.MaQRUtil;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class PhienLamViecService {
@@ -46,9 +52,14 @@ public class PhienLamViecService {
     }
 
     public boolean xacNhanThanhToanDatTruoc(String maDatCho, String maPhien) {
+        String maQR = MaQRUtil.taoMaQRPhien(maPhien, maDatCho);
         boolean dcOk = datChoDAO.xacNhanThanhToan(maDatCho);
+        boolean qrOk = dcOk && datChoDAO.capNhatMaQR(maDatCho, maQR);
         boolean hdOk = hoaDonDAO.capNhatTrangThaiThanhToanTheoPhien(maPhien, "Đã thanh toán");
-        return dcOk && hdOk;
+        if (dcOk && qrOk && hdOk) {
+            guiEmailXacNhanDatCho(maDatCho, maPhien);
+        }
+        return dcOk && qrOk && hdOk;
     }
 
     public List<String[]> layDanhSachChiNhanh() {
@@ -67,22 +78,29 @@ public class PhienLamViecService {
         return khongGianDAO.layTatCaKhongGian();
     }
 
+    public HoiVienDTO timKhachHangTheoSdt(String sdt) {
+        if (sdt == null || sdt.trim().isEmpty()) {
+            return null;
+        }
+        return khachHangDAO.timTheoSdt(sdt.trim());
+    }
+
     public String timHoacTaoKhachHang(String hoTen, String sdt) {
-        List<HoiVienDTO> ds = khachHangDAO.search(sdt);
-        if (ds != null && !ds.isEmpty()) {
-            return ds.get(0).getMaKH();
+        HoiVienDTO khachHang = timKhachHangTheoSdt(sdt);
+        if (khachHang != null) {
+            return khachHang.getMaKH();
         }
 
         HoiVienDTO newKH = new HoiVienDTO();
-        newKH.setHoTen(hoTen);
-        newKH.setSdt(sdt);
+        newKH.setHoTen(hoTen != null ? hoTen.trim() : "");
+        newKH.setSdt(sdt != null ? sdt.trim() : "");
         newKH.setTrangThai("Đang hoạt động");
         newKH.setLoaiKH("Khách vãng lai");
         try {
             khachHangDAO.insert(newKH);
-            ds = khachHangDAO.search(sdt);
-            if (ds != null && !ds.isEmpty()) {
-                return ds.get(0).getMaKH();
+            khachHang = timKhachHangTheoSdt(sdt);
+            if (khachHang != null) {
+                return khachHang.getMaKH();
             }
         } catch (Exception e) {
             System.err.println("[PhienLamViecService] Lỗi tạo khách hàng: " + e.getMessage());
@@ -112,5 +130,52 @@ public class PhienLamViecService {
 
     public boolean capNhatPhien(String maPhien, String trangThai, String tenKH) {
         return phienDAO.capNhatPhien(maPhien, trangThai, tenKH);
+    }
+
+    private void guiEmailXacNhanDatCho(String maDatCho, String maPhien) {
+        ThongTinXacNhanDatChoDTO thongTin = phienDAO.layThongTinXacNhanDatCho(maDatCho, maPhien);
+        if (thongTin == null) {
+            return;
+        }
+        if (thongTin.getEmail() == null || thongTin.getEmail().isBlank()) {
+            System.err.println("[PhienLamViecService] Khách hàng không có email để gửi xác nhận đặt chỗ.");
+            return;
+        }
+
+        byte[] qrPng = MaQRUtil.taoAnhPng(thongTin.getMaQR());
+        boolean sent = EmailUtil.guiEmailXacNhanDatChoDaThanhToan(
+                thongTin.getEmail(),
+                thongTin.getHoTen(),
+                thongTin.getMaPhien(),
+                thongTin.getMaDatCho(),
+                thongTin.getTenKhongGian(),
+                thongTin.getTenChiNhanh(),
+                dinhDangKhoangThoiGian(thongTin),
+                dinhDangTien(thongTin.getThanhTien()),
+                qrPng
+        );
+        if (!sent) {
+            System.err.println("[PhienLamViecService] Đã xác nhận thanh toán nhưng chưa gửi được email cho "
+                    + thongTin.getEmail());
+        }
+    }
+
+    private String dinhDangKhoangThoiGian(ThongTinXacNhanDatChoDTO thongTin) {
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm dd/MM/yyyy");
+        if (thongTin.getThoiGianBatDau() == null) {
+            return "Chưa có";
+        }
+        String start = formatter.format(thongTin.getThoiGianBatDau());
+        if (thongTin.getThoiGianDuKienKetThuc() == null) {
+            return start;
+        }
+        return start + " - " + formatter.format(thongTin.getThoiGianDuKienKetThuc());
+    }
+
+    private String dinhDangTien(BigDecimal value) {
+        if (value == null) {
+            return "0 VNĐ";
+        }
+        return new DecimalFormat("#,### VNĐ").format(value);
     }
 }

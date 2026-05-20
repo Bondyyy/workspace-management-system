@@ -35,6 +35,22 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
         });
     }
 
+    public javax.swing.JTable getTblLoaiDichVu() {
+        return tblLoaiDichVu;
+    }
+
+    public javax.swing.JTextField getTxtMaLoai() {
+        return txtMaLoai;
+    }
+
+    public javax.swing.JTextField getTxtTenLoai() {
+        return txtTenLoai;
+    }
+
+    public javax.swing.JComboBox<String> getCbxTrangThai() {
+        return cbxTrangThai;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -54,6 +70,7 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
         btnTimKiem = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblLoaiDichVu = new javax.swing.JTable();
+        btnLamMoi = new javax.swing.JButton();
         pnRight = new javax.swing.JPanel();
         lblDetailTitle = new javax.swing.JLabel();
         lblMaLoai = new javax.swing.JLabel();
@@ -64,7 +81,6 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
         cbxTrangThai = new javax.swing.JComboBox<>();
         btnThem = new javax.swing.JButton();
         btnCapNhat = new javax.swing.JButton();
-        btnLamMoi = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(1050, 640));
         setLayout(new java.awt.BorderLayout());
@@ -99,18 +115,18 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
         lblTimKiem.setForeground(new java.awt.Color(35, 30, 48));
         lblTimKiem.setText("Tìm kiếm loại DV:");
         pnLeft.add(lblTimKiem);
-        lblTimKiem.setBounds(20, 55, 130, 35);
+        lblTimKiem.setBounds(20, 60, 130, 35);
 
         txtTimKiem.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         pnLeft.add(txtTimKiem);
-        txtTimKiem.setBounds(150, 55, 320, 35);
+        txtTimKiem.setBounds(150, 60, 240, 35);
 
         btnTimKiem.setBackground(new java.awt.Color(235, 94, 141));
         btnTimKiem.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setText("Tìm");
         pnLeft.add(btnTimKiem);
-        btnTimKiem.setBounds(480, 55, 90, 35);
+        btnTimKiem.setBounds(390, 60, 80, 35);
 
         tblLoaiDichVu.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -139,6 +155,12 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
 
         pnLeft.add(jScrollPane1);
         jScrollPane1.setBounds(20, 110, 550, 410);
+
+        btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
+        btnLamMoi.setText("Làm mới");
+        pnLeft.add(btnLamMoi);
+        btnLamMoi.setBounds(470, 60, 100, 35);
 
         pnMain.add(pnLeft);
         pnLeft.setBounds(440, 70, 590, 540);
@@ -200,12 +222,6 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
         pnRight.add(btnCapNhat);
         btnCapNhat.setBounds(210, 290, 170, 35);
 
-        btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
-        btnLamMoi.setText("Làm mới form");
-        pnRight.add(btnLamMoi);
-        btnLamMoi.setBounds(20, 340, 360, 35);
-
         pnMain.add(pnRight);
         pnRight.setBounds(20, 70, 400, 540);
 
@@ -239,12 +255,5 @@ public class QuanLyLoaiDichVuForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtMaLoai;
     private javax.swing.JTextField txtTenLoai;
     private javax.swing.JTextField txtTimKiem;
-    // Getters for Controller access
-    public javax.swing.JTable getTblLoaiDichVu() { return tblLoaiDichVu; }
-    public javax.swing.JTextField getTxtMaLoai() { return txtMaLoai; }
-    public javax.swing.JTextField getTxtTenLoai() { return txtTenLoai; }
-    public javax.swing.JComboBox<String> getCbxTrangThai() { return cbxTrangThai; }
-    public javax.swing.JTextField getTxtTimKiem() { return txtTimKiem; }
-
     // End of variables declaration//GEN-END:variables
 }

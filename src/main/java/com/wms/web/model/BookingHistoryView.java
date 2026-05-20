@@ -8,6 +8,7 @@ public class BookingHistoryView {
     private final String maPhien;
     private final String maDatCho;
     private final String maHoaDon;
+    private final String maQR;
     private final String tenKhongGian;
     private final String tenChiNhanh;
     private final LocalDateTime thoiGianBatDau;
@@ -20,7 +21,7 @@ public class BookingHistoryView {
     private final LocalDateTime ngayLapHoaDon;
     private final List<SessionServiceView> dichVuDaDung;
 
-    public BookingHistoryView(String maPhien, String maDatCho, String maHoaDon,
+    public BookingHistoryView(String maPhien, String maDatCho, String maHoaDon, String maQR,
                               String tenKhongGian, String tenChiNhanh,
                               LocalDateTime thoiGianBatDau, LocalDateTime thoiGianDuKienKetThuc,
                               LocalDateTime thoiGianKetThuc, String trangThaiPhien,
@@ -29,6 +30,7 @@ public class BookingHistoryView {
         this.maPhien = maPhien;
         this.maDatCho = maDatCho;
         this.maHoaDon = maHoaDon;
+        this.maQR = maQR;
         this.tenKhongGian = tenKhongGian;
         this.tenChiNhanh = tenChiNhanh;
         this.thoiGianBatDau = thoiGianBatDau;
@@ -52,6 +54,10 @@ public class BookingHistoryView {
 
     public String getMaHoaDon() {
         return maHoaDon;
+    }
+
+    public String getMaQR() {
+        return maQR;
     }
 
     public String getTenKhongGian() {

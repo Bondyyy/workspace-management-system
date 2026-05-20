@@ -1,6 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyPhien.PhienLamViecService;
 import com.wms.view.TrangChuQuanLy.QuanLyPhien.MoPhienMoiForm;
@@ -19,6 +20,10 @@ public class MoPhienMoiController {
 
     public List<KhongGianDTO> layKhongGian(String maCN) {
         return service.layKhongGian(maCN);
+    }
+
+    public HoiVienDTO timKhachHangTheoSdt(String sdt) {
+        return service.timKhachHangTheoSdt(sdt);
     }
 
     /** Xác định chi nhánh dựa vào người dùng đang đăng nhập (fallback). */

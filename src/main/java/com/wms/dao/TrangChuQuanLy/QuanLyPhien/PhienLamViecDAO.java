@@ -4,6 +4,7 @@ import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -260,6 +261,46 @@ public class PhienLamViecDAO {
             System.err.println("[PhienLamViecDAO] Lỗi lấy dịch vụ: " + e.getMessage());
         }
         return list;
+    }
+
+    public ThongTinXacNhanDatChoDTO layThongTinXacNhanDatCho(String maDatCho, String maPhien) {
+        String sql = """
+                SELECT p.MaPhien, dc.MaDatCho, dc.MaQR, nd.HoTen, nd.Email,
+                       kg.TenKG, cn.TenCN, p.ThoiGianBatDau, p.ThoiGianDuKienKetThuc,
+                       h.ThanhTien
+                FROM PHIENLAMVIEC p
+                JOIN DATCHO dc ON dc.MaDatCho = p.MaDatCho
+                JOIN KHACHHANG kh ON kh.MaKH = p.MaKH
+                JOIN NGUOIDUNG nd ON nd.MaND = kh.MaND
+                JOIN KHONGGIAN kg ON kg.MaKG = p.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                LEFT JOIN HOADON h ON h.MaPhien = p.MaPhien
+                WHERE dc.MaDatCho = ? AND p.MaPhien = ?
+                """;
+        try (Connection conn = getConn();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maDatCho);
+            ps.setString(2, maPhien);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    ThongTinXacNhanDatChoDTO dto = new ThongTinXacNhanDatChoDTO();
+                    dto.setMaPhien(rs.getString("MaPhien"));
+                    dto.setMaDatCho(rs.getString("MaDatCho"));
+                    dto.setMaQR(rs.getString("MaQR"));
+                    dto.setHoTen(rs.getString("HoTen"));
+                    dto.setEmail(rs.getString("Email"));
+                    dto.setTenKhongGian(rs.getString("TenKG"));
+                    dto.setTenChiNhanh(rs.getString("TenCN"));
+                    dto.setThoiGianBatDau(rs.getTimestamp("ThoiGianBatDau"));
+                    dto.setThoiGianDuKienKetThuc(rs.getTimestamp("ThoiGianDuKienKetThuc"));
+                    dto.setThanhTien(rs.getBigDecimal("ThanhTien"));
+                    return dto;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[PhienLamViecDAO] Lỗi lấy thông tin xác nhận đặt chỗ: " + e.getMessage());
+        }
+        return null;
     }
 
     public int demSoLuong() {

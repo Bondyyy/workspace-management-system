@@ -11,6 +11,9 @@ import com.wms.web.service.PortalService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Controller
 public class PortalController {
@@ -279,6 +283,20 @@ public class PortalController {
         model.addAttribute("activePage", "history");
         model.addAttribute("histories", portalService.getMemberBookingHistory(user.getMaKH()));
         return "web/history";
+    }
+
+    @GetMapping(value = "/portal/history/{maPhien}/qr.png", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> sessionQr(@PathVariable("maPhien") String maPhien, HttpSession session) {
+        SessionUser user = currentMember(session);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return portalService.getSessionQrPng(user.getMaKH(), maPhien)
+                .map(bytes -> ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_PNG)
+                        .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePrivate())
+                        .body(bytes))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/portal/account")

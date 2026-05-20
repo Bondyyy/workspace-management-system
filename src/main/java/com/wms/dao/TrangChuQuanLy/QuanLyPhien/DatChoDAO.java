@@ -50,4 +50,20 @@ public class DatChoDAO {
             return false;
         }
     }
+
+    public boolean capNhatMaQR(String maDatCho, String maQR) {
+        String sql = "UPDATE DATCHO SET MaQR = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaDatCho = ?";
+        Connection conn = DatabaseConnection.getInstance().getConnection();
+        if (conn == null)
+            return false;
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, maQR);
+            pstmt.setString(2, maDatCho);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[DatChoDAO] Lỗi khi cập nhật mã QR đặt chỗ: " + e.getMessage());
+            return false;
+        }
+    }
 }

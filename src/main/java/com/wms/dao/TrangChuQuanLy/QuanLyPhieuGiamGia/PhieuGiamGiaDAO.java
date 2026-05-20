@@ -94,8 +94,8 @@ public class PhieuGiamGiaDAO {
 
     public boolean themMoi(PhieuGiamGiaDTO dto) {
         String sql = "INSERT INTO PHIEUGIAMGIA (MaPGG, MaChuSoPGG, GiaTriGiamGia, GiaTriApDungToiThieu, " +
-                     "NgayBatDauApDung, NgayKetThucApDung, SLDaDung, SLToiDa, NgayTaoPGG, MaNV) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, ?)";
+                     "NgayBatDauApDung, NgayKetThucApDung, SLDaDung, SLToiDa, NgayTaoPGG, MaNV, TrangThai) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, ?, ?)";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, dto.getMaPGG());
@@ -107,6 +107,7 @@ public class PhieuGiamGiaDAO {
             ps.setInt(7, 0);
             ps.setInt(8, dto.getSlToiDa());
             ps.setString(9, dto.getMaNV());
+            ps.setString(10, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[PhieuGiamGiaDAO] Lỗi thêm mới: " + e.getMessage());
@@ -116,7 +117,7 @@ public class PhieuGiamGiaDAO {
 
     public boolean capNhat(PhieuGiamGiaDTO dto) {
         String sql = "UPDATE PHIEUGIAMGIA SET MaChuSoPGG = ?, GiaTriGiamGia = ?, GiaTriApDungToiThieu = ?, " +
-                     "NgayBatDauApDung = ?, NgayKetThucApDung = ?, SLToiDa = ? WHERE MaPGG = ?";
+                     "NgayBatDauApDung = ?, NgayKetThucApDung = ?, SLToiDa = ?, TrangThai = ? WHERE MaPGG = ?";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, dto.getMaChuSoPGG());
@@ -125,7 +126,8 @@ public class PhieuGiamGiaDAO {
             ps.setTimestamp(4, new Timestamp(dto.getNgayBatDauApDung().getTime()));
             ps.setTimestamp(5, new Timestamp(dto.getNgayKetThucApDung().getTime()));
             ps.setInt(6, dto.getSlToiDa());
-            ps.setString(7, dto.getMaPGG());
+            ps.setString(7, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");
+            ps.setString(8, dto.getMaPGG());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[PhieuGiamGiaDAO] Lỗi cập nhật: " + e.getMessage());
@@ -134,13 +136,13 @@ public class PhieuGiamGiaDAO {
     }
 
     public boolean xoa(String maPGG) {
-        String sql = "DELETE FROM PHIEUGIAMGIA WHERE MaPGG = ?";
+        String sql = "UPDATE PHIEUGIAMGIA SET TrangThai = 'Đã vô hiệu hoá' WHERE MaPGG = ?";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maPGG);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("[PhieuGiamGiaDAO] Lỗi xóa: " + e.getMessage());
+            System.err.println("[PhieuGiamGiaDAO] Lỗi ngưng hoạt động: " + e.getMessage());
             return false;
         }
     }
@@ -157,6 +159,23 @@ public class PhieuGiamGiaDAO {
         }
     }
 
+    private String tinhTrangThaiTuDong(PhieuGiamGiaDTO dto, String dbTrangThai) {
+        if ("Đã vô hiệu hoá".equals(dbTrangThai) || "Đã ngưng".equals(dbTrangThai)) {
+            return "Đã vô hiệu hoá";
+        }
+        java.util.Date now = new java.util.Date();
+        if (dto.getNgayBatDauApDung() != null && now.before(dto.getNgayBatDauApDung())) {
+            return "Chưa đến hạn bắt đầu";
+        }
+        if (dto.getNgayKetThucApDung() != null && now.after(dto.getNgayKetThucApDung())) {
+            return "Hết hiệu lực";
+        }
+        if (dto.getSlToiDa() > 0 && dto.getSlDaDung() >= dto.getSlToiDa()) {
+            return "Hết hiệu lực";
+        }
+        return "Đang có hiệu lực";
+    }
+
     private PhieuGiamGiaDTO mapRow(ResultSet rs) throws SQLException {
         PhieuGiamGiaDTO dto = new PhieuGiamGiaDTO();
         dto.setMaPGG(rs.getString("MaPGG"));
@@ -169,6 +188,9 @@ public class PhieuGiamGiaDAO {
         dto.setSlToiDa(rs.getInt("SLToiDa"));
         dto.setNgayTaoPGG(rs.getTimestamp("NgayTaoPGG"));
         dto.setMaNV(rs.getString("MaNV"));
+        
+        String dbTrangThai = rs.getString("TrangThai");
+        dto.setTrangThai(tinhTrangThaiTuDong(dto, dbTrangThai));
         return dto;
     }
 }

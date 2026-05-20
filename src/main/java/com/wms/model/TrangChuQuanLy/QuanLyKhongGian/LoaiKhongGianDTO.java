@@ -5,8 +5,17 @@ public class LoaiKhongGianDTO {
     private String tenLoaiKG;
     private Integer sucChua;
     private Double donGiaTheoGio;
+    private String trangThai;
 
     public LoaiKhongGianDTO() {}
+
+    public String getTrangThai() {
+        return trangThai;
+    }
+
+    public void setTrangThai(String trangThai) {
+        this.trangThai = trangThai;
+    }
 
     public String getMaLoaiKG() {
         return maLoaiKG;

@@ -56,7 +56,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         javax.swing.JButton[] menuButtons = {
                 btnMenuTongQuan, btnMenuChiNhanh, btnMenuKhongGian,
                 btnMenuDichVu, btnMenuLoaiDichVu, btnMenuKho, btnMenuPhien, btnMenuDichVuDat,
-                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuNhanVien, btnMenuNguoiDung, btnMenuVaiTro
+                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuHangThanhVien, btnMenuNhanVien, btnMenuNguoiDung, btnMenuVaiTro
         };
 
         for (javax.swing.JButton b : menuButtons) {
@@ -76,7 +76,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         javax.swing.JButton[] menuButtons = {
                 btnMenuTongQuan, btnMenuChiNhanh, btnMenuKhongGian,
                 btnMenuDichVu, btnMenuLoaiDichVu, btnMenuKho, btnMenuPhien, btnMenuDichVuDat,
-                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuNhanVien, btnMenuNguoiDung, btnMenuVaiTro
+                btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuHangThanhVien, btnMenuNhanVien, btnMenuNguoiDung, btnMenuVaiTro
         };
 
         java.awt.Color defaultColor = new java.awt.Color(255, 255, 255);
@@ -123,6 +123,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuHoaDon.setVisible(user.hasChucNang("CN08"));
         btnMenuGiamGia.setVisible(user.hasChucNang("CN09"));
         btnMenuHoiVien.setVisible(user.hasChucNang("CN10"));
+        btnMenuHangThanhVien.setVisible(user.hasChucNang("CN15") || user.hasRole("VT01") || user.hasRole("Quản trị viên Hệ thống"));
         btnMenuNhanVien.setVisible(user.hasChucNang("CN11"));
         btnMenuLoaiDichVu.setVisible(user.hasChucNang("CN14"));
         btnMenuNguoiDung.setVisible(user.hasChucNang("CN12"));
@@ -150,6 +151,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
                 btnMenuNguoiDung.setVisible(true);
                 btnMenuVaiTro.setVisible(true);
                 btnMenuLoaiDichVu.setVisible(true);
+                btnMenuHangThanhVien.setVisible(true);
             } else {
                 btnMenuTongQuan.setVisible(true);
             }
@@ -172,6 +174,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuHoaDon.setVisible(true);
         btnMenuGiamGia.setVisible(true);
         btnMenuHoiVien.setVisible(true);
+        btnMenuHangThanhVien.setVisible(true);
         btnMenuNhanVien.setVisible(true);
 
         lblRole.setText("Vai trò: " + vaiTro);
@@ -220,6 +223,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuHoaDon = new javax.swing.JButton();
         btnMenuGiamGia = new javax.swing.JButton();
         btnMenuHoiVien = new javax.swing.JButton();
+        btnMenuHangThanhVien = new javax.swing.JButton();
         btnMenuNhanVien = new javax.swing.JButton();
         btnMenuLoaiDichVu = new javax.swing.JButton();
         btnMenuNguoiDung = new javax.swing.JButton();
@@ -380,6 +384,17 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuHoiVien.setMaximumSize(new java.awt.Dimension(32767, 45));
         btnMenuHoiVien.addActionListener(this::btnMenuHoiVienActionPerformed);
         pnMenuContainer.add(btnMenuHoiVien);
+
+        btnMenuHangThanhVien.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        btnMenuHangThanhVien.setForeground(new java.awt.Color(48, 30, 35));
+        btnMenuHangThanhVien.setText("●  Hạng thành viên");
+        btnMenuHangThanhVien.setBorderPainted(false);
+        btnMenuHangThanhVien.setContentAreaFilled(false);
+        btnMenuHangThanhVien.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnMenuHangThanhVien.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        btnMenuHangThanhVien.setMaximumSize(new java.awt.Dimension(32767, 45));
+        btnMenuHangThanhVien.addActionListener(this::btnMenuHangThanhVienActionPerformed);
+        pnMenuContainer.add(btnMenuHangThanhVien);
 
         btnMenuNhanVien.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
         btnMenuNhanVien.setForeground(new java.awt.Color(48, 30, 35));
@@ -543,6 +558,11 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         setActiveMenu(btnMenuHoiVien);
     }
 
+    private void btnMenuHangThanhVienActionPerformed(java.awt.event.ActionEvent evt) {
+        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyHangThanhVien.QuanLyHangThanhVienForm());
+        setActiveMenu(btnMenuHangThanhVien);
+    }
+
     private void btnMenuNhanVienActionPerformed(java.awt.event.ActionEvent evt) {
         showPanel(new com.wms.view.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienForm());
         setActiveMenu(btnMenuNhanVien);
@@ -610,6 +630,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     private javax.swing.JButton btnMenuGiamGia;
     private javax.swing.JButton btnMenuHoaDon;
     private javax.swing.JButton btnMenuHoiVien;
+    private javax.swing.JButton btnMenuHangThanhVien;
     private javax.swing.JButton btnMenuKho;
     private javax.swing.JButton btnMenuKhongGian;
     private javax.swing.JButton btnMenuNhanVien;

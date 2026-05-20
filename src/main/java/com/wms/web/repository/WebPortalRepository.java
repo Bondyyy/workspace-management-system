@@ -10,6 +10,7 @@ import com.wms.web.model.SessionServiceView;
 import com.wms.web.model.SessionUser;
 import com.wms.web.model.SpaceView;
 import com.wms.web.model.VoucherView;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -577,6 +578,52 @@ public class WebPortalRepository {
         );
     }
 
+    public void updateBookingQr(String maDatCho, String maQR) {
+        jdbcTemplate.update(
+                "UPDATE DATCHO SET MaQR = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaDatCho = ?",
+                maQR,
+                maDatCho
+        );
+    }
+
+    public ThongTinXacNhanDatChoDTO findConfirmationDetailsByBooking(String maDatCho) {
+        String sql = """
+                SELECT p.MaPhien, dc.MaDatCho, dc.MaQR, nd.HoTen, nd.Email,
+                       kg.TenKG, cn.TenCN, p.ThoiGianBatDau, p.ThoiGianDuKienKetThuc,
+                       h.ThanhTien
+                FROM DATCHO dc
+                JOIN PHIENLAMVIEC p ON p.MaDatCho = dc.MaDatCho
+                JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
+                JOIN NGUOIDUNG nd ON nd.MaND = kh.MaND
+                JOIN KHONGGIAN kg ON kg.MaKG = dc.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                LEFT JOIN HOADON h ON h.MaPhien = p.MaPhien
+                WHERE dc.MaDatCho = ?
+                """;
+        try {
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapThongTinXacNhanDatCho(rs), maDatCho);
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public String findSessionQrForMember(String maKH, String maPhien) {
+        if (maKH == null || maKH.isBlank() || maPhien == null || maPhien.isBlank()) {
+            return null;
+        }
+        String sql = """
+                SELECT dc.MaQR
+                FROM PHIENLAMVIEC p
+                JOIN DATCHO dc ON dc.MaDatCho = p.MaDatCho
+                WHERE p.MaKH = ? AND p.MaPhien = ?
+                """;
+        try {
+            return jdbcTemplate.queryForObject(sql, String.class, maKH, maPhien);
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
     public List<MemberSessionView> findMemberSessions(String maKH) {
         String sql = """
                 SELECT p.MaPhien, p.MaKG, kg.TenKG, cn.TenCN, p.ThoiGianBatDau,
@@ -596,13 +643,14 @@ public class WebPortalRepository {
             return List.of();
         }
         String sql = """
-                SELECT p.MaPhien, p.MaDatCho, kg.TenKG, cn.TenCN,
+                SELECT p.MaPhien, p.MaDatCho, dc.MaQR, kg.TenKG, cn.TenCN,
                        p.ThoiGianBatDau, p.ThoiGianDuKienKetThuc, p.ThoiGianKetThuc,
                        p.TrangThaiPhien, h.MaHoaDon, h.TongTien, h.ThanhTien,
                        h.TrangThaiThanhToan, h.NgayLapHoaDon
                 FROM PHIENLAMVIEC p
                 JOIN KHONGGIAN kg ON kg.MaKG = p.MaKG
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                LEFT JOIN DATCHO dc ON dc.MaDatCho = p.MaDatCho
                 LEFT JOIN HOADON h ON h.MaPhien = p.MaPhien
                 WHERE p.MaKH = ?
                 ORDER BY p.ThoiGianBatDau DESC
@@ -617,6 +665,7 @@ public class WebPortalRepository {
                     maPhien,
                     rs.getString("MaDatCho"),
                     rs.getString("MaHoaDon"),
+                    rs.getString("MaQR"),
                     rs.getString("TenKG"),
                     rs.getString("TenCN"),
                     start == null ? null : start.toLocalDateTime(),
@@ -786,6 +835,21 @@ public class WebPortalRepository {
                 rs.getBigDecimal("ThanhTien"),
                 rs.getString("GhiChu")
         );
+    }
+
+    private ThongTinXacNhanDatChoDTO mapThongTinXacNhanDatCho(java.sql.ResultSet rs) throws java.sql.SQLException {
+        ThongTinXacNhanDatChoDTO dto = new ThongTinXacNhanDatChoDTO();
+        dto.setMaPhien(rs.getString("MaPhien"));
+        dto.setMaDatCho(rs.getString("MaDatCho"));
+        dto.setMaQR(rs.getString("MaQR"));
+        dto.setHoTen(rs.getString("HoTen"));
+        dto.setEmail(rs.getString("Email"));
+        dto.setTenKhongGian(rs.getString("TenKG"));
+        dto.setTenChiNhanh(rs.getString("TenCN"));
+        dto.setThoiGianBatDau(rs.getTimestamp("ThoiGianBatDau"));
+        dto.setThoiGianDuKienKetThuc(rs.getTimestamp("ThoiGianDuKienKetThuc"));
+        dto.setThanhTien(rs.getBigDecimal("ThanhTien"));
+        return dto;
     }
 
     private VoucherView mapVoucher(java.sql.ResultSet rs) throws java.sql.SQLException {

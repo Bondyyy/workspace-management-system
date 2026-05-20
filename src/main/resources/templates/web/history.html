@@ -39,10 +39,16 @@
         <div class="history-list" th:if="${!#lists.isEmpty(histories)}">
             <article class="history-card" th:each="item : ${histories}">
                 <div class="history-main">
-                    <div>
-                        <span class="history-code" th:text="${item.maPhien}">PH0001</span>
-                        <h3 th:text="${item.tenKhongGian}">Không gian</h3>
-                        <p th:text="${item.tenChiNhanh}">Chi nhánh</p>
+                    <div class="history-title">
+                        <div>
+                            <span class="history-code" th:text="${item.maPhien}">PH0001</span>
+                            <h3 th:text="${item.tenKhongGian}">Không gian</h3>
+                            <p th:text="${item.tenChiNhanh}">Chi nhánh</p>
+                        </div>
+                        <div class="history-qr" th:if="${item.maQR != null and !#strings.isEmpty(item.maQR)}">
+                            <img th:src="@{'/portal/history/' + ${item.maPhien} + '/qr.png'}" alt="QR phiên làm việc">
+                            <span>QR nhận chỗ</span>
+                        </div>
                     </div>
                     <div class="history-money">
                         <span>Tổng cộng</span>

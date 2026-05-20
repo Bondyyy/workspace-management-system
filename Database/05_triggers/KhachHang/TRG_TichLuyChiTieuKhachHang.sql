@@ -4,8 +4,8 @@ FOR EACH ROW
 DECLARE
     v_MaKH VARCHAR2(50);
 BEGIN
-    IF :NEW.TrangThaiThanhToan = 'Thành công' AND
-       (INSERTING OR (UPDATING AND NVL(:OLD.TrangThaiThanhToan, '') != 'Thành công')) THEN
+    IF :NEW.TrangThaiThanhToan IN ('Đã thanh toán thành công', 'Đã thanh toán') AND
+       (INSERTING OR (UPDATING AND NVL(:OLD.TrangThaiThanhToan, '') NOT IN ('Đã thanh toán thành công', 'Đã thanh toán'))) THEN
 
         BEGIN
             SELECT MaKH INTO v_MaKH
@@ -14,7 +14,7 @@ BEGIN
 
             IF v_MaKH IS NOT NULL THEN
                 UPDATE KHACHHANG
-                SET TongChiTieu = NVL(TongChiTieu, 0) + :NEW.ThanhTien
+                SET TongChiTieu = NVL(TongChiTieu, 0) + NVL(:NEW.ThanhTien, 0)
                 WHERE MaKH = v_MaKH;
             END IF;
 

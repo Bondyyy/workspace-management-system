@@ -1,7 +1,7 @@
 package com.wms.service.TrangChuQuanLy.QuanLyHoiVien;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyHoiVien.KhachHangDAO;
-import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.HangThanhVienDAO;
+import com.wms.dao.TrangChuQuanLy.QuanLyHangThanhVien.HangThanhVienDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import java.util.List;
 

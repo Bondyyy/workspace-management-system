@@ -95,6 +95,49 @@ public class KhachHangDAO {
         return list;
     }
 
+    public HoiVienDTO timTheoSdt(String sdt) {
+        if (sdt == null || sdt.trim().isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT kh.MaKH, kh.MaND, nd.HoTen, kh.TongChiTieu, kh.MaHangThanhVien, " +
+                "nd.SDT, nd.Email, nd.NgaySinh, nd.GioiTinh, nd.AnhDaiDien, nd.TrangThaiND, " +
+                "h.TenHangThanhVien " +
+                "FROM KHACHHANG kh " +
+                "JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
+                "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
+                "WHERE kh.MaKH NOT LIKE 'KH_ADMIN_%' " +
+                "AND NOT EXISTS (SELECT 1 FROM NHANVIEN nv WHERE nv.MaND = kh.MaND) " +
+                "AND nd.SDT = ? " +
+                "ORDER BY kh.MaKH DESC";
+
+        try (Connection conn = getConn();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, sdt.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    HoiVienDTO dto = new HoiVienDTO();
+                    dto.setMaKH(rs.getString("MaKH"));
+                    dto.setMaND(rs.getString("MaND"));
+                    dto.setHoTen(rs.getString("HoTen"));
+                    dto.setSdt(rs.getString("SDT"));
+                    dto.setEmail(rs.getString("Email"));
+                    dto.setNgaySinh(rs.getDate("NgaySinh"));
+                    dto.setGioiTinh(rs.getString("GioiTinh"));
+                    dto.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
+                    dto.setTrangThai(rs.getString("TrangThaiND"));
+                    dto.setTongChiTieu(rs.getDouble("TongChiTieu"));
+                    dto.setMaHangThanhVien(rs.getString("MaHangThanhVien"));
+                    dto.setHangThanhVien(rs.getString("TenHangThanhVien"));
+                    return dto;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public String timMaKHTheoMaND(String maND) {
         if (maND == null || maND.isEmpty())
             return null;

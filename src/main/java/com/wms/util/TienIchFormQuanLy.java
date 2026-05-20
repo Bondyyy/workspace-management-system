@@ -124,9 +124,9 @@ public final class TienIchFormQuanLy {
                 ten("txtTenKhongGian", "cbxChiNhanh", "cbxLoaiKhongGian", "cbxTrangThai")));
         cauHinh.put("QuanLyLoaiKhongGianForm", cauHinh(
                 "btnThemMoi", "btnCapNhat", "tblLoaiKhongGian",
-                ten("txtTenLoaiKG", "txtDonGia"),
-                ten("txtTenLoaiKG", "txtSucChua", "txtDonGia"),
-                ten("txtTenLoaiKG", "txtSucChua", "txtDonGia")));
+                ten("txtTenLoaiKG", "txtDonGia", "cbxTrangThai"),
+                ten("txtTenLoaiKG", "txtSucChua", "txtDonGia", "cbxTrangThai"),
+                ten("txtTenLoaiKG", "txtSucChua", "txtDonGia", "cbxTrangThai")));
         cauHinh.put("QuanLyLoaiDichVuForm", cauHinh(
                 "btnThem", "btnCapNhat", "tblLoaiDichVu",
                 ten("txtTenLoai"),
@@ -159,6 +159,11 @@ public final class TienIchFormQuanLy {
                 ten("txtHoTen", "txtSDT", "txtTenTaiKhoan", "txtMatKhau", "txtEmail", "txtNgaySinh", "cbxGioiTinh", "cbxCaLam", "cbxChiNhanh", "cbxNhomQuyen", "txtLuong", "cbxTrangThai")));
         cauHinh.put("QuanLyHangTVForm", cauHinh(
                 null, "btnSua", "tblHangTV",
+                ten(),
+                ten("txtMaHang", "cbxTenHang", "spnPhanTram", "txtChiTieu"),
+                ten("cbxTenHang", "spnPhanTram", "txtChiTieu")));
+        cauHinh.put("QuanLyHangThanhVienForm", cauHinh(
+                null, "btnCapNhat", "tblHangTV",
                 ten(),
                 ten("txtMaHang", "cbxTenHang", "spnPhanTram", "txtChiTieu"),
                 ten("cbxTenHang", "spnPhanTram", "txtChiTieu")));

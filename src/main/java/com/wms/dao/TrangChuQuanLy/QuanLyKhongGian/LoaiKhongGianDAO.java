@@ -21,10 +21,10 @@ public class LoaiKhongGianDAO {
         List<LoaiKhongGianDTO> list = new ArrayList<>();
         String sql;
         if (tuKhoa == null || tuKhoa.isBlank()) {
-            sql = "SELECT MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio "
+            sql = "SELECT MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio, TrangThai "
                 + "FROM LOAIKHONGGIAN ORDER BY MaLoaiKG";
         } else {
-            sql = "SELECT MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio "
+            sql = "SELECT MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio, TrangThai "
                 + "FROM LOAIKHONGGIAN "
                 + "WHERE UPPER(TenLoaiKG) LIKE UPPER(?) OR UPPER(MaLoaiKG) LIKE UPPER(?) "
                 + "ORDER BY MaLoaiKG";
@@ -53,7 +53,7 @@ public class LoaiKhongGianDAO {
             dto.setMaLoaiKG(taoMaMoi());
         }
 
-        String sql = "INSERT INTO LOAIKHONGGIAN (MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO LOAIKHONGGIAN (MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio, TrangThai) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, dto.getMaLoaiKG());
@@ -62,6 +62,7 @@ public class LoaiKhongGianDAO {
             else ps.setNull(3, Types.INTEGER);
             if (dto.getDonGiaTheoGio() != null) ps.setDouble(4, dto.getDonGiaTheoGio());
             else ps.setNull(4, Types.DOUBLE);
+            ps.setString(5, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động");
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[LoaiKhongGianDAO] Lỗi thêm: " + e.getMessage());
@@ -70,7 +71,7 @@ public class LoaiKhongGianDAO {
     }
 
     public boolean capNhat(LoaiKhongGianDTO dto) {
-        String sql = "UPDATE LOAIKHONGGIAN SET TenLoaiKG = ?, SucChua = ?, DonGiaTheoGio = ? WHERE MaLoaiKG = ?";
+        String sql = "UPDATE LOAIKHONGGIAN SET TenLoaiKG = ?, SucChua = ?, DonGiaTheoGio = ?, TrangThai = ? WHERE MaLoaiKG = ?";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, dto.getTenLoaiKG());
@@ -78,7 +79,8 @@ public class LoaiKhongGianDAO {
             else ps.setNull(2, Types.INTEGER);
             if (dto.getDonGiaTheoGio() != null) ps.setDouble(3, dto.getDonGiaTheoGio());
             else ps.setNull(3, Types.DOUBLE);
-            ps.setString(4, dto.getMaLoaiKG());
+            ps.setString(4, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động");
+            ps.setString(5, dto.getMaLoaiKG());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[LoaiKhongGianDAO] Lỗi cập nhật: " + e.getMessage());
@@ -99,7 +101,7 @@ public class LoaiKhongGianDAO {
     }
 
     public LoaiKhongGianDTO layTheoMa(String maLoaiKG) {
-        String sql = "SELECT MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio FROM LOAIKHONGGIAN WHERE MaLoaiKG = ?";
+        String sql = "SELECT MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio, TrangThai FROM LOAIKHONGGIAN WHERE MaLoaiKG = ?";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maLoaiKG);
@@ -147,6 +149,7 @@ public class LoaiKhongGianDAO {
         dto.setSucChua(rs.wasNull() ? null : sucChua);
         double donGia = rs.getDouble("DonGiaTheoGio");
         dto.setDonGiaTheoGio(rs.wasNull() ? null : donGia);
+        dto.setTrangThai(rs.getString("TrangThai"));
         return dto;
     }
 }

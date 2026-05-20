@@ -10,14 +10,19 @@ import com.wms.web.model.SessionUser;
 import com.wms.web.model.SpaceView;
 import com.wms.web.model.VoucherView;
 import com.wms.web.repository.WebPortalRepository;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
+import com.wms.util.EmailUtil;
+import com.wms.util.MaQRUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -234,12 +239,19 @@ public class PortalService {
 
     @Transactional
     public void confirmBooking(String maDatCho) {
+        ThongTinXacNhanDatChoDTO thongTin = repository.findConfirmationDetailsByBooking(maDatCho);
+        String maQR = thongTin == null ? null : MaQRUtil.taoMaQRPhien(thongTin.getMaPhien(), maDatCho);
         repository.updateBookingStatus(
                 maDatCho,
                 "Da thanh toan thanh cong",
                 " | Nhan vien da xac nhan yeu cau."
         );
         repository.updateInvoiceStatusByBooking(maDatCho, "Da thanh toan thanh cong");
+        if (maQR != null) {
+            repository.updateBookingQr(maDatCho, maQR);
+            thongTin.setMaQR(maQR);
+            guiEmailXacNhanDatCho(thongTin);
+        }
     }
 
     @Transactional
@@ -299,6 +311,56 @@ public class PortalService {
         } catch (RuntimeException ex) {
             return fallback;
         }
+    }
+
+    public Optional<byte[]> getSessionQrPng(String maKH, String maPhien) {
+        String maQR = repository.findSessionQrForMember(maKH, maPhien);
+        if (maQR == null || maQR.isBlank()) {
+            return Optional.empty();
+        }
+        byte[] png = MaQRUtil.taoAnhPng(maQR);
+        return png.length == 0 ? Optional.empty() : Optional.of(png);
+    }
+
+    private void guiEmailXacNhanDatCho(ThongTinXacNhanDatChoDTO thongTin) {
+        if (thongTin == null || thongTin.getEmail() == null || thongTin.getEmail().isBlank()) {
+            return;
+        }
+        byte[] qrPng = MaQRUtil.taoAnhPng(thongTin.getMaQR());
+        boolean sent = EmailUtil.guiEmailXacNhanDatChoDaThanhToan(
+                thongTin.getEmail(),
+                thongTin.getHoTen(),
+                thongTin.getMaPhien(),
+                thongTin.getMaDatCho(),
+                thongTin.getTenKhongGian(),
+                thongTin.getTenChiNhanh(),
+                dinhDangKhoangThoiGian(thongTin),
+                dinhDangTien(thongTin.getThanhTien()),
+                qrPng
+        );
+        if (!sent) {
+            System.err.println("[PortalService] Đã xác nhận đặt chỗ nhưng chưa gửi được email cho " + thongTin.getEmail());
+        }
+    }
+
+    private String dinhDangKhoangThoiGian(ThongTinXacNhanDatChoDTO thongTin) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+        if (thongTin.getThoiGianBatDau() == null) {
+            return "Chưa có";
+        }
+        LocalDateTime start = thongTin.getThoiGianBatDau().toLocalDateTime();
+        if (thongTin.getThoiGianDuKienKetThuc() == null) {
+            return formatter.format(start);
+        }
+        LocalDateTime end = thongTin.getThoiGianDuKienKetThuc().toLocalDateTime();
+        return formatter.format(start) + " - " + formatter.format(end);
+    }
+
+    private String dinhDangTien(BigDecimal value) {
+        if (value == null) {
+            return "0 VNĐ";
+        }
+        return new DecimalFormat("#,### VNĐ").format(value);
     }
 
     public record BookingWindow(LocalDate date, LocalTime startTime, LocalTime endTime) {

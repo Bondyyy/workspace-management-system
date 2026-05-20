@@ -1,13 +1,19 @@
 package com.wms.util;
 
 import jakarta.mail.Authenticator;
+import jakarta.mail.BodyPart;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
+import jakarta.activation.DataHandler;
 
 import java.io.InputStream;
 import java.util.Properties;
@@ -63,6 +69,108 @@ public class EmailUtil {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static boolean guiEmailXacNhanDatChoDaThanhToan(
+            String toEmail,
+            String hoTen,
+            String maPhien,
+            String maDatCho,
+            String tenKhongGian,
+            String tenChiNhanh,
+            String thoiGian,
+            String thanhTien,
+            byte[] anhQRPng) {
+        if (toEmail == null || toEmail.isBlank()) {
+            System.err.println("[EmailUtil] Không có email khách hàng để gửi xác nhận đặt chỗ.");
+            return false;
+        }
+        if (SENDER_EMAIL == null || SENDER_EMAIL.isBlank()
+                || SENDER_APP_PASSWORD == null || SENDER_APP_PASSWORD.isBlank()) {
+            System.err.println("[EmailUtil] Lỗi: email gửi hoặc app password chưa được cấu hình!");
+            return false;
+        }
+
+        Session session = createSmtpSession();
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(SENDER_EMAIL));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Xác nhận thanh toán phiên " + safe(maPhien) + " - Spring MNGT");
+
+            Multipart multipart = new MimeMultipart("related");
+
+            BodyPart htmlPart = new MimeBodyPart();
+            htmlPart.setContent(taoNoiDungEmailXacNhan(hoTen, maPhien, maDatCho, tenKhongGian, tenChiNhanh, thoiGian, thanhTien),
+                    "text/html; charset=utf-8");
+            multipart.addBodyPart(htmlPart);
+
+            if (anhQRPng != null && anhQRPng.length > 0) {
+                MimeBodyPart qrPart = new MimeBodyPart();
+                qrPart.setDataHandler(new DataHandler(new ByteArrayDataSource(anhQRPng, "image/png")));
+                qrPart.setHeader("Content-ID", "<sessionQr>");
+                qrPart.setDisposition(MimeBodyPart.INLINE);
+                qrPart.setFileName("qr-" + safe(maPhien) + ".png");
+                multipart.addBodyPart(qrPart);
+            }
+
+            message.setContent(multipart);
+            Transport.send(message);
+            System.out.println("[EmailUtil] Đã gửi email xác nhận đặt chỗ tới: " + toEmail);
+            return true;
+        } catch (MessagingException e) {
+            System.err.println("[EmailUtil] Lỗi gửi email xác nhận đặt chỗ: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static String taoNoiDungEmailXacNhan(String hoTen, String maPhien, String maDatCho,
+                                                 String tenKhongGian, String tenChiNhanh,
+                                                 String thoiGian, String thanhTien) {
+        String qrHtml = "<p style=\"margin:18px 0 8px;color:#555;\">Mã QR phiên làm việc của bạn:</p>"
+                + "<img src=\"cid:sessionQr\" alt=\"QR phiên làm việc\" style=\"width:220px;height:220px;border:1px solid #f3c9d9;padding:10px;\"/>";
+        return """
+                <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f1722;">
+                    <h2 style="color:#eb5e8d;">Spring MNGT xác nhận thanh toán thành công</h2>
+                    <p>Xin chào <b>%s</b>,</p>
+                    <p>Cảm ơn bạn đã đặt chỗ tại Spring MNGT. Phiên làm việc của bạn đã được nhân viên xác nhận thanh toán.</p>
+                    <div style="background:#fff5f8;border:1px solid #f3c9d9;padding:14px 18px;margin:18px 0;">
+                        <p><b>Mã phiên:</b> %s</p>
+                        <p><b>Mã đặt chỗ:</b> %s</p>
+                        <p><b>Không gian:</b> %s</p>
+                        <p><b>Chi nhánh:</b> %s</p>
+                        <p><b>Thời gian:</b> %s</p>
+                        <p><b>Tổng cộng:</b> %s</p>
+                    </div>
+                    %s
+                    <p style="margin-top:18px;">Khi đến quầy, bạn có thể mở email này hoặc lịch sử đặt chỗ trên web để nhân viên quét mã nhanh hơn.</p>
+                    <p>Hẹn gặp bạn tại Spring MNGT.</p>
+                </div>
+                """.formatted(
+                html(safe(hoTen, "Quý khách")),
+                html(safe(maPhien)),
+                html(safe(maDatCho)),
+                html(safe(tenKhongGian)),
+                html(safe(tenChiNhanh)),
+                html(safe(thoiGian)),
+                html(safe(thanhTien, "0 VNĐ")),
+                qrHtml
+        );
+    }
+
+    private static String safe(String value) {
+        return safe(value, "");
+    }
+
+    private static String safe(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    private static String html(String value) {
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 
     private static Session createSmtpSession() {
