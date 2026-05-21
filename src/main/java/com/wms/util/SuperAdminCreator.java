@@ -221,9 +221,9 @@ public class SuperAdminCreator {
     }
 
     private static DbLabels loadDbLabels(Connection conn) {
-        List<String> trangThaiND = constraintValues(conn, "CHK_ND_TRANGTHAI");
-        List<String> gioiTinh = constraintValues(conn, "CHK_ND_GIOITINH");
-        List<String> loaiNV = constraintValues(conn, "CHK_NV_LOAINV");
+        List<String> trangThaiND = layGiaTriRangBuoc(conn, "CHK_ND_TRANGTHAI");
+        List<String> gioiTinh = layGiaTriRangBuoc(conn, "CHK_ND_GIOITINH");
+        List<String> loaiNV = layGiaTriRangBuoc(conn, "CHK_NV_LOAINV");
 
         return new DbLabels(
                 pick(trangThaiND, "dang hoat dong", 0, "Đang hoạt động"),
@@ -232,7 +232,7 @@ public class SuperAdminCreator {
         );
     }
 
-    private static List<String> constraintValues(Connection conn, String constraintName) {
+    private static List<String> layGiaTriRangBuoc(Connection conn, String constraintName) {
         List<String> values = new ArrayList<>();
         String sql = """
                 SELECT search_condition_vc
@@ -257,7 +257,7 @@ public class SuperAdminCreator {
 
     private static String pick(List<String> values, String normalizedNeedle, int fallbackIndex, String fallbackValue) {
         for (String value : values) {
-            if (normalize(value).contains(normalizedNeedle)) {
+            if (chuanHoa(value).contains(normalizedNeedle)) {
                 return value;
             }
         }
@@ -268,7 +268,7 @@ public class SuperAdminCreator {
         return fallbackValue;
     }
 
-    private static String normalize(String value) {
+    private static String chuanHoa(String value) {
         if (value == null) {
             return "";
         }

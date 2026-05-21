@@ -9,7 +9,7 @@ public class DangNhapController {
 
     private static NguoiDungDTO currentUser;
 
-    public NguoiDungService.ketQuaDangNhap login(String tenTaiKhoan, String matKhau) {
+    public NguoiDungService.ketQuaDangNhap dangNhap(String tenTaiKhoan, String matKhau) {
         NguoiDungService.AuthResponse response = nguoiDungService.authenticate(tenTaiKhoan, matKhau);
         
         if (response.getResult() == NguoiDungService.ketQuaDangNhap.THANH_CONG) {
@@ -23,7 +23,7 @@ public class DangNhapController {
         return currentUser;
     }
 
-    public static void logout() {
+    public static void dangXuat() {
         currentUser = null;
     }
 }

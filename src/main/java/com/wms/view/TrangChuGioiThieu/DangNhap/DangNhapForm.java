@@ -182,7 +182,7 @@ public class DangNhapForm extends javax.swing.JPanel {
         }
 
         DangNhapController controller = new DangNhapController();
-        NguoiDungService.ketQuaDangNhap result = controller.login(username, password);
+        NguoiDungService.ketQuaDangNhap result = controller.dangNhap(username, password);
 
         switch (result) {
             case THANH_CONG:
@@ -195,7 +195,7 @@ public class DangNhapForm extends javax.swing.JPanel {
                 }
 
                 // Nếu user có bất kỳ vai trò nào khác Hội viên HOẶC có bản ghi trong bảng NHANVIEN
-                System.out.println("[DEBUG] Login User: " + user.getTenTaiKhoan());
+                System.out.println("[DEBUG] dangNhap User: " + user.getTenTaiKhoan());
                 System.out.println("[DEBUG] User MaNV: " + user.getMaNV());
                 System.out.println("[DEBUG] User Roles: " + user.getVaiTro());
                 

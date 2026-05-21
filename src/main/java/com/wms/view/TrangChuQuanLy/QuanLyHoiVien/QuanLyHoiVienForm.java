@@ -129,8 +129,6 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         btnTimKiem = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblHoiVien = new javax.swing.JTable();
-        cbxNhomQuyen = new javax.swing.JComboBox<>();
-        lblNhomQuyen = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -331,28 +329,12 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         pnMain.add(jScrollPane1);
         jScrollPane1.setBounds(420, 130, 600, 480);
 
-        cbxNhomQuyen.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxNhomQuyen.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Admin (Toàn quyền)", "Quản lý Chi nhánh", "Nhân viên phục vụ" }));
-        cbxNhomQuyen.addActionListener(this::cbxNhomQuyenActionPerformed);
-        pnMain.add(cbxNhomQuyen);
-        cbxNhomQuyen.setBounds(20, 460, 370, 40);
-
-        lblNhomQuyen.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblNhomQuyen.setForeground(new java.awt.Color(35, 30, 48));
-        lblNhomQuyen.setText("Vai trò (*)");
-        pnMain.add(lblNhomQuyen);
-        lblNhomQuyen.setBounds(20, 440, 370, 18);
-
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void cbxHangTVActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_cbxHangTVActionPerformed
         // TODO add your handling code here:
     }// GEN-LAST:event_cbxHangTVActionPerformed
-
-    private void cbxNhomQuyenActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_cbxNhomQuyenActionPerformed
-        // TODO add your handling code here:
-    }// GEN-LAST:event_cbxNhomQuyenActionPerformed
 
     private void btnDoiAnhActionPerformed(java.awt.event.ActionEvent evt) {
         JFileChooser fileChooser = new JFileChooser();
@@ -404,9 +386,9 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn hội viên!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa?", "Xác nhận",
+        int xacNhan = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa?", "Xác nhận",
                 JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (xacNhan == JOptionPane.YES_OPTION) {
             try {
                 controller.xoaHoiVien(selectedHoiVien.getMaKH(), selectedHoiVien.getMaND());
                 JOptionPane.showMessageDialog(this, "Xóa thành công!");
@@ -469,7 +451,6 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JComboBox<String> cbxGioiTinh;
     private javax.swing.JComboBox<String> cbxHangTV;
-    private javax.swing.JComboBox<String> cbxNhomQuyen;
     private javax.swing.JComboBox<String> cbxTrangThai;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblAnhDaiDien;
@@ -480,7 +461,6 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblHoTen;
     private javax.swing.JLabel lblMaHV;
     private javax.swing.JLabel lblNgaySinh;
-    private javax.swing.JLabel lblNhomQuyen;
     private javax.swing.JLabel lblSDT;
     private javax.swing.JLabel lblTimKiem;
     private javax.swing.JLabel lblTongChiTieu;

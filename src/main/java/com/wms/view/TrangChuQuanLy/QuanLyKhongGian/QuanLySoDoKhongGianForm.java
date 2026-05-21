@@ -324,10 +324,10 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
     }
 
     private void btnLuuCSDLActionPerformed(java.awt.event.ActionEvent evt) {
-        int confirm = JOptionPane.showConfirmDialog(this,
+        int xacNhan = JOptionPane.showConfirmDialog(this,
                 "Bạn có muốn lưu toàn bộ thay đổi toạ độ vào CSDL không?",
                 "Xác nhận", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (xacNhan == JOptionPane.YES_OPTION) {
             String loi = controller.luuToaDo(dsKG);
             if (loi == null) {
                 JOptionPane.showMessageDialog(this, "Lưu thành công!");

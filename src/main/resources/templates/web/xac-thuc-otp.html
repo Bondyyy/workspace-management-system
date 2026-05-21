@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực OTP - Spring Workspace</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+</head>
+<body class="workspace-auth-page">
+<main class="workspace-auth">
+    <section class="auth-glass otp-glass">
+        <a class="auth-brand" th:href="@{/}">SPRING WORKSPACE</a>
+        <div class="auth-title">
+            <h1>Xác thực OTP</h1>
+            <p>Mã đã gửi tới <strong th:text="${email}"></strong></p>
+        </div>
+
+        <p class="flash success" th:if="${success}" th:text="${success}"></p>
+        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+
+        <form th:action="@{/register/verify}" th:object="${MaOtpForm}" method="post" class="workspace-form">
+            <label>
+                Nhập mã OTP
+                <input class="otp-input" type="text" inputmode="numeric" maxlength="6" th:field="*{otp}" placeholder="000000">
+                <span class="field-error" th:if="${#fields.hasErrors('otp')}" th:errors="*{otp}"></span>
+            </label>
+            <button type="submit" class="pink-button submit">Xác thực và tạo tài khoản</button>
+        </form>
+
+        <p class="auth-switch">Sai email? <a th:href="@{/register}">Đăng ký lại</a></p>
+    </section>
+
+    <section class="auth-hero-copy">
+        <div>
+            <h2>SPRING WORKSPACE</h2>
+            <p>Hoàn tất xác thực để bắt đầu đặt chỗ trực tiếp trên web.</p>
+        </div>
+    </section>
+</main>
+</body>
+</html>

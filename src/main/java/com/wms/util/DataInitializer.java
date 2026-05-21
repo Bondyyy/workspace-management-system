@@ -64,7 +64,7 @@ public class DataInitializer {
 
     public static void khoiTaoChucNang(Connection conn) {
         String[][] data = {
-                { "CN01", "Tổng quan", "Xem dashboard thống kê và báo cáo" },
+                { "CN01", "Tổng quan", "Xem hienThiBangDieuKhien thống kê và báo cáo" },
                 { "CN02", "Chi nhánh", "Quản lý thông tin và trạng thái các chi nhánh" },
                 { "CN03", "Không gian", "Quản lý sơ đồ, vị trí và trạng thái chỗ ngồi/phòng" },
                 { "CN04", "Thông tin Dịch vụ", "Quản lý danh mục dịch vụ F&B và tiện ích" },

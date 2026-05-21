@@ -54,7 +54,7 @@ public class NguoiDungService {
                 return new AuthResponse(ketQuaDangNhap.SAI_MAT_KHAU, null);
             }
 
-            nguoiDungDAO.updateLastLogin(user.getMaND());
+            nguoiDungDAO.capNhatLanDangNhapCuoi(user.getMaND());
             return new AuthResponse(ketQuaDangNhap.THANH_CONG, user);
         } catch (SQLException e) {
             System.err.println("[Service] Lỗi SQL khi đăng nhập: " + e.getMessage());
@@ -204,7 +204,7 @@ public class NguoiDungService {
     }
 
     private boolean isActive(String status) {
-        String normalized = normalize(status);
+        String normalized = chuanHoa(status);
         return !normalized.isBlank()
                 && !normalized.contains("khong hoat dong")
                 && !normalized.contains("ngung hoat dong")
@@ -215,7 +215,7 @@ public class NguoiDungService {
         return value == null || value.trim().isEmpty();
     }
 
-    private String normalize(String value) {
+    private String chuanHoa(String value) {
         if (value == null) {
             return "";
         }

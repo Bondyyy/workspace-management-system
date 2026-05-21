@@ -30,7 +30,6 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         txtMaND.setEditable(false);
         // Mở khóa để nhập khi tạo mới
         txtTaiKhoan.setEditable(true);
-        txtMatKhau.setEditable(true);
     }
 
     private void setupEvents() {
@@ -317,10 +316,6 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnPhanQuyenActionPerformed(java.awt.event.ActionEvent evt) {
-        TrangChuQuanLyForm mainForm = (TrangChuQuanLyForm) SwingUtilities.getWindowAncestor(this);
-        mainForm.showPanel(new QuanLyVaiTroForm());
-    }
 
     private void btnDoiAnhActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnDoiAnhActionPerformed
         // TODO add your handling code here:
@@ -411,9 +406,5 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
 
     public javax.swing.JTextField getTxtMatKhau() {
         return txtMatKhau;
-    }
-
-    public javax.swing.JComboBox<String> getCbxNhomQuyen() {
-        return cbxNhomQuyen;
     }
 }

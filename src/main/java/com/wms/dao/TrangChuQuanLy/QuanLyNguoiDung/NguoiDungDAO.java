@@ -215,7 +215,7 @@ public class NguoiDungDAO {
         }
     }
 
-    public void updateLastLogin(String maND) throws SQLException {
+    public void capNhatLanDangNhapCuoi(String maND) throws SQLException {
         String sql = "UPDATE NGUOIDUNG SET LanCuoiDangNhap = CURRENT_TIMESTAMP WHERE MaND = ?";
         try (PreparedStatement ps = getConn().prepareStatement(sql)) {
             ps.setString(1, maND);

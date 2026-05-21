@@ -407,9 +407,9 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn cập nhật không gian \"" + maKG + "\"?",
+        int xacNhan = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn cập nhật không gian \"" + maKG + "\"?",
                 "Xác nhận", JOptionPane.YES_NO_OPTION);
-        if (confirm != JOptionPane.YES_OPTION)
+        if (xacNhan != JOptionPane.YES_OPTION)
             return;
 
         KhongGianDTO dto = controller.layKhongGianTheoMa(maKG);
@@ -466,15 +466,23 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         cbxTrangThai.setSelectedItem(trangThai);
 
         for (int i = 0; i < cbxChiNhanh.getItemCount(); i++) {
-            if (cbxChiNhanh.getItemAt(i).startsWith(maCN + " ")) {
-                cbxChiNhanh.setSelectedIndex(i);
-                break;
+            String item = cbxChiNhanh.getItemAt(i);
+            if (item != null && item.contains(" - ")) {
+                String tenCN = item.split(" - ", 2)[1].trim();
+                if (tenCN.equalsIgnoreCase(maCN)) {
+                    cbxChiNhanh.setSelectedIndex(i);
+                    break;
+                }
             }
         }
         for (int i = 0; i < cbxLoaiKhongGian.getItemCount(); i++) {
-            if (cbxLoaiKhongGian.getItemAt(i).startsWith(maLoaiKG + " ")) {
-                cbxLoaiKhongGian.setSelectedIndex(i);
-                break;
+            String item = cbxLoaiKhongGian.getItemAt(i);
+            if (item != null && item.contains(" - ")) {
+                String tenLoai = item.split(" - ", 2)[1].trim();
+                if (tenLoai.equalsIgnoreCase(maLoaiKG)) {
+                    cbxLoaiKhongGian.setSelectedIndex(i);
+                    break;
+                }
             }
         }
     }

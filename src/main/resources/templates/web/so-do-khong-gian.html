@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sơ đồ không gian - Spring MNGT</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+</head>
+<body class="member-page">
+<aside class="member-sidebar">
+    <a class="member-brand" th:href="@{/portal}">
+        <strong>SPRING MNGT</strong>
+        <span>MEMBER PORTAL</span>
+    </a>
+    <nav class="member-nav">
+        <a th:href="@{/portal}">Trang chủ</a>
+        <a th:href="@{/portal/branches}" class="active">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
+        <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
+        <a th:href="@{/portal/account}">Thông tin tài khoản</a>
+    </nav>
+    <form th:action="@{/dangXuat}" method="post" class="member-dangXuat">
+        <button type="submit">← Đăng xuất</button>
+    </form>
+</aside>
+
+<main class="member-main">
+    <header class="member-topbar">
+        <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+    </header>
+
+    <section class="map-title">
+        <h2 th:text="'Sơ đồ Không gian - ' + ${branch.tenCN}">Sơ đồ Không gian</h2>
+    </section>
+
+    <section class="member-content map-layout">
+        <div class="map-panel">
+            <div class="panel-head compact-head">
+                <h3>Bản đồ không gian</h3>
+                <span class="subtle-text">
+                    <span th:text="${#temporals.format(selectedDate, 'dd/MM/yyyy')}"></span>,
+                    <span th:text="${selectedStart}"></span> - <span th:text="${selectedEnd}"></span>
+                </span>
+            </div>
+
+            <div class="floor-shell" th:style="|--map-cols:${mapColumns}; --map-rows:${mapRows};|">
+                <div class="reception">RECEPTION</div>
+                <div class="entrance">ENTRANCE</div>
+                <button type="button"
+                        class="space-node"
+                        th:each="space : ${spaces}"
+                        th:classappend="${!space.conTrong ? ' node-locked' : ''}"
+                        th:style="|--x:${space.toaDoX}; --y:${space.toaDoY}; --w:${space.chieuDai}; --h:${space.chieuRong};|"
+                        th:disabled="${!space.conTrong}"
+                        th:data-id="${space.maKG}"
+                        th:data-name="${space.tenKG}"
+                        th:data-price="${space.donGiaTheoGio != null ? space.donGiaTheoGio : 0}"
+                        th:data-available="${space.conTrong}">
+                    <strong th:text="${space.tenKG}">Không gian</strong>
+                    <small th:text="${space.tenLoaiKG}">Loại</small>
+                    <em th:if="${!space.conTrong and space.busyUntil != null}"
+                        th:text="|Trống sau ${#temporals.format(space.busyUntil, 'HH:mm')}|"></em>
+                </button>
+            </div>
+            <div class="map-legend">
+                <span><i class="legend-reception"></i> Quầy lễ tân</span>
+                <span><i class="legend-empty"></i> Trống</span>
+                <span><i class="legend-selected"></i> Đang chọn</span>
+                <span><i class="legend-booked"></i> Đã đặt</span>
+                <span><i class="legend-active"></i> Đang dùng</span>
+            </div>
+        </div>
+
+        <aside class="booking-side">
+            <h3>Đặt chỗ</h3>
+
+            <form th:action="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}" method="get" id="timeFilterForm" class="form-grid">
+                <label>
+                    Chi nhánh
+                    <input type="text" th:value="${branch.tenCN}" readonly>
+                </label>
+                <label>
+                    Ngày
+                    <input type="date" name="date" id="bookingDate" th:value="${selectedDate}" required>
+                </label>
+                <div class="time-row">
+                    <label>
+                        Từ giờ
+                        <select name="start" id="startHour">
+                            <option th:each="time : ${layLuaChonGio}"
+                                    th:value="${time}"
+                                    th:text="${time}"
+                                    th:selected="${time == selectedStart.toString()}"></option>
+                        </select>
+                    </label>
+                    <label>
+                        Đến giờ
+                        <select name="end" id="endHour">
+                            <option th:each="time : ${layLuaChonGio}"
+                                    th:value="${time}"
+                                    th:text="${time}"
+                                    th:selected="${time == selectedEnd.toString()}"></option>
+                        </select>
+                    </label>
+                </div>
+            </form>
+
+            <form th:action="@{/portal/checkout}" method="get" id="mapBookingForm" class="form-grid">
+                <input type="hidden" name="maKG" id="maKG">
+                <input type="hidden" name="arrivalTime" id="arrivalTime">
+                <input type="hidden" name="durationHours" id="durationHours" th:value="${selectedDuration}">
+
+                <label>
+                    Chỗ chọn
+                    <input type="text" id="selectedSpaceName" value="Chưa chọn" readonly>
+                </label>
+                <label>
+                    Ghi chú
+                    <textarea name="note" rows="2" placeholder="Ví dụ: phòng yên tĩnh"></textarea>
+                </label>
+                <div class="estimate-box">
+                    <span>Dự kiến</span>
+                    <strong id="estimateTotal">0 VNĐ</strong>
+                </div>
+                <button type="submit" class="button-primary full-width" id="continueButton" disabled>Thanh toán</button>
+                <a th:href="@{/portal/branches}" class="button-secondary full-width">Đổi chi nhánh</a>
+            </form>
+        </aside>
+    </section>
+</main>
+
+<script th:inline="javascript">
+    const nodes = document.querySelectorAll(".space-node");
+    const selectedInput = document.getElementById("selectedSpaceName");
+    const maKGInput = document.getElementById("maKG");
+    const arrivalInput = document.getElementById("arrivalTime");
+    const durationInput = document.getElementById("durationHours");
+    const dateInput = document.getElementById("bookingDate");
+    const startInput = document.getElementById("startHour");
+    const endInput = document.getElementById("endHour");
+    const timeFilterForm = document.getElementById("timeFilterForm");
+    const totalLabel = document.getElementById("estimateTotal");
+    const continueButton = document.getElementById("continueButton");
+    let selectedPrice = 0;
+
+    function minutes(value) {
+        const [hour, minute] = value.split(":").map(Number);
+        return hour * 60 + minute;
+    }
+
+    function formatMoney(value) {
+        return new Intl.NumberFormat("vi-VN").format(value) + " VNĐ";
+    }
+
+    function syncHiddenTime() {
+        const startMinutes = minutes(startInput.value);
+        const endMinutes = minutes(endInput.value);
+        const duration = Math.max(1, Math.round((endMinutes - startMinutes) / 60));
+        durationInput.value = duration;
+        arrivalInput.value = dateInput.value + "T" + startInput.value;
+        totalLabel.textContent = formatMoney(selectedPrice * duration);
+    }
+
+    function reloadForTimeChange() {
+        nodes.forEach((node) => node.disabled = true);
+        continueButton.disabled = true;
+        maKGInput.value = "";
+        selectedInput.value = "Đang cập nhật khung giờ...";
+        if (minutes(endInput.value) <= minutes(startInput.value)) {
+            const options = Array.from(endInput.options);
+            const next = options.find((option) => minutes(option.value) > minutes(startInput.value));
+            if (next) endInput.value = next.value;
+        }
+        timeFilterForm.submit();
+    }
+
+    nodes.forEach((node) => {
+        node.addEventListener("click", () => {
+            if (node.disabled || node.dataset.available !== "true") return;
+            nodes.forEach((item) => item.classList.remove("selected"));
+            node.classList.add("selected");
+            selectedPrice = Number(node.dataset.price || 0);
+            maKGInput.value = node.dataset.id;
+            selectedInput.value = node.dataset.name;
+            continueButton.disabled = false;
+            syncHiddenTime();
+        });
+    });
+
+    [dateInput, startInput, endInput].forEach((input) => input.addEventListener("change", reloadForTimeChange));
+    syncHiddenTime();
+</script>
+</body>
+</html>

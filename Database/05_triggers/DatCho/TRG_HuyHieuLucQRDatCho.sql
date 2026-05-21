@@ -5,7 +5,7 @@ WHEN (NEW.MaDatCho IS NOT NULL)
 BEGIN
     IF LOWER(:NEW.TrangThaiPhien) NOT LIKE '%t tr%' THEN
         UPDATE DATCHO
-        SET TrangThaiDatTruoc = 'Ä?Ã£ sá»­ dá»¥ng'
+        SET TrangThaiDatTruoc = 'Đã sử dụng'
         WHERE MaDatCho = :NEW.MaDatCho;
     END IF;
 END;

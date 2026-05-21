@@ -34,6 +34,10 @@ public final class MaQRUtil {
                 + "|TOKEN=" + token;
     }
 
+    public static String taoMaQRDatCho(String maDatCho) {
+        return taoMaQRPhien("", maDatCho);
+    }
+
     public static byte[] taoAnhPng(String noiDung) {
         return taoAnhPng(noiDung, DEFAULT_SIZE);
     }

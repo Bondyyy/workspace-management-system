@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Workspace</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+</head>
+<body class="spring-cover-page">
+<main class="spring-cover">
+    <section class="cover-left">
+        <nav class="cover-nav">
+            <a class="cover-brand" th:href="@{/}">SPRING WORKSPACE</a>
+            <div class="cover-actions">
+                <a class="glass-button" th:if="${user == null}" th:href="@{/dangNhap}">Đăng nhập</a>
+                <a class="pink-button" th:if="${user == null}" th:href="@{/register}">Tạo tài khoản</a>
+                <a class="glass-button" th:if="${user != null and user.staff}" th:href="@{/staff/bookings}">Bảng nhân viên</a>
+                <a class="pink-button" th:if="${user != null and !user.staff}" th:href="@{/portal}">Vào portal</a>
+            </div>
+        </nav>
+
+        <div class="cover-copy">
+            <p class="cover-kicker">Đặt chỗ không gian làm việc qua web</p>
+            <h1>Spring xin chào</h1>
+            <p>
+                Hội viên đăng nhập trên trình duyệt, chọn chi nhánh, chọn chỗ trên sơ đồ và gửi yêu cầu.
+                Nhân viên tiếp nhận trong hệ thống quản lý hiện có.
+            </p>
+            <div class="cover-cta">
+                <a class="pink-button large" th:if="${user == null}" th:href="@{/dangNhap}">Bắt đầu đặt chỗ</a>
+                <a class="pink-button large" th:if="${user != null and !user.staff}" th:href="@{/portal/branches}">Đặt chỗ ngay</a>
+                <a class="glass-button large" th:href="@{/register}">Tạo hội viên mới</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="cover-right">
+        <div class="cover-title-card">
+            <span>Spring Workspace Cafe</span>
+            <h2>Không gian học tập, làm việc và gặp gỡ</h2>
+            <p>Giao diện web dùng chung dữ liệu Oracle với app, đủ gọn cho đồ án nhưng vẫn có trải nghiệm giống sản phẩm thật.</p>
+        </div>
+    </section>
+</main>
+
+<section class="team-strip">
+    <div class="team-heading">
+        <p>Về chúng tôi</p>
+        <h2>Đội hình Spring</h2>
+    </div>
+    <div class="team-grid">
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Huy2.png}" alt="Lai Mộc Huy">
+            <strong>Lai Mộc Huy</strong>
+            <span>Nhóm trưởng</span>
+        </article>
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Dung2.png}" alt="Huỳnh Đức Dũng">
+            <strong>Huỳnh Đức Dũng</strong>
+            <span>Nhóm phó</span>
+        </article>
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Duyen2.png}" alt="Sơn Nguyễn Kỳ Duyên">
+            <strong>Sơn Nguyễn Kỳ Duyên</strong>
+            <span>Thư ký</span>
+        </article>
+        <article>
+            <img th:src="@{/images/ThanhVienNhom/Duc.png}" alt="Nguyễn Thành Đức">
+            <strong>Nguyễn Thành Đức</strong>
+            <span>Thành viên</span>
+        </article>
+    </div>
+</section>
+</body>
+</html>

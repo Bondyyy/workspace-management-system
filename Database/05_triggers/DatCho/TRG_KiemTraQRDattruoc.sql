@@ -19,11 +19,11 @@ BEGIN
 
     IF v_TrangThai = 'Đã sử dụng' THEN
         RAISE_APPLICATION_ERROR(-20003, 'Lỗi: Vé QR này đã được xài trước đó!');
-    ELSIF v_TrangThai NOT IN ('Đã thanh toán thành công', 'Đang chờ thanh toán') THEN
+    ELSIF v_TrangThai <> 'Đã thanh toán thành công' THEN
         RAISE_APPLICATION_ERROR(-20004, 'Lỗi: Vé chưa thanh toán hoặc giao dịch thất bại!');
     END IF;
 
-    IF SYSTIMESTAMP > (v_ThoiGianToi + v_khoangthoigiansudung) THEN
+    IF SYSTIMESTAMP > (v_ThoiGianToi + NUMTODSINTERVAL(v_khoangthoigiansudung, 'HOUR')) THEN
         RAISE_APPLICATION_ERROR(-20005, 'Lỗi: Vé đã quá hạn chờ');
     ELSIF SYSTIMESTAMP < (v_ThoiGianToi) THEN
         RAISE_APPLICATION_ERROR(-20006, 'Lỗi: Quá sớm, chưa đến giờ nhận chỗ hợp lệ!');

@@ -165,8 +165,8 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
 
     private void btnXoaNhomActionPerformed(java.awt.event.ActionEvent evt) {
         if (maVaiTroDangChon == null) return;
-        int confirm = JOptionPane.showConfirmDialog(this, "Xóa vai trò này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        int xacNhan = JOptionPane.showConfirmDialog(this, "Xóa vai trò này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (xacNhan == JOptionPane.YES_OPTION) {
             if (controller.xoaVaiTro(maVaiTroDangChon)) {
                 JOptionPane.showMessageDialog(this, "Xóa thành công!");
                 lamMoiPanel();

@@ -1,6 +1,7 @@
 package com.wms.view.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController;
+import java.text.Normalizer;
 
 public class QuanLyPhienForm extends javax.swing.JPanel {
 
@@ -181,7 +182,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pnMain = new javax.swing.JPanel();
@@ -276,19 +277,19 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         btnTaiLai.setBounds(500, 55, 95, 35);
 
         tblPhienLamViec.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][] {
+            new Object [][] {
 
-                },
-                new String[] {
-                        "Mã Phiên", "Không Gian", "Khách Hàng", "Bắt đầu", "Kết thúc", "Trạng thái", "Thanh toán",
-                        "Hình thức"
-                }) {
-            boolean[] canEdit = new boolean[] {
-                    false, false, false, false, false, false, false, false
+            },
+            new String [] {
+                "Mã Phiên", "Không Gian", "Khách Hàng", "Bắt đầu", "Kết thúc", "Trạng thái", "Thanh toán", "Hình thức"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
+                return canEdit [columnIndex];
             }
         });
         tblPhienLamViec.setRowHeight(30);
@@ -308,8 +309,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         pnLeft.add(lblChiNhanh);
         lblChiNhanh.setBounds(330, 20, 100, 18);
 
-        cbxChiNhanh.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[] { "Tất cả chi nhánh", "CN001 - Quận 1", "CN002 - Thủ Đức" }));
+        cbxChiNhanh.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tất cả chi nhánh", "CN001 - Quận 1", "CN002 - Thủ Đức" }));
         cbxChiNhanh.addActionListener(this::cbxChiNhanhActionPerformed);
         pnLeft.add(cbxChiNhanh);
         cbxChiNhanh.setBounds(410, 10, 180, 28);
@@ -423,18 +423,19 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         lblDichVu.setBounds(20, 340, 370, 20);
 
         tblDichVu.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][] {
+            new Object [][] {
 
-                },
-                new String[] {
-                        "Tên Dịch Vụ", "SL", "Đơn giá", "Thành tiền"
-                }) {
-            boolean[] canEdit = new boolean[] {
-                    false, false, false, false
+            },
+            new String [] {
+                "Tên Dịch Vụ", "SL", "Đơn giá", "Thành tiền"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit[columnIndex];
+                return canEdit [columnIndex];
             }
         });
         tblDichVu.setRowHeight(25);
@@ -509,7 +510,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         lblDuKien2.setBounds(210, 280, 150, 18);
 
         cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Tạm ngừng" }));
+        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang hoạt động", "Đã kết thúc", "Đã đặt trước" }));
         pnRight.add(cbxTrangThai);
         cbxTrangThai.setBounds(210, 185, 160, 30);
 
@@ -526,12 +527,12 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             return;
         }
 
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(this,
+        int xacNhan = javax.swing.JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn xóa phiên " + maPhien
                         + "?\nLưu ý: Hóa đơn và các chi tiết dịch vụ liên quan cũng sẽ bị xóa!",
                 "Xác nhận xóa", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.WARNING_MESSAGE);
 
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+        if (xacNhan == javax.swing.JOptionPane.YES_OPTION) {
             if (controller.xoaPhien(maPhien)) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Đã xóa phiên thành công!");
                 loadData("");
@@ -570,22 +571,31 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             return;
         }
 
-        com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO selected = currentList.get(row);
+        int modelRow = tblPhienLamViec.convertRowIndexToModel(row);
+        if (currentList == null || modelRow < 0 || modelRow >= currentList.size()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Không tìm thấy dữ liệu phiên đang chọn. Vui lòng tải lại danh sách!");
+            return;
+        }
+
+        com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO selected = currentList.get(modelRow);
         if (selected.getMaDatCho() == null) {
             javax.swing.JOptionPane.showMessageDialog(this,
                     "Đây là phiên khách vào trực tiếp, không cần xác nhận thanh toán đặt trước!");
             return;
         }
-        if (!"Đang chờ thanh toán".equals(selected.getTrangThaiDatCho())) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Phiên này không ở trạng thái 'Đang chờ thanh toán'!");
+        if (!coTheXacNhanThanhToan(selected)) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Phiên này không còn ở trạng thái chờ thanh toán!\nĐặt chỗ: "
+                            + hienTrangThai(selected.getTrangThaiDatCho()) + "\nHóa đơn: "
+                            + hienTrangThai(selected.getTrangThaiThanhToan()));
             return;
         }
 
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(this,
+        int xacNhan = javax.swing.JOptionPane.showConfirmDialog(this,
                 "Xác nhận khách hàng đã thanh toán cho mã đặt " + selected.getMaDatCho() + "?",
                 "Xác nhận thanh toán", javax.swing.JOptionPane.YES_NO_OPTION);
 
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+        if (xacNhan == javax.swing.JOptionPane.YES_OPTION) {
             if (controller.xacNhanThanhToanDatTruoc(selected)) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Xác nhận thanh toán thành công!");
                 loadData("");
@@ -594,6 +604,60 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                         "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private boolean coTheXacNhanThanhToan(com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO phien) {
+        String trangThaiDatCho = chuanHoaTrangThai(phien.getTrangThaiDatCho());
+        String trangThaiHoaDon = chuanHoaTrangThai(phien.getTrangThaiThanhToan());
+
+        if (trangThaiDatCho.contains("da su dung")
+                || trangThaiDatCho.contains("khong thanh cong")
+                || trangThaiHoaDon.contains("khong thanh cong")
+                || trangThaiHoaDon.contains("thanh toan thanh cong")
+                || trangThaiHoaDon.equals("da thanh toan")) {
+            return false;
+        }
+
+        return trangThaiDatCho.contains("cho thanh toan")
+                || trangThaiHoaDon.contains("cho thanh toan")
+                || trangThaiHoaDon.isBlank();
+    }
+
+    private String chuanHoaTrangThai(String value) {
+        if (value == null) {
+            return "";
+        }
+        String fixed = value;
+        if (value.indexOf('Ã') >= 0 || value.indexOf('Ä') >= 0 || value.indexOf('Â') >= 0) {
+            try {
+                String repaired = new String(value.getBytes("ISO-8859-1"), java.nio.charset.StandardCharsets.UTF_8);
+                if (repaired.indexOf('\uFFFD') < 0 && repaired.indexOf('?') < 0) {
+                    fixed = repaired;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (fixed.indexOf('�') >= 0) {
+            try {
+                String repaired = new String(value.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),
+                        java.nio.charset.StandardCharsets.UTF_8);
+                if (repaired.indexOf('\uFFFD') < 0 && repaired.indexOf('?') < 0) {
+                    fixed = repaired;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return Normalizer.normalize(fixed, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replace('đ', 'd')
+                .replaceAll("[^a-z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private String hienTrangThai(String value) {
+        return value == null || value.isBlank() ? "Chưa có" : value;
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
@@ -655,9 +719,9 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             return;
         }
 
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Xác nhận kết thúc phiên " + maPhien + "?",
+        int xacNhan = javax.swing.JOptionPane.showConfirmDialog(this, "Xác nhận kết thúc phiên " + maPhien + "?",
                 "Xác nhận", javax.swing.JOptionPane.YES_NO_OPTION);
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+        if (xacNhan == javax.swing.JOptionPane.YES_OPTION) {
             if (controller.ketThucPhien(maPhien)) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Đã kết thúc phiên thành công!");
                 loadData("");

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="20">
+    <title>Thanh toán đặt chỗ - Spring MNGT</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+</head>
+<body class="member-page hienThiXacNhanDatCho-page payment-wait-page">
+<aside class="member-sidebar">
+    <a class="member-brand" th:href="@{/portal}">
+        <strong>SPRING MNGT</strong>
+        <span>MEMBER PORTAL</span>
+    </a>
+    <nav class="member-nav">
+        <a th:href="@{/portal}">Trang chủ</a>
+        <a th:href="@{/portal/branches}" class="active">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
+        <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
+        <a th:href="@{/portal/account}">Thông tin tài khoản</a>
+    </nav>
+    <form th:action="@{/dangXuat}" method="post" class="member-dangXuat">
+        <button type="submit">← Đăng xuất</button>
+    </form>
+</aside>
+
+<main class="member-main">
+    <header class="member-topbar">
+        <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+    </header>
+
+    <section class="hienThiXacNhanDatCho-title">
+        <h2>Thanh toán đặt chỗ</h2>
+    </section>
+
+    <section class="member-content payment-wait-layout">
+        <p class="flash success" th:if="${success}" th:text="${success}"></p>
+        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+
+        <div class="hienThiXacNhanDatCho-panel payment-summary-panel">
+            <div class="panel-head">
+                <h3>Thông tin giữ chỗ</h3>
+                <span class="status-chip" th:text="${payment.trangThaiDatTruoc}">Đang chờ thanh toán</span>
+            </div>
+            <div class="payment-summary-grid">
+                <span>
+                    <strong>Mã đặt chỗ</strong>
+                    <em th:text="${payment.maDatCho}">DC000001</em>
+                </span>
+                <span>
+                    <strong>Không gian</strong>
+                    <em th:text="${payment.tenKhongGian}">Không gian</em>
+                </span>
+                <span>
+                    <strong>Chi nhánh</strong>
+                    <em th:text="${payment.tenChiNhanh}">Chi nhánh</em>
+                </span>
+                <span>
+                    <strong>Thời gian</strong>
+                    <em th:text="${#temporals.format(payment.thoiGianDuKienToi, 'HH:mm dd/MM/yyyy')} + ' · ' + ${payment.khoangThoiGianSuDung} + ' giờ'">--</em>
+                </span>
+                <span>
+                    <strong>Hết hạn giữ chỗ</strong>
+                    <em th:text="${payment.hetHanThanhToan != null ? #temporals.format(payment.hetHanThanhToan, 'HH:mm:ss dd/MM/yyyy') : '10 phút sau khi tạo'}">--</em>
+                </span>
+                <span>
+                    <strong>Tổng cộng</strong>
+                    <em class="money" th:text="${#numbers.formatDecimal(payment.thanhTien, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</em>
+                </span>
+            </div>
+            <div class="payment-actions">
+                <a th:href="@{/portal/history}" class="button-secondary">Xem lịch sử đặt chỗ</a>
+                <a th:href="@{/portal/branches}" class="button-primary">Đặt chỗ khác</a>
+            </div>
+        </div>
+
+        <aside class="payment-panel transfer-panel">
+            <h3>Chuyển khoản</h3>
+            <div class="payment-total compact-total">
+                <span>Thành tiền</span>
+                <strong th:text="${#numbers.formatDecimal(payment.thanhTien, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
+            </div>
+            <div class="qr-payment">
+                <div class="qr-box">
+                    <img src="/images/QR_ThanhToan.jpg" alt="Mã QR thanh toán SPRING MNGT">
+                </div>
+                <p>Chuyển đúng số tiền và đúng nội dung để hệ thống tự xác nhận.</p>
+                <dl class="bank-info">
+                    <div>
+                        <dt>Ngân hàng:</dt>
+                        <dd>Vietcombank</dd>
+                    </div>
+                    <div>
+                        <dt>Số tài khoản:</dt>
+                        <dd>9375037830</dd>
+                    </div>
+                    <div>
+                        <dt>Chủ tài khoản:</dt>
+                        <dd>LAI MOC HUY</dd>
+                    </div>
+                    <div class="span-bank">
+                        <dt>Nội dung CK:</dt>
+                        <dd th:text="${payment.noiDungChuyenKhoan}">WMS DC000001</dd>
+                    </div>
+                </dl>
+            </div>
+        </aside>
+    </section>
+</main>
+</body>
+</html>

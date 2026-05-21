@@ -55,7 +55,7 @@ public class PhienLamViecService {
         String maQR = MaQRUtil.taoMaQRPhien(maPhien, maDatCho);
         boolean dcOk = datChoDAO.xacNhanThanhToan(maDatCho);
         boolean qrOk = dcOk && datChoDAO.capNhatMaQR(maDatCho, maQR);
-        boolean hdOk = hoaDonDAO.capNhatTrangThaiThanhToanTheoPhien(maPhien, "Đã thanh toán");
+        boolean hdOk = hoaDonDAO.capNhatTrangThaiThanhToanTheoPhien(maPhien, "Đã thanh toán thành công");
         if (dcOk && qrOk && hdOk) {
             guiEmailXacNhanDatCho(maDatCho, maPhien);
         }

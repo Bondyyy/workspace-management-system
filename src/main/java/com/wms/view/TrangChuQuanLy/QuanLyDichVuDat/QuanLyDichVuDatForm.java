@@ -363,9 +363,9 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa dịch vụ này khỏi phiên?",
+        int xacNhan = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa dịch vụ này khỏi phiên?",
                 "Xác nhận", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (xacNhan == JOptionPane.YES_OPTION) {
             String loi = controller.xoaDichVu(maPhien, tenDV);
             if (loi == null) {
                 JOptionPane.showMessageDialog(this, "Xóa dịch vụ thành công!");

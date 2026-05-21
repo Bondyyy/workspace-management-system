@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý yêu cầu đặt chỗ</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+</head>
+<body class="hienThiBangDieuKhien-page">
+<header class="hienThiBangDieuKhien-header">
+    <div>
+        <p class="eyebrow">Bảng điều phối nhân viên</p>
+        <h1>Yêu cầu đặt chỗ</h1>
+        <p th:text="'Đang đăng nhập bởi ' + ${user.hoTen}"></p>
+    </div>
+    <div class="header-actions">
+        <form th:action="@{/dangXuat}" method="post">
+            <button type="submit" class="button-secondary">Đăng xuất</button>
+        </form>
+    </div>
+</header>
+
+<main class="hienThiBangDieuKhien-grid single-column">
+    <section class="panel wide-panel">
+        <div class="panel-head">
+            <h2>Danh sách yêu cầu</h2>
+            <span class="subtle-text" th:text="${#lists.size(hienThiDatCho)} + ' bản ghi'"></span>
+        </div>
+        <p class="flash success" th:if="${success}" th:text="${success}"></p>
+        <div class="booking-table-wrap">
+            <table class="booking-table">
+                <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Hội viên</th>
+                    <th>Không gian</th>
+                    <th>Chi nhánh</th>
+                    <th>Giờ đến</th>
+                    <th>Số giờ</th>
+                    <th>Trạng thái</th>
+                    <th>Tạm tính</th>
+                    <th>Xử lý</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="booking : ${hienThiDatCho}">
+                    <td th:text="${booking.maDatCho}"></td>
+                    <td th:text="${booking.hoTen}"></td>
+                    <td th:text="${booking.tenKhongGian}"></td>
+                    <td th:text="${booking.tenChiNhanh}"></td>
+                    <td th:text="${booking.thoiGianDuKienToi != null ? #temporals.format(booking.thoiGianDuKienToi, 'dd/MM/yyyy HH:mm') : 'Chưa có'}"></td>
+                    <td th:text="${booking.khoangThoiGianSuDung != null ? booking.khoangThoiGianSuDung : 'Chưa có'}"></td>
+                    <td th:text="${booking.trangThaiDatTruoc}"></td>
+                    <td th:text="${booking.thanhTien != null ? #numbers.formatDecimal(booking.thanhTien, 0, 'COMMA', 0, 'POINT') : '0'}"></td>
+                    <td class="action-cell">
+                        <form th:action="@{'/staff/bookings/' + ${booking.maDatCho} + '/xacNhan'}" method="post">
+                            <button type="submit" class="button-primary small-button">Xác nhận</button>
+                        </form>
+                        <form th:action="@{'/staff/bookings/' + ${booking.maDatCho} + '/danhDauDaSuDung'}" method="post">
+                            <button type="submit" class="button-secondary small-button">Đã sử dụng</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(hienThiDatCho)}">
+                    <td colspan="9" class="empty-state">Chưa có yêu cầu đặt chỗ nào.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

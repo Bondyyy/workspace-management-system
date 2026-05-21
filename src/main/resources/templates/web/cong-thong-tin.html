@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring MNGT - Hội viên</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+</head>
+<body class="member-page portal-page">
+<aside class="member-sidebar">
+    <a class="member-brand" th:href="@{/portal}">
+        <strong>SPRING MNGT</strong>
+        <span>MEMBER PORTAL</span>
+    </a>
+    <nav class="member-nav">
+        <a th:href="@{/portal}" class="active">Trang chủ</a>
+        <a th:href="@{/portal/branches}">Đặt chỗ không gian</a>
+        <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
+        <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
+        <a th:href="@{/portal/account}">Thông tin tài khoản</a>
+    </nav>
+    <form th:action="@{/dangXuat}" method="post" class="member-dangXuat">
+        <button type="submit">← Đăng xuất</button>
+    </form>
+</aside>
+
+<main class="member-main">
+    <header class="member-topbar">
+        <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
+        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+    </header>
+
+    <section class="member-content">
+        <p class="flash success" th:if="${success}" th:text="${success}"></p>
+        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+
+        <div class="section-title">
+            <p>Tổng quan hoạt động</p>
+            <h2>Lịch sử và quyền lợi của bạn</h2>
+        </div>
+
+        <div class="metric-row">
+            <article class="metric-card pink-line">
+                <span>Điểm tích lũy</span>
+                <strong th:text="${#numbers.formatDecimal(totalSpent, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                <small th:text="'Hạng hiện tại: ' + ${rankName}">Hạng hiện tại: Không có</small>
+            </article>
+            <article class="metric-card blue-line">
+                <span>Tổng giờ sử dụng</span>
+                <strong th:text="${totalHours}">0</strong>
+                <small>Thống kê từ lịch sử đặt chỗ</small>
+            </article>
+            <article class="metric-card gold-line">
+                <span>Yêu cầu đặt chỗ</span>
+                <strong th:text="${bookingCount}">0</strong>
+                <small>Đã gửi qua cổng hội viên</small>
+            </article>
+        </div>
+
+        <div class="trangChu-layout">
+            <section class="member-panel">
+                <div class="panel-head">
+                    <h3>Lịch sử đặt chỗ gần đây</h3>
+                    <a th:href="@{/portal/branches}" class="small-link">Đặt chỗ mới</a>
+                </div>
+                <div class="booking-table-wrap">
+                    <table class="booking-table">
+                        <thead>
+                        <tr>
+                            <th>Mã phiếu</th>
+                            <th>Không gian</th>
+                            <th>Thời gian</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="booking : ${recentBookings}">
+                            <td th:text="${booking.maDatCho}"></td>
+                            <td th:text="${booking.tenKhongGian}"></td>
+                            <td th:text="${booking.thoiGianDuKienToi != null ? #temporals.format(booking.thoiGianDuKienToi, 'dd/MM/yyyy HH:mm') : 'Chưa có'}"></td>
+                            <td><span class="status-chip" th:text="${booking.trangThaiDatTruoc}"></span></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recentBookings)}">
+                            <td colspan="4" class="empty-state">Bạn chưa có yêu cầu đặt chỗ nào.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <aside class="featured-panel" th:if="${featuredSpace != null}">
+                <h3>Không gian nổi bật</h3>
+                <div class="featured-room">
+                    <span th:text="${featuredSpace.maKG}">KG001</span>
+                    <h4 th:text="${featuredSpace.tenKG}">Phòng họp SPRING 01</h4>
+                    <p th:text="${featuredSpace.tenCN}">Chi nhánh 1</p>
+                    <p>Không gian yên tĩnh, phù hợp họp nhóm, học tập và làm việc cá nhân.</p>
+                    <strong th:text="${featuredSpace.donGiaTheoGio != null ? #numbers.formatDecimal(featuredSpace.donGiaTheoGio, 0, 'COMMA', 0, 'POINT') + ' VNĐ/giờ' : '0 VNĐ/giờ'}">0 VNĐ/giờ</strong>
+                </div>
+                <a th:href="@{/portal/branches}" class="button-primary full-width">Đặt ngay bây giờ</a>
+            </aside>
+        </div>
+    </section>
+</main>
+</body>
+</html>

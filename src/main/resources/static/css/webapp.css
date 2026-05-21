@@ -988,6 +988,82 @@ hr {
     overflow-wrap: anywhere;
 }
 
+.payment-note {
+    margin: 14px 0 18px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.payment-wait-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 24px;
+    align-items: start;
+}
+
+.payment-wait-layout > .flash {
+    grid-column: 1 / -1;
+}
+
+.payment-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.payment-summary-grid span {
+    display: grid;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid #f1d9e4;
+    border-radius: var(--radius);
+    background: #fff8fb;
+}
+
+.payment-summary-grid strong {
+    color: #827381;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.payment-summary-grid em {
+    color: var(--ink);
+    font-style: normal;
+    font-weight: 850;
+    overflow-wrap: anywhere;
+}
+
+.payment-summary-grid .money {
+    color: var(--primary);
+    font-size: 1.35rem;
+}
+
+.payment-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.compact-total {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.transfer-panel .qr-box {
+    width: min(100%, 230px);
+}
+
+.bank-info .span-bank {
+    grid-column: 1 / -1;
+}
+
+.payment-wait-page .bank-info {
+    grid-template-columns: 1fr;
+}
+
 .rank-banner {
     display: grid;
     grid-template-columns: 1fr 1.15fr;
@@ -2010,6 +2086,12 @@ hr {
     }
 
     .checkout-page .checkout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-wait-layout,
+    .payment-summary-grid,
+    .payment-actions {
         grid-template-columns: 1fr;
     }
 }

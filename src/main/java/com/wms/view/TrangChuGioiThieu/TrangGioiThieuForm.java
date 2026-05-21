@@ -255,19 +255,19 @@ public class TrangGioiThieuForm extends javax.swing.JFrame {
     }
 
     public void showLoginForm() {
-        com.wms.view.TrangChuGioiThieu.DangNhap.DangNhapForm loginForm = new com.wms.view.TrangChuGioiThieu.DangNhap.DangNhapForm();
-        loginForm.setOpaque(false); // Cần thiết để hiển thị nền mờ phía dưới
+        com.wms.view.TrangChuGioiThieu.DangNhap.DangNhapForm DangNhapWebForm = new com.wms.view.TrangChuGioiThieu.DangNhap.DangNhapForm();
+        DangNhapWebForm.setOpaque(false); // Cần thiết để hiển thị nền mờ phía dưới
         pnAuthContainer.removeAll();
-        pnAuthContainer.add(loginForm, java.awt.BorderLayout.CENTER);
+        pnAuthContainer.add(DangNhapWebForm, java.awt.BorderLayout.CENTER);
         pnAuthContainer.revalidate();
         pnAuthContainer.repaint();
     }
 
     public void showRegisterForm() {
-        com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm registerForm = new com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm();
-        registerForm.setOpaque(false); // Cần thiết để hiển thị nền mờ phía dưới
+        com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm DangKyWebForm = new com.wms.view.TrangChuGioiThieu.DangKy.DangKyForm();
+        DangKyWebForm.setOpaque(false); // Cần thiết để hiển thị nền mờ phía dưới
         pnAuthContainer.removeAll();
-        pnAuthContainer.add(registerForm, java.awt.BorderLayout.CENTER);
+        pnAuthContainer.add(DangKyWebForm, java.awt.BorderLayout.CENTER);
         pnAuthContainer.revalidate();
         pnAuthContainer.repaint();
     }

@@ -371,8 +371,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         String ma = txtMaPGG.getText();
         if (ma.isEmpty()) return;
         
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn ngừng chương trình giảm giá này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        int xacNhan = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn ngừng chương trình giảm giá này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (xacNhan == JOptionPane.YES_OPTION) {
             if (controller.xoa(ma)) {
                 JOptionPane.showMessageDialog(this, "Đã ngưng chương trình thành công!");
                 loadDataToTable();

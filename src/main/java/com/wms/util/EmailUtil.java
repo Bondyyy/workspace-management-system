@@ -96,7 +96,8 @@ public class EmailUtil {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(SENDER_EMAIL));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            message.setSubject("Xác nhận thanh toán phiên " + safe(maPhien) + " - Spring MNGT");
+            String code = safe(maPhien).isBlank() ? safe(maDatCho) : safe(maPhien);
+            message.setSubject("Xác nhận thanh toán đặt chỗ " + code + " - Spring MNGT");
 
             Multipart multipart = new MimeMultipart("related");
 
@@ -108,9 +109,9 @@ public class EmailUtil {
             if (anhQRPng != null && anhQRPng.length > 0) {
                 MimeBodyPart qrPart = new MimeBodyPart();
                 qrPart.setDataHandler(new DataHandler(new ByteArrayDataSource(anhQRPng, "image/png")));
-                qrPart.setHeader("Content-ID", "<sessionQr>");
+                qrPart.setHeader("Content-ID", "<layQrPhien>");
                 qrPart.setDisposition(MimeBodyPart.INLINE);
-                qrPart.setFileName("qr-" + safe(maPhien) + ".png");
+                qrPart.setFileName("qr-" + code + ".png");
                 multipart.addBodyPart(qrPart);
             }
 
@@ -124,19 +125,83 @@ public class EmailUtil {
         }
     }
 
+    public static boolean guiEmailThanhToanDatChoThatBai(
+            String toEmail,
+            String hoTen,
+            String maDatCho,
+            String tenKhongGian,
+            String tenChiNhanh,
+            String thoiGian,
+            String thanhTien,
+            String lyDo) {
+        if (toEmail == null || toEmail.isBlank()) {
+            System.err.println("[EmailUtil] Không có email khách hàng để gửi thông báo thanh toán thất bại.");
+            return false;
+        }
+        if (SENDER_EMAIL == null || SENDER_EMAIL.isBlank()
+                || SENDER_APP_PASSWORD == null || SENDER_APP_PASSWORD.isBlank()) {
+            System.err.println("[EmailUtil] Lỗi: email gửi hoặc app password chưa được cấu hình!");
+            return false;
+        }
+
+        Session session = createSmtpSession();
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(SENDER_EMAIL));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Thanh toán đặt chỗ chưa thành công " + safe(maDatCho) + " - Spring MNGT");
+            String content = """
+                    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f1722;">
+                        <h2 style="color:#eb5e8d;">Spring MNGT chưa xác nhận được thanh toán</h2>
+                        <p>Xin chào <b>%s</b>,</p>
+                        <p>Yêu cầu đặt chỗ của bạn chưa được thanh toán thành công.</p>
+                        <div style="background:#fff5f8;border:1px solid #f3c9d9;padding:14px 18px;margin:18px 0;">
+                            <p><b>Mã đặt chỗ:</b> %s</p>
+                            <p><b>Không gian:</b> %s</p>
+                            <p><b>Chi nhánh:</b> %s</p>
+                            <p><b>Thời gian:</b> %s</p>
+                            <p><b>Số tiền cần thanh toán:</b> %s</p>
+                            <p><b>Lý do:</b> %s</p>
+                        </div>
+                        <p>Không gian đã được mở lại để khách khác có thể đặt. Bạn có thể tạo yêu cầu mới trên portal.</p>
+                    </div>
+                    """.formatted(
+                    html(safe(hoTen, "Quý khách")),
+                    html(safe(maDatCho)),
+                    html(safe(tenKhongGian)),
+                    html(safe(tenChiNhanh)),
+                    html(safe(thoiGian)),
+                    html(safe(thanhTien, "0 VNĐ")),
+                    html(safe(lyDo, "Không nhận được thanh toán trong thời gian giữ chỗ."))
+            );
+            message.setContent(content, "text/html; charset=utf-8");
+            Transport.send(message);
+            System.out.println("[EmailUtil] Đã gửi email thanh toán thất bại tới: " + toEmail);
+            return true;
+        } catch (MessagingException e) {
+            System.err.println("[EmailUtil] Lỗi gửi email thanh toán thất bại: " + e.getMessage());
+            return false;
+        }
+    }
+
     private static String taoNoiDungEmailXacNhan(String hoTen, String maPhien, String maDatCho,
                                                  String tenKhongGian, String tenChiNhanh,
                                                  String thoiGian, String thanhTien) {
-        String qrHtml = "<p style=\"margin:18px 0 8px;color:#555;\">Mã QR phiên làm việc của bạn:</p>"
-                + "<img src=\"cid:sessionQr\" alt=\"QR phiên làm việc\" style=\"width:220px;height:220px;border:1px solid #f3c9d9;padding:10px;\"/>";
+        String qrHtml = "<p style=\"margin:18px 0 8px;color:#555;\">Mã QR nhận chỗ của bạn:</p>"
+                + "<img src=\"cid:layQrPhien\" alt=\"QR nhận chỗ\" style=\"width:220px;height:220px;border:1px solid #f3c9d9;padding:10px;\"/>";
+        String maChinh = safe(maPhien).isBlank() ? safe(maDatCho) : safe(maPhien);
+        String nhanMaChinh = safe(maPhien).isBlank() ? "Mã đặt chỗ" : "Mã phiên";
+        String dongMaDatCho = safe(maPhien).isBlank()
+                ? ""
+                : "<p><b>Mã đặt chỗ:</b> " + html(safe(maDatCho)) + "</p>";
         return """
                 <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f1722;">
                     <h2 style="color:#eb5e8d;">Spring MNGT xác nhận thanh toán thành công</h2>
                     <p>Xin chào <b>%s</b>,</p>
                     <p>Cảm ơn bạn đã đặt chỗ tại Spring MNGT. Phiên làm việc của bạn đã được nhân viên xác nhận thanh toán.</p>
                     <div style="background:#fff5f8;border:1px solid #f3c9d9;padding:14px 18px;margin:18px 0;">
-                        <p><b>Mã phiên:</b> %s</p>
-                        <p><b>Mã đặt chỗ:</b> %s</p>
+                        <p><b>%s:</b> %s</p>
+                        %s
                         <p><b>Không gian:</b> %s</p>
                         <p><b>Chi nhánh:</b> %s</p>
                         <p><b>Thời gian:</b> %s</p>
@@ -148,8 +213,9 @@ public class EmailUtil {
                 </div>
                 """.formatted(
                 html(safe(hoTen, "Quý khách")),
-                html(safe(maPhien)),
-                html(safe(maDatCho)),
+                html(nhanMaChinh),
+                html(maChinh),
+                dongMaDatCho,
                 html(safe(tenKhongGian)),
                 html(safe(tenChiNhanh)),
                 html(safe(thoiGian)),

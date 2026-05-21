@@ -478,9 +478,9 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn hủy hóa đơn này?", "Xác nhận hủy",
+        int xacNhan = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn hủy hóa đơn này?", "Xác nhận hủy",
                 JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (xacNhan == JOptionPane.YES_OPTION) {
             if (hoaDonController.huyHoaDon(maHD)) {
                 JOptionPane.showMessageDialog(this, "Đã hủy hóa đơn thành công!");
                 loadDataToTable();
@@ -536,9 +536,9 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         if (maHD.isEmpty())
             return;
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn XÓA VĨNH VIỄN hóa đơn này?",
+        int xacNhan = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn XÓA VĨNH VIỄN hóa đơn này?",
                 "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (xacNhan == JOptionPane.YES_OPTION) {
             if (hoaDonController.xoaHoaDon(maHD)) {
                 JOptionPane.showMessageDialog(this, "Đã xóa hóa đơn!");
                 loadDataToTable();
