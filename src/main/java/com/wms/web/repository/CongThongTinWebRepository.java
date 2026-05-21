@@ -970,7 +970,7 @@ public class CongThongTinWebRepository {
 
         if (laDichVuGiaHan(service)) {
             mauJdbc.update(
-                    "UPDATE PHIENLAMVIEC SET ThoiGianDuKienKetThuc = ThoiGianDuKienKetThuc + INTERVAL '1' HOUR * ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?",
+                    "UPDATE PHIENLAMVIEC SET ThoiGianDuKienKetThuc = ThoiGianDuKienKetThuc + NUMTODSINTERVAL(?, 'HOUR'), CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?",
                     quantity,
                     maPhien
             );

@@ -400,6 +400,10 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         return cbxTrangThai;
     }
 
+    public javax.swing.JComboBox<String> getCbxNhomQuyen() {
+        return cbxNhomQuyen;
+    }
+
     public javax.swing.JLabel getLblAnhDaiDien() {
         return lblAnhDaiDien;
     }

@@ -11,7 +11,7 @@ import com.wms.web.model.ChiNhanhView;
 import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.model.KhongGianView;
 import com.wms.web.model.PhieuGiamGiaView;
-import com.wms.web.khoDuLieu.CongThongTinWebRepository;
+import com.wms.web.repository.CongThongTinWebRepository;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.EmailUtil;
 import com.wms.util.MaQRUtil;

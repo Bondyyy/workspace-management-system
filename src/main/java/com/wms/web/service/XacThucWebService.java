@@ -6,7 +6,7 @@ import com.wms.web.form.DangNhapWebForm;
 import com.wms.web.form.DangKyWebForm;
 import com.wms.web.model.DangKyChoXacThuc;
 import com.wms.web.model.NguoiDungPhien;
-import com.wms.web.khoDuLieu.CongThongTinWebRepository;
+import com.wms.web.repository.CongThongTinWebRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,7 +57,7 @@ public class XacThucWebService {
                 form.getHoTen().trim(),
                 form.getTenTaiKhoan().trim(),
                 form.getEmail().trim(),
-                PasswordUtil.hash(form.getPassword()),
+                PasswordUtil.hash(form.getMatKhau()),
                 otp,
                 LocalDateTime.now().plusMinutes(5)
         );
@@ -71,7 +71,7 @@ public class XacThucWebService {
         if (DangKyChoXacThuc.daHetHan()) {
             throw new IllegalArgumentException("Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
         }
-        if (!DangKyChoXacThuc.matches(submittedOtp)) {
+        if (!DangKyChoXacThuc.khopMa(submittedOtp)) {
             throw new IllegalArgumentException("Mã OTP không đúng.");
         }
 

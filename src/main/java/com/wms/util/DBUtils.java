@@ -1,4 +1,4 @@
-package com.wms.utils;
+package com.wms.util;
 
 import com.wms.config.DatabaseConnection;
 import java.sql.*;

@@ -15,7 +15,7 @@ public class TrangChuDAO {
 
     public int layDiemTichLuy(String maND) {
         int diem = 0;
-        String sql = "SELECT DiemTichLuy FROM KHACHHANG WHERE MaND = ?";
+        String sql = "SELECT NVL(TongChiTieu, 0) AS DiemTichLuy FROM KHACHHANG WHERE MaND = ?";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
@@ -24,14 +24,13 @@ public class TrangChuDAO {
                 diem = rs.getInt("DiemTichLuy");
             }
         } catch (Exception e) {
-            // Có thể cột chưa tồn tại trong CSDL, trả về 0
             System.err.println("Lỗi lấy điểm tích lũy: " + e.getMessage());
         }
         return diem;
     }
 
     public String layHangHienTai(String maND) {
-        String hang = "Thành viên Mới";
+        String hang = "Thành viên mới";
         String sql = "SELECT h.TenHangThanhVien FROM KHACHHANG kh " +
                      "JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
                      "WHERE kh.MaND = ?";
@@ -50,9 +49,13 @@ public class TrangChuDAO {
 
     public int layTongGioSuDung(String maND) {
         int gio = 0;
-        String sql = "SELECT SUM(SoGio) as TongGio FROM PHIEUDATCHO p " +
-                     "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-                     "WHERE kh.MaND = ? AND p.TrangThai = N'Đã hoàn thành'";
+        String sql = """
+                SELECT NVL(SUM(NVL(dc.KhoangThoiGianSuDung, 0)), 0) AS TongGio
+                FROM DATCHO dc
+                JOIN KHACHHANG kh ON dc.MaKH = kh.MaKH
+                WHERE kh.MaND = ?
+                  AND dc.TrangThaiDatTruoc = 'Đã sử dụng'
+                """;
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
@@ -68,12 +71,14 @@ public class TrangChuDAO {
 
     public int laySoUuDai(String maND) {
         int soUuDai = 0;
-        String sql = "SELECT COUNT(*) as SoUuDai FROM UUDAI_KHACHHANG uk " +
-                     "JOIN KHACHHANG kh ON uk.MaKH = kh.MaKH " +
-                     "WHERE kh.MaND = ? AND uk.TrangThai = N'Chưa sử dụng'";
+        String sql = """
+                SELECT COUNT(*) AS SoUuDai
+                FROM PHIEUGIAMGIA
+                WHERE CURRENT_TIMESTAMP BETWEEN NgayBatDauApDung AND NgayKetThucApDung
+                  AND NVL(SLDaDung, 0) < NVL(SLToiDa, 0)
+                """;
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, maND);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 soUuDai = rs.getInt("SoUuDai");
@@ -86,22 +91,25 @@ public class TrangChuDAO {
 
     public List<Object[]> layLichSuDatCho(String maND) {
         List<Object[]> list = new ArrayList<>();
-        String sql = "SELECT TOP 10 p.MaPhieu, k.TenKhongGian, p.ThoiGianBatDau, p.TrangThai " +
-                     "FROM PHIEUDATCHO p " +
-                     "JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-                     "JOIN KHONGGIAN k ON p.MaKhongGian = k.MaKhongGian " +
-                     "WHERE kh.MaND = ? " +
-                     "ORDER BY p.ThoiGianTao DESC";
+        String sql = """
+                SELECT dc.MaDatCho, kg.TenKG, dc.ThoiGianDuKienToi, dc.TrangThaiDatTruoc
+                FROM DATCHO dc
+                JOIN KHACHHANG kh ON dc.MaKH = kh.MaKH
+                JOIN KHONGGIAN kg ON dc.MaKG = kg.MaKG
+                WHERE kh.MaND = ?
+                ORDER BY dc.ThoiGianDat DESC
+                FETCH FIRST 10 ROWS ONLY
+                """;
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 list.add(new Object[]{
-                    rs.getString("MaPhieu"),
-                    rs.getString("TenKhongGian"),
-                    rs.getString("ThoiGianBatDau"),
-                    rs.getString("TrangThai")
+                    rs.getString("MaDatCho"),
+                    rs.getString("TenKG"),
+                    rs.getTimestamp("ThoiGianDuKienToi"),
+                    rs.getString("TrangThaiDatTruoc")
                 });
             }
         } catch (Exception e) {

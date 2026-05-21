@@ -9,7 +9,7 @@ public class LichKiemTraThanhToanDatCho {
 
     private final CongThongTinService congThongTinService;
 
-    public LichKiemTraThanhToanDatCho(CongThongTinService CongThongTinService) {
+    public LichKiemTraThanhToanDatCho(CongThongTinService congThongTinService) {
         this.congThongTinService = congThongTinService;
     }
 

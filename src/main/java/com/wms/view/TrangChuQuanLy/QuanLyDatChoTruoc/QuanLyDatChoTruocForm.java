@@ -121,7 +121,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         btnTimKiem.setText("Tìm");
         btnTimKiem.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         pnLeft.add(btnTimKiem);
-        btnTimKiem.setBounds(390, 60, 90, 35);
+        btnTimKiem.setBounds(390, 60, 76, 35);
 
         tblDatCho.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -146,16 +146,15 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         pnLeft.add(jScrollPane1);
         jScrollPane1.setBounds(20, 110, 550, 410);
 
-        btnLamMoi.setBackground(new java.awt.Color(235, 94, 141));
         btnLamMoi.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnLamMoi.setForeground(new java.awt.Color(255, 255, 255));
+        btnLamMoi.setForeground(new java.awt.Color(235, 94, 141));
         btnLamMoi.setText("Làm mới");
         btnLamMoi.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         pnLeft.add(btnLamMoi);
-        btnLamMoi.setBounds(480, 60, 110, 35);
+        btnLamMoi.setBounds(470, 60, 100, 35);
 
         pnMain.add(pnLeft);
-        pnLeft.setBounds(20, 80, 590, 540);
+        pnLeft.setBounds(450, 70, 590, 540);
 
         pnRight.setBackground(new java.awt.Color(255, 255, 255));
         pnRight.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
@@ -256,7 +255,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         pnRight.add(jScrollPane2);
         jScrollPane2.setBounds(20, 400, 360, 45);
 
-        btnCapNhat.setBackground(new java.awt.Color(21, 101, 192));
+        btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhat.setText("Cập nhật");
@@ -265,7 +264,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         btnCapNhat.setBounds(20, 460, 360, 35);
 
         pnMain.add(pnRight);
-        pnRight.setBounds(630, 80, 400, 540);
+        pnRight.setBounds(20, 70, 400, 540);
 
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents

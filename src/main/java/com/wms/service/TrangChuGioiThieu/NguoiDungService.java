@@ -91,7 +91,7 @@ public class NguoiDungService {
     }
 
     public OtpResponse yeuCauOTP(String tenTaiKhoan, String email) {
-        if (isBlank(tenTaiKhoan) || isBlank(email)) {
+        if (!NguoiDungInputValidator.isOtpRequestValid(tenTaiKhoan, email)) {
             return new OtpResponse(ketQuaDangKy.DU_LIEU_KHONG_HOP_LE, null);
         }
 
@@ -114,7 +114,7 @@ public class NguoiDungService {
     }
 
     public ketQuaDangKy register(String tenTaiKhoan, String hoTen, String email, String matKhau) {
-        if (isBlank(tenTaiKhoan) || isBlank(hoTen) || isBlank(email) || isBlank(matKhau)) {
+        if (!NguoiDungInputValidator.isRegistrationValid(tenTaiKhoan, hoTen, email, matKhau)) {
             return ketQuaDangKy.DU_LIEU_KHONG_HOP_LE;
         }
 
@@ -166,7 +166,7 @@ public class NguoiDungService {
     }
 
     public OtpQuenPassResponse yeuCauOtpQuenMatKhau(String email) {
-        if (isBlank(email)) {
+        if (!NguoiDungInputValidator.isEmailOnlyRequestValid(email)) {
             return new OtpQuenPassResponse(ketQuaQuenMatKhau.DU_LIEU_KHONG_HOP_LE, null);
         }
 
@@ -186,7 +186,7 @@ public class NguoiDungService {
     }
 
     public ketQuaQuenMatKhau datLaiMatKhau(String email, String matKhauMoi) {
-        if (isBlank(email) || isBlank(matKhauMoi)) {
+        if (!NguoiDungInputValidator.isResetPasswordValid(email, matKhauMoi)) {
             return ketQuaQuenMatKhau.DU_LIEU_KHONG_HOP_LE;
         }
 

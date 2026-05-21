@@ -15,7 +15,7 @@ public class NhanVienWebController {
 
     private final CongThongTinService congThongTinService;
 
-    public NhanVienWebController(CongThongTinService CongThongTinService) {
+    public NhanVienWebController(CongThongTinService congThongTinService) {
         this.congThongTinService = congThongTinService;
     }
 
