@@ -2,7 +2,9 @@ package com.wms.view.TrangChuQuanLy.TongQuan;
 
 import com.wms.controller.TrangChuQuanLy.TongQuan.TongQuanController;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.DoanhThuReportRowDTO;
 import com.wms.model.TrangChuQuanLy.TongQuan.TongQuanDTO;
+import com.wms.util.DoanhThuJasperReportExporter;
 import com.wms.util.DoanhThuReportExporter;
 
 import javax.swing.BorderFactory;
@@ -127,10 +129,14 @@ public class TongQuanForm extends JPanel {
         JButton btnXuatPDF = button("Xuất PDF", mauCam);
         btnXuatPDF.addActionListener(e -> xuatPdf());
 
-        JPanel actions = new JPanel(new GridLayout(1, 2, 8, 0));
+        JButton btnXuatJasper = button("Xuất PDF Jasper", new Color(80, 120, 80));
+        btnXuatJasper.addActionListener(e -> xuatPdfJasper());
+
+        JPanel actions = new JPanel(new GridLayout(1, 3, 8, 0));
         actions.setOpaque(false);
         actions.add(btnXuatCSV);
         actions.add(btnXuatPDF);
+        actions.add(btnXuatJasper);
 
         panel.add(txtTuNgay);
         panel.add(txtDenNgay);
@@ -325,6 +331,40 @@ public class TongQuanForm extends JPanel {
                 JOptionPane.showMessageDialog(this, "Xuất báo cáo doanh thu PDF thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void xuatPdfJasper() {
+        String tuNgay = txtTuNgay.getText().trim();
+        String denNgay = txtDenNgay.getText().trim();
+        String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
+        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
+
+        if (duLieuHienTai == null) {
+            capNhatDuLieu();
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu báo cáo doanh thu JasperReports");
+        fileChooser.setSelectedFile(new File("BaoCaoDoanhThu_Jasper_" + tuNgay.replace("/", "") + "_" + denNgay.replace("/", "") + ".pdf"));
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF Files", "pdf"));
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = ensureExtension(fileChooser.getSelectedFile(), ".pdf");
+            try {
+                List<DoanhThuReportRowDTO> rows = controller.layDongBaoCaoDoanhThu(tuNgay, denNgay, chiNhanh, loaiDT);
+                DoanhThuJasperReportExporter.ReportParams params = new DoanhThuJasperReportExporter.ReportParams(
+                        tuNgay,
+                        denNgay,
+                        chiNhanh == null ? "Tất cả chi nhánh" : chiNhanh,
+                        duLieuHienTai.getDoanhThuThuc(),
+                        rows.size()
+                );
+                DoanhThuJasperReportExporter.exportPdf(file, params, rows);
+                JOptionPane.showMessageDialog(this, "Xuất báo cáo doanh thu JasperReports thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF Jasper: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

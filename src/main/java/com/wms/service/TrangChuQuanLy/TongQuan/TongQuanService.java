@@ -3,6 +3,7 @@ package com.wms.service.TrangChuQuanLy.TongQuan;
 import com.wms.dao.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDAO;
 import com.wms.dao.TrangChuQuanLy.TongQuan.ThongKeDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.DoanhThuReportRowDTO;
 import com.wms.model.TrangChuQuanLy.TongQuan.TongQuanDTO;
 
 import java.util.List;
@@ -35,5 +36,9 @@ public class TongQuanService {
 
     public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
         return thongKeDAO.layDanhSachHoaDonTheoDieuKien(tuNgay, denNgay, chiNhanh, loaiDT);
+    }
+
+    public List<DoanhThuReportRowDTO> layDongBaoCaoDoanhThu(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
+        return thongKeDAO.layDongBaoCaoDoanhThu(tuNgay, denNgay, chiNhanh, loaiDT);
     }
 }

@@ -123,9 +123,57 @@ Nếu Maven chưa có trong PATH, dùng Maven đi kèm NetBeans:
 - `mvn -q -DskipTests compile`: BUILD SUCCESS.
 - `mvn test`: BUILD SUCCESS, 16 tests run, 0 failures, 0 errors, 0 skipped.
 
+## Preflight trước khi tích hợp JasperReports
+
+- Đã chạy `mvn clean` bằng Maven đi kèm NetBeans do `mvn` chưa có trên PATH: BUILD SUCCESS.
+- Đã chạy `mvn -q -DskipTests compile` bằng Maven đi kèm NetBeans: BUILD SUCCESS.
+- Đã chạy `mvn test` bằng Maven đi kèm NetBeans: BUILD SUCCESS, 16 tests run, 0 failures, 0 errors, 0 skipped.
+- `DoanhThuReportExporter` vẫn có đủ `xuatCsv` và `xuatPdf`.
+- `DoanhThuReportExporterTest` vẫn pass trong suite test.
+- `TongQuanForm` vẫn có nút `Xuất CSV` và `Xuất PDF`.
+- `README.md`, `FIX_REPORT.md`, `DO_AN_RUBRIC_CHECKLIST.md` không còn pattern mojibake rõ khi rà bằng `rg`.
+- Không thêm dependency mới trong bước preflight này.
+- Project đã sẵn sàng để thêm JasperReports ở bước tiếp theo.
+
+## Tích hợp JasperReports cho báo cáo doanh thu chuyên dụng
+
+- Đã thêm dependency `net.sf.jasperreports:jasperreports:6.21.5` vào `pom.xml`.
+- Đã thêm template `src/main/resources/reports/bao_cao_doanh_thu.jrxml`.
+- Đã thêm `DoanhThuReportRowDTO` để truyền dữ liệu chi tiết cho JasperReports.
+- Đã thêm `DoanhThuJasperReportExporter`:
+  - load template từ classpath `/reports/bao_cao_doanh_thu.jrxml`;
+  - compile/fill report bằng `JRBeanCollectionDataSource`;
+  - export PDF ra file người dùng chọn;
+  - không query trực tiếp DB trong `.jrxml`.
+- Đã thêm đường controller/service/DAO riêng để lấy dòng báo cáo doanh thu JasperReports, có tên khách hàng, chi nhánh, không gian, tổng tiền, thành tiền, phương thức và trạng thái thanh toán.
+- Query doanh thu JasperReports dùng `PreparedStatement`, dùng `kg.MaCN`, không dùng `MaChiNhanh`, không dùng cú pháp SQL Server.
+- Đã tích hợp nút `Xuất PDF Jasper` vào `TongQuanForm`, không xóa nút `Xuất CSV` và không thay thế PDF fallback hiện có.
+- Đã thêm `DoanhThuJasperReportExporterTest` để kiểm tra load/compile `.jrxml` và export PDF từ dữ liệu mẫu offline.
+- PDF JasperReports dùng text không dấu nhất quán khi export để tránh phụ thuộc font proprietary; source Java, `.jrxml`, README và checklist vẫn là UTF-8.
+
+### Trạng thái build/test sau khi thêm JasperReports
+
+- Đã thử chạy `mvn -q -DskipTests compile` bằng Maven đi kèm NetBeans.
+- Lần chạy trong sandbox thất bại vì môi trường không cho Maven truy cập Maven Central: `Permission denied: getsockopt`.
+- Lần chạy escalation bị hệ thống từ chối do giới hạn sử dụng phiên hiện tại, nên chưa xác minh được dependency JasperReports bằng Maven trong lượt này.
+- Chưa sửa lan man hoặc thay thế logic report hiện có. Cần chạy lại:
+
+```powershell
+& 'C:\Program Files\Apache NetBeans\java\maven\bin\mvn.cmd' -q -DskipTests compile
+& 'C:\Program Files\Apache NetBeans\java\maven\bin\mvn.cmd' test
+```
+
+hoặc:
+
+```powershell
+mvn -q -DskipTests compile
+mvn test
+```
+
 ## Lỗi còn tồn tại / chưa xác thực
 
 - Chưa chạy runtime với Oracle thật trong phiên làm việc này.
+- Chưa xác minh Maven sau khi thêm JasperReports do sandbox/network bị chặn trong lượt chạy hiện tại.
 - Chưa có integration test Oracle thật.
 - Chưa có UI automation/runtime test cho Swing hoặc web.
 - Chưa có xuất Excel `.xlsx` thật; hiện tại project có doanh thu CSV/PDF và hóa đơn PDF.

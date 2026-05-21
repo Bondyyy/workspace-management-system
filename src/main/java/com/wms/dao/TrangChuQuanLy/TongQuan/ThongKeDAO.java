@@ -1,6 +1,7 @@
 package com.wms.dao.TrangChuQuanLy.TongQuan;
 
 import com.wms.config.DatabaseConnection;
+import com.wms.model.TrangChuQuanLy.TongQuan.DoanhThuReportRowDTO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -220,6 +221,52 @@ public class ThongKeDAO {
         return list;
     }
 
+    public List<DoanhThuReportRowDTO> layDongBaoCaoDoanhThu(String tuNgay, String denNgay, String maChiNhanh, String loaiDT) {
+        List<DoanhThuReportRowDTO> list = new ArrayList<>();
+        Connection conn = DatabaseConnection.getInstance().getConnection();
+        if (conn == null) {
+            return list;
+        }
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT h.MaHoaDon, h.NgayLapHoaDon, nd.HoTen AS HoTenKH, cn.TenCN, kg.TenKG, " +
+                        "h.TongTien, h.ThanhTien, h.PhuongThucThanhToan, h.TrangThaiThanhToan " +
+                        "FROM HOADON h " +
+                        "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
+                        "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                        "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
+                        "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                        "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN " +
+                        "WHERE h.TrangThaiThanhToan LIKE ? ");
+
+        appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
+        sql.append("ORDER BY h.NgayLapHoaDon DESC");
+
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
+            try (ResultSet rs = ps.executeQuery()) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                DecimalFormat df = new DecimalFormat("#,###");
+                while (rs.next()) {
+                    list.add(new DoanhThuReportRowDTO(
+                            rs.getString("MaHoaDon"),
+                            rs.getTimestamp("NgayLapHoaDon") != null ? sdf.format(rs.getTimestamp("NgayLapHoaDon")) : "",
+                            valueOrDefault(rs.getString("HoTenKH"), "Khách vãng lai"),
+                            valueOrDefault(rs.getString("TenCN"), "Không xác định"),
+                            valueOrDefault(rs.getString("TenKG"), "Không xác định"),
+                            df.format(rs.getDouble("TongTien")),
+                            df.format(rs.getDouble("ThanhTien")),
+                            valueOrDefault(rs.getString("PhuongThucThanhToan"), ""),
+                            valueOrDefault(rs.getString("TrangThaiThanhToan"), "")
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     private void appendDateAndBranchFilters(StringBuilder sql, String tuNgay, String denNgay, String maChiNhanh) {
         if (tuNgay != null && !tuNgay.isBlank()) {
             sql.append("AND h.NgayLapHoaDon >= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
@@ -261,5 +308,9 @@ public class ThongKeDAO {
         } catch (Exception e) {
             return dateStr;
         }
+    }
+
+    private String valueOrDefault(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value;
     }
 }
