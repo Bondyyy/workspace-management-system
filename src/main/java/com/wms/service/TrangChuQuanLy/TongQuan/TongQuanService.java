@@ -15,7 +15,7 @@ public class TongQuanService {
 
     public TongQuanDTO layDuLieuTongQuan(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
         Map<String, Double> stats = thongKeDAO.layDoanhThuTongHop(tuNgay, denNgay, chiNhanh, loaiDT);
-        List<Double> chart7Ngay = thongKeDAO.layDoanhThu7NgayGầnNhất(chiNhanh);
+        List<Double> chart7Ngay = thongKeDAO.layDoanhThu7NgayGanNhat(chiNhanh);
         Map<String, Integer> coCau = thongKeDAO.layCoCauThanhToan();
         List<Object[]> giaoDich = thongKeDAO.layRecentTransactions();
 

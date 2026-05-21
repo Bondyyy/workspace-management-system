@@ -1,7 +1,11 @@
 package com.wms.dao.TrangChuQuanLy.TongQuan;
 
 import com.wms.config.DatabaseConnection;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,11 +15,15 @@ import java.util.Map;
 
 public class ThongKeDAO {
 
+    private static final String ALL_BRANCHES = "Tất cả chi nhánh";
+    private static final String PAID_STATUS_FILTER = "Đã thanh toán%";
+
     public List<Object[]> layRecentTransactions() {
         List<Object[]> list = new ArrayList<>();
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
+        if (conn == null) {
             return list;
+        }
 
         String sql = "SELECT h.MaHoaDon, nd.HoTen AS HoTenKH, h.ThanhTien, h.TrangThaiThanhToan " +
                 "FROM HOADON h " +
@@ -26,11 +34,12 @@ public class ThongKeDAO {
                 "FETCH FIRST 5 ROWS ONLY";
 
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            DecimalFormat df = new DecimalFormat("#,###");
             while (rs.next()) {
-                list.add(new Object[] {
+                list.add(new Object[]{
                         rs.getString("MaHoaDon"),
                         rs.getString("HoTenKH") == null ? "Khách vãng lai" : rs.getString("HoTenKH"),
-                        new DecimalFormat("#,###").format(rs.getDouble("ThanhTien")),
+                        df.format(rs.getDouble("ThanhTien")),
                         rs.getString("TrangThaiThanhToan")
                 });
             }
@@ -47,37 +56,21 @@ public class ThongKeDAO {
         ketQua.put("chietKhau", 0.0);
 
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
+        if (conn == null) {
             return ketQua;
+        }
 
         StringBuilder sql = new StringBuilder(
-                "SELECT SUM(h.ThanhTien) as DoanhThuThuc, SUM(h.TongTien) as TruocGiam " +
+                "SELECT SUM(h.ThanhTien) AS DoanhThuThuc, SUM(h.TongTien) AS TruocGiam " +
                         "FROM HOADON h " +
                         "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                         "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                        "WHERE h.TrangThaiThanhToan LIKE 'Đã thanh toán%' ");
+                        "WHERE h.TrangThaiThanhToan LIKE ? ");
 
-        if (tuNgay != null && !tuNgay.isEmpty()) {
-            sql.append("AND h.NgayLapHoaDon >= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
-        }
-        if (denNgay != null && !denNgay.isEmpty()) {
-            sql.append("AND h.NgayLapHoaDon <= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
-        }
-        if (maChiNhanh != null && !maChiNhanh.equals("Tất cả chi nhánh")) {
-            sql.append("AND kg.MaChiNhanh = ? ");
-        }
+        appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
 
         try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            int idx = 1;
-            if (tuNgay != null && !tuNgay.isEmpty())
-                ps.setString(idx++, convertFormat(tuNgay) + " 00:00:00");
-            if (denNgay != null && !denNgay.isEmpty())
-                ps.setString(idx++, convertFormat(denNgay) + " 23:59:59");
-            if (maChiNhanh != null && !maChiNhanh.equals("Tất cả chi nhánh")) {
-                String ma = maChiNhanh.split(" - ")[0];
-                ps.setString(idx++, ma);
-            }
-
+            bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     double thuc = rs.getDouble("DoanhThuThuc");
@@ -93,32 +86,32 @@ public class ThongKeDAO {
         return ketQua;
     }
 
-    public List<Double> layDoanhThu7NgayGầnNhất(String maChiNhanh) {
+    public List<Double> layDoanhThu7NgayGanNhat(String maChiNhanh) {
         List<Double> data = new ArrayList<>();
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
+        if (conn == null) {
             return data;
-
-        // Lấy doanh thu của 7 ngày gần nhất (bao gồm cả hôm nay)
-        String sql = "SELECT TRUNC(NgayLapHoaDon) as Ngay, SUM(ThanhTien) as Tong " +
-                "FROM HOADON h " +
-                "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
-                "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                "WHERE h.TrangThaiThanhToan LIKE 'Đã thanh toán%' " +
-                "AND NgayLapHoaDon >= TRUNC(SYSDATE) - 6 ";
-
-        if (maChiNhanh != null && !maChiNhanh.equals("Tất cả chi nhánh")) {
-            sql += "AND kg.MaChiNhanh = ? ";
         }
 
-        sql += "GROUP BY TRUNC(NgayLapHoaDon) ORDER BY Ngay";
+        StringBuilder sql = new StringBuilder(
+                "SELECT TRUNC(h.NgayLapHoaDon) AS Ngay, SUM(h.ThanhTien) AS Tong " +
+                        "FROM HOADON h " +
+                        "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
+                        "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                        "WHERE h.TrangThaiThanhToan LIKE ? " +
+                        "AND h.NgayLapHoaDon >= TRUNC(SYSDATE) - 6 ");
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (maChiNhanh != null && !maChiNhanh.equals("Tất cả chi nhánh")) {
-                ps.setString(1, maChiNhanh.split(" - ")[0]);
+        if (hasBranchFilter(maChiNhanh)) {
+            sql.append("AND kg.MaCN = ? ");
+        }
+        sql.append("GROUP BY TRUNC(h.NgayLapHoaDon) ORDER BY Ngay");
+
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            ps.setString(1, PAID_STATUS_FILTER);
+            if (hasBranchFilter(maChiNhanh)) {
+                ps.setString(2, extractBranchCode(maChiNhanh));
             }
 
-            // Map để lưu kết quả tạm thời
             Map<String, Double> map = new HashMap<>();
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -126,7 +119,6 @@ public class ThongKeDAO {
                 }
             }
 
-            // Đảm bảo đủ 7 ngày (nếu ngày nào không có thì là 0)
             java.util.Calendar cal = java.util.Calendar.getInstance();
             cal.add(java.util.Calendar.DAY_OF_YEAR, -6);
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -136,7 +128,6 @@ public class ThongKeDAO {
                 data.add(map.getOrDefault(d, 0.0));
                 cal.add(java.util.Calendar.DAY_OF_YEAR, 1);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -149,32 +140,36 @@ public class ThongKeDAO {
         stats.put("TM", 0);
 
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
+        if (conn == null) {
             return stats;
+        }
 
-        String sql = "SELECT PhuongThucThanhToan, COUNT(*) as SoLuong FROM HOADON " +
-                "WHERE TrangThaiThanhToan LIKE 'Đã thanh toán%' " +
+        String sql = "SELECT PhuongThucThanhToan, COUNT(*) AS SoLuong FROM HOADON " +
+                "WHERE TrangThaiThanhToan LIKE ? " +
                 "GROUP BY PhuongThucThanhToan";
 
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-            int tong = 0;
-            int ckCount = 0;
-            int tmCount = 0;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, PAID_STATUS_FILTER);
+            try (ResultSet rs = ps.executeQuery()) {
+                int tong = 0;
+                int ckCount = 0;
+                int tmCount = 0;
 
-            while (rs.next()) {
-                String pt = rs.getString("PhuongThucThanhToan");
-                int sl = rs.getInt("SoLuong");
-                if ("Chuyển khoản".equals(pt) || "Momo".equals(pt)) {
-                    ckCount += sl;
-                } else {
-                    tmCount += sl;
+                while (rs.next()) {
+                    String pt = rs.getString("PhuongThucThanhToan");
+                    int sl = rs.getInt("SoLuong");
+                    if ("Chuyển khoản".equalsIgnoreCase(pt) || "Momo".equalsIgnoreCase(pt)) {
+                        ckCount += sl;
+                    } else {
+                        tmCount += sl;
+                    }
+                    tong += sl;
                 }
-                tong += sl;
-            }
 
-            if (tong > 0) {
-                stats.put("CK", (ckCount * 100) / tong);
-                stats.put("TM", 100 - stats.get("CK"));
+                if (tong > 0) {
+                    stats.put("CK", (ckCount * 100) / tong);
+                    stats.put("TM", 100 - stats.get("CK"));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -182,65 +177,36 @@ public class ThongKeDAO {
         return stats;
     }
 
-    private String convertFormat(String dateStr) {
-        // dd/MM/yyyy -> yyyy-MM-dd
-        try {
-            String[] p = dateStr.split("/");
-            return p[2] + "-" + p[1] + "-" + p[0];
-        } catch (Exception e) {
-            return dateStr;
-        }
-    }
-
-    public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String maChiNhanh,
-            String loaiDT) {
+    public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String maChiNhanh, String loaiDT) {
         List<Object[]> list = new ArrayList<>();
         Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
+        if (conn == null) {
             return list;
+        }
 
         StringBuilder sql = new StringBuilder(
-                "SELECT h.MaHoaDon, nd.HoTen AS HoTenKH, h.NgayLapHoaDon, h.TongTien, h.ThanhTien, h.PhuongThucThanhToan, h.TrangThaiThanhToan "
-                        +
+                "SELECT h.MaHoaDon, nd.HoTen AS HoTenKH, h.NgayLapHoaDon, h.TongTien, " +
+                        "h.ThanhTien, h.PhuongThucThanhToan, h.TrangThaiThanhToan " +
                         "FROM HOADON h " +
                         "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                         "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
                         "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                         "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                        "WHERE h.TrangThaiThanhToan LIKE 'Đã thanh toán%' ");
+                        "WHERE h.TrangThaiThanhToan LIKE ? ");
 
-        if (tuNgay != null && !tuNgay.isEmpty()) {
-            sql.append("AND h.NgayLapHoaDon >= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
-        }
-        if (denNgay != null && !denNgay.isEmpty()) {
-            sql.append("AND h.NgayLapHoaDon <= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
-        }
-        if (maChiNhanh != null && !maChiNhanh.equals("Tất cả chi nhánh")) {
-            sql.append("AND kg.MaChiNhanh = ? ");
-        }
-
+        appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
         sql.append("ORDER BY h.NgayLapHoaDon DESC");
 
         try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            int idx = 1;
-            if (tuNgay != null && !tuNgay.isEmpty())
-                ps.setString(idx++, convertFormat(tuNgay) + " 00:00:00");
-            if (denNgay != null && !denNgay.isEmpty())
-                ps.setString(idx++, convertFormat(denNgay) + " 23:59:59");
-            if (maChiNhanh != null && !maChiNhanh.equals("Tất cả chi nhánh")) {
-                String ma = maChiNhanh.split(" - ")[0];
-                ps.setString(idx++, ma);
-            }
-
+            bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
                 DecimalFormat df = new DecimalFormat("#,###");
                 while (rs.next()) {
-                    list.add(new Object[] {
+                    list.add(new Object[]{
                             rs.getString("MaHoaDon"),
                             rs.getString("HoTenKH") == null ? "Khách vãng lai" : rs.getString("HoTenKH"),
-                            rs.getTimestamp("NgayLapHoaDon") != null ? sdf.format(rs.getTimestamp("NgayLapHoaDon"))
-                                    : "",
+                            rs.getTimestamp("NgayLapHoaDon") != null ? sdf.format(rs.getTimestamp("NgayLapHoaDon")) : "",
                             df.format(rs.getDouble("TongTien")),
                             df.format(rs.getDouble("ThanhTien")),
                             rs.getString("PhuongThucThanhToan"),
@@ -252,5 +218,48 @@ public class ThongKeDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    private void appendDateAndBranchFilters(StringBuilder sql, String tuNgay, String denNgay, String maChiNhanh) {
+        if (tuNgay != null && !tuNgay.isBlank()) {
+            sql.append("AND h.NgayLapHoaDon >= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
+        }
+        if (denNgay != null && !denNgay.isBlank()) {
+            sql.append("AND h.NgayLapHoaDon <= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
+        }
+        if (hasBranchFilter(maChiNhanh)) {
+            sql.append("AND kg.MaCN = ? ");
+        }
+    }
+
+    private void bindPaidDateAndBranch(PreparedStatement ps, String tuNgay, String denNgay, String maChiNhanh) throws java.sql.SQLException {
+        int idx = 1;
+        ps.setString(idx++, PAID_STATUS_FILTER);
+        if (tuNgay != null && !tuNgay.isBlank()) {
+            ps.setString(idx++, convertFormat(tuNgay) + " 00:00:00");
+        }
+        if (denNgay != null && !denNgay.isBlank()) {
+            ps.setString(idx++, convertFormat(denNgay) + " 23:59:59");
+        }
+        if (hasBranchFilter(maChiNhanh)) {
+            ps.setString(idx, extractBranchCode(maChiNhanh));
+        }
+    }
+
+    private boolean hasBranchFilter(String maChiNhanh) {
+        return maChiNhanh != null && !maChiNhanh.isBlank() && !ALL_BRANCHES.equals(maChiNhanh);
+    }
+
+    private String extractBranchCode(String maChiNhanh) {
+        return maChiNhanh.split(" - ")[0].trim();
+    }
+
+    private String convertFormat(String dateStr) {
+        try {
+            String[] p = dateStr.split("/");
+            return p[2] + "-" + p[1] + "-" + p[0];
+        } catch (Exception e) {
+            return dateStr;
+        }
     }
 }
