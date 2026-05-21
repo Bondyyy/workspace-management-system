@@ -5,9 +5,11 @@ import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO;
 import java.sql.*;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class HoaDonDAO {
 
@@ -240,6 +242,43 @@ public class HoaDonDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public boolean thanhToanVoiPhieuGiamGia(String maPhien, String maNV, String maPGG, String phuongThucThanhToan) {
+        Connection conn = DatabaseConnection.getInstance().getConnection();
+        if (conn == null)
+            return false;
+
+        String sql = "{call SP_ThanhToanVoiPhieuGiamGia(?, ?, ?, ?, ?)}";
+        try (CallableStatement cstmt = conn.prepareCall(sql)) {
+            cstmt.setString(1, maPhien);
+            cstmt.setString(2, maNV);
+            if (maPGG == null || maPGG.trim().isEmpty()) {
+                cstmt.setNull(3, Types.VARCHAR);
+            } else {
+                cstmt.setString(3, maPGG.trim());
+            }
+            cstmt.setString(4, phuongThucThanhToan);
+            cstmt.registerOutParameter(5, Types.VARCHAR);
+            cstmt.execute();
+
+            String message = cstmt.getString(5);
+            System.out.println("[HoaDonDAO] " + message);
+            return laThongBaoThanhCong(message);
+        } catch (SQLException e) {
+            System.err.println("[HoaDonDAO] Lỗi gọi SP_ThanhToanVoiPhieuGiamGia: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean laThongBaoThanhCong(String message) {
+        if (message == null) {
+            return false;
+        }
+        String normalized = Normalizer.normalize(message, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT);
+        return normalized.contains("thanh toan thanh cong");
     }
 
     public boolean huyHoaDon(String maHoaDon) {

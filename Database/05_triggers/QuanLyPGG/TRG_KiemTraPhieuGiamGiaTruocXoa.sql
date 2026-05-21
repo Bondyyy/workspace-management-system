@@ -8,7 +8,7 @@ BEGIN
     INTO v_SoHDChuaThanhToan
     FROM HOADON
     WHERE MaPGG = :OLD.MaPGG
-      AND TrangThaiThanhToan != 'Thành công';
+      AND TrangThaiThanhToan <> 'Đã thanh toán thành công';
 
     IF v_SoHDChuaThanhToan > 0 THEN
         RAISE_APPLICATION_ERROR(

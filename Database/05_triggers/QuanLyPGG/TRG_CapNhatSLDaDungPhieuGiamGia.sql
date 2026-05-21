@@ -1,7 +1,7 @@
 CREATE OR REPLACE TRIGGER TRG_CapNhatSLDaDungPhieuGiamGia
 AFTER INSERT ON HOADON
 FOR EACH ROW
-WHEN (NEW.MaPGG IS NOT NULL AND NEW.TrangThaiThanhToan = 'Thành công')
+WHEN (NEW.MaPGG IS NOT NULL AND NEW.TrangThaiThanhToan = 'Đã thanh toán thành công')
 BEGIN
     UPDATE PHIEUGIAMGIA
     SET SLDaDung = NVL(SLDaDung, 0) + 1

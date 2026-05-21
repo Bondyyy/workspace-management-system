@@ -7,8 +7,10 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.MaTuDongUtil;
 import java.sql.*;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class PhienLamViecDAO {
 
@@ -49,7 +51,7 @@ public class PhienLamViecDAO {
             cstmt.execute();
 
             String message = cstmt.getString(6);
-            if (message != null && message.contains("thành công")) {
+            if (laThongBaoThanhCong(message)) {
                 return true;
             } else {
                 System.err.println("[PhienLamViecDAO] Lỗi từ SP: " + message);
@@ -59,6 +61,16 @@ public class PhienLamViecDAO {
             System.err.println("[PhienLamViecDAO] Lỗi khi gọi SP tạo phiên: " + e.getMessage());
             return false;
         }
+    }
+
+    private boolean laThongBaoThanhCong(String message) {
+        if (message == null) {
+            return false;
+        }
+        String normalized = Normalizer.normalize(message, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT);
+        return normalized.contains("thanh cong");
     }
 
     public List<PhienLamViecFullDTO> layDanhSachPhien(String keyword, String maCN) {

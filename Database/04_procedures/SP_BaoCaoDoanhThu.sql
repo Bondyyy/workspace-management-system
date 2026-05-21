@@ -21,13 +21,13 @@ BEGIN
         NVL(SUM(HD.ThanhTien), 0),
         NVL(SUM(HD.TongTien), 0),
         NVL(SUM(HD.TongTien - HD.ThanhTien), 0),
-        COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Thành công' THEN 1 END),
-        COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Không thành công' THEN 1 END),
+        COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Đã thanh toán thành công' THEN 1 END),
+        COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Thanh toán không thành công' THEN 1 END),
         NVL(SUM(CASE WHEN HD.PhuongThucThanhToan = 'Tiền mặt'
-                      AND HD.TrangThaiThanhToan = 'Thành công'
+                      AND HD.TrangThaiThanhToan = 'Đã thanh toán thành công'
                      THEN HD.ThanhTien ELSE 0 END), 0),
         NVL(SUM(CASE WHEN HD.PhuongThucThanhToan = 'Chuyển khoản'
-                      AND HD.TrangThaiThanhToan = 'Thành công'
+                      AND HD.TrangThaiThanhToan = 'Đã thanh toán thành công'
                      THEN HD.ThanhTien ELSE 0 END), 0)
     INTO
         p_outTongThanhTien, p_outTongTruocGiam, p_outTongChietKhau,

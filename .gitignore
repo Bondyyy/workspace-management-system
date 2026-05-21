@@ -30,5 +30,4 @@ src/main/resources/config.properties
 .gemini/
 
 ./scratch/
-DO_AN_RUBRIC_CHECKLIST.md
-FIX_REPORT.md
+docs/

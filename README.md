@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
 # Workspace Management System
 
 Hệ thống quản lý không gian làm việc/học tập dùng Java 17, Maven, Swing/JDBC với Oracle Database. Dự án cũng có phần Spring Boot web đã được giảng viên cho phép như một phần mở rộng.
@@ -25,32 +20,30 @@ Hệ thống quản lý không gian làm việc/học tập dùng Java 17, Maven
 - Quản lý chi nhánh, không gian, loại không gian.
 - Đặt chỗ, mở phiên làm việc, gia hạn phiên, gọi dịch vụ.
 - Thanh toán hóa đơn, áp dụng phiếu giảm giá, tích lũy/thăng hạng hội viên.
-- Dashboard doanh thu cho quản lý.
+- Dashboard doanh thu cho quản lý/admin.
 - QR check-in/check-out ở mức utility.
 
 ## Report và export
 
-Dự án hiện có các điểm phục vụ yêu cầu đồ án về thống kê/report và xuất file:
-
 - Xem thống kê doanh thu tại màn hình `TongQuanForm`.
 - Lọc báo cáo theo từ ngày, đến ngày, chi nhánh, loại doanh thu.
-- Xuất hóa đơn PDF bằng `HoaDonPDFExporter`, được gọi từ màn hình quản lý/thanh toán hóa đơn.
-- Xuất báo cáo doanh thu CSV bằng `DoanhThuReportExporter`.
+- Xuất hóa đơn PDF bằng `HoaDonPDFExporter`.
+- Xuất báo cáo doanh thu CSV/PDF fallback bằng `DoanhThuReportExporter`.
 - CSV có UTF-8 BOM để Excel mở tiếng Việt ổn định.
-- CSV có header tiếng Việt rõ ràng và escape đúng dấu phẩy, dấu nháy kép, xuống dòng.
-- Xuất báo cáo doanh thu PDF fallback bằng `DoanhThuReportExporter`.
 - Xuất báo cáo doanh thu chuyên dụng bằng JasperReports qua nút `Xuất PDF Jasper` trong `TongQuanForm`.
 - JasperReports dùng dữ liệu do Java/DAO lấy sẵn và truyền vào `JRBeanCollectionDataSource`, không query trực tiếp Oracle trong `.jrxml`.
 
-Lưu ý: dự án chưa triển khai xuất Excel `.xlsx` thật, nên tài liệu và UI hiện ghi rõ là CSV/PDF, không ghi là Excel.
+Lưu ý: dự án chưa triển khai xuất Excel `.xlsx` thật, nên tài liệu và UI hiện ghi rõ là CSV/PDF.
 
-## Báo cáo chuyên dụng bằng JasperReports
+## Xử lý đồng thời
 
-- Template nằm tại `src/main/resources/reports/bao_cao_doanh_thu.jrxml`.
-- Exporter nằm tại `DoanhThuJasperReportExporter`.
-- Dữ liệu chi tiết từng dòng dùng `DoanhThuReportRowDTO`.
-- Demo: mở màn `Tổng quan`, chọn khoảng ngày/chi nhánh/loại doanh thu, bấm `Xuất PDF Jasper`, chọn nơi lưu file PDF.
-- Để tránh phụ thuộc font proprietary, PDF Jasper dùng text không dấu nhất quán khi export. Source `.jrxml` và tài liệu vẫn là UTF-8.
+Dự án đã bổ sung xử lý đồng thời cho ba luồng nghiệp vụ chính:
+
+- Mở phiên làm việc trực tiếp: khóa dòng `KHONGGIAN` bằng `FOR UPDATE NOWAIT`, chỉ mở phiên khi không gian đang `Trống`.
+- Nhập kho dịch vụ: khóa `LOAIDICHVU`/`DICHVU` khi tìm hoặc tạo mới, tránh mất cập nhật số lượng tồn khi hai nhân viên nhập cùng lúc.
+- Thanh toán và phiếu giảm giá: khóa `PHIENLAMVIEC`, `HOADON`, và `PHIEUGIAMGIA` trước khi cập nhật, tránh thanh toán trùng phiên hoặc dùng vượt lượt mã giảm giá.
+
+Tài liệu chi tiết nằm ở `docs/CONCURRENCY.md`. Script demo hai session nằm trong `Database/07_concurrency_test/`.
 
 ## Kiểm thử
 
@@ -62,6 +55,7 @@ Bộ test hiện tại là unit/static test chạy offline, không cần Oracle 
 - `SqlDialectStaticTest`: chặn cú pháp SQL Server trong source Java của dự án Oracle.
 - `EncodingStaticTest`: bắt mojibake rõ trong source/resource/Database.
 - `SqlScriptSmokeTest`: smoke test script SQL Oracle.
+- `ConcurrencySqlStaticTest`: chặn `DBMS_SESSION.SLEEP`, trạng thái hóa đơn sai constraint, cột kho không tồn tại và insert chuỗi vào BLOB.
 - `DoanhThuReportExporterTest`: kiểm tra CSV doanh thu có BOM, header tiếng Việt và escape đúng.
 - `DoanhThuJasperReportExporterTest`: kiểm tra load/compile template JasperReports và export PDF từ dữ liệu mẫu offline.
 
@@ -85,11 +79,8 @@ Nếu Maven chưa có trong PATH, có thể dùng Maven đi kèm NetBeans:
 - Project dùng Oracle, không dùng SQL Server.
 - Cột chi nhánh của `KHONGGIAN` là `MaCN`.
 - Báo cáo JasperReports không query trực tiếp DB trong `.jrxml`; dữ liệu đi qua DAO/service hiện có.
+- Các procedure nghiệp vụ chính tự quản lý `COMMIT`/`ROLLBACK` theo phong cách hiện có của project.
 
 ## Lưu ý cấu hình
 
 Không commit secret thật. Các file cấu hình thật như `db.properties`, `application.properties`, `.gitignore` được giữ nguyên theo chủ repo.
-<<<<<<< HEAD
->>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
-=======
->>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
