@@ -1,6 +1,7 @@
 package com.wms.dao.TrangChuQuanLy.QuanLyPhieuGiamGia;
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
+import com.wms.util.MaTuDongUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,15 @@ public class PhieuGiamGiaDAO {
             System.err.println("[PhieuGiamGiaDAO] Lỗi đếm số lượng: " + e.getMessage());
         }
         return 0;
+    }
+
+    public String taoMaMoi() {
+        try (Connection conn = getConn()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEU_GIAM_GIA);
+        } catch (SQLException e) {
+            System.err.println("[PhieuGiamGiaDAO] Lỗi tạo mã mới: " + e.getMessage());
+            return "PGG000001";
+        }
     }
 
     public List<PhieuGiamGiaDTO> layDanhSach() {

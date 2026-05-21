@@ -2,6 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
+import com.wms.util.MaTuDongUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -157,21 +158,7 @@ public class NguoiDungDAO {
             }
 
             try (PreparedStatement psKH = conn.prepareStatement(sqlKH)) {
-                String maKH = "HV000001";
-                // Tìm mã HV lớn nhất để tăng dần
-                String sqlMaxKH = "SELECT MAX(MaKH) FROM KHACHHANG WHERE MaKH LIKE 'HV%'";
-                try (PreparedStatement psMax = conn.prepareStatement(sqlMaxKH);
-                        ResultSet rsMax = psMax.executeQuery()) {
-                    if (rsMax.next() && rsMax.getString(1) != null) {
-                        String max = rsMax.getString(1);
-                        try {
-                            int num = Integer.parseInt(max.substring(2)) + 1;
-                            maKH = String.format("HV%06d", num);
-                        } catch (Exception e) {
-                            maKH = "HV000001";
-                        }
-                    }
-                }
+                String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
 
                 psKH.setString(1, maKH);
                 psKH.setString(2, maND);
@@ -361,15 +348,9 @@ public class NguoiDungDAO {
     }
 
     public String generateNextMaND() throws SQLException {
-        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaND, 3))) FROM NGUOIDUNG WHERE REGEXP_LIKE(MaND, '^ND[0-9]+$')";
-        try (PreparedStatement ps = getConn().prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                int maxNum = rs.getInt(1);
-                return String.format("ND%03d", maxNum + 1);
-            }
+        try (Connection conn = getConn()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
         }
-        return "ND001";
     }
 
     public java.util.List<String> layDanhSachChucNangCuaNguoiDung(String maND) {

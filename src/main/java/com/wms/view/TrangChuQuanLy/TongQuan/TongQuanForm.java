@@ -2,7 +2,9 @@ package com.wms.view.TrangChuQuanLy.TongQuan;
 
 import com.wms.controller.TrangChuQuanLy.TongQuan.TongQuanController;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.DoanhThuReportRowDTO;
 import com.wms.model.TrangChuQuanLy.TongQuan.TongQuanDTO;
+import com.wms.util.DoanhThuJasperReportExporter;
 import com.wms.util.DoanhThuReportExporter;
 
 import javax.swing.BorderFactory;
@@ -24,7 +26,10 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.io.File;
 import java.text.DecimalFormat;
@@ -95,18 +100,11 @@ public class TongQuanForm extends JPanel {
     }
 
     private JPanel taoBoLoc() {
-        JPanel panel = new JPanel(new GridLayout(2, 6, 10, 6));
+        JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(225, 225, 225)),
-                new EmptyBorder(10, 12, 12, 12)));
-
-        panel.add(label("Từ ngày"));
-        panel.add(label("Đến ngày"));
-        panel.add(label("Chi nhánh"));
-        panel.add(label("Loại doanh thu"));
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
+                new EmptyBorder(12, 14, 14, 14)));
 
         txtTuNgay = new JTextField();
         txtDenNgay = new JTextField();
@@ -127,18 +125,60 @@ public class TongQuanForm extends JPanel {
         JButton btnXuatPDF = button("Xuất PDF", mauCam);
         btnXuatPDF.addActionListener(e -> xuatPdf());
 
-        JPanel actions = new JPanel(new GridLayout(1, 2, 8, 0));
+        JButton btnXuatJasper = button("Xuất PDF Jasper", new Color(80, 120, 80));
+        btnXuatJasper.addActionListener(e -> xuatPdfJasper());
+
+<<<<<<< HEAD
+        for (JButton b : new JButton[]{btnXemBaoCao, btnXuatCSV, btnXuatPDF, btnXuatJasper}) {
+            b.setPreferredSize(new Dimension(150, 36));
+            b.setMinimumSize(new Dimension(130, 36));
+            b.setToolTipText(b.getText());
+        }
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+
+        addFilterField(panel, gbc, 0, "Từ ngày", txtTuNgay);
+        addFilterField(panel, gbc, 1, "Đến ngày", txtDenNgay);
+        addFilterField(panel, gbc, 2, "Chi nhánh", cbxChiNhanh);
+        addFilterField(panel, gbc, 3, "Loại doanh thu", cbxLoaiDichVu);
+
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
+        gbc.weightx = 0;
+        panel.add(btnXemBaoCao, gbc);
+
+        JPanel actions = new JPanel(new GridLayout(1, 3, 10, 0));
+=======
+        JPanel actions = new JPanel(new GridLayout(1, 3, 8, 0));
+>>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
         actions.setOpaque(false);
         actions.add(btnXuatCSV);
         actions.add(btnXuatPDF);
+        actions.add(btnXuatJasper);
 
-        panel.add(txtTuNgay);
-        panel.add(txtDenNgay);
-        panel.add(cbxChiNhanh);
-        panel.add(cbxLoaiDichVu);
-        panel.add(btnXemBaoCao);
-        panel.add(actions);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 5;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        panel.add(actions, gbc);
         return panel;
+    }
+
+    private void addFilterField(JPanel panel, GridBagConstraints gbc, int x, String text, java.awt.Component input) {
+        gbc.gridx = x;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        panel.add(label(text), gbc);
+
+        gbc.gridy = 1;
+        panel.add(input, gbc);
     }
 
     private JPanel taoVungTheThongKe() {
@@ -167,6 +207,10 @@ public class TongQuanForm extends JPanel {
         JTable table = new JTable(tableModel);
         table.setRowHeight(28);
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        table.getColumnModel().getColumn(0).setPreferredWidth(90);
+        table.getColumnModel().getColumn(1).setPreferredWidth(180);
+        table.getColumnModel().getColumn(2).setPreferredWidth(110);
+        table.getColumnModel().getColumn(3).setPreferredWidth(190);
         return wrapCard("GIAO DỊCH GẦN NHẤT", new JScrollPane(table));
     }
 
@@ -325,6 +369,40 @@ public class TongQuanForm extends JPanel {
                 JOptionPane.showMessageDialog(this, "Xuất báo cáo doanh thu PDF thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void xuatPdfJasper() {
+        String tuNgay = txtTuNgay.getText().trim();
+        String denNgay = txtDenNgay.getText().trim();
+        String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
+        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
+
+        if (duLieuHienTai == null) {
+            capNhatDuLieu();
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Lưu báo cáo doanh thu JasperReports");
+        fileChooser.setSelectedFile(new File("BaoCaoDoanhThu_Jasper_" + tuNgay.replace("/", "") + "_" + denNgay.replace("/", "") + ".pdf"));
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF Files", "pdf"));
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = ensureExtension(fileChooser.getSelectedFile(), ".pdf");
+            try {
+                List<DoanhThuReportRowDTO> rows = controller.layDongBaoCaoDoanhThu(tuNgay, denNgay, chiNhanh, loaiDT);
+                DoanhThuJasperReportExporter.ReportParams params = new DoanhThuJasperReportExporter.ReportParams(
+                        tuNgay,
+                        denNgay,
+                        chiNhanh == null ? "Tất cả chi nhánh" : chiNhanh,
+                        duLieuHienTai.getDoanhThuThuc(),
+                        rows.size()
+                );
+                DoanhThuJasperReportExporter.exportPdf(file, params, rows);
+                JOptionPane.showMessageDialog(this, "Xuất báo cáo doanh thu JasperReports thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF Jasper: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

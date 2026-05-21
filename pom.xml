@@ -99,6 +99,12 @@
             <artifactId>itextpdf</artifactId>
             <version>5.5.13.3</version>
         </dependency>
+
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
+            <version>6.21.5</version>
+        </dependency>
         
         <!-- NetBeans AbsoluteLayout -->
         <dependency>

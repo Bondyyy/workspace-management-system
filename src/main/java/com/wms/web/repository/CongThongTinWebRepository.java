@@ -12,7 +12,10 @@ import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.model.KhongGianView;
 import com.wms.web.model.PhieuGiamGiaView;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
+import com.wms.util.MaTuDongUtil;
+import com.wms.util.MaTuDongUtil.MaDoiTuong;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -25,7 +28,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,8 +83,8 @@ public class CongThongTinWebRepository {
     }
 
     public void taoHoiVien(String fullName, String username, String email, String hashedPassword) {
-        String maND = UUID.randomUUID().toString();
-        String maKH = "KH_" + maND;
+        String maND = sinhMaTuDong(MaDoiTuong.NGUOI_DUNG);
+        String maKH = sinhMaTuDong(MaDoiTuong.KHACH_HANG);
 
         mauJdbc.update(
                 """
@@ -429,30 +431,15 @@ public class CongThongTinWebRepository {
     }
 
     public String taoMaDatChoTiepTheo() {
-        Integer maxNumber = mauJdbc.queryForObject(
-                "SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(MaDatCho, '[0-9]+'))), 0) FROM DATCHO",
-                Integer.class
-        );
-        int next = maxNumber == null ? 1 : maxNumber + 1;
-        return String.format("DC%06d", next);
+        return sinhMaTuDong(MaDoiTuong.DAT_CHO);
     }
 
     public String taoMaPhienTiepTheo() {
-        Integer maxNumber = mauJdbc.queryForObject(
-                "SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(MaPhien, '[0-9]+'))), 0) FROM PHIENLAMVIEC",
-                Integer.class
-        );
-        int next = maxNumber == null ? 1 : maxNumber + 1;
-        return String.format("PH%04d", next);
+        return sinhMaTuDong(MaDoiTuong.PHIEN_LAM_VIEC);
     }
 
     public String taoMaHoaDonTiepTheo() {
-        Integer maxNumber = mauJdbc.queryForObject(
-                "SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(MaHoaDon, '[0-9]+'))), 0) FROM HOADON",
-                Integer.class
-        );
-        int next = maxNumber == null ? 1 : maxNumber + 1;
-        return String.format("HD%06d", next);
+        return sinhMaTuDong(MaDoiTuong.HOA_DON);
     }
 
     public void taoDatCho(String maDatCho, NguoiDungPhien user, String maKG, LocalDateTime arrivalTime,
@@ -1151,6 +1138,10 @@ public class CongThongTinWebRepository {
 
     private String rongThanhNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private String sinhMaTuDong(MaDoiTuong doiTuong) {
+        return mauJdbc.execute((ConnectionCallback<String>) conn -> MaTuDongUtil.sinhMaTiepTheo(conn, doiTuong));
     }
 
     private String transferContent(String maDatCho) {

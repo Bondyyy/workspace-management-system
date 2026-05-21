@@ -5,6 +5,7 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
+import com.wms.util.MaTuDongUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,15 +17,8 @@ public class PhienLamViecDAO {
     }
 
     public String generateNextMaPhien() throws SQLException {
-        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaPhien, 3))) FROM PHIENLAMVIEC WHERE REGEXP_LIKE(MaPhien, '^PH[0-9]+$')";
-        try (Connection conn = getConn();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                int maxNum = rs.getInt(1);
-                return String.format("PH%04d", maxNum + 1);
-            }
-            return "PH0001";
+        try (Connection conn = getConn()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
         }
     }
 

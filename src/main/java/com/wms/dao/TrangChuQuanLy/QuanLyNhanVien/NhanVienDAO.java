@@ -4,6 +4,7 @@ import com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDAO;
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
+import com.wms.util.MaTuDongUtil;
 import com.wms.util.PasswordUtil;
 
 import java.sql.*;
@@ -98,17 +99,7 @@ public class NhanVienDAO {
 
             String maND = ndDAO.generateNextMaND();
             
-            // Tạo MaKH tuần tự (giống KhachHangDAO)
-            String maKH = "HV000001";
-            String sqlMaxKH = "SELECT MAX(MaKH) FROM KHACHHANG WHERE MaKH LIKE 'HV%'";
-            try (PreparedStatement psMax = conn.prepareStatement(sqlMaxKH);
-                 ResultSet rsMax = psMax.executeQuery()) {
-                if (rsMax.next() && rsMax.getString(1) != null) {
-                    String max = rsMax.getString(1);
-                    int num = Integer.parseInt(max.substring(2)) + 1;
-                    maKH = String.format("HV%06d", num);
-                }
-            }
+            String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
             String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau)
                     : PasswordUtil.hash("123456");
 
@@ -339,14 +330,8 @@ public class NhanVienDAO {
     public String taoMaNVMoi(Connection conn) throws SQLException {
         boolean isStandalone = (conn == null);
         Connection localConn = isStandalone ? getConn() : conn;
-        // Loại bỏ NV_ADMIN và chỉ lấy những mã bắt đầu bằng NV theo sau là số
-        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaNV, 3))) FROM NHANVIEN WHERE MaNV LIKE 'NV%' AND MaNV != 'NV_ADMIN'";
-        try (PreparedStatement ps = localConn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                int maxNum = rs.getInt(1);
-                return String.format("NV%06d", maxNum + 1);
-            }
+        try {
+            return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.NHAN_VIEN);
         } catch (SQLException e) {
             System.err.println("[NhanVienDAO] Lỗi tạo mã mới: " + e.getMessage());
         }

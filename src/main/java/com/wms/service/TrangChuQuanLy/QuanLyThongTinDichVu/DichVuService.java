@@ -38,14 +38,7 @@ public class DichVuService {
     }
 
     public String generateMaDV() {
-        String maxMa = dichVuDAO.layMaxMaDV();
-        if (maxMa == null || !maxMa.startsWith("DV")) return "DV001";
-        try {
-            int num = Integer.parseInt(maxMa.substring(2)) + 1;
-            return String.format("DV%03d", num);
-        } catch (Exception e) {
-            return "DV" + (System.currentTimeMillis() % 1000);
-        }
+        return dichVuDAO.taoMaMoi();
     }
 
     // Quản lý Loại dịch vụ
@@ -82,12 +75,9 @@ public class DichVuService {
 
     public String generateMaLoai() {
         try {
-            String maxMa = loaiDichVuDAO.layMaxMaLoaiDV();
-            if (maxMa == null || !maxMa.startsWith("LDV")) return "LDV001";
-            int num = Integer.parseInt(maxMa.substring(3)) + 1;
-            return String.format("LDV%03d", num);
+            return loaiDichVuDAO.generateNextMa();
         } catch (Exception e) {
-            return "LDV" + (System.currentTimeMillis() % 1000);
+            return "LDV000001";
         }
     }
 }

@@ -2,6 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyDatChoTruoc;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyDatChoTruoc.DatChoTruocDTO;
+import com.wms.util.MaTuDongUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -117,8 +118,8 @@ public class QuanLyDatChoTruocDAO {
         if (!coTheNhanCho(conn, maDatCho)) {
             return false;
         }
-        String maPhien = taoMaTiepTheo(conn, "PHIENLAMVIEC", "MaPhien", "PH", 4);
-        String maHoaDon = taoMaTiepTheo(conn, "HOADON", "MaHoaDon", "HD", 6);
+        String maPhien = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
+        String maHoaDon = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.HOA_DON);
 
         try (PreparedStatement ps = conn.prepareStatement("""
                 INSERT INTO PHIENLAMVIEC
@@ -184,18 +185,6 @@ public class QuanLyDatChoTruocDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }
-        }
-    }
-
-    private String taoMaTiepTheo(Connection conn, String tableName, String columnName, String prefix, int width) throws SQLException {
-        String sql = "SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(" + columnName + ", '[0-9]+'))), 0) FROM " + tableName;
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            int next = 1;
-            if (rs.next()) {
-                next = rs.getInt(1) + 1;
-            }
-            return prefix + String.format("%0" + width + "d", next);
         }
     }
 

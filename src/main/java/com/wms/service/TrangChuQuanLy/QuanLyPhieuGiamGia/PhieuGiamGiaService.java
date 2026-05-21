@@ -69,7 +69,6 @@ public class PhieuGiamGiaService {
     }
 
     public String sinhMaMoi() {
-        int count = dao.demSoLuong();
-        return String.format("PGG%03d", count + 1);
+        return dao.taoMaMoi();
     }
 }

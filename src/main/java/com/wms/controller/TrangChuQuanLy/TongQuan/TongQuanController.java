@@ -1,6 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.TongQuan;
 
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.DoanhThuReportRowDTO;
 import com.wms.model.TrangChuQuanLy.TongQuan.TongQuanDTO;
 import com.wms.service.TrangChuQuanLy.TongQuan.TongQuanService;
 
@@ -20,5 +21,9 @@ public class TongQuanController {
 
     public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
         return service.layDanhSachHoaDonTheoDieuKien(tuNgay, denNgay, chiNhanh, loaiDT);
+    }
+
+    public List<DoanhThuReportRowDTO> layDongBaoCaoDoanhThu(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
+        return service.layDongBaoCaoDoanhThu(tuNgay, denNgay, chiNhanh, loaiDT);
     }
 }

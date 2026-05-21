@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="bao_cao_doanh_thu"
+              pageWidth="842"
+              pageHeight="595"
+              orientation="Landscape"
+              columnWidth="802"
+              leftMargin="20"
+              rightMargin="20"
+              topMargin="20"
+              bottomMargin="20"
+              uuid="b8c19a2b-4fa7-4c6d-a762-a12deee07b35">
+    <property name="net.sf.jasperreports.default.font.name" value="SansSerif"/>
+
+    <parameter name="REPORT_TITLE" class="java.lang.String">
+        <defaultValueExpression><![CDATA["BÁO CÁO DOANH THU"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="TU_NGAY" class="java.lang.String"/>
+    <parameter name="DEN_NGAY" class="java.lang.String"/>
+    <parameter name="TEN_CHI_NHANH" class="java.lang.String"/>
+    <parameter name="TONG_DOANH_THU" class="java.lang.String"/>
+    <parameter name="SO_GIAO_DICH" class="java.lang.String"/>
+    <parameter name="NGAY_XUAT" class="java.lang.String"/>
+
+    <field name="maHoaDon" class="java.lang.String"/>
+    <field name="ngayLap" class="java.lang.String"/>
+    <field name="tenKhachHang" class="java.lang.String"/>
+    <field name="tenChiNhanh" class="java.lang.String"/>
+    <field name="tenKhongGian" class="java.lang.String"/>
+    <field name="tongTien" class="java.lang.String"/>
+    <field name="thanhTien" class="java.lang.String"/>
+    <field name="phuongThucThanhToan" class="java.lang.String"/>
+    <field name="trangThaiThanhToan" class="java.lang.String"/>
+
+    <title>
+        <band height="96">
+            <textField>
+                <reportElement x="0" y="0" width="802" height="30" uuid="71f5e5b2-330c-46a8-82d9-0dfb44282b06"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="18" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{REPORT_TITLE}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="42" width="80" height="16" uuid="d19cc58b-7149-4901-a3e8-e2f690b1cf1b"/>
+                <textElement><font size="9" isBold="true"/></textElement>
+                <text><![CDATA[Khoang ngay:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="82" y="42" width="210" height="16" uuid="cf55d38c-3cb6-4b87-806f-70b1782b9a65"/>
+                <textElement><font size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{TU_NGAY} + " - " + $P{DEN_NGAY}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="310" y="42" width="65" height="16" uuid="947511cc-806d-41e9-80bd-2454258e7bb8"/>
+                <textElement><font size="9" isBold="true"/></textElement>
+                <text><![CDATA[Chi nhanh:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="378" y="42" width="190" height="16" uuid="0cc0a8a0-12f6-4bd6-a4b3-c96d9c4099d0"/>
+                <textElement><font size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{TEN_CHI_NHANH}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="590" y="42" width="65" height="16" uuid="49bdc39d-682a-47fd-8cd5-809841748b73"/>
+                <textElement><font size="9" isBold="true"/></textElement>
+                <text><![CDATA[Ngay xuat:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="658" y="42" width="144" height="16" uuid="88c4038a-2041-4863-adf5-6d93e7ccca79"/>
+                <textElement><font size="9"/></textElement>
+                <textFieldExpression><![CDATA[$P{NGAY_XUAT}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="68" width="95" height="18" uuid="9b503c52-0a0c-4f38-b6be-aafac2815bd2"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Tong doanh thu:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="98" y="68" width="180" height="18" uuid="4286b43a-94e2-4b42-8938-1fd18634294e"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{TONG_DOANH_THU}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="310" y="68" width="105" height="18" uuid="b72704f3-58f8-4666-b094-ef99f8709345"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[So giao dich:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="418" y="68" width="90" height="18" uuid="43dc4c8c-1d45-4d84-83d8-7f641927c50e"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{SO_GIAO_DICH}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="24">
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="0" y="0" width="68" height="22" uuid="840dc116-d72d-4f32-b8cb-1bd3191163fb"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Ma HD]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="68" y="0" width="88" height="22" uuid="45349d7f-66c6-42f0-b006-c4778691f7da"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Ngay lap]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="156" y="0" width="120" height="22" uuid="2429c236-68d2-477e-b9cf-ae0773581779"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Khach hang]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="276" y="0" width="98" height="22" uuid="df74d8ff-9c4f-4f7f-b46e-65027ed01804"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Khong gian]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="374" y="0" width="98" height="22" uuid="98385d97-0ba1-4215-9e7f-d12d6a92c93c"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Chi nhanh]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="472" y="0" width="80" height="22" uuid="36b74aa4-f674-464e-8a14-4644766390d6"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Tong tien]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="552" y="0" width="80" height="22" uuid="b6705695-fdfd-4480-8691-764a61f89b7c"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Thanh tien]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="632" y="0" width="78" height="22" uuid="b23fb795-84d3-4b64-b34b-302514319ac3"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[PT thanh toan]]></text></staticText>
+            <staticText><reportElement mode="Opaque" backcolor="#E9EEF7" x="710" y="0" width="92" height="22" uuid="09a54ab1-d4a7-4c21-9043-bd39ffd791d2"/><textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Trang thai]]></text></staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="20">
+            <textField isBlankWhenNull="true"><reportElement x="0" y="0" width="68" height="18" uuid="f68e0474-a55a-4802-9442-ec6cc9a9d03f"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{maHoaDon}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="68" y="0" width="88" height="18" uuid="33a5390d-b3cd-4892-bd8d-64e3f2e468e6"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{ngayLap}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="156" y="0" width="120" height="18" uuid="79e46fc6-9977-4e0e-a1c0-1e6735be1ce2"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{tenKhachHang}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="276" y="0" width="98" height="18" uuid="f47a68ef-d2e9-4db0-b539-e079e2020d33"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{tenKhongGian}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="374" y="0" width="98" height="18" uuid="c7ef3dc1-a979-423d-bb93-3d9df03a1832"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{tenChiNhanh}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="472" y="0" width="80" height="18" uuid="1252c30a-04d0-4c85-b935-688116849348"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{tongTien}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="552" y="0" width="80" height="18" uuid="55799526-78b3-48c8-8102-0545ac283f6e"/><textElement textAlignment="Right" verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{thanhTien}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="632" y="0" width="78" height="18" uuid="9fe5f176-86b4-4dc8-820b-15b4e7ceba6b"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{phuongThucThanhToan}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement x="710" y="0" width="92" height="18" uuid="479896a3-b82a-444a-9c60-42e140367a10"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{trangThaiThanhToan}]]></textFieldExpression></textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <textField>
+                <reportElement x="682" y="0" width="120" height="14" uuid="9a40194b-62b2-4098-89dd-86915bb44741"/>
+                <textElement textAlignment="Right"><font size="8"/></textElement>
+                <textFieldExpression><![CDATA["Trang " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

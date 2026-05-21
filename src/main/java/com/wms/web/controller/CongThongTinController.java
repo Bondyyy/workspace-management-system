@@ -270,13 +270,14 @@ public class CongThongTinController {
     public String hienThiUuDai(@RequestParam(name = "keyword", required = false) String keyword,
                            HttpSession session,
                            Model model) {
-        NguoiDungPhien user = layHoiVienHienTai(session);
-        if (user == null) {
-            return "redirect:/dangNhap";
+        String accessRedirect = redirectNeuKhongPhaiHoiVien(session);
+        if (accessRedirect != null) {
+            return accessRedirect;
         }
+        NguoiDungPhien user = layHoiVienHienTai(session);
         model.addAttribute("user", user);
         model.addAttribute("rankName", congThongTinService.layTenHangThanhVien(user));
-        model.addAttribute("activePage", "hienThiUuDai");
+        model.addAttribute("activePage", "uuDai");
         var vouchers = congThongTinService.layPhieuGiamGiaHieuLuc();
         if (keyword != null && !keyword.isBlank()) {
             String normalizedKeyword = keyword.trim().toLowerCase();
@@ -291,20 +292,21 @@ public class CongThongTinController {
                 .filter(voucher -> voucher.getNgayKetThucApDung() != null)
                 .filter(voucher -> voucher.getNgayKetThucApDung().isBefore(LocalDateTime.now().plusDays(3)))
                 .count());
-        return "web/hienThiUuDai";
+        return "web/uu-dai";
     }
 
     @GetMapping("/portal/history")
     public String hienThiLichSu(HttpSession session, Model model) {
-        NguoiDungPhien user = layHoiVienHienTai(session);
-        if (user == null) {
-            return "redirect:/dangNhap";
+        String accessRedirect = redirectNeuKhongPhaiHoiVien(session);
+        if (accessRedirect != null) {
+            return accessRedirect;
         }
+        NguoiDungPhien user = layHoiVienHienTai(session);
         model.addAttribute("user", user);
         model.addAttribute("rankName", congThongTinService.layTenHangThanhVien(user));
-        model.addAttribute("activePage", "hienThiLichSu");
+        model.addAttribute("activePage", "lichSu");
         model.addAttribute("histories", congThongTinService.layLichSuDatChoHoiVien(user.getMaKH()));
-        return "web/hienThiLichSu";
+        return "web/lich-su";
     }
 
     @GetMapping(value = "/portal/history/bookings/{maDatCho}/qr.png", produces = MediaType.IMAGE_PNG_VALUE)
@@ -328,23 +330,24 @@ public class CongThongTinController {
 
     @GetMapping("/portal/account")
     public String hienThiTaiKhoan(HttpSession session, Model model) {
-        NguoiDungPhien user = layHoiVienHienTai(session);
-        if (user == null) {
-            return "redirect:/dangNhap";
+        String accessRedirect = redirectNeuKhongPhaiHoiVien(session);
+        if (accessRedirect != null) {
+            return accessRedirect;
         }
+        NguoiDungPhien user = layHoiVienHienTai(session);
         List<DatChoView> hienThiDatCho = layDanhSachDatChoHoiVien(user.getMaKH());
         ThongTinTaiKhoanView profile = congThongTinService.layThongTinTaiKhoan(user);
         model.addAttribute("user", user);
         model.addAttribute("rankName", congThongTinService.layTenHangThanhVien(user));
         model.addAttribute("profile", profile);
-        model.addAttribute("activePage", "hienThiTaiKhoan");
+        model.addAttribute("activePage", "taiKhoan");
         model.addAttribute("joinDate", LocalDate.now());
         model.addAttribute("bookingCount", hienThiDatCho.size());
         model.addAttribute("lastBooking", hienThiDatCho.stream()
                 .filter(booking -> booking.getThoiGianDuKienToi() != null)
                 .max(Comparator.comparing(DatChoView::getThoiGianDuKienToi))
                 .orElse(null));
-        return "web/hienThiTaiKhoan";
+        return "web/tai-khoan";
     }
 
     @PostMapping("/portal/account")
@@ -385,6 +388,20 @@ public class CongThongTinController {
             return null;
         }
         return user;
+    }
+
+    private String redirectNeuKhongPhaiHoiVien(HttpSession session) {
+        NguoiDungPhien user = (NguoiDungPhien) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/dangNhap";
+        }
+        if (user.laNhanVien()) {
+            return "redirect:/staff/bookings";
+        }
+        if (user.getMaKH() == null || user.getMaKH().isBlank()) {
+            return "redirect:/dangNhap";
+        }
+        return null;
     }
 
     private List<DatChoView> layDanhSachDatChoHoiVien(String maKH) {

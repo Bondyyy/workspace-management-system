@@ -2,6 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyKhongGian;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
+import com.wms.util.MaTuDongUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -180,18 +181,12 @@ public class KhongGianDAO {
     }
 
     public String taoMaMoi() {
-        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaKG, 3))) FROM KHONGGIAN WHERE MaKG LIKE 'KG%'";
-        try (Connection conn = getConn();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            if (rs.next()) {
-                int maxNum = rs.getInt(1);
-                return String.format("KG%03d", maxNum + 1);
-            }
-        } catch (Exception e) {
+        try (Connection conn = getConn()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHONG_GIAN);
+        } catch (SQLException e) {
             System.err.println("[KhongGianDAO] Lỗi tạo mã mới: " + e.getMessage());
         }
-        return "KG" + (System.currentTimeMillis() % 1000);
+        return "KG000001";
     }
 
     public boolean kiemTraTinhTrangKhongGian(String tenLoaiKG, String ngayDat, String gioToi) {

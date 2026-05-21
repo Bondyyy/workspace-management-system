@@ -2,9 +2,11 @@ package com.wms.dao.TrangChuQuanLy.QuanLyThongTinDichVu;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
+import com.wms.util.MaTuDongUtil;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,5 +119,14 @@ public class DichVuDAO {
             System.err.println("[DichVuDAO] Lỗi lấy mã MAX: " + e.getMessage());
         }
         return null;
+    }
+
+    public String taoMaMoi() {
+        try (Connection conn = getConn()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.DICH_VU);
+        } catch (SQLException e) {
+            System.err.println("[DichVuDAO] Lỗi tạo mã mới: " + e.getMessage());
+            return "DV000001";
+        }
     }
 }

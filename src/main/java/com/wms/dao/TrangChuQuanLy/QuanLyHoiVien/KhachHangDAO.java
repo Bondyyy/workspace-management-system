@@ -3,6 +3,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyHoiVien;
 import com.wms.config.DatabaseConnection;
 import com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
+import com.wms.util.MaTuDongUtil;
 import com.wms.util.PasswordUtil;
 import java.sql.*;
 import java.util.ArrayList;
@@ -158,13 +159,8 @@ public class KhachHangDAO {
     public String taoMaKHMoi(Connection conn) throws SQLException {
         boolean isStandalone = (conn == null);
         Connection localConn = isStandalone ? getConn() : conn;
-        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaKH, 3))) FROM KHACHHANG WHERE REGEXP_LIKE(MaKH, '^HV[0-9]+$')";
-        try (PreparedStatement ps = localConn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                int maxNum = rs.getInt(1);
-                return String.format("HV%06d", maxNum + 1);
-            }
+        try {
+            return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
         } catch (SQLException e) {
             System.err.println("[KhachHangDAO] Lỗi tạo mã mới: " + e.getMessage());
         }

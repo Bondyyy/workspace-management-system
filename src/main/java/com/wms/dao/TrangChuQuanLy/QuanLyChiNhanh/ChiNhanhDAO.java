@@ -2,9 +2,11 @@ package com.wms.dao.TrangChuQuanLy.QuanLyChiNhanh;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
+import com.wms.util.MaTuDongUtil;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -118,5 +120,14 @@ public class ChiNhanhDAO {
             System.err.println("Lỗi đếm số lượng chi nhánh: " + e.getMessage());
         }
         return 0;
+    }
+
+    public String taoMaMoi() {
+        try (Connection conn = getConn()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.CHI_NHANH);
+        } catch (SQLException e) {
+            System.err.println("Lỗi tạo mã chi nhánh mới: " + e.getMessage());
+            return "CN000001";
+        }
     }
 }

@@ -26,8 +26,7 @@ public class ChiNhanhService {
         String loi = validate(cn, false);
         if (loi != null) return loi;
 
-        int count = chiNhanhDAO.demSoLuong();
-        cn.setMaCN(String.format("CN%03d", count + 1));
+        cn.setMaCN(chiNhanhDAO.taoMaMoi());
         return chiNhanhDAO.themChiNhanh(cn) ? null : "Thêm chi nhánh thất bại, vui lòng thử lại.";
     }
 
@@ -49,8 +48,7 @@ public class ChiNhanhService {
     }
 
     public String layMaCNTiepTheo() {
-        int count = chiNhanhDAO.demSoLuong();
-        return String.format("CN%03d", count + 1);
+        return chiNhanhDAO.taoMaMoi();
     }
 
     private String validate(ChiNhanhDTO cn, boolean isUpdate) {

@@ -2,6 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyLoaiDichVu;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyLoaiDichVu.LoaiDichVuDTO;
+import com.wms.util.MaTuDongUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -76,18 +77,7 @@ public class LoaiDichVuDAO {
     }
 
     public String generateNextMa() throws SQLException {
-        String sql = "SELECT MAX(MaLoaiDV) FROM LOAIDICHVU";
-        try (PreparedStatement ps = getConn().prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                String maxMa = rs.getString(1);
-                if (maxMa != null && maxMa.startsWith("LDV")) {
-                    int num = Integer.parseInt(maxMa.substring(3)) + 1;
-                    return String.format("LDV%03d", num);
-                }
-            }
-        }
-        return "LDV001";
+        return MaTuDongUtil.sinhMaTiepTheo(getConn(), MaTuDongUtil.MaDoiTuong.LOAI_DICH_VU);
     }
 
     private LoaiDichVuDTO mapResultSetToDTO(ResultSet rs) throws SQLException {
