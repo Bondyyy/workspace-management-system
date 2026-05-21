@@ -1,5 +1,8 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
 # Workspace Management System
 
 Hệ thống quản lý không gian làm việc/học tập dùng Java 17, Maven, Swing/JDBC với Oracle Database. Dự án cũng có phần Spring Boot web đã được giảng viên cho phép như một phần mở rộng.
@@ -86,4 +89,7 @@ Nếu Maven chưa có trong PATH, có thể dùng Maven đi kèm NetBeans:
 ## Lưu ý cấu hình
 
 Không commit secret thật. Các file cấu hình thật như `db.properties`, `application.properties`, `.gitignore` được giữ nguyên theo chủ repo.
+<<<<<<< HEAD
+>>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
+=======
 >>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed

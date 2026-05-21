@@ -129,6 +129,7 @@ public class TongQuanForm extends JPanel {
         btnXuatJasper.addActionListener(e -> xuatPdfJasper());
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         for (JButton b : new JButton[]{btnXemBaoCao, btnXuatCSV, btnXuatPDF, btnXuatJasper}) {
             b.setPreferredSize(new Dimension(150, 36));
             b.setMinimumSize(new Dimension(130, 36));
@@ -152,6 +153,9 @@ public class TongQuanForm extends JPanel {
         panel.add(btnXemBaoCao, gbc);
 
         JPanel actions = new JPanel(new GridLayout(1, 3, 10, 0));
+=======
+        JPanel actions = new JPanel(new GridLayout(1, 3, 8, 0));
+>>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
 =======
         JPanel actions = new JPanel(new GridLayout(1, 3, 8, 0));
 >>>>>>> bbfcce882d9241c79717df514eeb219b9a8813ed
