@@ -12,7 +12,8 @@ public class DBUtils {
 
     // 2. Chạy câu lệnh INSERT, UPDATE, DELETE (DML)
     public static int executeUpdate(String sql, Object... params) {
-        try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
                 pstmt.setObject(i + 1, params[i]);
             }
@@ -28,7 +29,7 @@ public class DBUtils {
         try {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
-            // Không đóng conn ở đây nếu bạn muốn dùng Singleton xuyên suốt
+            if (conn != null) conn.close(); // Trả connection về Hikari pool
         } catch (SQLException e) {
             e.printStackTrace();
         }

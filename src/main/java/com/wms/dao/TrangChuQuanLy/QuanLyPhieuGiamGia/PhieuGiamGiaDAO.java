@@ -8,14 +8,11 @@ import java.util.List;
 
 
 public class PhieuGiamGiaDAO {
-    private Connection getConn() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
     
     // Gộp layThongTinVoucher vào timTheoMa để tránh trùng lặp code
     public PhieuGiamGiaDTO timTheoMa(String maPGG) {
         String sql = "SELECT * FROM PHIEUGIAMGIA WHERE MaPGG = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maPGG.trim());
             try (ResultSet rs = ps.executeQuery()) {
@@ -31,7 +28,7 @@ public class PhieuGiamGiaDAO {
 
     public PhieuGiamGiaDTO timTheoMaChuSo(String maChuSoPGG) {
         String sql = "SELECT * FROM PHIEUGIAMGIA WHERE UPPER(MaChuSoPGG) = UPPER(?)";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maChuSoPGG.trim());
             try (ResultSet rs = ps.executeQuery()) {
@@ -47,7 +44,7 @@ public class PhieuGiamGiaDAO {
 
     public int demSoLuong() {
         String sql = "SELECT COUNT(*) FROM PHIEUGIAMGIA";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             if (rs.next()) {
@@ -60,7 +57,7 @@ public class PhieuGiamGiaDAO {
     }
 
     public String taoMaMoi() {
-        try (Connection conn = getConn()) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEU_GIAM_GIA);
         } catch (SQLException e) {
             System.err.println("[PhieuGiamGiaDAO] Lỗi tạo mã mới: " + e.getMessage());
@@ -71,7 +68,7 @@ public class PhieuGiamGiaDAO {
     public List<PhieuGiamGiaDTO> layDanhSach() {
         List<PhieuGiamGiaDTO> list = new ArrayList<>();
         String sql = "SELECT * FROM PHIEUGIAMGIA ORDER BY NgayTaoPGG DESC";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -86,7 +83,7 @@ public class PhieuGiamGiaDAO {
     public List<PhieuGiamGiaDTO> timKiem(String keyword) {
         List<PhieuGiamGiaDTO> list = new ArrayList<>();
         String sql = "SELECT * FROM PHIEUGIAMGIA WHERE UPPER(MaPGG) LIKE UPPER(?) OR UPPER(MaChuSoPGG) LIKE UPPER(?) ORDER BY NgayTaoPGG DESC";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             String k = "%" + keyword.trim() + "%";
             ps.setString(1, k);
@@ -106,7 +103,7 @@ public class PhieuGiamGiaDAO {
         String sql = "INSERT INTO PHIEUGIAMGIA (MaPGG, MaChuSoPGG, GiaTriGiamGia, GiaTriApDungToiThieu, " +
                      "NgayBatDauApDung, NgayKetThucApDung, SLDaDung, SLToiDa, NgayTaoPGG, MaNV, TrangThai) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, ?, ?)";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, dto.getMaPGG());
             ps.setString(2, dto.getMaChuSoPGG());
@@ -128,7 +125,7 @@ public class PhieuGiamGiaDAO {
     public boolean capNhat(PhieuGiamGiaDTO dto) {
         String sql = "UPDATE PHIEUGIAMGIA SET MaChuSoPGG = ?, GiaTriGiamGia = ?, GiaTriApDungToiThieu = ?, " +
                      "NgayBatDauApDung = ?, NgayKetThucApDung = ?, SLToiDa = ?, TrangThai = ? WHERE MaPGG = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, dto.getMaChuSoPGG());
             ps.setDouble(2, dto.getGiaTriGiamGia());
@@ -147,7 +144,7 @@ public class PhieuGiamGiaDAO {
 
     public boolean xoa(String maPGG) {
         String sql = "UPDATE PHIEUGIAMGIA SET TrangThai = 'Đã vô hiệu hoá' WHERE MaPGG = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maPGG);
             return ps.executeUpdate() > 0;
@@ -159,7 +156,7 @@ public class PhieuGiamGiaDAO {
 
     public boolean tangSoLuongDaDung(String maPGG) {
         String sql = "UPDATE PHIEUGIAMGIA SET SLDaDung = SLDaDung + 1 WHERE MaPGG = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maPGG);
             return ps.executeUpdate() > 0;

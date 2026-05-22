@@ -9,10 +9,6 @@ import java.util.Arrays;
 
 public class DataInitializer {
 
-    private static Connection getConn() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
-
     public static void initializeAll(Connection conn) {
         System.out.println("[DataInitializer] Bat dau khoi tao du lieu mac dinh...");
         khoiTaoChucNang(conn);

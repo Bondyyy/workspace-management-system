@@ -10,10 +10,6 @@ import java.util.List;
 
 public class NguoiDungDAO {
 
-    private Connection getConn() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
-
     public NguoiDungDTO timTheoTenTaiKhoan(String identifier) throws SQLException {
         String sql = """
                     SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.AnhDaiDien,
@@ -30,64 +26,61 @@ public class NguoiDungDAO {
         NguoiDungDTO user = null;
         List<String> vaiTros = new ArrayList<>();
 
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identifier);
             ps.setString(2, identifier);
             ps.setString(3, identifier);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                if (user == null) {
-                    user = new NguoiDungDTO();
-                    user.setMaND(rs.getString("MaND"));
-                    user.setTenTaiKhoan(rs.getString("TenTaiKhoan"));
-                    user.setMatKhauMaHoa(rs.getString("MatKhauMaHoa"));
-                    user.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
-                    user.setGioiTinh(rs.getString("GioiTinh"));
-                    user.setEmail(rs.getString("Email"));
-                    user.setSdt(rs.getString("SDT"));
-                    user.setNgaySinh(rs.getDate("NgaySinh"));
-                    user.setThoiGianTao(rs.getTimestamp("ThoiGianTao"));
-                    user.setCapNhatLanCuoi(rs.getTimestamp("CapNhatLanCuoi"));
-                    user.setLanCuoiDangNhap(rs.getTimestamp("LanCuoiDangNhap"));
-                    user.setTrangThaiND(rs.getString("TrangThaiND"));
-                    String hoTen = rs.getString("HoTen");
-                    if (hoTen == null || hoTen.trim().isEmpty()) {
-                        hoTen = rs.getString("TenTaiKhoan");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    if (user == null) {
+                        user = new NguoiDungDTO();
+                        user.setMaND(rs.getString("MaND"));
+                        user.setTenTaiKhoan(rs.getString("TenTaiKhoan"));
+                        user.setMatKhauMaHoa(rs.getString("MatKhauMaHoa"));
+                        user.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
+                        user.setGioiTinh(rs.getString("GioiTinh"));
+                        user.setEmail(rs.getString("Email"));
+                        user.setSdt(rs.getString("SDT"));
+                        user.setNgaySinh(rs.getDate("NgaySinh"));
+                        user.setThoiGianTao(rs.getTimestamp("ThoiGianTao"));
+                        user.setCapNhatLanCuoi(rs.getTimestamp("CapNhatLanCuoi"));
+                        user.setLanCuoiDangNhap(rs.getTimestamp("LanCuoiDangNhap"));
+                        user.setTrangThaiND(rs.getString("TrangThaiND"));
+                        String hoTen = rs.getString("HoTen");
+                        if (hoTen == null || hoTen.trim().isEmpty()) {
+                            hoTen = rs.getString("TenTaiKhoan");
+                        }
+                        if (hoTen == null || hoTen.trim().isEmpty()) {
+                            hoTen = "Admin";
+                        }
+                        user.setHoTen(hoTen);
+                        user.setMaNV(rs.getString("MaNV"));
                     }
-                    if (hoTen == null || hoTen.trim().isEmpty()) {
-                        hoTen = "Admin"; // Fallback cuối cùng
-                    }
-                    user.setHoTen(hoTen);
-                    user.setMaNV(rs.getString("MaNV"));
-                }
 
-                String tenVaiTro = rs.getString("TenVaiTro");
-                if (tenVaiTro != null) {
-                    vaiTros.add(tenVaiTro);
-                }
-                String maVaiTro = rs.getString("MaVaiTro");
-                if (maVaiTro != null) {
-                    vaiTros.add(maVaiTro);
+                    String tenVaiTro = rs.getString("TenVaiTro");
+                    if (tenVaiTro != null) {
+                        vaiTros.add(tenVaiTro);
+                    }
+                    String maVaiTro = rs.getString("MaVaiTro");
+                    if (maVaiTro != null) {
+                        vaiTros.add(maVaiTro);
+                    }
                 }
             }
         }
 
         if (user != null) {
             user.setVaiTro(vaiTros);
-            // Load danh sách chức năng của người dùng
             user.setChucNang(layDanhSachChucNangCuaNguoiDung(user.getMaND()));
         }
         return user;
     }
 
     public boolean kiemTraTaiKhoanTonTai(String tenTaiKhoan) throws SQLException {
-        Connection conn = getConn();
-        if (conn == null) {
-            throw new SQLException("Không thể kết nối đến Cơ sở dữ liệu!");
-        }
         String sql = "SELECT 1 FROM NGUOIDUNG WHERE TenTaiKhoan = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tenTaiKhoan);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -96,12 +89,9 @@ public class NguoiDungDAO {
     }
 
     public boolean kiemTraEmailTonTai(String email) throws SQLException {
-        Connection conn = getConn();
-        if (conn == null) {
-            throw new SQLException("Không thể kết nối đến Cơ sở dữ liệu!");
-        }
         String sql = "SELECT 1 FROM NGUOIDUNG WHERE Email = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -110,12 +100,9 @@ public class NguoiDungDAO {
     }
 
     public boolean kiemTraSdtTonTai(String sdt) throws SQLException {
-        Connection conn = getConn();
-        if (conn == null) {
-            throw new SQLException("Không thể kết nối đến Cơ sở dữ liệu!");
-        }
         String sql = "SELECT 1 FROM NGUOIDUNG WHERE SDT = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, sdt);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -124,87 +111,82 @@ public class NguoiDungDAO {
     }
 
     public void themNguoiDung(NguoiDungDTO user, String hoTen) throws SQLException {
-        String maND = user.getMaND();
-        if (maND == null || maND.isEmpty()) {
-            maND = generateNextMaND();
-            user.setMaND(maND);
-        }
-
         String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, Email, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
-                +
-                "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                + "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
-        // Sử dụng mã HV sequential cho hội viên mới
         String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH) " +
                 "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?, 'Hội viên')";
 
-        Connection conn = getConn();
-        if (conn == null) {
-            throw new SQLException("Không thể kết nối đến Cơ sở dữ liệu!");
-        }
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            boolean autoCommit = conn.getAutoCommit();
+            try {
+                conn.setAutoCommit(false);
 
-        boolean autoCommit = conn.getAutoCommit();
-        try {
-            conn.setAutoCommit(false);
+                String maND = user.getMaND();
+                if (maND == null || maND.isEmpty()) {
+                    maND = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
+                    user.setMaND(maND);
+                }
 
-            try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
-                ps.setString(1, maND);
-                ps.setString(2, hoTen);
-                ps.setString(3, user.getTenTaiKhoan());
-                ps.setString(4, user.getMatKhauMaHoa());
-                ps.setString(5, user.getEmail());
-                ps.setString(6, "Đang hoạt động");
-                ps.executeUpdate();
-            }
+                try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
+                    ps.setString(1, maND);
+                    ps.setString(2, hoTen);
+                    ps.setString(3, user.getTenTaiKhoan());
+                    ps.setString(4, user.getMatKhauMaHoa());
+                    ps.setString(5, user.getEmail());
+                    ps.setString(6, "Đang hoạt động");
+                    ps.executeUpdate();
+                }
 
-            try (PreparedStatement psKH = conn.prepareStatement(sqlKH)) {
-                String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
+                try (PreparedStatement psKH = conn.prepareStatement(sqlKH)) {
+                    String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
+                    psKH.setString(1, maKH);
+                    psKH.setString(2, maND);
+                    psKH.executeUpdate();
+                }
 
-                psKH.setString(1, maKH);
-                psKH.setString(2, maND);
-                psKH.executeUpdate();
-            }
-
-            // Đảm bảo vai trò Khách hàng (VT00) tồn tại trong hệ thống
-            String sqlCheckVT = "SELECT COUNT(*) FROM VAITRO WHERE MaVaiTro = ?";
-            try (PreparedStatement psCheck = conn.prepareStatement(sqlCheckVT)) {
-                psCheck.setString(1, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
-                ResultSet rsCheck = psCheck.executeQuery();
-                if (rsCheck.next() && rsCheck.getInt(1) == 0) {
-                    String sqlInsVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
-                    try (PreparedStatement psIns = conn.prepareStatement(sqlInsVT)) {
-                        psIns.setString(1, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
-                        psIns.setString(2, com.wms.config.AppConstants.ROLE_CUSTOMER_NAME);
-                        psIns.setString(3, "Quyền hạn mặc định cho người đăng ký mới");
-                        psIns.executeUpdate();
+                String sqlCheckVT = "SELECT COUNT(*) FROM VAITRO WHERE MaVaiTro = ?";
+                try (PreparedStatement psCheck = conn.prepareStatement(sqlCheckVT)) {
+                    psCheck.setString(1, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
+                    try (ResultSet rsCheck = psCheck.executeQuery()) {
+                        if (rsCheck.next() && rsCheck.getInt(1) == 0) {
+                            String sqlInsVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
+                            try (PreparedStatement psIns = conn.prepareStatement(sqlInsVT)) {
+                                psIns.setString(1, com.wms.config.AppConstants.ROLE_CUSTOMER_CODE);
+                                psIns.setString(2, com.wms.config.AppConstants.ROLE_CUSTOMER_NAME);
+                                psIns.setString(3, "Quyền hạn mặc định cho người đăng ký mới");
+                                psIns.executeUpdate();
+                            }
+                        }
                     }
                 }
-            }
 
-            String selectedRole = com.wms.config.AppConstants.ROLE_CUSTOMER_CODE; // Mặc định là Khách hàng
-            if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
-                selectedRole = user.getVaiTro().get(0);
-            }
+                String selectedRole = com.wms.config.AppConstants.ROLE_CUSTOMER_CODE;
+                if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
+                    selectedRole = user.getVaiTro().get(0);
+                }
 
-            String sqlVaiTro = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
-            try (PreparedStatement psVT = conn.prepareStatement(sqlVaiTro)) {
-                psVT.setString(1, maND);
-                psVT.setString(2, selectedRole);
-                psVT.executeUpdate();
-            }
+                String sqlVaiTro = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
+                try (PreparedStatement psVT = conn.prepareStatement(sqlVaiTro)) {
+                    psVT.setString(1, maND);
+                    psVT.setString(2, selectedRole);
+                    psVT.executeUpdate();
+                }
 
-            conn.commit();
-        } catch (SQLException e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(autoCommit);
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(autoCommit);
+            }
         }
     }
 
     public void capNhatLanDangNhapCuoi(String maND) throws SQLException {
         String sql = "UPDATE NGUOIDUNG SET LanCuoiDangNhap = CURRENT_TIMESTAMP WHERE MaND = ?";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
             ps.executeUpdate();
         }
@@ -212,7 +194,8 @@ public class NguoiDungDAO {
 
     public void capNhatMatKhauTheoEmail(String email, String matKhauMaHoa) throws SQLException {
         String sql = "UPDATE NGUOIDUNG SET MatKhauMaHoa = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE Email = ?";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, matKhauMaHoa);
             ps.setString(2, email);
             ps.executeUpdate();
@@ -226,8 +209,9 @@ public class NguoiDungDAO {
                      "LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro " +
                      "ORDER BY n.ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
-        try (PreparedStatement ps = getConn().prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(mapResultSetToDTO(rs));
             }
@@ -244,7 +228,8 @@ public class NguoiDungDAO {
                      "ORDER BY n.ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
         String searchKey = "%" + keyword.toLowerCase() + "%";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, searchKey);
             ps.setString(2, searchKey);
             ps.setString(3, searchKey);
@@ -267,57 +252,54 @@ public class NguoiDungDAO {
         }
         sql.append("WHERE MaND = ?");
 
-        Connection conn = getConn();
-        if (conn == null) {
-            throw new SQLException("Không thể kết nối đến Cơ sở dữ liệu!");
-        }
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            boolean autoCommit = conn.getAutoCommit();
+            try {
+                conn.setAutoCommit(false);
 
-        boolean autoCommit = conn.getAutoCommit();
-        try {
-            conn.setAutoCommit(false);
-
-            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-                int idx = 1;
-                ps.setString(idx++, user.getHoTen());
-                ps.setString(idx++, user.getTenTaiKhoan());
-                ps.setString(idx++, user.getGioiTinh());
-                ps.setString(idx++, user.getEmail());
-                ps.setString(idx++, user.getSdt());
-                ps.setDate(idx++, user.getNgaySinh());
-                ps.setString(idx++, user.getTrangThaiND());
-                ps.setBytes(idx++, user.getAnhDaiDien());
-                if (updatePassword) {
-                    ps.setString(idx++, user.getMatKhauMaHoa());
+                try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                    int idx = 1;
+                    ps.setString(idx++, user.getHoTen());
+                    ps.setString(idx++, user.getTenTaiKhoan());
+                    ps.setString(idx++, user.getGioiTinh());
+                    ps.setString(idx++, user.getEmail());
+                    ps.setString(idx++, user.getSdt());
+                    ps.setDate(idx++, user.getNgaySinh());
+                    ps.setString(idx++, user.getTrangThaiND());
+                    ps.setBytes(idx++, user.getAnhDaiDien());
+                    if (updatePassword) {
+                        ps.setString(idx++, user.getMatKhauMaHoa());
+                    }
+                    ps.setString(idx++, user.getMaND());
+                    ps.executeUpdate();
                 }
-                ps.setString(idx++, user.getMaND());
-                ps.executeUpdate();
-            }
 
-            // Xoá vai trò cũ
-            try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
-                psDel.setString(1, user.getMaND());
-                psDel.executeUpdate();
-            }
+                // Xoá vai trò cũ
+                try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
+                    psDel.setString(1, user.getMaND());
+                    psDel.executeUpdate();
+                }
 
-            // Thêm vai trò mới
-            String selectedRole = com.wms.config.AppConstants.ROLE_CUSTOMER_CODE;
-            if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
-                selectedRole = user.getVaiTro().get(0);
-            }
+                // Thêm vai trò mới
+                String selectedRole = com.wms.config.AppConstants.ROLE_CUSTOMER_CODE;
+                if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {
+                    selectedRole = user.getVaiTro().get(0);
+                }
 
-            String sqlVT = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
-            try (PreparedStatement psVT = conn.prepareStatement(sqlVT)) {
-                psVT.setString(1, user.getMaND());
-                psVT.setString(2, selectedRole);
-                psVT.executeUpdate();
-            }
+                String sqlVT = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro) VALUES (?, ?)";
+                try (PreparedStatement psVT = conn.prepareStatement(sqlVT)) {
+                    psVT.setString(1, user.getMaND());
+                    psVT.setString(2, selectedRole);
+                    psVT.executeUpdate();
+                }
 
-            conn.commit();
-        } catch (SQLException e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(autoCommit);
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(autoCommit);
+            }
         }
     }
 
@@ -348,7 +330,9 @@ public class NguoiDungDAO {
     }
 
     public String generateNextMaND() throws SQLException {
-        return MaTuDongUtil.sinhMaTiepTheo(getConn(), MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
+        }
     }
 
     public java.util.List<String> layDanhSachChucNangCuaNguoiDung(String maND) {
@@ -358,7 +342,8 @@ public class NguoiDungDAO {
                 "JOIN CHITIETNHOMCHUCNANG ctncn ON cvt.MaVaiTro = ctncn.MaVaiTro " +
                 "JOIN CHITIETCHUCNANG ctcn ON ctncn.MaNhomChucNang = ctcn.MaNhomChucNang " +
                 "WHERE cvt.MaND = ?";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

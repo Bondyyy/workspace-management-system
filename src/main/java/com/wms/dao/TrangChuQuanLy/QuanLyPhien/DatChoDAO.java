@@ -11,11 +11,8 @@ public class DatChoDAO {
         String sql = "INSERT INTO DATCHO (MaDatCho, ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung, " +
                 "TrangThaiDatTruoc, ThanhTien, GhiChu, MaKH, MaKG) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, dc.getMaDatCho());
             pstmt.setTimestamp(2, dc.getThoiGianDat());
             pstmt.setTimestamp(3, dc.getThoiGianDuKienToi());
@@ -38,11 +35,8 @@ public class DatChoDAO {
 
     public boolean xacNhanThanhToan(String maDatCho) {
         String sql = "UPDATE DATCHO SET TrangThaiDatTruoc = 'Đã thanh toán thành công', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaDatCho = ?";
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, maDatCho);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -53,11 +47,8 @@ public class DatChoDAO {
 
     public boolean capNhatMaQR(String maDatCho, String maQR) {
         String sql = "UPDATE DATCHO SET MaQR = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaDatCho = ?";
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, maQR);
             pstmt.setString(2, maDatCho);
             return pstmt.executeUpdate() > 0;

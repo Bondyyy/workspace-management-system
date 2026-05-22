@@ -17,10 +17,6 @@ public class HoaDonDAO {
 
     public List<HoaDonDTO> layDanhSachHoaDon(String searchText, String statusFilter) {
         List<HoaDonDTO> list = new ArrayList<>();
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return list;
-
         StringBuilder sql = new StringBuilder(
                 "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc "
                         +
@@ -44,7 +40,8 @@ public class HoaDonDAO {
         }
         sql.append("ORDER BY h.NgayLapHoaDon DESC");
 
-        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             if (searchText != null && !searchText.trim().isEmpty()) {
                 String q = "%" + searchText.trim() + "%";
@@ -84,22 +81,18 @@ public class HoaDonDAO {
                     list.add(hd);
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
     }
 
     public boolean taoHoaDonMoi(HoaDonDTO hd) {
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-
         String sql = "INSERT INTO HOADON (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, TrangThaiThanhToan, MaPhien) "
-                +
-                "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
+                + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, hd.getMaHoaDon());
             pstmt.setString(2, hd.getSoHD());
             pstmt.setDouble(3, hd.getTongTien());
@@ -108,7 +101,7 @@ public class HoaDonDAO {
             pstmt.setString(6, hd.getMaPhien());
 
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -116,25 +109,20 @@ public class HoaDonDAO {
 
     public boolean capNhatTrangThaiThanhToanTheoPhien(String maPhien, String trangThai) {
         String sql = "UPDATE HOADON SET TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, trangThai);
             pstmt.setString(2, maPhien);
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
 
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
         ThongTinHoaDonDTO thongTin = null;
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return null;
-
         String sqlChung = "SELECT h.MaHoaDon, h.TongTien, h.ThanhTien, p.MaPhien, " +
                 "p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, " +
                 "nd.HoTen AS HoTenKH, kg.TenKG " +
@@ -150,7 +138,8 @@ public class HoaDonDAO {
                 "JOIN DICHVU dv ON ct.MaDV = dv.MaDV " +
                 "WHERE ct.MaPhien = ?";
 
-        try (PreparedStatement psChung = conn.prepareStatement(sqlChung)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement psChung = conn.prepareStatement(sqlChung)) {
             psChung.setString(1, maHoaDon);
             try (ResultSet rsChung = psChung.executeQuery()) {
                 if (rsChung.next()) {
@@ -217,7 +206,7 @@ public class HoaDonDAO {
                     }
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return thongTin;
@@ -225,32 +214,26 @@ public class HoaDonDAO {
 
     public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG,
             double thanhTien) {
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-
         String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, ThanhTien = ?, TrangThaiThanhToan = 'Đã thanh toán thành công', NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaHoaDon = ?";
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, phuongThucThanhToan);
             pstmt.setString(2, maNV);
             pstmt.setString(3, maPGG);
             pstmt.setDouble(4, thanhTien);
             pstmt.setString(5, maHoaDon);
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     public boolean thanhToanVoiPhieuGiamGia(String maPhien, String maNV, String maPGG, String phuongThucThanhToan) {
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-
         String sql = "{call SP_ThanhToanVoiPhieuGiamGia(?, ?, ?, ?, ?)}";
-        try (CallableStatement cstmt = conn.prepareCall(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             CallableStatement cstmt = conn.prepareCall(sql)) {
             cstmt.setString(1, maPhien);
             cstmt.setString(2, maNV);
             if (maPGG == null || maPGG.trim().isEmpty()) {
@@ -265,7 +248,7 @@ public class HoaDonDAO {
             String message = cstmt.getString(5);
             System.out.println("[HoaDonDAO] " + message);
             return laThongBaoThanhCong(message);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("[HoaDonDAO] Lỗi gọi SP_ThanhToanVoiPhieuGiamGia: " + e.getMessage());
             return false;
         }
@@ -282,31 +265,24 @@ public class HoaDonDAO {
     }
 
     public boolean huyHoaDon(String maHoaDon) {
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-        // Vì SQL không có trạng thái 'Đã hủy', tạm thời chuyển về 'Thanh toán không
-        // thành công' hoặc xử lý khác
         String sql = "UPDATE HOADON SET TrangThaiThanhToan = 'Thanh toán không thành công' WHERE MaHoaDon = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, maHoaDon);
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     public boolean xoaHoaDon(String maHoaDon) {
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null)
-            return false;
-
         String sql = "DELETE FROM HOADON WHERE MaHoaDon = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, maHoaDon);
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }

@@ -125,7 +125,7 @@ public class ChiNhanhDAO {
     public String taoMaMoi() {
         try (Connection conn = getConn()) {
             return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.CHI_NHANH);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Lỗi tạo mã chi nhánh mới: " + e.getMessage());
             return "CN000001";
         }

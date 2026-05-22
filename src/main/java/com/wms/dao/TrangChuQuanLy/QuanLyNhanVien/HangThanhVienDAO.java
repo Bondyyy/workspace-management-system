@@ -11,15 +11,11 @@ import java.util.List;
 
 public class HangThanhVienDAO {
 
-    private Connection getConn() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
-
     public List<HangThanhVienDTO> getAll() {
         List<HangThanhVienDTO> list = new ArrayList<>();
         String sql = "SELECT MaHangThanhVien, TenHangThanhVien, PhanTramTienGiam, TongChiTieuToiThieu FROM HANGTHANHVIEN ORDER BY TongChiTieuToiThieu ASC";
 
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -38,7 +34,7 @@ public class HangThanhVienDAO {
 
     public void updateDiscount(String maHang, double discount) throws SQLException {
         String sql = "UPDATE HANGTHANHVIEN SET PhanTramTienGiam = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaHangThanhVien = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, discount);
             ps.setString(2, maHang);
@@ -48,7 +44,7 @@ public class HangThanhVienDAO {
 
     public String getMaHangByName(String name) {
         String sql = "SELECT MaHangThanhVien FROM HANGTHANHVIEN WHERE TenHangThanhVien = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
             try (ResultSet rs = ps.executeQuery()) {

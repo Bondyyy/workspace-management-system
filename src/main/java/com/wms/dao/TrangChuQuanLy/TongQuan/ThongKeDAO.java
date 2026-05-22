@@ -21,11 +21,6 @@ public class ThongKeDAO {
 
     public List<Object[]> layRecentTransactions() {
         List<Object[]> list = new ArrayList<>();
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) {
-            return list;
-        }
-
         String sql = "SELECT h.MaHoaDon, nd.HoTen AS HoTenKH, h.ThanhTien, h.TrangThaiThanhToan " +
                 "FROM HOADON h " +
                 "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
@@ -34,7 +29,9 @@ public class ThongKeDAO {
                 "ORDER BY h.NgayLapHoaDon DESC " +
                 "FETCH FIRST 5 ROWS ONLY";
 
-        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             Statement st = conn.createStatement(); 
+             ResultSet rs = st.executeQuery(sql)) {
             DecimalFormat df = new DecimalFormat("#,###");
             while (rs.next()) {
                 list.add(new Object[]{
@@ -56,11 +53,6 @@ public class ThongKeDAO {
         ketQua.put("truocGiam", 0.0);
         ketQua.put("chietKhau", 0.0);
 
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) {
-            return ketQua;
-        }
-
         StringBuilder sql = new StringBuilder(
                 "SELECT SUM(h.ThanhTien) AS DoanhThuThuc, SUM(h.TongTien) AS TruocGiam " +
                         "FROM HOADON h " +
@@ -70,7 +62,8 @@ public class ThongKeDAO {
 
         appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
 
-        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -89,11 +82,6 @@ public class ThongKeDAO {
 
     public List<Double> layDoanhThu7NgayGanNhat(String maChiNhanh) {
         List<Double> data = new ArrayList<>();
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) {
-            return data;
-        }
-
         StringBuilder sql = new StringBuilder(
                 "SELECT TRUNC(h.NgayLapHoaDon) AS Ngay, SUM(h.ThanhTien) AS Tong " +
                         "FROM HOADON h " +
@@ -107,7 +95,8 @@ public class ThongKeDAO {
         }
         sql.append("GROUP BY TRUNC(h.NgayLapHoaDon) ORDER BY Ngay");
 
-        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             ps.setString(1, PAID_STATUS_FILTER);
             if (hasBranchFilter(maChiNhanh)) {
                 ps.setString(2, extractBranchCode(maChiNhanh));
@@ -140,16 +129,12 @@ public class ThongKeDAO {
         stats.put("CK", 0);
         stats.put("TM", 0);
 
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) {
-            return stats;
-        }
-
         String sql = "SELECT PhuongThucThanhToan, COUNT(*) AS SoLuong FROM HOADON " +
                 "WHERE TrangThaiThanhToan LIKE ? " +
                 "GROUP BY PhuongThucThanhToan";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, PAID_STATUS_FILTER);
             try (ResultSet rs = ps.executeQuery()) {
                 int tong = 0;
@@ -180,11 +165,6 @@ public class ThongKeDAO {
 
     public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String maChiNhanh, String loaiDT) {
         List<Object[]> list = new ArrayList<>();
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) {
-            return list;
-        }
-
         StringBuilder sql = new StringBuilder(
                 "SELECT h.MaHoaDon, nd.HoTen AS HoTenKH, h.NgayLapHoaDon, h.TongTien, " +
                         "h.ThanhTien, h.PhuongThucThanhToan, h.TrangThaiThanhToan " +
@@ -198,7 +178,8 @@ public class ThongKeDAO {
         appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
         sql.append("ORDER BY h.NgayLapHoaDon DESC");
 
-        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
@@ -223,11 +204,6 @@ public class ThongKeDAO {
 
     public List<DoanhThuReportRowDTO> layDongBaoCaoDoanhThu(String tuNgay, String denNgay, String maChiNhanh, String loaiDT) {
         List<DoanhThuReportRowDTO> list = new ArrayList<>();
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) {
-            return list;
-        }
-
         StringBuilder sql = new StringBuilder(
                 "SELECT h.MaHoaDon, h.NgayLapHoaDon, nd.HoTen AS HoTenKH, cn.TenCN, kg.TenKG, " +
                         "h.TongTien, h.ThanhTien, h.PhuongThucThanhToan, h.TrangThaiThanhToan " +
@@ -242,7 +218,8 @@ public class ThongKeDAO {
         appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
         sql.append("ORDER BY h.NgayLapHoaDon DESC");
 
-        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");

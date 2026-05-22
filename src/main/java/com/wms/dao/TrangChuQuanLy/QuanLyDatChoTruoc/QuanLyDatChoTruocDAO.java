@@ -34,11 +34,8 @@ public class QuanLyDatChoTruocDAO {
                 ORDER BY dc.ThoiGianDat DESC
                 """;
 
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null) {
-            return list;
-        }
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, search);
             ps.setString(2, search);
             ps.setString(3, search);
@@ -48,7 +45,7 @@ public class QuanLyDatChoTruocDAO {
                     list.add(map(rs));
                 }
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             System.err.println("[QuanLyDatChoTruocDAO] Lỗi tải danh sách đặt chỗ: " + ex.getMessage());
         }
         return list;
@@ -67,45 +64,48 @@ public class QuanLyDatChoTruocDAO {
                     CapNhatLanCuoi = CURRENT_TIMESTAMP
                 WHERE MaDatCho = ?
                 """;
-        Connection conn = DatabaseConnection.getInstance().getConnection();
-        if (conn == null || dto == null || dto.getMaDatCho() == null || dto.getMaDatCho().isBlank()) {
+        if (dto == null || dto.getMaDatCho() == null || dto.getMaDatCho().isBlank()) {
             return false;
         }
-        boolean oldAutoCommit = true;
-        try {
-            oldAutoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
-            String trangThaiHienThi = hienThiTrangThaiDatCho(dto.getTrangThaiDatTruoc());
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, dto.getMaKH());
-                ps.setString(2, dto.getMaKG());
-                ps.setTimestamp(3, dto.getThoiGianDuKienToi());
-                if (dto.getKhoangThoiGianSuDung() == null) {
-                    ps.setNull(4, java.sql.Types.INTEGER);
-                } else {
-                    ps.setInt(4, dto.getKhoangThoiGianSuDung());
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            boolean oldAutoCommit = conn.getAutoCommit();
+            try {
+                conn.setAutoCommit(false);
+                String trangThaiHienThi = hienThiTrangThaiDatCho(dto.getTrangThaiDatTruoc());
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, dto.getMaKH());
+                    ps.setString(2, dto.getMaKG());
+                    ps.setTimestamp(3, dto.getThoiGianDuKienToi());
+                    if (dto.getKhoangThoiGianSuDung() == null) {
+                        ps.setNull(4, java.sql.Types.INTEGER);
+                    } else {
+                        ps.setInt(4, dto.getKhoangThoiGianSuDung());
+                    }
+                    ps.setBigDecimal(5, dto.getThanhTien());
+                    ps.setString(6, trangThaiDatChoDb(conn, trangThaiHienThi));
+                    ps.setString(7, dto.getGhiChu());
+                    ps.setString(8, dto.getMaDatCho());
+                    int updated = ps.executeUpdate();
+                    capNhatTrangThaiKhongGian(conn, dto);
+                    conn.commit();
+                    return updated > 0;
                 }
-                ps.setBigDecimal(5, dto.getThanhTien());
-                ps.setString(6, trangThaiDatChoDb(conn, trangThaiHienThi));
-                ps.setString(7, dto.getGhiChu());
-                ps.setString(8, dto.getMaDatCho());
-                int updated = ps.executeUpdate();
-                capNhatTrangThaiKhongGian(conn, dto);
-                conn.commit();
-                return updated > 0;
+            } catch (SQLException ex) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {
+                }
+                System.err.println("[QuanLyDatChoTruocDAO] Lỗi cập nhật đặt chỗ: " + ex.getMessage());
+                return false;
+            } finally {
+                try {
+                    conn.setAutoCommit(oldAutoCommit);
+                } catch (SQLException ignored) {
+                }
             }
-        } catch (SQLException ex) {
-            try {
-                conn.rollback();
-            } catch (SQLException ignored) {
-            }
-            System.err.println("[QuanLyDatChoTruocDAO] Lỗi cập nhật đặt chỗ: " + ex.getMessage());
+        } catch (Exception e) {
+            System.err.println("[QuanLyDatChoTruocDAO] Lỗi kết nối CSDL: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                conn.setAutoCommit(oldAutoCommit);
-            } catch (SQLException ignored) {
-            }
         }
     }
 

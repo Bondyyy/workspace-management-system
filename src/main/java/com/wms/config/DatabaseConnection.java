@@ -37,11 +37,13 @@ public class DatabaseConnection {
             config.setDriverClassName("oracle.jdbc.OracleDriver");
 
             // Cau hinh toi uu cho Pool ket noi (nhe, muot cho Desktop App)
-            config.setMaximumPoolSize(5);        // So ket noi toi da duy tri
+            config.setMaximumPoolSize(10);        // So ket noi toi da duy tri
             config.setMinimumIdle(2);            // So ket noi toi thieu luon san sang
-            config.setIdleTimeout(30000);        // Dong ket noi thua sau 30s
+            config.setIdleTimeout(300000);       // Dong ket noi thua sau 5 phut
             config.setMaxLifetime(1800000);      // Reset ket noi vat ly sau 30 phut
             config.setConnectionTimeout(15000);  // Thoi gian cho ket noi toi da 15s
+            config.setLeakDetectionThreshold(5000); // Bat leak detection 5s
+            config.setPoolName("WMS-HikariPool");
 
             // Query kiem tra trang thai ket noi khoe manh
             config.setConnectionTestQuery("SELECT 1 FROM DUAL");
@@ -66,10 +68,14 @@ public class DatabaseConnection {
             if (dataSource == null || dataSource.isClosed()) {
                 initConnectionPool();
             }
-            return dataSource.getConnection();
+            Connection conn = dataSource.getConnection();
+            if (conn == null) {
+                throw new SQLException("DataSource returned a null connection.");
+            }
+            return conn;
         } catch (SQLException e) {
             System.err.println("[DB] Loi lay ket noi tu Pool: " + e.getMessage());
-            return null;
+            throw new RuntimeException("[DB] Loi lay ket noi tu Pool: " + e.getMessage(), e);
         }
     }
 

@@ -43,7 +43,8 @@ public class NhanVienDAO {
         }
         sql.append(" ORDER BY nv.MaNV");
 
-        try (PreparedStatement ps = getConn().prepareStatement(sql.toString())) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int paramIndex = 1;
             if (tuKhoa != null && !tuKhoa.trim().isEmpty()) {
                 String pattern = "%" + tuKhoa.trim().toLowerCase() + "%";
@@ -63,20 +64,16 @@ public class NhanVienDAO {
                             rs.getString("GioiTinh"), rs.getString("Email"), rs.getDouble("LuongCoBan"),
                             rs.getString("MaCN"), rs.getString("MaVaiTro"), rs.getString("MaND"),
                             rs.getBytes("AnhDaiDien"), rs.getDate("NgaySinh"), rs.getString("TenTaiKhoan")
-                    });
+                     });
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("[NhanVienDAO] Lỗi tìm kiếm: " + e.getMessage());
         }
         return list;
     }
 
     public boolean themNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) {
-        Connection conn = getConn();
-        if (conn == null)
-            return false;
-
         NguoiDungDAO ndDAO = new NguoiDungDAO();
         try {
             if (ndDAO.kiemTraEmailTonTai(nd.getEmail()))
@@ -93,87 +90,87 @@ public class NhanVienDAO {
         }
 
         boolean autoCommit = true;
-        try {
+        try (Connection conn = getConn()) {
             autoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+            try {
+                conn.setAutoCommit(false);
 
-            String maND = ndDAO.generateNextMaND();
-            
-            String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
-            String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau)
-                    : PasswordUtil.hash("123456");
+                String maND = ndDAO.generateNextMaND();
+                String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
+                String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau)
+                        : PasswordUtil.hash("123456");
 
-            String username = (nd.getTenTaiKhoan() != null && !nd.getTenTaiKhoan().trim().isEmpty()) 
-                    ? nd.getTenTaiKhoan().trim() 
-                    : nd.getSdt();
+                String username = (nd.getTenTaiKhoan() != null && !nd.getTenTaiKhoan().trim().isEmpty()) 
+                        ? nd.getTenTaiKhoan().trim() 
+                        : nd.getSdt();
 
-            String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email, GioiTinh, AnhDaiDien, NgaySinh, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
-                ps.setString(1, maND);
-                ps.setString(2, hoTen);
-                ps.setString(3, username);
-                ps.setString(4, hashedPw);
-                ps.setString(5, nd.getSdt());
-                ps.setString(6, nd.getEmail());
-                ps.setString(7, nd.getGioiTinh());
-                ps.setBytes(8, nd.getAnhDaiDien());
-                ps.setDate(9, nd.getNgaySinh());
-                ps.executeUpdate();
-            }
-
-            String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, 'HTV00', 0, CURRENT_TIMESTAMP, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
-                ps.setString(1, maKH);
-                ps.setString(2, maND);
-                ps.executeUpdate();
-            }
-
-            if (nv.getMaNV() == null || nv.getMaNV().isEmpty())
-                nv.setMaNV(taoMaNVMoi(conn));
-            String sqlNV = "INSERT INTO NHANVIEN (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, CaLamViec, LuongCoBan, MaCN, MaND) VALUES (?, ?, CURRENT_DATE, ?, ?, ?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
-                ps.setString(1, nv.getMaNV());
-                ps.setString(2, nv.getLoaiNV());
-                ps.setString(3, nv.getTrangThaiLamViec() != null ? nv.getTrangThaiLamViec() : "Đang làm việc");
-                ps.setString(4, nv.getCaLamViec());
-                ps.setDouble(5, nv.getLuongCoBan());
-                ps.setString(6, nv.getMaCN());
-                ps.setString(7, maND);
-                ps.executeUpdate();
-            }
-
-            if (maVaiTro != null && !maVaiTro.isEmpty()) {
-                String sqlVT = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro, MoTa) VALUES (?, ?, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
+                String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email, GioiTinh, AnhDaiDien, NgaySinh, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
                     ps.setString(1, maND);
-                    ps.setString(2, maVaiTro);
-                    ps.setString(3, "Phân quyền vai trò mặc định khi thêm nhân viên");
+                    ps.setString(2, hoTen);
+                    ps.setString(3, username);
+                    ps.setString(4, hashedPw);
+                    ps.setString(5, nd.getSdt());
+                    ps.setString(6, nd.getEmail());
+                    ps.setString(7, nd.getGioiTinh());
+                    ps.setBytes(8, nd.getAnhDaiDien());
+                    ps.setDate(9, nd.getNgaySinh());
                     ps.executeUpdate();
                 }
-            }
 
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
-            try {
-                conn.rollback();
-            } catch (SQLException ex) {
+                String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, 'HTV00', 0, CURRENT_TIMESTAMP, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
+                    ps.setString(1, maKH);
+                    ps.setString(2, maND);
+                    ps.executeUpdate();
+                }
+
+                if (nv.getMaNV() == null || nv.getMaNV().isEmpty())
+                    nv.setMaNV(taoMaNVMoi(conn));
+                String sqlNV = "INSERT INTO NHANVIEN (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, CaLamViec, LuongCoBan, MaCN, MaND) VALUES (?, ?, CURRENT_DATE, ?, ?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
+                    ps.setString(1, nv.getMaNV());
+                    ps.setString(2, nv.getLoaiNV());
+                    ps.setString(3, nv.getTrangThaiLamViec() != null ? nv.getTrangThaiLamViec() : "Đang làm việc");
+                    ps.setString(4, nv.getCaLamViec());
+                    ps.setDouble(5, nv.getLuongCoBan());
+                    ps.setString(6, nv.getMaCN());
+                    ps.setString(7, maND);
+                    ps.executeUpdate();
+                }
+
+                if (maVaiTro != null && !maVaiTro.isEmpty()) {
+                    String sqlVT = "INSERT INTO CHITIETVAITRO (MaND, MaVaiTro, MoTa) VALUES (?, ?, ?)";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
+                        ps.setString(1, maND);
+                        ps.setString(2, maVaiTro);
+                        ps.setString(3, "Phân quyền vai trò mặc định khi thêm nhân viên");
+                        ps.executeUpdate();
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {}
+                System.err.println("[NhanVienDAO] Lỗi thêm nhân viên: " + e.getMessage());
+                return false;
+            } finally {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException ignored) {}
             }
+        } catch (Exception e) {
+            System.err.println("[NhanVienDAO] Lỗi kết nối thêm nhân viên: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                conn.setAutoCommit(autoCommit);
-            } catch (SQLException ex) {
-            }
         }
     }
 
     public boolean capNhatNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) {
-        Connection conn = getConn();
-        if (conn == null)
-            return false;
         boolean autoCommit = true;
-        try {
+        try (Connection conn = getConn()) {
             // Kiểm tra trùng email/sdt (loại trừ chính nhân viên này)
             String sqlCheck = "SELECT MaND, HoTen FROM NGUOIDUNG WHERE (LOWER(TRIM(Email)) = LOWER(TRIM(?)) OR LOWER(TRIM(SDT)) = LOWER(TRIM(?))) AND LOWER(TRIM(MaND)) != LOWER(TRIM(?))";
             try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
@@ -207,146 +204,155 @@ public class NhanVienDAO {
             }
 
             autoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+            try {
+                conn.setAutoCommit(false);
 
-            boolean hasNewPw = (matKhau != null && !matKhau.isEmpty());
-            String sqlND = "UPDATE NGUOIDUNG SET HoTen = ?, TenTaiKhoan = ?, SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, NgaySinh = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP"
-                    + (hasNewPw ? ", MatKhauMaHoa = ?" : "") + " WHERE MaND = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
-                ps.setString(1, hoTen);
-                ps.setString(2, nd.getTenTaiKhoan());
-                ps.setString(3, nd.getSdt());
-                ps.setString(4, nd.getEmail());
-                ps.setString(5, nd.getGioiTinh());
-                ps.setBytes(6, nd.getAnhDaiDien());
-                ps.setDate(7, nd.getNgaySinh());
-                if (hasNewPw) {
-                    ps.setString(8, PasswordUtil.hash(matKhau));
-                    ps.setString(9, nv.getMaND());
-                } else {
-                    ps.setString(8, nv.getMaND());
-                }
-                ps.executeUpdate();
-            }
-
-            String sqlKH = "UPDATE KHACHHANG SET CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaND = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
-                ps.setString(1, nv.getMaND());
-                ps.executeUpdate();
-            }
-
-            String sqlNV = "UPDATE NHANVIEN SET LoaiNV = ?, CaLamViec = ?, LuongCoBan = ?, MaCN = ?, TrangThaiLamViec = ? WHERE MaNV = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
-                ps.setString(1, nv.getLoaiNV());
-                ps.setString(2, nv.getCaLamViec());
-                ps.setDouble(3, nv.getLuongCoBan());
-                ps.setString(4, nv.getMaCN());
-                ps.setString(5, nv.getTrangThaiLamViec());
-                ps.setString(6, nv.getMaNV());
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
-                ps.setString(1, nv.getMaND());
-                ps.executeUpdate();
-            }
-
-            if (maVaiTro != null && !maVaiTro.isEmpty()) {
-                try (PreparedStatement ps = conn
-                        .prepareStatement("INSERT INTO CHITIETVAITRO (MaND, MaVaiTro, MoTa) VALUES (?, ?, ?)")) {
-                    ps.setString(1, nv.getMaND());
-                    ps.setString(2, maVaiTro);
-                    ps.setString(3, "Cập nhật vai trò nhân viên");
+                boolean hasNewPw = (matKhau != null && !matKhau.isEmpty());
+                String sqlND = "UPDATE NGUOIDUNG SET HoTen = ?, TenTaiKhoan = ?, SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, NgaySinh = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP"
+                        + (hasNewPw ? ", MatKhauMaHoa = ?" : "") + " WHERE MaND = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
+                    ps.setString(1, hoTen);
+                    ps.setString(2, nd.getTenTaiKhoan());
+                    ps.setString(3, nd.getSdt());
+                    ps.setString(4, nd.getEmail());
+                    ps.setString(5, nd.getGioiTinh());
+                    ps.setBytes(6, nd.getAnhDaiDien());
+                    ps.setDate(7, nd.getNgaySinh());
+                    if (hasNewPw) {
+                        ps.setString(8, PasswordUtil.hash(matKhau));
+                        ps.setString(9, nv.getMaND());
+                    } else {
+                        ps.setString(8, nv.getMaND());
+                    }
                     ps.executeUpdate();
                 }
-            }
 
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
-            try {
-                conn.rollback();
-            } catch (SQLException ex) {
+                String sqlKH = "UPDATE KHACHHANG SET CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaND = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
+                    ps.setString(1, nv.getMaND());
+                    ps.executeUpdate();
+                }
+
+                String sqlNV = "UPDATE NHANVIEN SET LoaiNV = ?, CaLamViec = ?, LuongCoBan = ?, MaCN = ?, TrangThaiLamViec = ? WHERE MaNV = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
+                    ps.setString(1, nv.getLoaiNV());
+                    ps.setString(2, nv.getCaLamViec());
+                    ps.setDouble(3, nv.getLuongCoBan());
+                    ps.setString(4, nv.getMaCN());
+                    ps.setString(5, nv.getTrangThaiLamViec());
+                    ps.setString(6, nv.getMaNV());
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
+                    ps.setString(1, nv.getMaND());
+                    ps.executeUpdate();
+                }
+
+                if (maVaiTro != null && !maVaiTro.isEmpty()) {
+                    try (PreparedStatement ps = conn
+                            .prepareStatement("INSERT INTO CHITIETVAITRO (MaND, MaVaiTro, MoTa) VALUES (?, ?, ?)")) {
+                        ps.setString(1, nv.getMaND());
+                        ps.setString(2, maVaiTro);
+                        ps.setString(3, "Cập nhật vai trò nhân viên");
+                        ps.executeUpdate();
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {}
+                throw new RuntimeException(e.getMessage());
+            } finally {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException ignored) {}
             }
-            throw new RuntimeException(e.getMessage());
-        } finally {
-            try {
-                conn.setAutoCommit(autoCommit);
-            } catch (SQLException ex) {
-            }
+        } catch (Exception e) {
+            System.err.println("[NhanVienDAO] Lỗi cập nhật nhân viên: " + e.getMessage());
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
     public boolean xoaNhanVien(String maNV, String maND) {
-        Connection conn = getConn();
-        if (conn == null)
-            return false;
         boolean autoCommit = true;
-        try {
+        try (Connection conn = getConn()) {
             autoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+            try {
+                conn.setAutoCommit(false);
 
-            String[] queries = {
-                    "DELETE FROM CHITIETVAITRO WHERE MaND = ?",
-                    "DELETE FROM NHANVIEN WHERE MaNV = ?",
-                    "DELETE FROM KHACHHANG WHERE MaND = ?",
-                    "DELETE FROM NGUOIDUNG WHERE MaND = ?"
-            };
-            for (String sql : queries) {
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    ps.setString(1, sql.contains("MaNV") ? maNV : maND);
-                    ps.executeUpdate();
+                String[] queries = {
+                        "DELETE FROM CHITIETVAITRO WHERE MaND = ?",
+                        "DELETE FROM NHANVIEN WHERE MaNV = ?",
+                        "DELETE FROM KHACHHANG WHERE MaND = ?",
+                        "DELETE FROM NGUOIDUNG WHERE MaND = ?"
+                };
+                for (String sql : queries) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, sql.contains("MaNV") ? maNV : maND);
+                        ps.executeUpdate();
+                    }
                 }
-            }
 
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
-            try {
-                conn.rollback();
-            } catch (SQLException ex) {
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ignored) {}
+                System.err.println("[NhanVienDAO] Lỗi xóa nhân viên: " + e.getMessage());
+                return false;
+            } finally {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException ignored) {}
             }
+        } catch (Exception e) {
+            System.err.println("[NhanVienDAO] Lỗi kết nối xóa nhân viên: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                conn.setAutoCommit(autoCommit);
-            } catch (SQLException ex) {
-            }
         }
     }
 
     public List<String[]> layDanhSachChiNhanh() {
         List<String[]> list = new ArrayList<>();
         String sql = "SELECT MaCN, TenCN FROM CHINHANH WHERE TrangThai = 'Đang hoạt động'";
-        try (PreparedStatement ps = getConn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next())
                 list.add(new String[] { rs.getString("MaCN"), rs.getString("TenCN") });
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
     }
 
     public String taoMaNVMoi(Connection conn) throws SQLException {
-        boolean isStandalone = (conn == null);
-        Connection localConn = isStandalone ? getConn() : conn;
-        try {
-            return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.NHAN_VIEN);
-        } catch (SQLException e) {
-            System.err.println("[NhanVienDAO] Lỗi tạo mã mới: " + e.getMessage());
+        if (conn == null) {
+            try (Connection localConn = getConn()) {
+                return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.NHAN_VIEN);
+            } catch (Exception e) {
+                System.err.println("[NhanVienDAO] Lỗi tạo mã mới (standalone): " + e.getMessage());
+                return "NV000001";
+            }
+        } else {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NHAN_VIEN);
         }
-        return "NV000001";
     }
 
     public String layMaNVTuMaND(String maND) {
         String sql = "SELECT MaNV FROM NHANVIEN WHERE MaND = ?";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next())
                     return rs.getString("MaNV");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -354,13 +360,14 @@ public class NhanVienDAO {
 
     public String layMaCNTuMaND(String maND) {
         String sql = "SELECT MaCN FROM NHANVIEN WHERE MaND = ?";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next())
                     return rs.getString("MaCN");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -372,12 +379,13 @@ public class NhanVienDAO {
                 "FROM NHANVIEN nv " +
                 "JOIN NGUOIDUNG nd ON nv.MaND = nd.MaND " +
                 "WHERE nv.TrangThaiLamViec = 'Đang làm việc'";
-        try (PreparedStatement ps = getConn().prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(new String[] { rs.getString("MaNV"), rs.getString("HoTen") });
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return list;

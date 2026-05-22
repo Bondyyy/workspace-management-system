@@ -9,19 +9,16 @@ import java.util.List;
 
 public class TrangChuDAO {
 
-    private Connection getConn() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
-
     public int layDiemTichLuy(String maND) {
         int diem = 0;
         String sql = "SELECT NVL(TongChiTieu, 0) AS DiemTichLuy FROM KHACHHANG WHERE MaND = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                diem = rs.getInt("DiemTichLuy");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    diem = rs.getInt("DiemTichLuy");
+                }
             }
         } catch (Exception e) {
             System.err.println("Lỗi lấy điểm tích lũy: " + e.getMessage());
@@ -34,12 +31,13 @@ public class TrangChuDAO {
         String sql = "SELECT h.TenHangThanhVien FROM KHACHHANG kh " +
                      "JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
                      "WHERE kh.MaND = ?";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                hang = rs.getString("TenHangThanhVien");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    hang = rs.getString("TenHangThanhVien");
+                }
             }
         } catch (Exception e) {
             System.err.println("Lỗi lấy hạng thành viên: " + e.getMessage());
@@ -56,12 +54,13 @@ public class TrangChuDAO {
                 WHERE kh.MaND = ?
                   AND dc.TrangThaiDatTruoc = 'Đã sử dụng'
                 """;
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                gio = rs.getInt("TongGio");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    gio = rs.getInt("TongGio");
+                }
             }
         } catch (Exception e) {
             System.err.println("Lỗi lấy tổng giờ sử dụng: " + e.getMessage());
@@ -77,11 +76,12 @@ public class TrangChuDAO {
                 WHERE CURRENT_TIMESTAMP BETWEEN NgayBatDauApDung AND NgayKetThucApDung
                   AND NVL(SLDaDung, 0) < NVL(SLToiDa, 0)
                 """;
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                soUuDai = rs.getInt("SoUuDai");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    soUuDai = rs.getInt("SoUuDai");
+                }
             }
         } catch (Exception e) {
             System.err.println("Lỗi lấy số ưu đãi: " + e.getMessage());
@@ -100,17 +100,18 @@ public class TrangChuDAO {
                 ORDER BY dc.ThoiGianDat DESC
                 FETCH FIRST 10 ROWS ONLY
                 """;
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maND);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                list.add(new Object[]{
-                    rs.getString("MaDatCho"),
-                    rs.getString("TenKG"),
-                    rs.getTimestamp("ThoiGianDuKienToi"),
-                    rs.getString("TrangThaiDatTruoc")
-                });
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Object[]{
+                        rs.getString("MaDatCho"),
+                        rs.getString("TenKG"),
+                        rs.getTimestamp("ThoiGianDuKienToi"),
+                        rs.getString("TrangThaiDatTruoc")
+                    });
+                }
             }
         } catch (Exception e) {
             System.err.println("Lỗi lấy lịch sử đặt chỗ: " + e.getMessage());

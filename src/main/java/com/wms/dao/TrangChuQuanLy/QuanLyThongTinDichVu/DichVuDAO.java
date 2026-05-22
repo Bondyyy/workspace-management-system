@@ -12,14 +12,10 @@ import java.util.List;
 
 public class DichVuDAO {
 
-    private Connection getConn() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
-
     public List<DichVuDTO> layDanhSachDichVu(String maLoai, String trangThai, String tuKhoa) {
         List<DichVuDTO> list = new ArrayList<>();
         String sql = "{call SP_TraCuuDichVu(?, ?, ?, ?, ?)}";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, maLoai);
             cs.setString(2, trangThai);
@@ -51,7 +47,7 @@ public class DichVuDAO {
 
     public boolean themDichVu(DichVuDTO dv) {
         String sql = "{call sp_ThemDichVu(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, dv.getMaDV());
             cs.setString(2, dv.getTenDV());
@@ -79,7 +75,7 @@ public class DichVuDAO {
 
     public boolean capNhatDichVu(DichVuDTO dv) {
         String sql = "{call sp_CapNhatDichVu(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, dv.getMaDV());
             cs.setString(2, dv.getTenDV());
@@ -108,7 +104,7 @@ public class DichVuDAO {
 
     public String layMaxMaDV() {
         String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaDV, 3))) FROM DICHVU WHERE MaDV LIKE 'DV%'";
-        try (Connection conn = getConn();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
              java.sql.Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             if (rs.next()) {
@@ -122,9 +118,9 @@ public class DichVuDAO {
     }
 
     public String taoMaMoi() {
-        try (Connection conn = getConn()) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.DICH_VU);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("[DichVuDAO] Lỗi tạo mã mới: " + e.getMessage());
             return "DV000001";
         }

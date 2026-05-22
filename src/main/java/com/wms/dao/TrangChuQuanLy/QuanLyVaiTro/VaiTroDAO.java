@@ -10,15 +10,12 @@ import java.util.List;
 
 public class VaiTroDAO {
 
-    private Connection getConn() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
-
     public List<VaiTroDTO> layTatCaVaiTro() {
         List<VaiTroDTO> list = new ArrayList<>();
         String sql = "SELECT MaVaiTro, TenVaiTro, MoTa FROM VAITRO ORDER BY MaVaiTro";
-        try (PreparedStatement ps = getConn().prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 VaiTroDTO vt = new VaiTroDTO();
                 vt.setMaVaiTro(rs.getString("MaVaiTro"));
@@ -26,170 +23,171 @@ public class VaiTroDAO {
                 vt.setMoTa(rs.getString("MoTa"));
                 list.add(vt);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("[VaiTroDAO] Lỗi lấy danh sách vai trò: " + e.getMessage());
         }
         return list;
     }
 
     public boolean themVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) {
-        Connection conn = getConn();
-        if (conn == null)
-            return false;
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            boolean autoCommit = conn.getAutoCommit();
+            try {
+                conn.setAutoCommit(false);
 
-        boolean autoCommit = true;
-        try {
-            autoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+                String maVT = vt.getMaVaiTro();
+                if (maVT == null || maVT.trim().isEmpty()) {
+                    maVT = taoMaVaiTroMoi(conn);
+                    vt.setMaVaiTro(maVT);
+                }
 
-            String maVT = vt.getMaVaiTro();
-            if (maVT == null || maVT.trim().isEmpty()) {
-                maVT = taoMaVaiTroMoi(conn);
-                vt.setMaVaiTro(maVT);
-            }
+                String sqlVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
+                    ps.setString(1, maVT);
+                    ps.setString(2, vt.getTenVaiTro());
+                    ps.setString(3, vt.getMoTa());
+                    ps.executeUpdate();
+                }
 
-            String sqlVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
-                ps.setString(1, maVT);
-                ps.setString(2, vt.getTenVaiTro());
-                ps.setString(3, vt.getMoTa());
-                ps.executeUpdate();
-            }
+                String sqlNCN = "INSERT INTO NHOMCHUCNANG (MaNhomChucNang, TenNhomChucNang, MoTa) VALUES (?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlNCN)) {
+                    ps.setString(1, maVT);
+                    ps.setString(2, vt.getTenVaiTro());
+                    ps.setString(3, vt.getMoTa());
+                    ps.executeUpdate();
+                }
 
-            String sqlNCN = "INSERT INTO NHOMCHUCNANG (MaNhomChucNang, TenNhomChucNang, MoTa) VALUES (?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlNCN)) {
-                ps.setString(1, maVT);
-                ps.setString(2, vt.getTenVaiTro());
-                ps.setString(3, vt.getMoTa());
-                ps.executeUpdate();
-            }
+                String sqlCTNCN = "INSERT INTO CHITIETNHOMCHUCNANG (MaVaiTro, MaNhomChucNang, MoTa) VALUES (?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlCTNCN)) {
+                    ps.setString(1, maVT);
+                    ps.setString(2, maVT);
+                    ps.setString(3, "Liên kết vai trò với nhóm chức năng mặc định");
+                    ps.executeUpdate();
+                }
 
-            String sqlCTNCN = "INSERT INTO CHITIETNHOMCHUCNANG (MaVaiTro, MaNhomChucNang, MoTa) VALUES (?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(sqlCTNCN)) {
-                ps.setString(1, maVT);
-                ps.setString(2, maVT);
-                ps.setString(3, "Liên kết vai trò với nhóm chức năng mặc định");
-                ps.executeUpdate();
-            }
-
-            if (danhSachMaChucNang != null && !danhSachMaChucNang.isEmpty()) {
-                String sqlCN = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang, MoTa) VALUES (?, ?, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(sqlCN)) {
-                    for (String maCN : danhSachMaChucNang) {
-                        ps.setString(1, maVT);
-                        ps.setString(2, maCN);
-                        ps.setString(3, "Cấp quyền chức năng cho nhóm");
-                        ps.addBatch();
+                if (danhSachMaChucNang != null && !danhSachMaChucNang.isEmpty()) {
+                    String sqlCN = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang, MoTa) VALUES (?, ?, ?)";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlCN)) {
+                        for (String maCN : danhSachMaChucNang) {
+                            ps.setString(1, maVT);
+                            ps.setString(2, maCN);
+                            ps.setString(3, "Cấp quyền chức năng cho nhóm");
+                            ps.addBatch();
+                        }
+                        ps.executeBatch();
                     }
-                    ps.executeBatch();
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                System.err.println("[VaiTroDAO] Lỗi thêm vai trò: " + e.getMessage());
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                }
+                return false;
+            } finally {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException ex) {
                 }
             }
-
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
-            System.err.println("[VaiTroDAO] Lỗi thêm vai trò: " + e.getMessage());
-            try {
-                conn.rollback();
-            } catch (SQLException ex) {
-            }
+        } catch (Exception e) {
+            System.err.println("[VaiTroDAO] Lỗi kết nối CSDL: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                conn.setAutoCommit(autoCommit);
-            } catch (SQLException ex) {
-            }
         }
     }
 
     public boolean capNhatVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) {
-        Connection conn = getConn();
-        if (conn == null)
-            return false;
-
-        boolean autoCommit = true;
-        try {
-            autoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
-
-            try (PreparedStatement ps = conn
-                    .prepareStatement("UPDATE VAITRO SET TenVaiTro = ?, MoTa = ? WHERE MaVaiTro = ?")) {
-                ps.setString(1, vt.getTenVaiTro());
-                ps.setString(2, vt.getMoTa());
-                ps.setString(3, vt.getMaVaiTro());
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE NHOMCHUCNANG SET TenNhomChucNang = ?, MoTa = ? WHERE MaNhomChucNang = ?")) {
-                ps.setString(1, vt.getTenVaiTro());
-                ps.setString(2, vt.getMoTa());
-                ps.setString(3, vt.getMaVaiTro());
-                ps.executeUpdate();
-            }
-
-            capNhatChucNangInternal(conn, vt.getMaVaiTro(), danhSachMaChucNang);
-
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            boolean autoCommit = conn.getAutoCommit();
             try {
-                conn.rollback();
-            } catch (SQLException ex) {
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement ps = conn
+                        .prepareStatement("UPDATE VAITRO SET TenVaiTro = ?, MoTa = ? WHERE MaVaiTro = ?")) {
+                    ps.setString(1, vt.getTenVaiTro());
+                    ps.setString(2, vt.getMoTa());
+                    ps.setString(3, vt.getMaVaiTro());
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE NHOMCHUCNANG SET TenNhomChucNang = ?, MoTa = ? WHERE MaNhomChucNang = ?")) {
+                    ps.setString(1, vt.getTenVaiTro());
+                    ps.setString(2, vt.getMoTa());
+                    ps.setString(3, vt.getMaVaiTro());
+                    ps.executeUpdate();
+                }
+
+                capNhatChucNangInternal(conn, vt.getMaVaiTro(), danhSachMaChucNang);
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                }
+                return false;
+            } finally {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException ex) {
+                }
             }
+        } catch (Exception e) {
+            System.err.println("[VaiTroDAO] Lỗi kết nối CSDL: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                conn.setAutoCommit(autoCommit);
-            } catch (SQLException ex) {
-            }
         }
     }
 
     public boolean xoaVaiTro(String maVaiTro) {
-        Connection conn = getConn();
-        if (conn == null)
-            return false;
-        boolean autoCommit = true;
-        try {
-            autoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            boolean autoCommit = conn.getAutoCommit();
+            try {
+                conn.setAutoCommit(false);
 
-            String sqlCheck = "SELECT COUNT(*) FROM CHITIETVAITRO WHERE MaVaiTro = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
-                ps.setString(1, maVaiTro);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next() && rs.getInt(1) > 0)
-                        return false;
-                }
-            }
-
-            String[] queries = {
-                    "DELETE FROM CHITIETCHUCNANG WHERE MaNhomChucNang = ?",
-                    "DELETE FROM CHITIETNHOMCHUCNANG WHERE MaVaiTro = ?",
-                    "DELETE FROM NHOMCHUCNANG WHERE MaNhomChucNang = ?",
-                    "DELETE FROM VAITRO WHERE MaVaiTro = ?"
-            };
-            for (String sql : queries) {
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                String sqlCheck = "SELECT COUNT(*) FROM CHITIETVAITRO WHERE MaVaiTro = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
                     ps.setString(1, maVaiTro);
-                    ps.executeUpdate();
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0)
+                            return false;
+                    }
+                }
+
+                String[] queries = {
+                        "DELETE FROM CHITIETCHUCNANG WHERE MaNhomChucNang = ?",
+                        "DELETE FROM CHITIETNHOMCHUCNANG WHERE MaVaiTro = ?",
+                        "DELETE FROM NHOMCHUCNANG WHERE MaNhomChucNang = ?",
+                        "DELETE FROM VAITRO WHERE MaVaiTro = ?"
+                };
+                for (String sql : queries) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, maVaiTro);
+                        ps.executeUpdate();
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                }
+                return false;
+            } finally {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException ex) {
                 }
             }
-
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
-            try {
-                conn.rollback();
-            } catch (SQLException ex) {
-            }
+        } catch (Exception e) {
+            System.err.println("[VaiTroDAO] Lỗi kết nối CSDL: " + e.getMessage());
             return false;
-        } finally {
-            try {
-                conn.setAutoCommit(autoCommit);
-            } catch (SQLException ex) {
-            }
         }
     }
 
@@ -198,13 +196,14 @@ public class VaiTroDAO {
         String sql = "SELECT cn.MaChucNang, cn.TenChucNang FROM CHUCNANG cn " +
                 "JOIN CHITIETCHUCNANG ctcn ON cn.MaChucNang = ctcn.MaChucNang " +
                 "WHERE ctcn.MaNhomChucNang = ? ORDER BY cn.MaChucNang";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, maVaiTro);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next())
                     list.add(new String[] { rs.getString("MaChucNang"), rs.getString("TenChucNang") });
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
@@ -213,7 +212,9 @@ public class VaiTroDAO {
     public List<ChucNangDTO> layTatCaChucNang() {
         List<ChucNangDTO> list = new ArrayList<>();
         String sql = "SELECT MaChucNang, TenChucNang, MoTa FROM CHUCNANG ORDER BY MaChucNang";
-        try (PreparedStatement ps = getConn().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 ChucNangDTO cn = new ChucNangDTO();
                 cn.setMaChucNang(rs.getString("MaChucNang"));
@@ -221,7 +222,7 @@ public class VaiTroDAO {
                 cn.setMoTa(rs.getString("MoTa"));
                 list.add(cn);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
@@ -264,28 +265,30 @@ public class VaiTroDAO {
     }
 
     public String sinhMaVT() {
-        Connection conn = getConn();
-        if (conn == null) return "VT01";
-        try {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             return taoMaVaiTroMoi(conn);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return "VT01";
     }
 
     public boolean capNhatChucNangCuaVaiTro(String maVaiTro, List<String> dsMaCN) {
-        try {
-            capNhatChucNangInternal(getConn(), maVaiTro, dsMaCN);
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            capNhatChucNangInternal(conn, maVaiTro, dsMaCN);
             return true;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     public void khoiTaoDuLieuChucNang() {
-        com.wms.util.DataInitializer.khoiTaoChucNang(getConn());
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            com.wms.util.DataInitializer.khoiTaoChucNang(conn);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
