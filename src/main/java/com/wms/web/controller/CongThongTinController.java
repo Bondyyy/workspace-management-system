@@ -8,6 +8,7 @@ import com.wms.web.model.DatChoView;
 import com.wms.web.model.ChiNhanhView;
 import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.model.KhongGianView;
+import com.wms.web.model.PhieuGiamGiaView;
 import com.wms.web.service.CongThongTinService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -99,7 +100,8 @@ public class CongThongTinController {
         if (user == null) {
             return "redirect:/dangNhap";
         }
-        if (!congThongTinService.coThongTinLienHeDayDu(user)) {
+        ThongTinTaiKhoanView profile = congThongTinService.layThongTinTaiKhoan(user);
+        if (profile == null || !profile.coThongTinLienHeDayDu()) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng điền đầy đủ email và số điện thoại để đặt trước không gian.");
             return "redirect:/portal/branches";
         }
@@ -142,6 +144,7 @@ public class CongThongTinController {
         int mapRows = Math.min(8, Math.max(4, maxSpaceRow + 1));
 
         model.addAttribute("user", user);
+        model.addAttribute("profile", profile);
         model.addAttribute("rankName", congThongTinService.layTenHangThanhVien(user));
         model.addAttribute("activePage", "booking");
         model.addAttribute("branch", branch);
@@ -169,7 +172,8 @@ public class CongThongTinController {
         if (user == null) {
             return "redirect:/dangNhap";
         }
-        if (!congThongTinService.coThongTinLienHeDayDu(user)) {
+        ThongTinTaiKhoanView checkoutProfile = congThongTinService.layThongTinTaiKhoan(user);
+        if (checkoutProfile == null || !checkoutProfile.coThongTinLienHeDayDu()) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng điền đầy đủ email và số điện thoại để đặt trước không gian.");
             return "redirect:/portal/branches";
         }
@@ -195,8 +199,29 @@ public class CongThongTinController {
         }
 
         BigDecimal subtotal = congThongTinService.tinhTien(space, durationHours);
-        BigDecimal discount = congThongTinService.tinhGiamGia(subtotal, voucherCode);
+        String safeVoucherCode = voucherCode == null ? "" : voucherCode.trim();
+        BigDecimal discount = BigDecimal.ZERO;
+        String voucherMessage = "";
+        if (!safeVoucherCode.isBlank()) {
+            PhieuGiamGiaView voucher = congThongTinService.layPhieuGiamGiaHieuLucTheoMa(safeVoucherCode);
+            if (voucher == null) {
+                voucherMessage = "Mã ưu đãi không hợp lệ, hết hạn hoặc đã hết lượt sử dụng.";
+            } else {
+                BigDecimal minimum = voucher.getGiaTriApDungToiThieu() == null
+                        ? BigDecimal.ZERO
+                        : voucher.getGiaTriApDungToiThieu();
+                if (subtotal.compareTo(minimum) < 0) {
+                    voucherMessage = "Đơn này chưa đạt mức tối thiểu " + minimum.toPlainString() + " VNĐ để dùng mã ưu đãi.";
+                } else {
+                    discount = congThongTinService.tinhGiamGia(subtotal, safeVoucherCode);
+                    voucherMessage = discount.compareTo(BigDecimal.ZERO) > 0
+                            ? "Đã áp dụng mã ưu đãi " + safeVoucherCode + "."
+                            : "Mã ưu đãi hợp lệ nhưng chưa làm giảm giá trị đơn này.";
+                }
+            }
+        }
         model.addAttribute("user", user);
+        model.addAttribute("profile", checkoutProfile);
         model.addAttribute("rankName", congThongTinService.layTenHangThanhVien(user));
         model.addAttribute("activePage", "booking");
         model.addAttribute("space", space);
@@ -205,7 +230,9 @@ public class CongThongTinController {
         model.addAttribute("endTime", arrivalTime.plusHours(durationHours));
         model.addAttribute("durationHours", durationHours);
         model.addAttribute("note", note == null ? "" : note);
-        model.addAttribute("voucherCode", voucherCode == null ? "" : voucherCode.trim());
+        model.addAttribute("voucherCode", safeVoucherCode);
+        model.addAttribute("voucherMessage", voucherMessage);
+        model.addAttribute("voucherApplied", discount.compareTo(BigDecimal.ZERO) > 0);
         model.addAttribute("vouchers", congThongTinService.layPhieuGiamGiaHieuLuc());
         model.addAttribute("subtotal", subtotal);
         model.addAttribute("discount", discount);
@@ -264,6 +291,20 @@ public class CongThongTinController {
         model.addAttribute("activePage", "booking");
         model.addAttribute("payment", payment);
         return "web/thanh-toan";
+    }
+
+    @PostMapping("/portal/bookings/{maDatCho}/payment/mock-confirm")
+    public String giaLapDaNhanChuyenKhoan(@PathVariable("maDatCho") String maDatCho,
+                                      HttpSession session,
+                                      RedirectAttributes redirectAttributes) {
+        NguoiDungPhien user = layHoiVienHienTai(session);
+        if (user == null) {
+            return "redirect:/dangNhap";
+        }
+        CongThongTinService.KetQuaWebhookThanhToan result =
+                congThongTinService.xacNhanThanhToanDemo(user, maDatCho);
+        redirectAttributes.addFlashAttribute(result.success() ? "success" : "error", result.message());
+        return result.success() ? "redirect:/portal/history" : "redirect:/portal/bookings/" + maDatCho + "/payment";
     }
 
     @GetMapping("/portal/benefits")

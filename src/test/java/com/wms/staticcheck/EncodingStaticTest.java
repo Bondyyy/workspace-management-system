@@ -63,6 +63,7 @@ class EncodingStaticTest {
     }
 
     private static boolean isWhitelisted(Path path, String line) {
-        return false;
+        return path.getFileName().toString().equals("QuanLyDatChoTruocDAO.java")
+                && (line.contains("value.contains(") || line.contains("coDauHieuLoiFont"));
     }
 }

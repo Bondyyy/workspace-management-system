@@ -2,6 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
@@ -63,14 +64,160 @@ public class PhienLamViecDAO {
         }
     }
 
+    public KetQuaNhanChoDTO moPhienTuQrDatCho(String maDatCho, String noiDungQr) {
+        if (maDatCho == null || maDatCho.isBlank() || noiDungQr == null || noiDungQr.isBlank()) {
+            return new KetQuaNhanChoDTO(false, "Vui lòng nhập mã QR nhận chỗ hợp lệ.");
+        }
+
+        String bookingSql = """
+                SELECT dc.MaDatCho, dc.MaQR, dc.TrangThaiDatTruoc, dc.KhoangThoiGianSuDung,
+                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG, dc.MaKH
+                FROM DATCHO dc
+                WHERE dc.MaDatCho = ?
+                FOR UPDATE
+                """;
+        try (Connection conn = getConn()) {
+            conn.setAutoCommit(false);
+            try {
+                String qrTrongDb;
+                String trangThai;
+                int soGio;
+                double thanhTien;
+                String maKG;
+                String maKH;
+
+                try (PreparedStatement ps = conn.prepareStatement(bookingSql)) {
+                    ps.setString(1, maDatCho.trim());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return new KetQuaNhanChoDTO(false, "Không tìm thấy đặt chỗ " + maDatCho + ".");
+                        }
+                        qrTrongDb = rs.getString("MaQR");
+                        trangThai = rs.getString("TrangThaiDatTruoc");
+                        soGio = Math.max(1, rs.getInt("KhoangThoiGianSuDung"));
+                        thanhTien = rs.getDouble("ThanhTien");
+                        maKG = rs.getString("MaKG");
+                        maKH = rs.getString("MaKH");
+                    }
+                }
+
+                if (qrTrongDb == null || qrTrongDb.isBlank()) {
+                    conn.rollback();
+                    return new KetQuaNhanChoDTO(false, "Mã QR đã bị vô hiệu hoặc đặt chỗ chưa thanh toán.");
+                }
+                if (!qrTrongDb.trim().equals(noiDungQr.trim())) {
+                    conn.rollback();
+                    return new KetQuaNhanChoDTO(false, "Mã QR không khớp với đặt chỗ trong hệ thống.");
+                }
+                if (!chuanHoa(trangThai).contains("thanh toan thanh cong")) {
+                    conn.rollback();
+                    return new KetQuaNhanChoDTO(false, "Đặt chỗ chưa ở trạng thái đã thanh toán thành công.");
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT COUNT(*) FROM PHIENLAMVIEC WHERE MaDatCho = ?")) {
+                    ps.setString(1, maDatCho.trim());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            conn.rollback();
+                            return new KetQuaNhanChoDTO(false, "Đặt chỗ này đã được nhận trước đó.");
+                        }
+                    }
+                }
+
+                String maPhien = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
+                String maHoaDon = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.HOA_DON);
+
+                try (PreparedStatement ps = conn.prepareStatement("""
+                        INSERT INTO PHIENLAMVIEC
+                            (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
+                             CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
+                        VALUES (?, CURRENT_TIMESTAMP,
+                                CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
+                                ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        """)) {
+                    ps.setString(1, maPhien);
+                    ps.setInt(2, soGio);
+                    ps.setString(3, "Đã đặt trước");
+                    ps.setString(4, maKG);
+                    ps.setString(5, maKH);
+                    ps.setString(6, maDatCho.trim());
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE PHIENLAMVIEC SET TrangThaiPhien = 'Đang hoạt động', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?")) {
+                    ps.setString(1, maPhien);
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement("""
+                        INSERT INTO HOADON
+                            (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon,
+                             PhuongThucThanhToan, TrangThaiThanhToan, MaPhien)
+                        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        """)) {
+                    ps.setString(1, maHoaDon);
+                    ps.setString(2, maHoaDon);
+                    ps.setDouble(3, thanhTien);
+                    ps.setDouble(4, thanhTien);
+                    ps.setString(5, "Chuyển khoản");
+                    ps.setString(6, "Đã thanh toán thành công");
+                    ps.setString(7, maPhien);
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement("""
+                        UPDATE DATCHO
+                        SET TrangThaiDatTruoc = 'Đã sử dụng',
+                            MaQR = NULL,
+                            CapNhatLanCuoi = CURRENT_TIMESTAMP
+                        WHERE MaDatCho = ?
+                        """)) {
+                    ps.setString(1, maDatCho.trim());
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE KHONGGIAN SET TrangThaiKG = 'Đang hoạt động' WHERE MaKG = ?")) {
+                    ps.setString(1, maKG);
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+                return new KetQuaNhanChoDTO(true, "Mở phiên từ vé đặt chỗ thành công. Mã phiên: " + maPhien,
+                        maDatCho.trim(), maPhien);
+            } catch (SQLException ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            System.err.println("[PhienLamViecDAO] Lỗi mở phiên từ QR đặt chỗ: " + e.getMessage());
+            return new KetQuaNhanChoDTO(false, "Không thể mở phiên từ QR: " + e.getMessage());
+        }
+    }
+
     private boolean laThongBaoThanhCong(String message) {
         if (message == null) {
             return false;
         }
-        String normalized = Normalizer.normalize(message, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")
-                .toLowerCase(Locale.ROOT);
-        return normalized.contains("thanh cong");
+        return chuanHoa(message).contains("thanh cong");
+    }
+
+    private String chuanHoa(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .replace('đ', 'd')
+                .replaceAll("[^a-z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     public List<PhienLamViecFullDTO> layDanhSachPhien(String keyword, String maCN) {

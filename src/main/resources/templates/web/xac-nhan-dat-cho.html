@@ -44,7 +44,9 @@
                 </label>
                 <label>
                     Số điện thoại
-                    <input type="text" value="Chưa cập nhật" readonly>
+                    <input type="text"
+                           th:value="${profile != null && !#strings.isEmpty(profile.soDienThoai) ? profile.soDienThoai : 'Chưa cập nhật'}"
+                           readonly>
                 </label>
                 <label class="span-2">
                     Tại chi nhánh
@@ -94,6 +96,12 @@
                 </label>
                 <button type="submit" class="button-dark">Áp dụng</button>
             </form>
+            <p class="voucher-feedback"
+               th:if="${voucherMessage != null and !#strings.isEmpty(voucherMessage)}"
+               th:classappend="${voucherApplied} ? ' success' : ' warning'"
+               th:text="${voucherMessage}">
+                Mã ưu đãi chưa được áp dụng.
+            </p>
             <div class="payment-line muted">
                 <span>Khuyến mãi</span>
                 <strong th:text="'- ' + ${#numbers.formatDecimal(discount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">- 0 VNĐ</strong>

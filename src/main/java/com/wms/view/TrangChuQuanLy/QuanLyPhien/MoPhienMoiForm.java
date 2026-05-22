@@ -3,6 +3,7 @@ package com.wms.view.TrangChuQuanLy.QuanLyPhien;
 import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.controller.TrangChuQuanLy.QuanLyPhien.MoPhienMoiController;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import java.awt.Color;
 import java.awt.Font;
 import java.text.SimpleDateFormat;
@@ -255,6 +256,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         lblHeaderTitle = new javax.swing.JLabel();
         pnLeftMap = new javax.swing.JPanel();
         lblMapTitle = new javax.swing.JLabel();
+        btnNhanChoQr = new javax.swing.JButton();
         pnSoDo = new javax.swing.JPanel();
         pnChuThich = new javax.swing.JPanel();
         pnRightForm = new javax.swing.JPanel();
@@ -307,6 +309,14 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         lblMapTitle.setText("SƠ ĐỒ KHÔNG GIAN");
         pnLeftMap.add(lblMapTitle);
         lblMapTitle.setBounds(20, 15, 200, 30);
+
+        btnNhanChoQr.setBackground(new java.awt.Color(35, 30, 48));
+        btnNhanChoQr.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        btnNhanChoQr.setForeground(new java.awt.Color(255, 255, 255));
+        btnNhanChoQr.setText("Nhận chỗ bằng QR");
+        btnNhanChoQr.addActionListener(this::btnNhanChoQrActionPerformed);
+        pnLeftMap.add(btnNhanChoQr);
+        btnNhanChoQr.setBounds(430, 15, 190, 30);
 
         pnSoDo.setBackground(new java.awt.Color(255, 255, 255));
         pnSoDo.setLayout(new java.awt.GridLayout(4, 4, 10, 10));
@@ -536,9 +546,37 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_btnMoPhienActionPerformed
 
+    private void btnNhanChoQrActionPerformed(java.awt.event.ActionEvent evt) {
+        javax.swing.JTextArea input = new javax.swing.JTextArea(5, 42);
+        input.setLineWrap(true);
+        input.setWrapStyleWord(true);
+        JScrollPane scroll = new JScrollPane(input);
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                scroll,
+                "Dán nội dung QR nhận chỗ",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+        if (choice != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        KetQuaNhanChoDTO result = controller.nhanChoBangQr(input.getText());
+        if (result.isThanhCong()) {
+            com.wms.util.MessageUtil.showInfo(this, result.getThongBao());
+            khongGianChonDTO = null;
+            initMap();
+            btnLamMoiActionPerformed(evt);
+        } else {
+            com.wms.util.MessageUtil.showError(this, result.getThongBao());
+        }
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLamMoi;
     private javax.swing.JButton btnMoPhien;
+    private javax.swing.JButton btnNhanChoQr;
     private javax.swing.JButton btnXacNhan;
     private javax.swing.JLabel lblFormTitle;
     private javax.swing.JLabel lblHeaderTitle;

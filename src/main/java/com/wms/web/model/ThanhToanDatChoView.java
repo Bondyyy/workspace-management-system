@@ -1,5 +1,7 @@
 package com.wms.web.model;
 
+import com.wms.util.ChuyenKhoanQrUtil;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -69,5 +71,25 @@ public class ThanhToanDatChoView {
 
     public LocalDateTime getHetHanThanhToan() {
         return hetHanThanhToan;
+    }
+
+    public String getTenNganHangNhan() {
+        return ChuyenKhoanQrUtil.TEN_NGAN_HANG_NHAN;
+    }
+
+    public String getSoTaiKhoanNhan() {
+        return ChuyenKhoanQrUtil.SO_TAI_KHOAN_NHAN;
+    }
+
+    public String getChuTaiKhoanNhan() {
+        return ChuyenKhoanQrUtil.CHU_TAI_KHOAN_NHAN;
+    }
+
+    public BigDecimal getSoTienChuyenKhoan() {
+        return ChuyenKhoanQrUtil.lamTronTienVnd(thanhTien);
+    }
+
+    public String getQrChuyenKhoanUrl() {
+        return ChuyenKhoanQrUtil.taoVietQrUrl(thanhTien, noiDungChuyenKhoan);
     }
 }

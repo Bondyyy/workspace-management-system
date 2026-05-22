@@ -81,6 +81,21 @@ public class EmailUtil {
             String thoiGian,
             String thanhTien,
             byte[] anhQRPng) {
+        return guiEmailXacNhanDatChoDaThanhToan(toEmail, hoTen, maPhien, maDatCho,
+                tenKhongGian, tenChiNhanh, thoiGian, thanhTien, null, anhQRPng);
+    }
+
+    public static boolean guiEmailXacNhanDatChoDaThanhToan(
+            String toEmail,
+            String hoTen,
+            String maPhien,
+            String maDatCho,
+            String tenKhongGian,
+            String tenChiNhanh,
+            String thoiGian,
+            String thanhTien,
+            String maQR,
+            byte[] anhQRPng) {
         if (toEmail == null || toEmail.isBlank()) {
             System.err.println("[EmailUtil] Không có email khách hàng để gửi xác nhận đặt chỗ.");
             return false;
@@ -102,7 +117,7 @@ public class EmailUtil {
             Multipart multipart = new MimeMultipart("related");
 
             BodyPart htmlPart = new MimeBodyPart();
-            htmlPart.setContent(taoNoiDungEmailXacNhan(hoTen, maPhien, maDatCho, tenKhongGian, tenChiNhanh, thoiGian, thanhTien),
+            htmlPart.setContent(taoNoiDungEmailXacNhan(hoTen, maPhien, maDatCho, tenKhongGian, tenChiNhanh, thoiGian, thanhTien, maQR),
                     "text/html; charset=utf-8");
             multipart.addBodyPart(htmlPart);
 
@@ -186,9 +201,12 @@ public class EmailUtil {
 
     private static String taoNoiDungEmailXacNhan(String hoTen, String maPhien, String maDatCho,
                                                  String tenKhongGian, String tenChiNhanh,
-                                                 String thoiGian, String thanhTien) {
+                                                 String thoiGian, String thanhTien, String maQR) {
         String qrHtml = "<p style=\"margin:18px 0 8px;color:#555;\">Mã QR nhận chỗ của bạn:</p>"
                 + "<img src=\"cid:layQrPhien\" alt=\"QR nhận chỗ\" style=\"width:220px;height:220px;border:1px solid #f3c9d9;padding:10px;\"/>";
+        String qrText = safe(maQR).isBlank()
+                ? ""
+                : "<p style=\"word-break:break-all;\"><b>Mã QR dự phòng:</b> " + html(safe(maQR)) + "</p>";
         String maChinh = safe(maPhien).isBlank() ? safe(maDatCho) : safe(maPhien);
         String nhanMaChinh = safe(maPhien).isBlank() ? "Mã đặt chỗ" : "Mã phiên";
         String dongMaDatCho = safe(maPhien).isBlank()
@@ -206,6 +224,7 @@ public class EmailUtil {
                         <p><b>Chi nhánh:</b> %s</p>
                         <p><b>Thời gian:</b> %s</p>
                         <p><b>Tổng cộng:</b> %s</p>
+                        %s
                     </div>
                     %s
                     <p style="margin-top:18px;">Khi đến quầy, bạn có thể mở email này hoặc lịch sử đặt chỗ trên web để nhân viên quét mã nhanh hơn.</p>
@@ -220,6 +239,7 @@ public class EmailUtil {
                 html(safe(tenChiNhanh)),
                 html(safe(thoiGian)),
                 html(safe(thanhTien, "0 VNĐ")),
+                qrText,
                 qrHtml
         );
     }

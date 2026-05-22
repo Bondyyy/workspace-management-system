@@ -74,7 +74,6 @@ public class SuperAdminCreator {
     }
 
     private static void ensureAdminRole(Connection conn) throws Exception {
-        VaiTroDAO vtDao = new VaiTroDAO();
         List<String> fullQuyen = new ArrayList<>();
         // Lấy danh sách quyền theo yêu cầu của user cho VT01
         String[] adminRights = {"CN01", "CN02", "CN09", "CN11", "CN12", "CN13", "CN14"};
@@ -88,17 +87,53 @@ public class SuperAdminCreator {
             roleExists = rs.next();
         }
 
+        String tenVaiTro = Normalizer.normalize("Quản trị viên Hệ thống", Normalizer.Form.NFC);
+        String moTa = Normalizer.normalize("Toàn quyền quản lý hệ thống", Normalizer.Form.NFC);
+
         if (!roleExists) {
-            VaiTroDTO adminRole = new VaiTroDTO();
-            adminRole.setMaVaiTro("VT01");
-            adminRole.setTenVaiTro(Normalizer.normalize("Quản trị viên Hệ thống", Normalizer.Form.NFC));
-            adminRole.setMoTa(Normalizer.normalize("Toàn quyền quản lý hệ thống", Normalizer.Form.NFC));
-            vtDao.themVaiTro(adminRole, fullQuyen);
-        } else {
-            try (Statement st = conn.createStatement()) {
-                st.executeUpdate("UPDATE VAITRO SET TenVaiTro = 'Quản trị viên Hệ thống' WHERE MaVaiTro = 'VT01'");
+            try (PreparedStatement ps = conn.prepareStatement("INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES ('VT01', ?, ?)")) {
+                ps.setString(1, tenVaiTro);
+                ps.setString(2, moTa);
+                ps.executeUpdate();
             }
-            vtDao.capNhatChucNangCuaVaiTro("VT01", fullQuyen);
+
+            try (PreparedStatement ps = conn.prepareStatement("INSERT INTO NHOMCHUCNANG (MaNhomChucNang, TenNhomChucNang, MoTa) VALUES ('VT01', ?, ?)")) {
+                ps.setString(1, tenVaiTro);
+                ps.setString(2, moTa);
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement("INSERT INTO CHITIETNHOMCHUCNANG (MaVaiTro, MaNhomChucNang, MoTa) VALUES ('VT01', 'VT01', ?)")) {
+                ps.setString(1, "Liên kết vai trò với nhóm chức năng mặc định");
+                ps.executeUpdate();
+            }
+        } else {
+            try (PreparedStatement ps = conn.prepareStatement("UPDATE VAITRO SET TenVaiTro = ?, MoTa = ? WHERE MaVaiTro = 'VT01'")) {
+                ps.setString(1, tenVaiTro);
+                ps.setString(2, moTa);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = conn.prepareStatement("UPDATE NHOMCHUCNANG SET TenNhomChucNang = ?, MoTa = ? WHERE MaNhomChucNang = 'VT01'")) {
+                ps.setString(1, tenVaiTro);
+                ps.setString(2, moTa);
+                ps.executeUpdate();
+            }
+        }
+
+        // Cập nhật chi tiết chức năng
+        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CHITIETCHUCNANG WHERE MaNhomChucNang = 'VT01'")) {
+            ps.executeUpdate();
+        }
+        if (!fullQuyen.isEmpty()) {
+            String sql = "INSERT INTO CHITIETCHUCNANG (MaNhomChucNang, MaChucNang, MoTa) VALUES ('VT01', ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                for (String maCN : fullQuyen) {
+                    ps.setString(1, maCN);
+                    ps.setString(2, "Cấp quyền chức năng cho nhóm");
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
         }
     }
 

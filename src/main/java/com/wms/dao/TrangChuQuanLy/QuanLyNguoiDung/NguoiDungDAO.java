@@ -348,9 +348,7 @@ public class NguoiDungDAO {
     }
 
     public String generateNextMaND() throws SQLException {
-        try (Connection conn = getConn()) {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
-        }
+        return MaTuDongUtil.sinhMaTiepTheo(getConn(), MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
     }
 
     public java.util.List<String> layDanhSachChucNangCuaNguoiDung(String maND) {

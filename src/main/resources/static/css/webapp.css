@@ -480,6 +480,7 @@ hr {
 }
 
 .home-layout,
+.trangChu-layout,
 .benefit-grid,
 .account-grid,
 .checkout-grid,
@@ -1666,10 +1667,12 @@ hr {
     font-size: 0.82rem;
 }
 
-.portal-page .home-layout {
+.portal-page .home-layout,
+.portal-page .trangChu-layout {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) 330px;
     gap: 16px;
-    align-items: stretch;
+    align-items: start;
 }
 
 .portal-page .member-panel,
@@ -1701,20 +1704,32 @@ hr {
 
 .portal-page .featured-panel {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
     gap: 12px;
+    align-self: start;
 }
 
 .portal-page .featured-room {
-    min-height: 0;
-    align-content: center;
+    min-height: 180px;
+    align-content: start;
     gap: 8px;
     margin-bottom: 0;
     padding: 18px;
 }
 
+.portal-page .featured-room span {
+    width: fit-content;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fff0f6;
+    color: var(--primary-strong);
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
 .portal-page .featured-room h4 {
     font-size: 1.25rem;
+    line-height: 1.2;
 }
 
 .portal-page .featured-room p {
@@ -2072,6 +2087,7 @@ hr {
     }
 
     .portal-page .home-layout,
+    .portal-page .trangChu-layout,
     .portal-page .metric-row {
         grid-template-columns: 1fr;
     }
@@ -2155,6 +2171,7 @@ hr {
     }
 
     .home-layout,
+    .trangChu-layout,
     .benefit-grid,
     .account-grid,
     .checkout-grid,
@@ -2625,6 +2642,492 @@ hr {
 
     .account-page .account-form .button-primary {
         grid-column: auto;
+        width: 100%;
+    }
+}
+
+/* Member pages currently use Vietnamese template class names. Keep them styled
+   like the restored member portal pages without changing the templates. */
+.hienThiXacNhanDatCho-page .member-topbar,
+.hienThiLichSu-page .member-topbar,
+.hienThiTaiKhoan-page .member-topbar {
+    height: 64px;
+    min-height: 64px;
+}
+
+.hienThiXacNhanDatCho-page .member-main,
+.hienThiLichSu-page .member-main,
+.hienThiTaiKhoan-page .member-main {
+    min-width: 0;
+}
+
+.hienThiXacNhanDatCho-page .member-content,
+.hienThiLichSu-page .member-content,
+.hienThiTaiKhoan-page .member-content {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 18px 28px 28px;
+}
+
+.member-dangXuat {
+    padding: 22px 38px 30px;
+    border-top: 1px solid var(--line);
+}
+
+.member-dangXuat button {
+    border: 0;
+    background: transparent;
+    color: #8a8f94;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.member-dangXuat button:hover {
+    color: var(--primary-strong);
+}
+
+.hienThiXacNhanDatCho-title {
+    min-height: 58px;
+    display: grid;
+    place-items: center;
+    background: var(--primary);
+    color: #fff;
+}
+
+.hienThiXacNhanDatCho-title h2 {
+    margin: 0;
+    font-size: 1.45rem;
+}
+
+.hienThiXacNhanDatCho-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 16px;
+    align-items: start;
+}
+
+.hienThiXacNhanDatCho-panel,
+.hienThiXacNhanDatCho-grid .payment-panel {
+    background: #fff;
+    border: 1px solid #f1d9e4;
+    border-radius: var(--radius);
+    box-shadow: 0 16px 40px rgba(63, 34, 49, 0.06);
+    padding: 18px 20px;
+}
+
+.hienThiXacNhanDatCho-panel h3,
+.hienThiXacNhanDatCho-grid .payment-panel h3 {
+    margin: 0 0 12px;
+    font-size: 1.02rem;
+    text-transform: uppercase;
+}
+
+.hienThiXacNhanDatCho-page .readonly-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+}
+
+.hienThiXacNhanDatCho-page label {
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.hienThiXacNhanDatCho-page input,
+.hienThiXacNhanDatCho-page textarea {
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 0.92rem;
+}
+
+.hienThiXacNhanDatCho-page textarea {
+    height: 56px;
+    resize: none;
+}
+
+.hienThiXacNhanDatCho-page .button-secondary,
+.hienThiXacNhanDatCho-page .button-primary,
+.hienThiXacNhanDatCho-page .button-dark {
+    min-height: 38px;
+    font-size: 0.92rem;
+}
+
+.hienThiXacNhanDatCho-grid .payment-panel {
+    display: grid;
+    align-content: start;
+}
+
+.hienThiXacNhanDatCho-page .payment-line {
+    padding: 8px 0;
+}
+
+.hienThiXacNhanDatCho-page .voucher-row {
+    grid-template-columns: 1fr 108px;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.hienThiXacNhanDatCho-page .voucher-feedback {
+    margin: 0 0 8px;
+    padding: 9px 11px;
+    border-radius: 7px;
+    font-size: 0.84rem;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.hienThiXacNhanDatCho-page .voucher-feedback.success {
+    border: 1px solid #b7e0c4;
+    background: #eefaf1;
+    color: #107333;
+}
+
+.hienThiXacNhanDatCho-page .voucher-feedback.warning {
+    border: 1px solid #ffd1df;
+    background: #fff4f8;
+    color: var(--primary-strong);
+}
+
+.hienThiXacNhanDatCho-page .payment-total {
+    margin-top: 10px;
+    padding-top: 16px;
+}
+
+.hienThiXacNhanDatCho-page .payment-total strong {
+    font-size: 1.55rem;
+}
+
+.hienThiXacNhanDatCho-page .payment-note {
+    margin: 10px 0 14px;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.hienThiLichSu-content .section-title,
+.hienThiTaiKhoan-page .section-title {
+    margin-bottom: 16px;
+}
+
+.hienThiLichSu-content .section-title p,
+.hienThiTaiKhoan-page .section-title p {
+    margin-bottom: 4px;
+}
+
+.hienThiLichSu-content .section-title h2,
+.hienThiTaiKhoan-page .section-title h2 {
+    font-size: 1.55rem;
+}
+
+.hienThiLichSu-list {
+    display: grid;
+    gap: 14px;
+}
+
+.hienThiLichSu-card {
+    display: grid;
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid #f1d9e4;
+    border-radius: var(--radius);
+    background: #fff;
+    box-shadow: 0 16px 40px rgba(63, 34, 49, 0.06);
+}
+
+.hienThiLichSu-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.hienThiLichSu-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 0;
+}
+
+.hienThiLichSu-code {
+    color: var(--primary);
+    font-size: 0.82rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.hienThiLichSu-main h3 {
+    margin: 4px 0;
+    font-size: 1.18rem;
+}
+
+.hienThiLichSu-main p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.hienThiLichSu-money {
+    min-width: 168px;
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    text-align: right;
+}
+
+.hienThiLichSu-money span,
+.hienThiLichSu-money small {
+    color: var(--muted);
+}
+
+.hienThiLichSu-money strong {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.hienThiLichSu-meta {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.hienThiLichSu-meta span {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    padding: 9px 10px;
+    border: 1px solid #f1d9e4;
+    border-radius: 7px;
+    background: #fff8fb;
+}
+
+.hienThiLichSu-meta strong {
+    color: #827381;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+.hienThiLichSu-meta em {
+    color: var(--ink);
+    font-style: normal;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.hienThiLichSu-qr {
+    display: grid;
+    justify-items: center;
+    gap: 5px;
+    padding: 7px;
+    border: 1px solid #f1d9e4;
+    border-radius: 7px;
+    background: #fff8fb;
+}
+
+.hienThiLichSu-qr img {
+    width: 84px;
+    height: 84px;
+    display: block;
+    image-rendering: pixelated;
+}
+
+.hienThiLichSu-qr span {
+    color: var(--primary-strong);
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.service-details {
+    border-top: 1px solid #f1d9e4;
+    padding-top: 12px;
+}
+
+.service-details summary {
+    cursor: pointer;
+    color: var(--primary-strong);
+    font-weight: 900;
+}
+
+.service-list {
+    display: grid;
+    gap: 0;
+    margin-top: 10px;
+    overflow: hidden;
+    border: 1px solid #ead9e2;
+    border-radius: 7px;
+}
+
+.service-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) 90px 120px 120px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ead9e2;
+}
+
+.service-row:last-child {
+    border-bottom: 0;
+}
+
+.service-head {
+    color: #6f6270;
+    background: #f7f9fb;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.service-row strong,
+.service-row small {
+    display: block;
+}
+
+.service-row small {
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+.empty-hienThiLichSu {
+    display: grid;
+    gap: 12px;
+    justify-items: start;
+}
+
+.empty-hienThiLichSu h3,
+.empty-hienThiLichSu p {
+    margin: 0;
+}
+
+.hienThiTaiKhoan-grid {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.hienThiTaiKhoan-page .profile-card,
+.hienThiTaiKhoan-panel {
+    padding: 18px;
+    border-color: #f1d9e4;
+    border-radius: var(--radius);
+    box-shadow: 0 16px 40px rgba(63, 34, 49, 0.06);
+}
+
+.hienThiTaiKhoan-page .profile-card {
+    gap: 10px;
+}
+
+.hienThiTaiKhoan-page .avatar-box {
+    width: 150px;
+}
+
+.hienThiTaiKhoan-page .profile-card h3 {
+    margin: 6px 0 0;
+    font-size: 1.18rem;
+}
+
+.hienThiTaiKhoan-page .profile-card p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+}
+
+.hienThiTaiKhoan-panel h3 {
+    margin: 0 0 12px;
+    font-size: 1.02rem;
+    text-transform: uppercase;
+}
+
+.hienThiTaiKhoan-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+}
+
+.hienThiTaiKhoan-form label,
+.hienThiTaiKhoan-page .password-row label {
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.hienThiTaiKhoan-form input,
+.hienThiTaiKhoan-form select,
+.hienThiTaiKhoan-page .password-row input {
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 0.92rem;
+}
+
+.hienThiTaiKhoan-form .button-primary {
+    grid-column: 1 / -1;
+    width: min(100%, 360px);
+    min-height: 40px;
+    justify-self: start;
+}
+
+.hienThiTaiKhoan-page .password-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 14px;
+}
+
+.hienThiTaiKhoan-page .password-row .button-dark {
+    width: min(100%, 220px);
+    min-height: 40px;
+}
+
+@media (max-width: 1120px) {
+    .member-dangXuat {
+        display: none;
+    }
+
+    .hienThiXacNhanDatCho-grid,
+    .hienThiTaiKhoan-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hienThiLichSu-main {
+        flex-direction: column;
+    }
+
+    .hienThiLichSu-money {
+        justify-items: start;
+        text-align: left;
+    }
+
+    .hienThiLichSu-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .hienThiXacNhanDatCho-page .member-content,
+    .hienThiLichSu-page .member-content,
+    .hienThiTaiKhoan-page .member-content {
+        padding: 16px;
+    }
+
+    .hienThiXacNhanDatCho-page .readonly-grid,
+    .hienThiTaiKhoan-form,
+    .hienThiTaiKhoan-page .password-row,
+    .hienThiLichSu-meta,
+    .service-row {
+        grid-template-columns: 1fr;
+    }
+
+    .hienThiXacNhanDatCho-page .span-2 {
+        grid-column: auto;
+    }
+
+    .hienThiLichSu-title {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .hienThiTaiKhoan-form .button-primary {
         width: 100%;
     }
 }

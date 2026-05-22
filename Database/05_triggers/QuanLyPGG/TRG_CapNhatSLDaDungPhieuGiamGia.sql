@@ -1,10 +1,9 @@
 CREATE OR REPLACE TRIGGER TRG_CapNhatSLDaDungPhieuGiamGia
 AFTER INSERT ON HOADON
 FOR EACH ROW
-WHEN (NEW.MaPGG IS NOT NULL AND NEW.TrangThaiThanhToan = 'Đã thanh toán thành công')
 BEGIN
-    UPDATE PHIEUGIAMGIA
-    SET SLDaDung = NVL(SLDaDung, 0) + 1
-    WHERE MaPGG = :NEW.MaPGG;
+    -- Lượt dùng phiếu giảm giá được cộng trong SP_ThanhToanVoiPhieuGiamGia.
+    -- Trigger này giữ lại tên cũ để script triển khai không lỗi, nhưng không cộng lần hai.
+    NULL;
 END TRG_CapNhatSLDaDungPhieuGiamGia;
 /

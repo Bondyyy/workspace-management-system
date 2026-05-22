@@ -5,15 +5,11 @@ DECLARE
     v_TrangThaiPhien VARCHAR2(50);
     v_MaPhien VARCHAR2(50);
 BEGIN
-    -- Chỉ kiểm tra khi đang cập nhật sang trạng thái thanh toán thành công
-    -- hoặc khi chọn phương thức thanh toán
-    IF ((:NEW.TrangThaiThanhToan IN ('Đã thanh toán thành công', 'Đã thanh toán')) AND 
-        (NVL(:OLD.TrangThaiThanhToan, '') NOT IN ('Đã thanh toán thành công', 'Đã thanh toán')))
+    IF ((:NEW.TrangThaiThanhToan IN ('Đã thanh toán thành công', 'Đã thanh toán'))
+        AND (NVL(:OLD.TrangThaiThanhToan, '') NOT IN ('Đã thanh toán thành công', 'Đã thanh toán')))
        OR
-       (:NEW.PhuongThucThanhToan IS NOT NULL AND 
-        :OLD.PhuongThucThanhToan IS NULL) THEN
-        
-        -- Lấy trạng thái phiên làm việc
+       (:NEW.PhuongThucThanhToan IS NOT NULL AND :OLD.PhuongThucThanhToan IS NULL) THEN
+
         BEGIN
             SELECT TrangThaiPhien, MaPhien
             INTO v_TrangThaiPhien, v_MaPhien
@@ -26,8 +22,7 @@ BEGIN
                     'Lỗi: Không tìm thấy phiên làm việc [' || :NEW.MaPhien || ']!'
                 );
         END;
-        
-        -- Kiểm tra phiên đã kết thúc
+
         IF v_TrangThaiPhien != 'Đã kết thúc' THEN
             RAISE_APPLICATION_ERROR(
                 -20031,

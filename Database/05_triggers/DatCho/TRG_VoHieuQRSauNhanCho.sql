@@ -4,7 +4,7 @@ FOR EACH ROW
 WHEN (NEW.TrangThaiDatTruoc = 'Đã sử dụng' AND OLD.TrangThaiDatTruoc = 'Đã thanh toán thành công')
 BEGIN
     :NEW.MaQR := NULL;
-    :NEW.GhiChu := :NEW.GhiChu || ' | Khách đã nhận chỗ. QR bị vô hiệu hóa.';
+    :NEW.GhiChu := NVL(:NEW.GhiChu, '') || ' | Khách đã nhận chỗ. QR bị vô hiệu hóa.';
     :NEW.CapNhatLanCuoi := CURRENT_TIMESTAMP;
 END;
 /

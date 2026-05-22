@@ -2,14 +2,17 @@ package com.wms.dao.TrangChuQuanLy.QuanLyDatChoTruoc;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyDatChoTruoc.DatChoTruocDTO;
-import com.wms.util.MaTuDongUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class QuanLyDatChoTruocDAO {
 
@@ -72,15 +75,7 @@ public class QuanLyDatChoTruocDAO {
         try {
             oldAutoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
-            if ("Đã sử dụng".equals(dto.getTrangThaiDatTruoc())) {
-                boolean ok = taoPhienKhiNhanCho(conn, dto.getMaDatCho());
-                if (ok) {
-                    conn.commit();
-                } else {
-                    conn.rollback();
-                }
-                return ok;
-            }
+            String trangThaiHienThi = hienThiTrangThaiDatCho(dto.getTrangThaiDatTruoc());
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, dto.getMaKH());
                 ps.setString(2, dto.getMaKG());
@@ -91,7 +86,7 @@ public class QuanLyDatChoTruocDAO {
                     ps.setInt(4, dto.getKhoangThoiGianSuDung());
                 }
                 ps.setBigDecimal(5, dto.getThanhTien());
-                ps.setString(6, dto.getTrangThaiDatTruoc());
+                ps.setString(6, trangThaiDatChoDb(conn, trangThaiHienThi));
                 ps.setString(7, dto.getGhiChu());
                 ps.setString(8, dto.getMaDatCho());
                 int updated = ps.executeUpdate();
@@ -114,89 +109,15 @@ public class QuanLyDatChoTruocDAO {
         }
     }
 
-    private boolean taoPhienKhiNhanCho(Connection conn, String maDatCho) throws SQLException {
-        if (!coTheNhanCho(conn, maDatCho)) {
-            return false;
-        }
-        String maPhien = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
-        String maHoaDon = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.HOA_DON);
-
-        try (PreparedStatement ps = conn.prepareStatement("""
-                INSERT INTO PHIENLAMVIEC
-                    (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
-                     CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
-                SELECT ?, CURRENT_TIMESTAMP,
-                       CURRENT_TIMESTAMP + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR'),
-                       'Đang hoạt động', CURRENT_TIMESTAMP, MaKG, MaKH, MaDatCho
-                FROM DATCHO
-                WHERE MaDatCho = ?
-                """)) {
-            ps.setString(1, maPhien);
-            ps.setString(2, maDatCho);
-            ps.executeUpdate();
-        }
-
-        try (PreparedStatement ps = conn.prepareStatement("""
-                INSERT INTO HOADON
-                    (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon,
-                     PhuongThucThanhToan, TrangThaiThanhToan, MaPhien)
-                SELECT ?, ?, NVL(ThanhTien, 0), NVL(ThanhTien, 0), CURRENT_TIMESTAMP,
-                       'Chuyển khoản', 'Đã thanh toán thành công', ?
-                FROM DATCHO
-                WHERE MaDatCho = ?
-                """)) {
-            ps.setString(1, maHoaDon);
-            ps.setString(2, maHoaDon);
-            ps.setString(3, maPhien);
-            ps.setString(4, maDatCho);
-            ps.executeUpdate();
-        }
-
-        try (PreparedStatement ps = conn.prepareStatement("""
-                UPDATE DATCHO
-                SET TrangThaiDatTruoc = 'Đã sử dụng', CapNhatLanCuoi = CURRENT_TIMESTAMP
-                WHERE MaDatCho = ?
-                """)) {
-            ps.setString(1, maDatCho);
-            ps.executeUpdate();
-        }
-
-        try (PreparedStatement ps = conn.prepareStatement("""
-                UPDATE KHONGGIAN
-                SET TrangThaiKG = 'Đang hoạt động'
-                WHERE MaKG = (SELECT MaKG FROM DATCHO WHERE MaDatCho = ?)
-                """)) {
-            ps.setString(1, maDatCho);
-            ps.executeUpdate();
-        }
-        return true;
-    }
-
-    private boolean coTheNhanCho(Connection conn, String maDatCho) throws SQLException {
-        String sql = """
-                SELECT COUNT(*)
-                FROM DATCHO dc
-                WHERE dc.MaDatCho = ?
-                  AND dc.TrangThaiDatTruoc = 'Đã thanh toán thành công'
-                  AND NOT EXISTS (SELECT 1 FROM PHIENLAMVIEC p WHERE p.MaDatCho = dc.MaDatCho)
-                """;
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, maDatCho);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() && rs.getInt(1) > 0;
-            }
-        }
-    }
-
     private void capNhatTrangThaiKhongGian(Connection conn, DatChoTruocDTO dto) throws SQLException {
-        String status = dto.getTrangThaiDatTruoc();
+        String status = hienThiTrangThaiDatCho(dto.getTrangThaiDatTruoc());
         String trangThaiKG = null;
         if ("Đang chờ thanh toán".equals(status)) {
-            trangThaiKG = "Tạm khoá";
+            trangThaiKG = trangThaiKhongGianDb(conn, "Tam khoa");
         } else if ("Đã thanh toán thành công".equals(status)) {
-            trangThaiKG = "Đã đặt trước";
+            trangThaiKG = trangThaiKhongGianDb(conn, "Da dat truoc");
         } else if ("Thanh toán không thành công".equals(status)) {
-            trangThaiKG = "Trống";
+            trangThaiKG = trangThaiKhongGianDb(conn, "Trong");
         }
         if (trangThaiKG == null) {
             return;
@@ -218,9 +139,134 @@ public class QuanLyDatChoTruocDAO {
         dto.setThoiGianDuKienToi(rs.getTimestamp("ThoiGianDuKienToi"));
         int duration = rs.getInt("KhoangThoiGianSuDung");
         dto.setKhoangThoiGianSuDung(rs.wasNull() ? null : duration);
-        dto.setTrangThaiDatTruoc(rs.getString("TrangThaiDatTruoc"));
+        dto.setTrangThaiDatTruoc(hienThiTrangThaiDatCho(rs.getString("TrangThaiDatTruoc")));
         dto.setThanhTien(rs.getBigDecimal("ThanhTien"));
         dto.setGhiChu(rs.getString("GhiChu"));
         return dto;
+    }
+
+    private String trangThaiDatChoDb(Connection conn, String status) {
+        String normalized = chuanHoa(status);
+        if (normalized.contains("khong thanh cong")) {
+            return giaTriDb(conn, "CHK_DC_TRANGTHAI", "khong thanh cong", 2, "Thanh toán không thành công");
+        }
+        if (normalized.contains("thanh cong")) {
+            return giaTriDb(conn, "CHK_DC_TRANGTHAI", "thanh cong", 1, "Đã thanh toán thành công");
+        }
+        if (normalized.contains("su dung")) {
+            return giaTriDb(conn, "CHK_DC_TRANGTHAI", "su dung", 3, "Đã sử dụng");
+        }
+        return giaTriDb(conn, "CHK_DC_TRANGTHAI", "cho thanh toan", 0, "Đang chờ thanh toán");
+    }
+
+    private String trangThaiKhongGianDb(Connection conn, String status) {
+        String normalized = chuanHoa(status);
+        if (normalized.contains("tam khoa")) {
+            return giaTriDb(conn, "CHK_KG_TRANGTHAI", "tam khoa", 1, "Tạm khoá");
+        }
+        if (normalized.contains("dat truoc")) {
+            return giaTriDb(conn, "CHK_KG_TRANGTHAI", "dat truoc", 2, "Đã đặt trước");
+        }
+        if (normalized.contains("dang hoat dong")) {
+            return giaTriDb(conn, "CHK_KG_TRANGTHAI", "dang hoat dong", 3, "Đang hoạt động");
+        }
+        if (normalized.contains("bao tri")) {
+            return giaTriDb(conn, "CHK_KG_TRANGTHAI", "bao tri", 5, "Bảo trì");
+        }
+        return giaTriDb(conn, "CHK_KG_TRANGTHAI", "trong", 0, "Trống");
+    }
+
+    private String giaTriDb(Connection conn, String constraintName, String normalizedNeedle, int fallbackIndex, String fallbackValue) {
+        List<String> values = layGiaTriRangBuoc(conn, constraintName);
+        for (String value : values) {
+            if (chuanHoa(value).contains(normalizedNeedle)) {
+                return value;
+            }
+        }
+        if (!values.isEmpty()) {
+            int index = Math.max(0, Math.min(fallbackIndex, values.size() - 1));
+            return values.get(index);
+        }
+        return fallbackValue;
+    }
+
+    private List<String> layGiaTriRangBuoc(Connection conn, String constraintName) {
+        List<String> values = new ArrayList<>();
+        if (conn == null || constraintName == null || constraintName.isBlank()) {
+            return values;
+        }
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT search_condition_vc FROM user_constraints WHERE constraint_name = ?")) {
+            ps.setString(1, constraintName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String condition = rs.getString(1);
+                    if (condition != null) {
+                        Matcher matcher = Pattern.compile("'([^']*)'").matcher(condition);
+                        while (matcher.find()) {
+                            values.add(matcher.group(1));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ignored) {
+            // Fallback labels keep the management screen usable without metadata access.
+        }
+        return values;
+    }
+
+    private String hienThiTrangThaiDatCho(String value) {
+        if (value == null || value.isBlank()) {
+            return "Chưa có trạng thái";
+        }
+        String decoded = giaiMaLoiFont(value);
+        String normalized = chuanHoa(decoded);
+        if (normalized.contains("cho thanh toan")) {
+            return "Đang chờ thanh toán";
+        }
+        if (normalized.contains("khong thanh cong")) {
+            return "Thanh toán không thành công";
+        }
+        if (normalized.contains("thanh cong")) {
+            return "Đã thanh toán thành công";
+        }
+        if (normalized.contains("su dung")) {
+            return "Đã sử dụng";
+        }
+        return decoded;
+    }
+
+    private String chuanHoa(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(giaiMaLoiFont(value), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replace('đ', 'd')
+                .replaceAll("[^a-z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private String giaiMaLoiFont(String value) {
+        if (value == null || value.isBlank() || !coDauHieuLoiFont(value)) {
+            return value;
+        }
+        try {
+            String decoded = new String(value.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+            return decoded.indexOf('\uFFFD') >= 0 ? value : decoded;
+        } catch (RuntimeException ex) {
+            return value;
+        }
+    }
+
+    private boolean coDauHieuLoiFont(String value) {
+        return value.contains("Ã")
+                || value.contains("Ä")
+                || value.contains("Â")
+                || value.contains("Æ")
+                || value.contains("áº")
+                || value.contains("á»");
     }
 }

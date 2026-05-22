@@ -12,6 +12,7 @@ import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.model.KhongGianView;
 import com.wms.web.model.PhieuGiamGiaView;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
+import com.wms.util.ChuyenKhoanQrUtil;
 import com.wms.util.MaTuDongUtil;
 import com.wms.util.MaTuDongUtil.MaDoiTuong;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -424,8 +425,9 @@ public class CongThongTinWebRepository {
                   AND NVL(SLDaDung, 0) < NVL(SLToiDa, 0)
                 """;
         try {
-            return mauJdbc.queryForObject(sql, (rs, rowNum) -> anhXaPhieuGiamGia(rs), voucherCode.trim());
-        } catch (EmptyResultDataAccessException ex) {
+            List<PhieuGiamGiaView> matches = mauJdbc.query(sql, (rs, rowNum) -> anhXaPhieuGiamGia(rs), voucherCode.trim());
+            return matches.stream().findFirst().orElse(null);
+        } catch (RuntimeException ex) {
             return null;
         }
     }
@@ -660,8 +662,18 @@ public class CongThongTinWebRepository {
                 WHERE MaDatCho = ?
                 """,
                 maPhien,
-                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
+                giaTriDb("CHK_PLV_TRANGTHAI", "dat truoc", 1, "Đã đặt trước"),
                 maDatCho
+        );
+
+        mauJdbc.update(
+                """
+                UPDATE PHIENLAMVIEC
+                SET TrangThaiPhien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP
+                WHERE MaPhien = ?
+                """,
+                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
+                maPhien
         );
 
         mauJdbc.update(
@@ -685,7 +697,7 @@ public class CongThongTinWebRepository {
         mauJdbc.update(
                 """
                 UPDATE DATCHO
-                SET TrangThaiDatTruoc = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP
+                SET TrangThaiDatTruoc = ?, MaQR = NULL, CapNhatLanCuoi = CURRENT_TIMESTAMP
                 WHERE MaDatCho = ?
                 """,
                 trangThaiDatChoDb("Da su dung"),
@@ -784,10 +796,14 @@ public class CongThongTinWebRepository {
         String sql = """
                 SELECT dc.MaQR
                 FROM DATCHO dc
-                WHERE dc.MaKH = ? AND dc.MaDatCho = ?
+                WHERE dc.MaKH = ?
+                  AND dc.MaDatCho = ?
+                  AND dc.MaQR IS NOT NULL
+                  AND dc.TrangThaiDatTruoc = ?
                 """;
         try {
-            return mauJdbc.queryForObject(sql, String.class, maKH, maDatCho);
+            return mauJdbc.queryForObject(sql, String.class, maKH, maDatCho,
+                    trangThaiDatChoDb("Da thanh toan thanh cong"));
         } catch (EmptyResultDataAccessException ex) {
             return null;
         }
@@ -1145,7 +1161,7 @@ public class CongThongTinWebRepository {
     }
 
     private String transferContent(String maDatCho) {
-        return "WMS " + (maDatCho == null ? "" : maDatCho.trim());
+        return ChuyenKhoanQrUtil.taoNoiDungDatCho(maDatCho);
     }
 
     private String hienThiTrangThai(String value) {

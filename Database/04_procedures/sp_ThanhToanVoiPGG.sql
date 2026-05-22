@@ -14,6 +14,7 @@ CREATE OR REPLACE PROCEDURE SP_ThanhToanVoiPhieuGiamGia(
     v_SoLuongDaDung NUMBER;
     v_SoLuongToiDa NUMBER;
     v_KetQuaPGG VARCHAR2(4000);
+    v_CoPGG BOOLEAN := FALSE;
     ex_resource_busy EXCEPTION;
     PRAGMA EXCEPTION_INIT(ex_resource_busy, -54);
 BEGIN
@@ -53,6 +54,8 @@ BEGIN
     v_ThanhTien := FN_TinhThanhTien(TRIM(p_MaPhien), NULL);
 
     IF p_MaPGG IS NOT NULL AND LENGTH(TRIM(p_MaPGG)) > 0 THEN
+        v_CoPGG := TRUE;
+
         SELECT NVL(SLDaDung, 0), NVL(SLToiDa, 0)
         INTO v_SoLuongDaDung, v_SoLuongToiDa
         FROM PHIEUGIAMGIA
@@ -72,12 +75,18 @@ BEGIN
             RETURN;
         END IF;
 
-        UPDATE PHIEUGIAMGIA
-        SET SLDaDung = NVL(SLDaDung, 0) + 1
-        WHERE MaPGG = TRIM(p_MaPGG);
-
         v_ThanhTien := FN_TinhThanhTien(TRIM(p_MaPhien), TRIM(p_MaPGG));
     END IF;
+
+    UPDATE PHIENLAMVIEC
+    SET ThoiGianKetThuc = SYSTIMESTAMP,
+        TrangThaiPhien = 'Đã kết thúc',
+        CapNhatLanCuoi = SYSTIMESTAMP
+    WHERE MaPhien = TRIM(p_MaPhien);
+
+    UPDATE KHONGGIAN
+    SET TrangThaiKG = 'Dọn dẹp'
+    WHERE MaKG = v_MaKG;
 
     UPDATE HOADON
     SET TongTien = v_TongTien,
@@ -92,15 +101,11 @@ BEGIN
         MaNV = p_MaNV
     WHERE MaHoaDon = v_MaHoaDon;
 
-    UPDATE PHIENLAMVIEC
-    SET ThoiGianKetThuc = SYSTIMESTAMP,
-        TrangThaiPhien = 'Đã kết thúc',
-        CapNhatLanCuoi = SYSTIMESTAMP
-    WHERE MaPhien = TRIM(p_MaPhien);
-
-    UPDATE KHONGGIAN
-    SET TrangThaiKG = 'Dọn dẹp'
-    WHERE MaKG = v_MaKG;
+    IF v_CoPGG THEN
+        UPDATE PHIEUGIAMGIA
+        SET SLDaDung = NVL(SLDaDung, 0) + 1
+        WHERE MaPGG = TRIM(p_MaPGG);
+    END IF;
 
     COMMIT;
     p_outMessage := 'Thanh toán thành công. Mã hóa đơn: ' || v_MaHoaDon

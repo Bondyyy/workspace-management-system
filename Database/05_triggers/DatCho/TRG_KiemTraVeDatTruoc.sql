@@ -15,25 +15,26 @@ BEGIN
         WHERE MaDatCho = :NEW.MaDatCho;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            RAISE_APPLICATION_ERROR(-20002, 'Loi: Ma ve khong ton tai hoac khong hop le.');
+            RAISE_APPLICATION_ERROR(-20002, 'Lỗi: Mã vé không tồn tại hoặc không hợp lệ.');
     END;
 
     v_TrangThaiLower := LOWER(v_TrangThai);
 
-    IF v_TrangThaiLower LIKE '%su%dung%' THEN
-        RAISE_APPLICATION_ERROR(-20003, 'Loi: Ve nay da duoc su dung.');
+    IF v_TrangThaiLower LIKE '%sử%dụng%' OR v_TrangThaiLower LIKE '%su%dung%' THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Lỗi: Vé này đã được sử dụng.');
     ELSIF NOT (
-        v_TrangThaiLower LIKE '%thanh%to%'
-        AND v_TrangThaiLower NOT LIKE '%kh%ng%'
+        (v_TrangThaiLower LIKE '%thanh%to%' OR v_TrangThaiLower LIKE '%thanh toán%')
+        AND v_TrangThaiLower NOT LIKE '%không%'
+        AND v_TrangThaiLower NOT LIKE '%khong%'
     ) THEN
-        RAISE_APPLICATION_ERROR(-20004, 'Loi: Ve chua thanh toan hoac giao dich that bai.');
+        RAISE_APPLICATION_ERROR(-20004, 'Lỗi: Vé chưa thanh toán hoặc giao dịch thất bại.');
     END IF;
 
     IF LOWER(:NEW.TrangThaiPhien) NOT LIKE '%t tr%' THEN
         IF SYSTIMESTAMP > (v_ThoiGianToi + NUMTODSINTERVAL(NVL(v_KhoangThoiGianSuDung, 1), 'HOUR')) THEN
-            RAISE_APPLICATION_ERROR(-20005, 'Loi: Ve da qua han cho.');
+            RAISE_APPLICATION_ERROR(-20005, 'Lỗi: Vé đã quá hạn chờ.');
         ELSIF SYSTIMESTAMP < v_ThoiGianToi THEN
-            RAISE_APPLICATION_ERROR(-20006, 'Loi: Qua som, chua den gio nhan cho hop le.');
+            RAISE_APPLICATION_ERROR(-20006, 'Lỗi: Quá sớm, chưa đến giờ nhận chỗ hợp lệ.');
         END IF;
     END IF;
 END;

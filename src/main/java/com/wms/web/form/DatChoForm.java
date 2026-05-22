@@ -34,12 +34,28 @@ public class DatChoForm {
         this.maKG = maKG;
     }
 
+    public LocalDateTime getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public void setArrivalTime(LocalDateTime arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
+
     public LocalDateTime getThoiGianDen() {
         return arrivalTime;
     }
 
     public void setThoiGianDen(LocalDateTime arrivalTime) {
         this.arrivalTime = arrivalTime;
+    }
+
+    public Integer getDurationHours() {
+        return durationHours;
+    }
+
+    public void setDurationHours(Integer durationHours) {
+        this.durationHours = durationHours;
     }
 
     public Integer getSoGioSuDung() {
@@ -50,12 +66,28 @@ public class DatChoForm {
         this.durationHours = durationHours;
     }
 
+    public String getVoucherCode() {
+        return voucherCode;
+    }
+
+    public void setVoucherCode(String voucherCode) {
+        this.voucherCode = voucherCode;
+    }
+
     public String getMaGiamGia() {
         return voucherCode;
     }
 
     public void setMaGiamGia(String voucherCode) {
         this.voucherCode = voucherCode;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public String getGhiChu() {

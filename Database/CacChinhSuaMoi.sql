@@ -6,7 +6,7 @@ ADD TRANGTHAI VARCHAR2(100);
 
 COMMIT;
 
-ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai
+ALTER TABLE PHIENLAMVIEC add CONSTRAINT CHK_PLV_TrangThai
     CHECK (TrangThaiPhien IN ('Đang chờ thanh toán','Đang hoạt động', 'Đã đặt trước', 'Đã kết thúc'));
 
 ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_TrangThai

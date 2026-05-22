@@ -1,7 +1,14 @@
 package com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.ChuyenKhoan;
 
+import com.wms.util.ChuyenKhoanQrUtil;
+import com.wms.util.MaQRUtil;
+
+import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Locale;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 
@@ -17,9 +24,13 @@ public class ChuyenKhoanForm extends JDialog {
         this.tongTien = tongTien;
         this.maHoaDon = maHoaDon;
         initComponents();
-        loadQRCode();
         txtTongTien.setText(formatTien.format(tongTien));
-        txtNoiDung.setText("UIT CW " + maHoaDon);
+        txtNganHang.setText(ChuyenKhoanQrUtil.TEN_NGAN_HANG_NHAN);
+        txtSoTK.setText(ChuyenKhoanQrUtil.SO_TAI_KHOAN_NHAN);
+        txtChuTK.setText(ChuyenKhoanQrUtil.CHU_TAI_KHOAN_NHAN);
+        String noiDungChuyenKhoan = ChuyenKhoanQrUtil.taoNoiDungHoaDon(maHoaDon);
+        txtNoiDung.setText(noiDungChuyenKhoan);
+        loadQRCode(noiDungChuyenKhoan);
         pack();
         setLocationRelativeTo(parent);
     }
@@ -205,20 +216,61 @@ public class ChuyenKhoanForm extends JDialog {
         return daThanhToan;
     }
 
-    private void loadQRCode() {
-        try {
-            java.net.URL imgUrl = getClass().getResource("/images/QR_ThanhToan.jpg");
-            if (imgUrl != null) {
-                ImageIcon icon = new ImageIcon(imgUrl);
-                Image img = icon.getImage().getScaledInstance(lblQRCode.getWidth(), lblQRCode.getHeight(), Image.SCALE_SMOOTH);
-                lblQRCode.setIcon(new ImageIcon(img));
-                lblQRCode.setText("");
-            } else {
-                lblQRCode.setText("Không tìm thấy file QR!");
+    private void loadQRCode(String noiDungChuyenKhoan) {
+        lblQRCode.setIcon(null);
+        lblQRCode.setText("Đang tạo mã QR...");
+        BigDecimal soTien = BigDecimal.valueOf(tongTien);
+        new SwingWorker<ImageIcon, Void>() {
+            @Override
+            protected ImageIcon doInBackground() {
+                Image qrImage = taiAnhVietQr(soTien, noiDungChuyenKhoan);
+                if (qrImage == null) {
+                    qrImage = taoAnhQrDuPhong(soTien, noiDungChuyenKhoan);
+                }
+                return qrImage == null ? null : taoIconQr(qrImage);
             }
-        } catch (Exception e) {
-            lblQRCode.setText("Lỗi load QR: " + e.getMessage());
+
+            @Override
+            protected void done() {
+                try {
+                    ImageIcon icon = get();
+                    if (icon == null) {
+                        lblQRCode.setText("Không tạo được QR");
+                        return;
+                    }
+                    lblQRCode.setIcon(icon);
+                    lblQRCode.setText("");
+                } catch (Exception ex) {
+                    lblQRCode.setText("Lỗi tạo QR");
+                }
+            }
+        }.execute();
+    }
+
+    private Image taiAnhVietQr(BigDecimal soTien, String noiDungChuyenKhoan) {
+        try {
+            String qrUrl = ChuyenKhoanQrUtil.taoVietQrUrl(soTien, noiDungChuyenKhoan);
+            return ImageIO.read(new URL(qrUrl));
+        } catch (Exception ex) {
+            return null;
         }
+    }
+
+    private Image taoAnhQrDuPhong(BigDecimal soTien, String noiDungChuyenKhoan) {
+        try {
+            String payload = ChuyenKhoanQrUtil.taoNoiDungQrDuPhong(soTien, noiDungChuyenKhoan);
+            byte[] bytes = MaQRUtil.taoAnhPng(payload, 250);
+            return bytes.length == 0 ? null : ImageIO.read(new ByteArrayInputStream(bytes));
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private ImageIcon taoIconQr(Image image) {
+        int width = Math.max(250, lblQRCode.getWidth());
+        int height = Math.max(250, lblQRCode.getHeight());
+        Image scaled = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaled);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -3,6 +3,7 @@ package com.wms.controller.TrangChuQuanLy.QuanLyPhien;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyPhien.PhienLamViecService;
 import com.wms.view.TrangChuQuanLy.QuanLyPhien.MoPhienMoiForm;
 
@@ -40,5 +41,9 @@ public class MoPhienMoiController {
         if (maKH == null)
             return false;
         return service.taoPhienMoi(maKH, maKG, soGioSuDung, donGiaTheoGio);
+    }
+
+    public KetQuaNhanChoDTO nhanChoBangQr(String noiDungQr) {
+        return service.nhanChoBangQr(noiDungQr);
     }
 }

@@ -74,6 +74,11 @@
                 <a th:href="@{/portal/history}" class="button-secondary">Xem lịch sử đặt chỗ</a>
                 <a th:href="@{/portal/branches}" class="button-primary">Đặt chỗ khác</a>
             </div>
+            <form class="payment-actions demo-confirm-form"
+                  th:action="@{'/portal/bookings/' + ${payment.maDatCho} + '/payment/mock-confirm'}"
+                  method="post">
+                <button type="submit" class="button-dark">Giả lập đã nhận chuyển khoản</button>
+            </form>
         </div>
 
         <aside class="payment-panel transfer-panel">
@@ -84,25 +89,29 @@
             </div>
             <div class="qr-payment">
                 <div class="qr-box">
-                    <img src="/images/QR_ThanhToan.jpg" alt="Mã QR thanh toán SPRING MNGT">
+                    <img th:src="${payment.qrChuyenKhoanUrl}" alt="Mã QR chuyển khoản đặt chỗ SPRING MNGT">
                 </div>
-                <p>Chuyển đúng số tiền và đúng nội dung để hệ thống tự xác nhận.</p>
+                <p>QR đã gắn sẵn số tiền và nội dung chuyển khoản của phiếu đặt chỗ này.</p>
                 <dl class="bank-info">
                     <div>
                         <dt>Ngân hàng:</dt>
-                        <dd>Vietcombank</dd>
+                        <dd th:text="${payment.tenNganHangNhan}">Vietcombank</dd>
                     </div>
                     <div>
                         <dt>Số tài khoản:</dt>
-                        <dd>9375037830</dd>
+                        <dd th:text="${payment.soTaiKhoanNhan}">9375037830</dd>
                     </div>
                     <div>
                         <dt>Chủ tài khoản:</dt>
-                        <dd>LAI MOC HUY</dd>
+                        <dd th:text="${payment.chuTaiKhoanNhan}">LAI MOC HUY</dd>
+                    </div>
+                    <div>
+                        <dt>Số tiền CK:</dt>
+                        <dd th:text="${#numbers.formatDecimal(payment.soTienChuyenKhoan, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</dd>
                     </div>
                     <div class="span-bank">
                         <dt>Nội dung CK:</dt>
-                        <dd th:text="${payment.noiDungChuyenKhoan}">WMS DC000001</dd>
+                        <dd th:text="${payment.noiDungChuyenKhoan}">SPRINGMNGT DATCHO DC000001</dd>
                     </div>
                 </dl>
             </div>

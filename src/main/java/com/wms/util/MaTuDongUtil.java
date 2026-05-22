@@ -111,11 +111,11 @@ public final class MaTuDongUtil {
                 + doiTuong.columnName()
                 + ", '[0-9]+$'))), 0) FROM "
                 + doiTuong.tableName()
-                + " WHERE "
+                + " WHERE REGEXP_LIKE("
                 + doiTuong.columnName()
-                + " LIKE '"
+                + ", '^"
                 + doiTuong.prefix()
-                + "%'";
+                + "[0-9]+$')";
         try (Statement statement = conn.createStatement();
              ResultSet rs = statement.executeQuery(sql)) {
             int max = rs.next() ? rs.getInt(1) : 0;

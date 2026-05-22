@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.Normalizer;
 import java.time.LocalDate;
@@ -33,7 +34,7 @@ import java.util.regex.Pattern;
 @Service
 public class CongThongTinService {
 
-    private static final Pattern MA_DAT_CHO_PATTERN = Pattern.compile("\\bDC\\d{6}\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MA_DAT_CHO_PATTERN = Pattern.compile("\\bDC\\d{3,12}\\b", Pattern.CASE_INSENSITIVE);
 
     private final CongThongTinWebRepository khoDuLieu;
 
@@ -251,6 +252,21 @@ public class CongThongTinService {
     }
 
     @Transactional
+    public KetQuaWebhookThanhToan xacNhanThanhToanDemo(NguoiDungPhien user, String maDatCho) {
+        ThanhToanDatChoView payment = layThanhToanDatCho(user, maDatCho);
+        if (payment == null) {
+            return new KetQuaWebhookThanhToan(false, "Không tìm thấy đặt chỗ của hội viên hiện tại.", maDatCho);
+        }
+        YeuCauWebhookThanhToan request = new YeuCauWebhookThanhToan();
+        request.setMaGiaoDich("MOCK-" + maDatCho + "-" + System.currentTimeMillis());
+        request.setSoTien(payment.getThanhTien());
+        request.setNoiDung(payment.getNoiDungChuyenKhoan());
+        request.setTrangThai("SUCCESS");
+        request.setThoiGianThanhToan(LocalDateTime.now());
+        return xuLyWebhookThanhToan(request);
+    }
+
+    @Transactional
     public void xacNhanDatChoDaThanhToan(String maDatCho) {
         ThongTinXacNhanDatChoDTO thongTin = khoDuLieu.timThongTinXacNhanTheoDatCho(maDatCho);
         if (thongTin == null) {
@@ -293,40 +309,48 @@ public class CongThongTinService {
 
         ThanhToanDatChoView payment = khoDuLieu.timThanhToanDatCho(maDatCho, null);
         if (payment == null) {
-            return new KetQuaWebhookThanhToan(false, "Không tìm thấy đặt chỗ " + maDatCho + ".");
+            return new KetQuaWebhookThanhToan(false, "Không tìm thấy đặt chỗ " + maDatCho + ".", maDatCho);
         }
         if (!chuanHoa(payment.getTrangThaiDatTruoc()).contains("cho thanh toan")) {
-            return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.");
+            return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.", maDatCho);
         }
 
-        BigDecimal expectedAmount = payment.getThanhTien() == null ? BigDecimal.ZERO : payment.getThanhTien();
-        BigDecimal paidAmount = request.getSoTien() == null ? BigDecimal.ZERO : request.getSoTien();
+        if (!laTrangThaiWebhookThanhCong(request.getTrangThai())) {
+            return new KetQuaWebhookThanhToan(false, "Giao dịch ngân hàng chưa ở trạng thái thanh toán thành công.", maDatCho);
+        }
+
+        BigDecimal expectedAmount = lamTronTienVnd(payment.getThanhTien());
+        if (request.getSoTien() == null) {
+            return new KetQuaWebhookThanhToan(false, "Webhook thiếu số tiền chuyển khoản.", maDatCho);
+        }
+        BigDecimal paidAmount = lamTronTienVnd(request.getSoTien());
         if (paidAmount.compareTo(expectedAmount) < 0) {
-            ThongTinXacNhanDatChoDTO thongTin = khoDuLieu.timThongTinXacNhanTheoDatCho(maDatCho);
-            String reason = "Đã nhận " + dinhDangTien(paidAmount) + ", còn thiếu "
-                    + dinhDangTien(expectedAmount.subtract(paidAmount)) + ".";
-            if (khoDuLieu.ghiNhanThanhToanDatChoThatBai(maDatCho, reason)) {
-                guiEmailThanhToanThatBai(thongTin, reason);
-            }
-            return new KetQuaWebhookThanhToan(false, reason);
+            String reason = "Số tiền chuyển khoản chưa đủ. Cần "
+                    + dinhDangTien(expectedAmount) + ", nhận " + dinhDangTien(paidAmount) + ".";
+            return new KetQuaWebhookThanhToan(false, reason, maDatCho);
         }
 
         ThongTinXacNhanDatChoDTO thongTin = khoDuLieu.timThongTinXacNhanTheoDatCho(maDatCho);
         if (thongTin == null) {
-            return new KetQuaWebhookThanhToan(false, "Không lấy được chi tiết đặt chỗ " + maDatCho + ".");
+            return new KetQuaWebhookThanhToan(false, "Không lấy được chi tiết đặt chỗ " + maDatCho + ".", maDatCho);
         }
         String maQR = MaQRUtil.taoMaQRDatCho(maDatCho);
         boolean confirmed = khoDuLieu.xacNhanDatChoDaTraTien(
                 maDatCho,
                 maQR,
-                " | Webhook đã xác nhận giao dịch " + chuoiAnToan(request.getMaGiaoDich()) + "."
+                " | Webhook đã xác nhận giao dịch " + chuoiAnToan(request.getMaGiaoDich())
+                        + " với số tiền " + dinhDangTien(paidAmount) + "."
         );
         if (!confirmed) {
-            return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.");
+            return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.", maDatCho);
         }
         thongTin.setMaQR(maQR);
-        guiEmailXacNhanDatCho(thongTin);
-        return new KetQuaWebhookThanhToan(true, "Đã xác nhận thanh toán cho " + maDatCho + ".");
+        boolean emailSent = guiEmailXacNhanDatCho(thongTin);
+        String message = emailSent
+                ? "Đã xác nhận thanh toán cho " + maDatCho + " và đã gửi email QR nhận chỗ."
+                : "Đã xác nhận thanh toán cho " + maDatCho
+                    + " nhưng chưa gửi được email. Khách vẫn xem được QR trong lịch sử.";
+        return new KetQuaWebhookThanhToan(true, message, maDatCho);
     }
 
     @Transactional
@@ -350,6 +374,28 @@ public class CongThongTinService {
 
     private String chuoiAnToan(String value) {
         return value == null || value.isBlank() ? "không có mã giao dịch" : value.trim();
+    }
+
+    private boolean laTrangThaiWebhookThanhCong(String status) {
+        if (status == null || status.isBlank()) {
+            return true;
+        }
+        String normalized = chuanHoa(status);
+        return normalized.equals("1")
+                || normalized.equals("ok")
+                || normalized.contains("success")
+                || normalized.contains("paid")
+                || normalized.contains("complete")
+                || normalized.contains("thanh cong")
+                || normalized.contains("da nhan")
+                || normalized.contains("nhan tien");
+    }
+
+    private BigDecimal lamTronTienVnd(BigDecimal value) {
+        if (value == null) {
+            return BigDecimal.ZERO;
+        }
+        return value.max(BigDecimal.ZERO).setScale(0, RoundingMode.HALF_UP);
     }
 
     private String chuanHoa(String value) {
@@ -414,9 +460,9 @@ public class CongThongTinService {
         return Optional.empty();
     }
 
-    private void guiEmailXacNhanDatCho(ThongTinXacNhanDatChoDTO thongTin) {
+    private boolean guiEmailXacNhanDatCho(ThongTinXacNhanDatChoDTO thongTin) {
         if (thongTin == null || thongTin.getEmail() == null || thongTin.getEmail().isBlank()) {
-            return;
+            return false;
         }
         byte[] qrPng = MaQRUtil.taoAnhPng(thongTin.getMaQR());
         boolean sent = EmailUtil.guiEmailXacNhanDatChoDaThanhToan(
@@ -428,11 +474,14 @@ public class CongThongTinService {
                 thongTin.getTenChiNhanh(),
                 dinhDangKhoangThoiGian(thongTin),
                 dinhDangTien(thongTin.getThanhTien()),
+                thongTin.getMaQR(),
                 qrPng
         );
         if (!sent) {
             System.err.println("[CongThongTinService] Đã xác nhận đặt chỗ nhưng chưa gửi được email cho " + thongTin.getEmail());
+            System.err.println("[CongThongTinService] QR nhận chỗ dự phòng: " + thongTin.getMaQR());
         }
+        return sent;
     }
 
     private void guiEmailThanhToanThatBai(ThongTinXacNhanDatChoDTO thongTin, String lyDo) {
@@ -477,6 +526,9 @@ public class CongThongTinService {
     public record KhungGioDatCho(LocalDate date, LocalTime startTime, LocalTime endTime) {
     }
 
-    public record KetQuaWebhookThanhToan(boolean success, String message) {
+    public record KetQuaWebhookThanhToan(boolean success, String message, String maDatCho) {
+        public KetQuaWebhookThanhToan(boolean success, String message) {
+            this(success, message, null);
+        }
     }
 }

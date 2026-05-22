@@ -63,7 +63,9 @@ BEGIN
 
     IF p_MaDatCho IS NOT NULL AND LENGTH(TRIM(p_MaDatCho)) > 0 THEN
         UPDATE DATCHO
-        SET TrangThaiDatTruoc = 'Đã sử dụng'
+        SET TrangThaiDatTruoc = 'Đã sử dụng',
+            MaQR = NULL,
+            CapNhatLanCuoi = SYSTIMESTAMP
         WHERE MaDatCho = TRIM(p_MaDatCho);
     END IF;
 

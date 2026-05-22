@@ -10,6 +10,7 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
@@ -20,8 +21,11 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PhienLamViecService {
+    private static final Pattern MA_DAT_CHO_PATTERN = Pattern.compile("\\bDC\\d{3,12}\\b", Pattern.CASE_INSENSITIVE);
 
     private final PhienLamViecDAO phienDAO;
     private final KhachHangDAO khachHangDAO;
@@ -124,6 +128,17 @@ public class PhienLamViecService {
         return phienDAO.taoPhienLamViecMoi(phien);
     }
 
+    public KetQuaNhanChoDTO nhanChoBangQr(String noiDungQr) {
+        if (noiDungQr == null || noiDungQr.isBlank()) {
+            return new KetQuaNhanChoDTO(false, "Vui lòng nhập hoặc dán nội dung QR nhận chỗ.");
+        }
+        String maDatCho = tachMaDatCho(noiDungQr);
+        if (maDatCho == null) {
+            return new KetQuaNhanChoDTO(false, "Không tìm thấy mã đặt chỗ trong nội dung QR.");
+        }
+        return phienDAO.moPhienTuQrDatCho(maDatCho, noiDungQr.trim());
+    }
+
     public boolean xoaPhien(String maPhien) {
         return phienDAO.xoaPhien(maPhien);
     }
@@ -152,6 +167,7 @@ public class PhienLamViecService {
                 thongTin.getTenChiNhanh(),
                 dinhDangKhoangThoiGian(thongTin),
                 dinhDangTien(thongTin.getThanhTien()),
+                thongTin.getMaQR(),
                 qrPng
         );
         if (!sent) {
@@ -177,5 +193,18 @@ public class PhienLamViecService {
             return "0 VNĐ";
         }
         return new DecimalFormat("#,### VNĐ").format(value);
+    }
+
+    private String tachMaDatCho(String noiDungQr) {
+        String[] parts = noiDungQr.split("\\|");
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (trimmed.regionMatches(true, 0, "DATCHO=", 0, "DATCHO=".length())) {
+                String value = trimmed.substring("DATCHO=".length()).trim();
+                return value.isBlank() ? null : value.toUpperCase();
+            }
+        }
+        Matcher matcher = MA_DAT_CHO_PATTERN.matcher(noiDungQr.toUpperCase());
+        return matcher.find() ? matcher.group().toUpperCase() : null;
     }
 }

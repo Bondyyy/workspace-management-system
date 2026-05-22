@@ -1,18 +1,3 @@
--- Chạy file này trên schema hiện tại nếu DB đã được tạo trước khi thêm luồng đặt chỗ mới.
-
-BEGIN
-    EXECUTE IMMEDIATE 'ALTER TABLE KHONGGIAN DROP CONSTRAINT CHK_KG_TRANGTHAI';
-EXCEPTION
-    WHEN OTHERS THEN
-        IF SQLCODE != -2443 THEN
-            RAISE;
-        END IF;
-END;
-/
-
-ALTER TABLE KHONGGIAN ADD CONSTRAINT CHK_KG_TrangThai
-    CHECK (TrangThaiKG IN ('Trống', 'Tạm khoá', 'Đã đặt trước', 'Đang hoạt động', 'Dọn dẹp', 'Bảo trì'));
-
 CREATE OR REPLACE TRIGGER TRG_HuyHieuLucVeCheckIn
 AFTER INSERT ON PHIENLAMVIEC
 FOR EACH ROW
