@@ -14,6 +14,7 @@
         <p th:text="'Đang đăng nhập bởi ' + ${user.hoTen}"></p>
     </div>
     <div class="header-actions">
+        <a class="button-primary" th:href="@{/staff/bookings/scan}">Quét QR nhận chỗ</a>
         <form th:action="@{/dangXuat}" method="post">
             <button type="submit" class="button-secondary">Đăng xuất</button>
         </form>
@@ -24,7 +25,10 @@
     <section class="panel wide-panel">
         <div class="panel-head">
             <h2>Danh sách yêu cầu</h2>
-            <span class="subtle-text" th:text="${#lists.size(hienThiDatCho)} + ' bản ghi'"></span>
+            <div class="header-actions">
+                <span class="subtle-text" th:text="${#lists.size(hienThiDatCho)} + ' bản ghi'"></span>
+                <a class="button-secondary small-button" th:href="@{/staff/bookings/scan}">Quét QR nhận chỗ</a>
+            </div>
         </div>
         <p class="flash success" th:if="${success}" th:text="${success}"></p>
         <div class="booking-table-wrap">

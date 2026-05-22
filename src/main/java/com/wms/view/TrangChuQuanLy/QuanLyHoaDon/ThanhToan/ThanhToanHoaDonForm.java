@@ -372,15 +372,16 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void tinhLaiTongTien() {
+        double traTruoc = (hoaDonHienTai != null) ? hoaDonHienTai.getSoTienDaTraTruoc() : 0;
         if (maGiamGiaDangAp != null) {
             tienGiamGia = maGiamGiaDangAp.getGiaTriGiamGia();
-            thanhTien = Math.max(0, tongTienGoc - tienGiamGia);
+            thanhTien = Math.max(0, tongTienGoc - traTruoc - tienGiamGia);
             JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
             if (lblGiaTriGG != null)
                 lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
         } else {
             tienGiamGia = 0;
-            thanhTien = tongTienGoc;
+            thanhTien = Math.max(0, tongTienGoc - traTruoc);
         }
         lblTongTien.setText(formatTien.format(tongTienGoc));
         lblThanhTien.setText(formatTien.format(thanhTien));
@@ -536,6 +537,16 @@ public class ThanhToanHoaDonForm extends JPanel {
             lblKhongCoDV.setForeground(mauXamNhat);
             lblKhongCoDV.setAlignmentX(JLabel.LEFT_ALIGNMENT);
             panelChiTietHD.add(lblKhongCoDV);
+        }
+
+        if (hoaDon.getSoTienDaTraTruoc() > 0) {
+            panelChiTietHD.add(taoKhoangCach(15));
+            panelChiTietHD.add(taoDuongPhanCach());
+            panelChiTietHD.add(taoKhoangCach(15));
+            JPanel pnlTraTruoc = taoThongTinRow("Đã trả trước (Online):", "- " + formatTien.format(hoaDon.getSoTienDaTraTruoc()), true);
+            JLabel lblTraTruoc = (JLabel) pnlTraTruoc.getComponent(1);
+            if (lblTraTruoc != null) lblTraTruoc.setForeground(mauXanhLa);
+            panelChiTietHD.add(pnlTraTruoc);
         }
 
         tinhLaiTongTien();

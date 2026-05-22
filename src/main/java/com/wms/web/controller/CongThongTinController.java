@@ -93,6 +93,7 @@ public class CongThongTinController {
                                @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
                                @RequestParam(name = "end", required = false)
                                @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
+                               @RequestParam(name = "canhBao", required = false) String canhBao,
                               HttpSession session,
                               Model model,
                               RedirectAttributes redirectAttributes) {
@@ -110,6 +111,19 @@ public class CongThongTinController {
             return "redirect:/portal/branches";
         }
 
+        return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, endTime,
+                null, doiMaCanhBaoDatCho(canhBao), model);
+    }
+
+    private String napModelSoDoKhongGian(NguoiDungPhien user,
+                                         ThongTinTaiKhoanView profile,
+                                         ChiNhanhView branch,
+                                         LocalDate bookingDate,
+                                         LocalTime startTime,
+                                         LocalTime endTime,
+                                         String thongBaoLoi,
+                                         String canhBao,
+                                         Model model) {
         var defaultWindow = congThongTinService.khungGioDatChoMacDinh(branch);
         List<String> layLuaChonGio = congThongTinService.layLuaChonGio(branch);
         LocalTime latestEnd = layLuaChonGio.isEmpty()
@@ -126,12 +140,16 @@ public class CongThongTinController {
             selectedEnd = latestEnd;
         }
         if (!selectedEnd.isAfter(selectedStart)) {
+            thongBaoLoi = "Giờ kết thúc phải sau giờ bắt đầu.";
             selectedEnd = selectedStart.plusHours(1);
         }
         LocalDateTime selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
         LocalDateTime selectedEndDateTime = LocalDateTime.of(selectedDate, selectedEnd);
+        if (thongBaoLoi == null && !congThongTinService.laThoiGianDatChoTrongTuongLai(selectedStartDateTime)) {
+            thongBaoLoi = "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
+        }
 
-        List<KhongGianView> spaces = congThongTinService.layKhongGian(branchId, selectedStartDateTime, selectedEndDateTime);
+        List<KhongGianView> spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
         int maxSpaceColumn = spaces.stream()
                 .mapToInt(space -> space.getToaDoX() + space.getChieuDai())
                 .max()
@@ -156,6 +174,8 @@ public class CongThongTinController {
         model.addAttribute("selectedDuration", Math.max(1, java.time.Duration.between(selectedStart, selectedEnd).toHours()));
         model.addAttribute("mapColumns", mapColumns);
         model.addAttribute("mapRows", mapRows);
+        model.addAttribute("error", thongBaoLoi);
+        model.addAttribute("canhBao", canhBao);
         return "web/so-do-khong-gian";
     }
 
@@ -179,23 +199,27 @@ public class CongThongTinController {
         }
 
         KhongGianView space = congThongTinService.layMotKhongGian(maKG);
-        if (space == null || durationHours == null || durationHours < 1) {
+        if (space == null) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng chọn không gian và khung giờ hợp lệ.");
             return "redirect:/portal/branches";
+        }
+        if (durationHours == null || durationHours < 1) {
+            return traVeSoDoKhongGianVoiLoi(user, checkoutProfile, space, arrivalTime, durationHours,
+                    "Vui lòng chọn khung giờ hợp lệ.", model, redirectAttributes);
         }
         if (space.getTrangThaiKG() != null
                 && java.text.Normalizer.normalize(space.getTrangThaiKG(), java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "")
                 .toLowerCase()
                 .contains("bao tri")) {
-            redirectAttributes.addFlashAttribute("error", "Khong gian nay dang bao tri.");
-            return "redirect:/portal/branches";
+            return traVeSoDoKhongGianVoiLoi(user, checkoutProfile, space, arrivalTime, durationHours,
+                    "Không gian này đang bảo trì.", model, redirectAttributes);
         }
         try {
             congThongTinService.kiemTraXacNhanDatCho(maKG, arrivalTime, durationHours);
         } catch (IllegalArgumentException ex) {
-            redirectAttributes.addFlashAttribute("error", ex.getMessage());
-            return "redirect:/portal/branches";
+            return traVeSoDoKhongGianVoiLoi(user, checkoutProfile, space, arrivalTime, durationHours,
+                    ex.getMessage(), model, redirectAttributes);
         }
 
         BigDecimal subtotal = congThongTinService.tinhTien(space, durationHours);
@@ -244,6 +268,7 @@ public class CongThongTinController {
     public String taoDatCho(@Valid @ModelAttribute("DatChoForm") DatChoForm DatChoForm,
                                 BindingResult bindingResult,
                                 HttpSession session,
+                                Model model,
                                 RedirectAttributes redirectAttributes) {
         NguoiDungPhien user = layHoiVienHienTai(session);
         if (user == null) {
@@ -258,6 +283,12 @@ public class CongThongTinController {
             return "redirect:/portal/branches";
         }
         if (bindingResult.hasErrors()) {
+            KhongGianView space = congThongTinService.layMotKhongGian(DatChoForm.getMaKG());
+            ThongTinTaiKhoanView profile = congThongTinService.layThongTinTaiKhoan(user);
+            if (space != null) {
+                return traVeSoDoKhongGianVoiLoi(user, profile, space, DatChoForm.getThoiGianDen(),
+                        DatChoForm.getSoGioSuDung(), "Vui lòng kiểm tra lại thông tin đặt chỗ.", model, redirectAttributes);
+            }
             redirectAttributes.addFlashAttribute("error", "Vui lòng kiểm tra lại thông tin đặt chỗ.");
             return "redirect:/portal/branches";
         }
@@ -267,6 +298,12 @@ public class CongThongTinController {
             redirectAttributes.addFlashAttribute("success", "Hệ thống đã giữ chỗ trong 10 phút. Vui lòng chuyển khoản đúng nội dung để tự xác nhận.");
             return "redirect:/portal/bookings/" + maDatCho + "/payment";
         } catch (IllegalArgumentException ex) {
+            KhongGianView space = congThongTinService.layMotKhongGian(DatChoForm.getMaKG());
+            ThongTinTaiKhoanView profile = congThongTinService.layThongTinTaiKhoan(user);
+            if (space != null) {
+                return traVeSoDoKhongGianVoiLoi(user, profile, space, DatChoForm.getThoiGianDen(),
+                        DatChoForm.getSoGioSuDung(), ex.getMessage(), model, redirectAttributes);
+            }
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
             return "redirect:/portal/branches";
         }
@@ -450,5 +487,38 @@ public class CongThongTinController {
             return List.of();
         }
         return congThongTinService.layDatChoTheoHoiVien(maKH);
+    }
+
+    private String traVeSoDoKhongGianVoiLoi(NguoiDungPhien user,
+                                            ThongTinTaiKhoanView profile,
+                                            KhongGianView space,
+                                            LocalDateTime arrivalTime,
+                                            Integer durationHours,
+                                            String thongBaoLoi,
+                                            Model model,
+                                            RedirectAttributes redirectAttributes) {
+        if (space == null || space.getMaCN() == null || space.getMaCN().isBlank()) {
+            redirectAttributes.addFlashAttribute("error", thongBaoLoi);
+            return "redirect:/portal/branches";
+        }
+        ChiNhanhView branch = congThongTinService.layMotChiNhanh(space.getMaCN()).orElse(null);
+        if (branch == null) {
+            redirectAttributes.addFlashAttribute("error", thongBaoLoi);
+            return "redirect:/portal/branches";
+        }
+        LocalDate ngayDat = arrivalTime == null ? null : arrivalTime.toLocalDate();
+        LocalTime gioBatDau = arrivalTime == null ? null : arrivalTime.toLocalTime();
+        LocalTime gioKetThuc = arrivalTime == null || durationHours == null || durationHours < 1
+                ? null
+                : arrivalTime.plusHours(durationHours).toLocalTime();
+        return napModelSoDoKhongGian(user, profile, branch, ngayDat, gioBatDau, gioKetThuc,
+                thongBaoLoi, null, model);
+    }
+
+    private String doiMaCanhBaoDatCho(String canhBao) {
+        if ("chon-lai-khong-gian".equals(canhBao)) {
+            return "Bạn đã thay đổi thời gian. Vui lòng chọn lại không gian phù hợp với khung giờ mới.";
+        }
+        return null;
     }
 }

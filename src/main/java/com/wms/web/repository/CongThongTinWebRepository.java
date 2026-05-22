@@ -11,6 +11,7 @@ import com.wms.web.model.DichVuTrongPhienView;
 import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.model.KhongGianView;
 import com.wms.web.model.PhieuGiamGiaView;
+import com.wms.web.model.ThongTinNhanChoBangQR;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.ChuyenKhoanQrUtil;
 import com.wms.util.MaTuDongUtil;
@@ -27,13 +28,17 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Repository
 public class CongThongTinWebRepository {
+
+    private static final ZoneId MUI_GIO_VIET_NAM = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final JdbcTemplate mauJdbc;
 
@@ -187,7 +192,7 @@ public class CongThongTinWebRepository {
     public List<KhongGianView> timKhongGian(String branchId) {
         String baseSql = """
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
-                       cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                       kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                        lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong
@@ -210,12 +215,17 @@ public class CongThongTinWebRepository {
                 rs.getString("TenLoaiKG"),
                 rs.getString("ViTri"),
                 rs.getString("TrangThaiKG"),
+                rs.getString("MaCN"),
                 rs.getString("TenCN"),
+                null,
+                null,
                 rs.getBigDecimal("DonGiaTheoGio"),
                 rs.getInt("ToaDoX"),
                 rs.getInt("ToaDoY"),
                 rs.getInt("ChieuDai"),
-                rs.getInt("ChieuRong")
+                rs.getInt("ChieuRong"),
+                true,
+                null
         ), params);
     }
 
@@ -226,7 +236,7 @@ public class CongThongTinWebRepository {
 
         String baseSql = """
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
-                       cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                       kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                        lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong,
@@ -253,14 +263,14 @@ public class CongThongTinWebRepository {
                         dc.TrangThaiDatTruoc = ?
                         OR (
                             dc.TrangThaiDatTruoc = ?
-                            AND dc.ThoiGianDat >= SYSTIMESTAMP - INTERVAL '10' MINUTE
+                            AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
                         )
                     )
                 """;
         String sql = baseSql + """
                 WHERE kg.MaCN = ?
                 GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
-                         cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                         kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                          lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
                          NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
                          NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
@@ -279,7 +289,7 @@ public class CongThongTinWebRepository {
         if (branchId == null || branchId.isBlank()) {
             sql = baseSql + """
                     GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
-                             cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                             kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                              lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
                              NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
                              NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
@@ -304,6 +314,7 @@ public class CongThongTinWebRepository {
                     rs.getString("TenLoaiKG"),
                     rs.getString("ViTri"),
                     rs.getString("TrangThaiKG"),
+                    rs.getString("MaCN"),
                     rs.getString("TenCN"),
                     rs.getString("ThoiGianMoCua"),
                     rs.getString("ThoiGianDongCua"),
@@ -321,7 +332,7 @@ public class CongThongTinWebRepository {
     public KhongGianView timKhongGianTheoMa(String maKG) {
         String sql = """
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
-                       cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
+                       kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                        lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong
@@ -337,6 +348,7 @@ public class CongThongTinWebRepository {
                     rs.getString("TenLoaiKG"),
                     rs.getString("ViTri"),
                     rs.getString("TrangThaiKG"),
+                    rs.getString("MaCN"),
                     rs.getString("TenCN"),
                     rs.getString("ThoiGianMoCua"),
                     rs.getString("ThoiGianDongCua"),
@@ -377,7 +389,7 @@ public class CongThongTinWebRepository {
                            TrangThaiDatTruoc = ?
                            OR (
                                TrangThaiDatTruoc = ?
-                               AND ThoiGianDat >= SYSTIMESTAMP - INTERVAL '10' MINUTE
+                               AND ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
                            )
                        ))
                 FROM DUAL
@@ -401,7 +413,7 @@ public class CongThongTinWebRepository {
                 SELECT MaPGG, MaChuSoPGG, GiaTriGiamGia, GiaTriApDungToiThieu,
                        NgayKetThucApDung, SLDaDung, SLToiDa
                 FROM PHIEUGIAMGIA
-                WHERE CAST(SYSTIMESTAMP AS TIMESTAMP) BETWEEN NgayBatDauApDung AND NgayKetThucApDung
+                WHERE CAST(CURRENT_TIMESTAMP AS TIMESTAMP) BETWEEN NgayBatDauApDung AND NgayKetThucApDung
                   AND NVL(SLDaDung, 0) < NVL(SLToiDa, 0)
                 ORDER BY NgayKetThucApDung ASC
                 """;
@@ -421,7 +433,7 @@ public class CongThongTinWebRepository {
                        NgayKetThucApDung, SLDaDung, SLToiDa
                 FROM PHIEUGIAMGIA
                 WHERE UPPER(MaChuSoPGG) = UPPER(?)
-                  AND CAST(SYSTIMESTAMP AS TIMESTAMP) BETWEEN NgayBatDauApDung AND NgayKetThucApDung
+                  AND CAST(CURRENT_TIMESTAMP AS TIMESTAMP) BETWEEN NgayBatDauApDung AND NgayKetThucApDung
                   AND NVL(SLDaDung, 0) < NVL(SLToiDa, 0)
                 """;
         try {
@@ -444,6 +456,92 @@ public class CongThongTinWebRepository {
         return sinhMaTuDong(MaDoiTuong.HOA_DON);
     }
 
+    public Optional<ThongTinNhanChoBangQR> timDatChoTheoMaQRDeNhanCho(String noiDungQR) {
+        if (noiDungQR == null || noiDungQR.isBlank()) {
+            return Optional.empty();
+        }
+        String sql = """
+                SELECT dc.MaDatCho,
+                       dc.MaQR,
+                       dc.TrangThaiDatTruoc,
+                       dc.ThoiGianDuKienToi,
+                       dc.KhoangThoiGianSuDung,
+                       dc.MaKH,
+                       dc.MaKG,
+                       kg.TenKG,
+                       nd.HoTen AS TenKhachHang
+                FROM DATCHO dc
+                JOIN KHONGGIAN kg ON dc.MaKG = kg.MaKG
+                LEFT JOIN KHACHHANG kh ON dc.MaKH = kh.MaKH
+                LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND
+                WHERE dc.MaQR = ?
+                FOR UPDATE OF dc.TrangThaiDatTruoc NOWAIT
+                """;
+        List<ThongTinNhanChoBangQR> ketQua = mauJdbc.query(
+                sql,
+                (rs, rowNum) -> anhXaThongTinNhanChoBangQR(rs),
+                noiDungQR.trim()
+        );
+        return ketQua.stream().findFirst();
+    }
+
+    public LocalDateTime layThoiGianHeThong() {
+        Timestamp thoiGian = mauJdbc.queryForObject(
+                "SELECT CAST(CURRENT_TIMESTAMP AS TIMESTAMP) FROM DUAL",
+                Timestamp.class
+        );
+        return thoiGian == null ? layThoiGianHienTaiVietNam() : thoiGian.toLocalDateTime();
+    }
+
+    public boolean daCoPhienTheoDatCho(String maDatCho) {
+        if (maDatCho == null || maDatCho.isBlank()) {
+            return false;
+        }
+        Integer soLuong = mauJdbc.queryForObject(
+                "SELECT COUNT(*) FROM PHIENLAMVIEC WHERE MaDatCho = ?",
+                Integer.class,
+                maDatCho
+        );
+        return soLuong != null && soLuong > 0;
+    }
+
+    public void moPhienTuDatCho(String maPhien, ThongTinNhanChoBangQR thongTin) {
+        if (thongTin == null) {
+            throw new IllegalArgumentException("Thiếu thông tin đặt chỗ để mở phiên.");
+        }
+        mauJdbc.update(
+                """
+                INSERT INTO PHIENLAMVIEC (
+                    MaPhien,
+                    ThoiGianBatDau,
+                    ThoiGianDuKienKetThuc,
+                    TrangThaiPhien,
+                    ThoiGianKetThuc,
+                    CapNhatLanCuoi,
+                    MaKG,
+                    MaKH,
+                    MaDatCho
+                ) VALUES (
+                    ?,
+                    CURRENT_TIMESTAMP,
+                    CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
+                    ?,
+                    NULL,
+                    CURRENT_TIMESTAMP,
+                    ?,
+                    ?,
+                    ?
+                )
+                """,
+                maPhien,
+                thongTin.laySoGioSuDungAnToan(),
+                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
+                thongTin.getMaKG(),
+                thongTin.getMaKH(),
+                thongTin.getMaDatCho()
+        );
+    }
+
     public void taoDatCho(String maDatCho, NguoiDungPhien user, String maKG, LocalDateTime arrivalTime,
                               Integer durationHours, BigDecimal totalAmount, String note) {
         mauJdbc.update(
@@ -454,7 +552,7 @@ public class CongThongTinWebRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
                 """,
                 maDatCho,
-                Timestamp.valueOf(LocalDateTime.now()),
+                Timestamp.valueOf(layThoiGianHienTaiVietNam()),
                 Timestamp.valueOf(arrivalTime),
                 durationHours,
                 giaTriDb("CHK_DC_TRANGTHAI", "dang cho thanh toan", 0, "Đang chờ thanh toán"),
@@ -469,6 +567,10 @@ public class CongThongTinWebRepository {
                 trangThaiKhongGianDb("Tam khoa"),
                 maKG
         );
+    }
+
+    private LocalDateTime layThoiGianHienTaiVietNam() {
+        return LocalDateTime.now(MUI_GIO_VIET_NAM);
     }
 
     public void taoPhienConThieuChoDatCho() {
@@ -546,6 +648,56 @@ public class CongThongTinWebRepository {
         } catch (EmptyResultDataAccessException ex) {
             return null;
         }
+    }
+
+    public ThanhToanDatChoView timThanhToanDatChoForUpdate(String maDatCho) {
+        if (maDatCho == null || maDatCho.isBlank()) {
+            return null;
+        }
+        String sql = """
+                SELECT dc.MaDatCho, nd.HoTen, kg.TenKG, cn.TenCN, dc.ThoiGianDat,
+                       dc.ThoiGianDuKienToi, dc.KhoangThoiGianSuDung,
+                       dc.TrangThaiDatTruoc, dc.ThanhTien
+                FROM DATCHO dc
+                JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
+                JOIN NGUOIDUNG nd ON nd.MaND = kh.MaND
+                JOIN KHONGGIAN kg ON kg.MaKG = dc.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                WHERE dc.MaDatCho = ?
+                FOR UPDATE OF dc.TrangThaiDatTruoc NOWAIT
+                """;
+        try {
+            return mauJdbc.queryForObject(sql, (rs, rowNum) -> {
+                Timestamp bookingTime = rs.getTimestamp("ThoiGianDat");
+                Timestamp arrivalTime = rs.getTimestamp("ThoiGianDuKienToi");
+                int durationHours = rs.getInt("KhoangThoiGianSuDung");
+                boolean durationNull = rs.wasNull();
+                String bookingId = rs.getString("MaDatCho");
+                return new ThanhToanDatChoView(
+                        bookingId,
+                        rs.getString("HoTen"),
+                        rs.getString("TenKG"),
+                        rs.getString("TenCN"),
+                        arrivalTime == null ? null : arrivalTime.toLocalDateTime(),
+                        durationNull ? null : durationHours,
+                        hienThiTrangThai(rs.getString("TrangThaiDatTruoc")),
+                        rs.getBigDecimal("ThanhTien"),
+                        transferContent(bookingId),
+                        bookingTime == null ? null : bookingTime.toLocalDateTime().plusMinutes(10)
+                );
+            }, maDatCho);
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public boolean daTonTaiGiaoDich(String maDatCho, String maGiaoDich) {
+        if (maGiaoDich == null || maGiaoDich.isBlank()) {
+            return false;
+        }
+        String sql = "SELECT COUNT(*) FROM DATCHO WHERE MaDatCho = ? AND GhiChu LIKE ?";
+        Integer count = mauJdbc.queryForObject(sql, Integer.class, maDatCho, "%" + maGiaoDich.trim() + "%");
+        return count != null && count > 0;
     }
 
     public boolean xacNhanDatChoDaTraTien(String maDatCho, String maQR, String note) {
@@ -626,7 +778,7 @@ public class CongThongTinWebRepository {
                 JOIN KHONGGIAN kg ON kg.MaKG = dc.MaKG
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 WHERE dc.TrangThaiDatTruoc = ?
-                  AND dc.ThoiGianDat < SYSTIMESTAMP - INTERVAL '10' MINUTE
+                  AND dc.ThoiGianDat < CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
                 ORDER BY dc.ThoiGianDat ASC
                 """;
         return mauJdbc.query(sql, (rs, rowNum) -> mapThongTinXacNhanDatCho(rs),
@@ -1028,6 +1180,23 @@ public class CongThongTinWebRepository {
                 hienThiTrangThai(rs.getString("TrangThaiDatTruoc")),
                 rs.getBigDecimal("ThanhTien"),
                 rs.getString("GhiChu")
+        );
+    }
+
+    private ThongTinNhanChoBangQR anhXaThongTinNhanChoBangQR(java.sql.ResultSet rs) throws java.sql.SQLException {
+        Timestamp thoiGianDuKienToi = rs.getTimestamp("ThoiGianDuKienToi");
+        int khoangThoiGian = rs.getInt("KhoangThoiGianSuDung");
+        Integer khoangThoiGianSuDung = rs.wasNull() ? null : khoangThoiGian;
+        return new ThongTinNhanChoBangQR(
+                rs.getString("MaDatCho"),
+                rs.getString("MaQR"),
+                rs.getString("TrangThaiDatTruoc"),
+                thoiGianDuKienToi == null ? null : thoiGianDuKienToi.toLocalDateTime(),
+                khoangThoiGianSuDung,
+                rs.getString("MaKH"),
+                rs.getString("MaKG"),
+                giaiMaLoiFont(rs.getString("TenKG")),
+                giaiMaLoiFont(rs.getString("TenKhachHang"))
         );
     }
 

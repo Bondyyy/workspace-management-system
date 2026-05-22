@@ -88,17 +88,22 @@ public class HoaDonPDFExporter {
                 double tongTienGoc = hoaDon.getTongTien();
 
                 document.add(new Paragraph("TONG CONG: " + formatTien.format(tongTienGoc), boldFont));
+                if (hoaDon.getSoTienDaTraTruoc() > 0) {
+                    document.add(new Paragraph("DA TRA TRUOC (ONLINE): -" + formatTien.format(hoaDon.getSoTienDaTraTruoc()), normalFont));
+                }
                 if (tienGiamGia > 0) {
-                    document.add(new Paragraph("GIAM GIA: " + formatTien.format(tienGiamGia), normalFont));
+                    document.add(new Paragraph("GIAM GIA: -" + formatTien.format(tienGiamGia), normalFont));
                 }
 
                 double thanhTien;
-                if (tienGiamGia > 0) {
-                    thanhTien = Math.max(0, tongTienGoc - tienGiamGia);
+                if (tienGiamGia > 0 || hoaDon.getSoTienDaTraTruoc() > 0) {
+                    thanhTien = Math.max(0, tongTienGoc - hoaDon.getSoTienDaTraTruoc() - tienGiamGia);
                 } else {
                     thanhTien = hoaDon.getThanhTien() > 0 ? hoaDon.getThanhTien() : tongTienGoc;
                 }
-                document.add(new Paragraph("THANH TIEN: " + formatTien.format(thanhTien), boldFont));
+                
+                String labelThanhTien = hoaDon.getSoTienDaTraTruoc() > 0 ? "CON PHAI THU: " : "THANH TIEN: ";
+                document.add(new Paragraph(labelThanhTien + formatTien.format(thanhTien), boldFont));
                 Paragraph end = new Paragraph("\n      --- CAM ON QUY KHACH ---");
                 end.setAlignment(Element.ALIGN_CENTER);
                 document.add(end);

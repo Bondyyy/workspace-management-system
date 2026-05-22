@@ -46,7 +46,7 @@ public class DataInitializer {
             try (PreparedStatement ps = conn.prepareStatement(sqlDV)) {
                 ps.setString(1, "DV000");
                 ps.setString(2, Normalizer.normalize("Gia hạn giờ", Normalizer.Form.NFC));
-                ps.setDouble(3, 1000); 
+                ps.setDouble(3, 1000);
                 ps.setString(4, Normalizer.normalize("Đang hoạt động", Normalizer.Form.NFC));
                 ps.setString(5, "LDV000");
                 ps.executeUpdate();
@@ -122,8 +122,6 @@ public class DataInitializer {
             String mergeSql = "MERGE INTO HANGTHANHVIEN dest USING (SELECT ? AS MaHangThanhVien, ? AS TenHangThanhVien, ? AS TongChiTieuToiThieu, ? AS PhanTramTienGiam FROM DUAL) src "
                     +
                     "ON (dest.MaHangThanhVien = src.MaHangThanhVien) " +
-                    "WHEN MATCHED THEN UPDATE SET dest.TenHangThanhVien = src.TenHangThanhVien, dest.TongChiTieuToiThieu = src.TongChiTieuToiThieu, dest.PhanTramTienGiam = src.PhanTramTienGiam "
-                    +
                     "WHEN NOT MATCHED THEN INSERT (MaHangThanhVien, TenHangThanhVien, TongChiTieuToiThieu, PhanTramTienGiam) VALUES (src.MaHangThanhVien, src.TenHangThanhVien, src.TongChiTieuToiThieu, src.PhanTramTienGiam)";
 
             try (PreparedStatement ps = conn.prepareStatement(mergeSql)) {
@@ -141,18 +139,19 @@ public class DataInitializer {
             System.err.println("[DataInitializer] Loi dong bo du lieu HANGTHANHVIEN: " + e.getMessage());
         }
     }
-    
+
     public static void khoiTaoVaiTroMacDinh(Connection conn) {
         String[][] data = {
-            { "VT01", "Quản trị viên Hệ thống", "Toàn quyền quản lý hệ thống" },
-            { "VT02", "Quản lý Chi nhánh", "Quản lý chi nhánh và nhân viên" },
-            { "VT03", "Nhân viên", "Thực hiện các nghiệp vụ hằng ngày" },
-            { "VT00", "Hội viên", "Khách hàng sử dụng dịch vụ" }
+                { "VT01", "Quản trị viên Hệ thống", "Toàn quyền quản lý hệ thống" },
+                { "VT02", "Quản lý Chi nhánh", "Quản lý chi nhánh và nhân viên" },
+                { "VT03", "Nhân viên", "Thực hiện các nghiệp vụ hằng ngày" },
+                { "VT00", "Hội viên", "Khách hàng sử dụng dịch vụ" }
         };
         try {
-            String mergeSql = "MERGE INTO VAITRO dest USING (SELECT ? AS MaVaiTro, ? AS TenVaiTro, ? AS MoTa FROM DUAL) src " +
-                             "ON (dest.MaVaiTro = src.MaVaiTro) " +
-                             "WHEN NOT MATCHED THEN INSERT (MaVaiTro, TenVaiTro, MoTa) VALUES (src.MaVaiTro, src.TenVaiTro, src.MoTa)";
+            String mergeSql = "MERGE INTO VAITRO dest USING (SELECT ? AS MaVaiTro, ? AS TenVaiTro, ? AS MoTa FROM DUAL) src "
+                    +
+                    "ON (dest.MaVaiTro = src.MaVaiTro) " +
+                    "WHEN NOT MATCHED THEN INSERT (MaVaiTro, TenVaiTro, MoTa) VALUES (src.MaVaiTro, src.TenVaiTro, src.MoTa)";
             try (PreparedStatement ps = conn.prepareStatement(mergeSql)) {
                 for (String[] row : data) {
                     ps.setString(1, row[0]);
@@ -162,9 +161,10 @@ public class DataInitializer {
                 }
             }
             // Cũng khởi tạo NHOMCHUCNANG tương ứng vì hệ thống dùng 1-1
-            String mergeNhomSql = "MERGE INTO NHOMCHUCNANG dest USING (SELECT ? AS MaNhomChucNang, ? AS TenNhomChucNang FROM DUAL) src " +
-                                 "ON (dest.MaNhomChucNang = src.MaNhomChucNang) " +
-                                 "WHEN NOT MATCHED THEN INSERT (MaNhomChucNang, TenNhomChucNang) VALUES (src.MaNhomChucNang, src.TenNhomChucNang)";
+            String mergeNhomSql = "MERGE INTO NHOMCHUCNANG dest USING (SELECT ? AS MaNhomChucNang, ? AS TenNhomChucNang FROM DUAL) src "
+                    +
+                    "ON (dest.MaNhomChucNang = src.MaNhomChucNang) " +
+                    "WHEN NOT MATCHED THEN INSERT (MaNhomChucNang, TenNhomChucNang) VALUES (src.MaNhomChucNang, src.TenNhomChucNang)";
             try (PreparedStatement ps = conn.prepareStatement(mergeNhomSql)) {
                 for (String[] row : data) {
                     ps.setString(1, row[0]);
@@ -172,11 +172,12 @@ public class DataInitializer {
                     ps.executeUpdate();
                 }
             }
-            
+
             // Khởi tạo CHITIETNHOMCHUCNANG tương ứng để kết nối vai trò và nhóm chức năng
-            String mergeCTNCNSql = "MERGE INTO CHITIETNHOMCHUCNANG dest USING (SELECT ? AS MaVaiTro, ? AS MaNhomChucNang, ? AS MoTa FROM DUAL) src " +
-                                   "ON (dest.MaVaiTro = src.MaVaiTro AND dest.MaNhomChucNang = src.MaNhomChucNang) " +
-                                   "WHEN NOT MATCHED THEN INSERT (MaVaiTro, MaNhomChucNang, MoTa) VALUES (src.MaVaiTro, src.MaNhomChucNang, src.MoTa)";
+            String mergeCTNCNSql = "MERGE INTO CHITIETNHOMCHUCNANG dest USING (SELECT ? AS MaVaiTro, ? AS MaNhomChucNang, ? AS MoTa FROM DUAL) src "
+                    +
+                    "ON (dest.MaVaiTro = src.MaVaiTro AND dest.MaNhomChucNang = src.MaNhomChucNang) " +
+                    "WHEN NOT MATCHED THEN INSERT (MaVaiTro, MaNhomChucNang, MoTa) VALUES (src.MaVaiTro, src.MaNhomChucNang, src.MoTa)";
             try (PreparedStatement ps = conn.prepareStatement(mergeCTNCNSql)) {
                 for (String[] row : data) {
                     ps.setString(1, row[0]);
@@ -192,24 +193,26 @@ public class DataInitializer {
 
     public static void khoiTaoPhanQuyenMacDinh(Connection conn) {
         try {
-            // Xóa chi tiết cũ để reset lại theo chuẩn mới (Hoặc có thể dùng MERGE nếu muốn giữ lại tùy chỉnh)
+            // Xóa chi tiết cũ để reset lại theo chuẩn mới (Hoặc có thể dùng MERGE nếu muốn
+            // giữ lại tùy chỉnh)
             // Tuy nhiên user yêu cầu điều chỉnh mặc định nên ta sẽ sync lại
-            
+
             // 1. Admin (VT01)
-            String[] adminRights = {"CN01", "CN02", "CN09", "CN11", "CN12", "CN13", "CN14"};
+            String[] adminRights = { "CN01", "CN02", "CN09", "CN11", "CN12", "CN13", "CN14" };
             ganQuyen(conn, "VT01", adminRights);
-            
+
             // 2. Nhân viên (VT03)
-            String[] staffRights = {"CN05", "CN06", "CN07", "CN08", "CN10"};
+            String[] staffRights = { "CN05", "CN06", "CN07", "CN08", "CN10" };
             ganQuyen(conn, "VT03", staffRights);
-            
+
             // 3. Quản lý (VT02): CN01, CN03, CN11 + staffRights
             List<String> managerRights = new java.util.ArrayList<>(java.util.Arrays.asList(staffRights));
             managerRights.add("CN01");
             managerRights.add("CN03");
+            managerRights.add("CN04");
             managerRights.add("CN11");
             ganQuyen(conn, "VT02", managerRights.toArray(new String[0]));
-            
+
             System.out.println("[DataInitializer] Khoi tao phan quyen mac dinh thanh cong.");
         } catch (Exception e) {
             System.err.println("[DataInitializer] Loi phan quyen mac dinh: " + e.getMessage());

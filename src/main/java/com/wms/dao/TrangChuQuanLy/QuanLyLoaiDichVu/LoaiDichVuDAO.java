@@ -17,7 +17,8 @@ public class LoaiDichVuDAO {
     public List<LoaiDichVuDTO> layTatCa() throws SQLException {
         List<LoaiDichVuDTO> list = new ArrayList<>();
         String sql = "SELECT MaLoaiDV, TenLoaiDV, TrangThaiLDV FROM LOAIDICHVU ORDER BY MaLoaiDV";
-        try (PreparedStatement ps = getConn().prepareStatement(sql);
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(mapResultSetToDTO(rs));
@@ -31,7 +32,8 @@ public class LoaiDichVuDAO {
         String sql = "SELECT MaLoaiDV, TenLoaiDV, TrangThaiLDV FROM LOAIDICHVU " +
                      "WHERE LOWER(MaLoaiDV) LIKE ? OR LOWER(TenLoaiDV) LIKE ? ORDER BY MaLoaiDV";
         String searchKey = "%" + keyword.toLowerCase() + "%";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, searchKey);
             ps.setString(2, searchKey);
             try (ResultSet rs = ps.executeQuery()) {
@@ -45,7 +47,8 @@ public class LoaiDichVuDAO {
 
     public boolean them(LoaiDichVuDTO loai) throws SQLException {
         String sql = "INSERT INTO LOAIDICHVU (MaLoaiDV, TenLoaiDV, TrangThaiLDV) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, loai.getMaLoaiDV());
             ps.setString(2, loai.getTenLoaiDV());
             ps.setString(3, loai.getTrangThaiLDV());
@@ -56,7 +59,8 @@ public class LoaiDichVuDAO {
 
     public boolean capNhat(LoaiDichVuDTO loai) throws SQLException {
         String sql = "UPDATE LOAIDICHVU SET TenLoaiDV = ?, TrangThaiLDV = ? WHERE MaLoaiDV = ?";
-        try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, loai.getTenLoaiDV());
             ps.setString(2, loai.getTrangThaiLDV());
             ps.setString(3, loai.getMaLoaiDV());
@@ -67,7 +71,8 @@ public class LoaiDichVuDAO {
 
     public String layMaxMaLoaiDV() throws SQLException {
         String sql = "SELECT MAX(MaLoaiDV) FROM LOAIDICHVU";
-        try (PreparedStatement ps = getConn().prepareStatement(sql);
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getString(1);
@@ -77,7 +82,9 @@ public class LoaiDichVuDAO {
     }
 
     public String generateNextMa() throws SQLException {
-        return MaTuDongUtil.sinhMaTiepTheo(getConn(), MaTuDongUtil.MaDoiTuong.LOAI_DICH_VU);
+        try (Connection conn = getConn()) {
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.LOAI_DICH_VU);
+        }
     }
 
     private LoaiDichVuDTO mapResultSetToDTO(ResultSet rs) throws SQLException {

@@ -79,9 +79,9 @@ BEGIN
     END IF;
 
     UPDATE PHIENLAMVIEC
-    SET ThoiGianKetThuc = SYSTIMESTAMP,
+    SET ThoiGianKetThuc = CURRENT_TIMESTAMP,
         TrangThaiPhien = 'Đã kết thúc',
-        CapNhatLanCuoi = SYSTIMESTAMP
+        CapNhatLanCuoi = CURRENT_TIMESTAMP
     WHERE MaPhien = TRIM(p_MaPhien);
 
     UPDATE KHONGGIAN
@@ -97,7 +97,7 @@ BEGIN
         END,
         TrangThaiThanhToan = 'Đã thanh toán thành công',
         PhuongThucThanhToan = p_PhuongThucTT,
-        NgayLapHoaDon = SYSTIMESTAMP,
+        NgayLapHoaDon = CURRENT_TIMESTAMP,
         MaNV = p_MaNV
     WHERE MaHoaDon = v_MaHoaDon;
 

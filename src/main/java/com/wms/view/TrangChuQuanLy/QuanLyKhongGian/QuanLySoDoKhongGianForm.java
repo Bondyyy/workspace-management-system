@@ -70,8 +70,9 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         txtChieuRong = new javax.swing.JTextField();
         lblChieuDai = new javax.swing.JLabel();
         txtChieuDai = new javax.swing.JTextField();
+        btnGo = new javax.swing.JButton();
         btnCapNhatToaDo = new javax.swing.JButton();
-        btnLuuCSDL = new javax.swing.JButton();
+        btnLuuCSDL1 = new javax.swing.JButton();
         pnRight = new javax.swing.JPanel();
         lblDetailTitle = new javax.swing.JLabel();
         scrollSoDo = new javax.swing.JScrollPane();
@@ -178,21 +179,28 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         pnLeft.add(txtChieuDai);
         txtChieuDai.setBounds(185, 370, 150, 30);
 
+        btnGo.setBackground(new java.awt.Color(220, 53, 69));
+        btnGo.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnGo.setForeground(new java.awt.Color(255, 255, 255));
+        btnGo.setText("Gỡ không gian khỏi bản đồ");
+        btnGo.addActionListener(this::btnGoActionPerformed);
+        pnLeft.add(btnGo);
+        btnGo.setBounds(15, 450, 320, 35);
+
         btnCapNhatToaDo.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhatToaDo.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnCapNhatToaDo.setForeground(new java.awt.Color(255, 255, 255));
         btnCapNhatToaDo.setText("Cập nhật trên Sơ đồ");
         btnCapNhatToaDo.addActionListener(this::btnCapNhatToaDoActionPerformed);
         pnLeft.add(btnCapNhatToaDo);
-        btnCapNhatToaDo.setBounds(15, 420, 320, 35);
+        btnCapNhatToaDo.setBounds(15, 410, 320, 35);
 
-        btnLuuCSDL.setBackground(new java.awt.Color(220, 53, 69));
-        btnLuuCSDL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnLuuCSDL.setForeground(new java.awt.Color(255, 255, 255));
-        btnLuuCSDL.setText("Lưu Sơ đồ");
-        btnLuuCSDL.addActionListener(this::btnLuuCSDLActionPerformed);
-        pnLeft.add(btnLuuCSDL);
-        btnLuuCSDL.setBounds(15, 465, 320, 35);
+        btnLuuCSDL1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnLuuCSDL1.setForeground(new java.awt.Color(235, 94, 141));
+        btnLuuCSDL1.setText("Lưu Sơ đồ");
+        btnLuuCSDL1.addActionListener(this::btnLuuCSDL1ActionPerformed);
+        pnLeft.add(btnLuuCSDL1);
+        btnLuuCSDL1.setBounds(15, 490, 320, 35);
 
         pnMain.add(pnLeft);
         pnLeft.setBounds(10, 70, 350, 530);
@@ -225,6 +233,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
 
         getContentPane().add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
 
     private void initCustomUI() {
         pnBaoNgoai.setManagementMode(true);
@@ -270,7 +279,9 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         model.setRowCount(0);
         for (KhongGianDTO dto : dsKG) {
             model.addRow(new Object[]{
-                dto.getMaKG(), dto.getTenKG(), dto.getToaDoX(), dto.getToaDoY(),
+                dto.getMaKG(), dto.getTenKG(), 
+                dto.getToaDoX() != null ? dto.getToaDoX() : "", 
+                dto.getToaDoY() != null ? dto.getToaDoY() : "",
                 dto.getChieuDai(), dto.getChieuRong()
             });
         }
@@ -289,8 +300,8 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         String maKG = tblKhongGian.getValueAt(row, 0).toString();
         KhongGianDTO dto = mapKG.get(maKG);
         if (dto == null) return;
-        txtToaDoX.setText(String.valueOf(dto.getToaDoX()));
-        txtToaDoY.setText(String.valueOf(dto.getToaDoY()));
+        txtToaDoX.setText(dto.getToaDoX() != null ? String.valueOf(dto.getToaDoX()) : "");
+        txtToaDoY.setText(dto.getToaDoY() != null ? String.valueOf(dto.getToaDoY()) : "");
         txtChieuRong.setText(String.valueOf(dto.getChieuDai()));
         txtChieuDai.setText(String.valueOf(dto.getChieuRong()));
     }
@@ -303,12 +314,34 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         }
         try {
             String maKG = tblKhongGian.getValueAt(row, 0).toString();
+            KhongGianDTO dto = mapKG.get(maKG);
+            if (dto != null && "Ngừng hoạt động".equals(dto.getTrangThaiLoaiKG())) {
+                JOptionPane.showMessageDialog(this, "Loại không gian này đã ngừng hoạt động, không thể đặt lên sơ đồ!");
+                return;
+            }
             int x = Integer.parseInt(txtToaDoX.getText().trim());
             int y = Integer.parseInt(txtToaDoY.getText().trim());
             int w = Integer.parseInt(txtChieuRong.getText().trim());
             int h = Integer.parseInt(txtChieuDai.getText().trim());
 
-            KhongGianDTO dto = mapKG.get(maKG);
+            if (x < 0 || y < 0 || w <= 0 || h <= 0) {
+                JOptionPane.showMessageDialog(this, "Toạ độ và kích thước không hợp lệ (X, Y >= 0; W, H > 0)!");
+                return;
+            }
+            if (x + w > 12 || y + h > 8) {
+                JOptionPane.showMessageDialog(this, "Không gian vượt quá diện tích sơ đồ (12x8)!");
+                return;
+            }
+            if (kiemTraChongLanVoiVungCoDinh(x, y, w, h)) {
+                JOptionPane.showMessageDialog(this, "Không gian bị chồng lấn với khu vực RECEPTION hoặc ENTRANCE!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            String loiChongLan = kiemTraChongLan(maKG, x, y, w, h);
+            if (loiChongLan != null) {
+                JOptionPane.showMessageDialog(this, loiChongLan, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             if (dto != null) {
                 dto.setToaDoX(x); dto.setToaDoY(y);
                 dto.setChieuDai(w); dto.setChieuRong(h);
@@ -323,7 +356,25 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
         }
     }
 
-    private void btnLuuCSDLActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnGoActionPerformed(java.awt.event.ActionEvent evt) {
+        int row = tblKhongGian.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn một không gian trong bảng để gỡ!");
+            return;
+        }
+        String maKG = tblKhongGian.getValueAt(row, 0).toString();
+        KhongGianDTO dto = mapKG.get(maKG);
+        if (dto != null) {
+            dto.setToaDoX(null); dto.setToaDoY(null);
+            tblKhongGian.setValueAt("", row, 2);
+            tblKhongGian.setValueAt("", row, 3);
+            txtToaDoX.setText("");
+            txtToaDoY.setText("");
+            veSoDo();
+        }
+    }
+
+    private void btnLuuCSDL1ActionPerformed(java.awt.event.ActionEvent evt) {
         int xacNhan = JOptionPane.showConfirmDialog(this,
                 "Bạn có muốn lưu toàn bộ thay đổi toạ độ vào CSDL không?",
                 "Xác nhận", JOptionPane.YES_NO_OPTION);
@@ -336,6 +387,28 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
                 JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private boolean kiemTraChongLanVoiVungCoDinh(int x, int y, int w, int h) {
+        boolean chongReception = (x < 2) && (x + w > 0) && (y < 1) && (y + h > 0);
+        boolean chongEntrance  = (x < 3) && (x + w > 2) && (y < 1) && (y + h > 0);
+        return chongReception || chongEntrance;
+    }
+
+    private String kiemTraChongLan(String maKGHienTai, int x, int y, int w, int h) {
+        for (KhongGianDTO other : dsKG) {
+            if (other.getMaKG().equals(maKGHienTai)) continue;
+            if (other.getToaDoX() == null || other.getToaDoY() == null) continue;
+            
+            int ox = other.getToaDoX(), oy = other.getToaDoY();
+            int ow = other.getChieuDai() > 0 ? other.getChieuDai() : 1;
+            int oh = other.getChieuRong() > 0 ? other.getChieuRong() : 1;
+            
+            if ((x < ox + ow) && (x + w > ox) && (y < oy + oh) && (y + h > oy)) {
+                return String.format("Không gian bị chồng lấn với %s (%s)!", other.getMaKG(), other.getTenKG());
+            }
+        }
+        return null;
     }
 
     /**
@@ -377,7 +450,8 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCapNhatToaDo;
-    private javax.swing.JButton btnLuuCSDL;
+    private javax.swing.JButton btnGo;
+    private javax.swing.JButton btnLuuCSDL1;
     private javax.swing.JLabel lblChieuDai;
     private javax.swing.JLabel lblChieuRong;
     private javax.swing.JLabel lblDetailTitle;

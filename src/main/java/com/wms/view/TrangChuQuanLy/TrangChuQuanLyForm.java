@@ -17,10 +17,82 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
             .getLogger(TrangChuQuanLyForm.class.getName());
     private javax.swing.JButton activeButton;
     private javax.swing.JButton btnMenuDatChoTruoc;
+    private javax.swing.JPanel pnGroupTongQuan;
+    private javax.swing.JPanel pnGroupVanHanh;
+    private javax.swing.JPanel pnGroupDichVu;
+    private javax.swing.JPanel pnGroupKhachHang;
+    private javax.swing.JPanel pnGroupTaiChinh;
+    private javax.swing.JPanel pnGroupNhanSu;
+
+    private static final java.awt.Color SIDEBAR_BG = new java.awt.Color(255, 250, 252);
+    private static final java.awt.Color MENU_TEXT = new java.awt.Color(62, 49, 56);
+    private static final java.awt.Color MENU_MUTED = new java.awt.Color(167, 139, 151);
+    private static final java.awt.Color MENU_ACTIVE_BG = new java.awt.Color(255, 234, 242);
+    private static final java.awt.Color MENU_HOVER_BG = new java.awt.Color(255, 244, 248);
+    private static final java.awt.Color MENU_ACTIVE_TEXT = new java.awt.Color(226, 82, 130);
+    private static final java.awt.Color MENU_BADGE_BG = new java.awt.Color(255, 240, 246);
+
+    private static class SidebarButtonUI extends javax.swing.plaf.basic.BasicButtonUI {
+        @Override
+        public void installDefaults(javax.swing.AbstractButton b) {
+            super.installDefaults(b);
+            b.setOpaque(false);
+            b.setContentAreaFilled(false);
+            b.setBorderPainted(false);
+            b.setRolloverEnabled(true);
+        }
+
+        @Override
+        public void paint(java.awt.Graphics g, javax.swing.JComponent c) {
+            javax.swing.AbstractButton button = (javax.swing.AbstractButton) c;
+            boolean active = Boolean.TRUE.equals(button.getClientProperty("menu.active"));
+            boolean hover = button.getModel().isRollover();
+
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+
+            if (active || hover) {
+                int x = 3;
+                int y = 2;
+                int width = c.getWidth() - 6;
+                int height = c.getHeight() - 4;
+
+                g2.setColor(active ? MENU_ACTIVE_BG : MENU_HOVER_BG);
+                g2.fillRoundRect(x, y, width, height, 12, 12);
+
+                if (active) {
+                    g2.setColor(MENU_ACTIVE_TEXT);
+                    g2.fillRoundRect(x + 2, y + 7, 4, height - 14, 4, 4);
+                }
+            }
+
+            String badge = (String) button.getClientProperty("menu.badge");
+            if (badge != null && !badge.isEmpty()) {
+                int badgeSize = 20;
+                int badgeX = 16;
+                int badgeY = (c.getHeight() - badgeSize) / 2;
+
+                g2.setColor(active ? java.awt.Color.WHITE : MENU_BADGE_BG);
+                g2.fillRoundRect(badgeX, badgeY, badgeSize, badgeSize, 8, 8);
+
+                g2.setColor(active ? MENU_ACTIVE_TEXT : MENU_MUTED);
+                g2.setFont(button.getFont().deriveFont(java.awt.Font.BOLD, badge.length() > 1 ? 8.5f : 9.5f));
+                java.awt.FontMetrics metrics = g2.getFontMetrics();
+                int textX = badgeX + (badgeSize - metrics.stringWidth(badge)) / 2;
+                int textY = badgeY + ((badgeSize - metrics.getHeight()) / 2) + metrics.getAscent();
+                g2.drawString(badge, textX, textY);
+            }
+
+            g2.dispose();
+            super.paint(g, c);
+        }
+    }
 
     public TrangChuQuanLyForm() {
         initComponents();
         themMenuDatChoTruoc();
+        sapXepMenuTheoNhom();
         setupCustomUI();
 
         NguoiDungDTO user = DangNhapController.getCurrentUser();
@@ -66,12 +138,143 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         pnMenuContainer.add(btnMenuDatChoTruoc, 7);
     }
 
-    private void setActiveMenu(javax.swing.JButton btn) {
-        java.awt.Color defaultColor = new java.awt.Color(255, 255, 255);
-        java.awt.Color activeColor = new java.awt.Color(252, 235, 241);
-        java.awt.Color activeTextColor = new java.awt.Color(235, 94, 141);
-        java.awt.Color defaultTextColor = new java.awt.Color(48, 30, 35);
+    private void sapXepMenuTheoNhom() {
+        pnSidebar.setPreferredSize(new java.awt.Dimension(250, 700));
+        pnSidebar.setBackground(SIDEBAR_BG);
+        pnLogo.setPreferredSize(new java.awt.Dimension(250, 88));
+        pnLogo.setBackground(SIDEBAR_BG);
+        lblLogo.setBounds(0, 17, 250, 35);
+        lblLogoSub.setBounds(0, 53, 250, 20);
 
+        btnMenuTongQuan.setText("B\u00e1o c\u00e1o");
+        btnMenuChiNhanh.setText("Chi nh\u00e1nh");
+        btnMenuKhongGian.setText("Kh\u00f4ng gian");
+        btnMenuDichVu.setText("Th\u00f4ng tin d\u1ecbch v\u1ee5");
+        btnMenuLoaiDichVu.setText("Lo\u1ea1i d\u1ecbch v\u1ee5");
+        btnMenuKho.setText("Kho d\u1ecbch v\u1ee5");
+        btnMenuDichVuDat.setText("D\u1ecbch v\u1ee5 kh\u00e1ch \u0111\u1eb7t");
+        btnMenuPhien.setText("Phi\u00ean l\u00e0m vi\u1ec7c");
+        btnMenuDatChoTruoc.setText("\u0110\u1eb7t ch\u1ed7 tr\u01b0\u1edbc");
+        btnMenuHoaDon.setText("H\u00f3a \u0111\u01a1n & thu ng\u00e2n");
+        btnMenuGiamGia.setText("Khuy\u1ebfn m\u00e3i");
+        btnMenuHoiVien.setText("H\u1ed9i vi\u00ean");
+        btnMenuHangThanhVien.setText("H\u1ea1ng th\u00e0nh vi\u00ean");
+        btnMenuNhanVien.setText("Nh\u00e2n vi\u00ean");
+        btnMenuNguoiDung.setText("Ng\u01b0\u1eddi d\u00f9ng");
+        btnMenuVaiTro.setText("Vai tr\u00f2");
+        ganKyHieuMenu();
+
+        pnMenuContainer.removeAll();
+        pnMenuContainer.setBackground(SIDEBAR_BG);
+        pnMenuContainer.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10));
+
+        pnGroupTongQuan = taoNhomMenu("T\u1ed5ng quan", btnMenuTongQuan);
+        pnGroupVanHanh = taoNhomMenu("V\u1eadn h\u00e0nh", btnMenuChiNhanh, btnMenuKhongGian, btnMenuPhien, btnMenuDatChoTruoc);
+        pnGroupDichVu = taoNhomMenu("D\u1ecbch v\u1ee5", btnMenuDichVu, btnMenuLoaiDichVu, btnMenuKho, btnMenuDichVuDat);
+        pnGroupKhachHang = taoNhomMenu("Kh\u00e1ch h\u00e0ng", btnMenuHoiVien, btnMenuHangThanhVien, btnMenuGiamGia);
+        pnGroupTaiChinh = taoNhomMenu("T\u00e0i ch\u00ednh", btnMenuHoaDon);
+        pnGroupNhanSu = taoNhomMenu("Nh\u00e2n s\u1ef1 & quy\u1ec1n", btnMenuNhanVien, btnMenuNguoiDung, btnMenuVaiTro);
+
+        pnMenuContainer.add(pnGroupTongQuan);
+        pnMenuContainer.add(pnGroupVanHanh);
+        pnMenuContainer.add(pnGroupDichVu);
+        pnMenuContainer.add(pnGroupKhachHang);
+        pnMenuContainer.add(pnGroupTaiChinh);
+        pnMenuContainer.add(pnGroupNhanSu);
+
+        themScrollChoMenu();
+        capNhatHienThiNhomMenu();
+    }
+
+    private void ganKyHieuMenu() {
+        btnMenuTongQuan.putClientProperty("menu.badge", "BC");
+        btnMenuChiNhanh.putClientProperty("menu.badge", "CN");
+        btnMenuKhongGian.putClientProperty("menu.badge", "KG");
+        btnMenuDichVu.putClientProperty("menu.badge", "DV");
+        btnMenuLoaiDichVu.putClientProperty("menu.badge", "LD");
+        btnMenuKho.putClientProperty("menu.badge", "K");
+        btnMenuDichVuDat.putClientProperty("menu.badge", "DD");
+        btnMenuPhien.putClientProperty("menu.badge", "P");
+        btnMenuDatChoTruoc.putClientProperty("menu.badge", "DC");
+        btnMenuHoaDon.putClientProperty("menu.badge", "HD");
+        btnMenuGiamGia.putClientProperty("menu.badge", "KM");
+        btnMenuHoiVien.putClientProperty("menu.badge", "HV");
+        btnMenuHangThanhVien.putClientProperty("menu.badge", "H");
+        btnMenuNhanVien.putClientProperty("menu.badge", "NV");
+        btnMenuNguoiDung.putClientProperty("menu.badge", "ND");
+        btnMenuVaiTro.putClientProperty("menu.badge", "VT");
+    }
+
+    private javax.swing.JPanel taoNhomMenu(String title, javax.swing.JButton... buttons) {
+        javax.swing.JPanel group = new javax.swing.JPanel();
+        group.setOpaque(false);
+        group.setLayout(new javax.swing.BoxLayout(group, javax.swing.BoxLayout.Y_AXIS));
+        group.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+
+        javax.swing.JLabel label = new javax.swing.JLabel(title);
+        label.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        label.setForeground(MENU_MUTED);
+        label.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 12, 3, 0));
+        label.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        group.add(label);
+
+        for (javax.swing.JButton button : buttons) {
+            button.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+            group.add(button);
+        }
+
+        group.add(javax.swing.Box.createVerticalStrut(1));
+        group.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, group.getPreferredSize().height));
+        return group;
+    }
+
+    private void themScrollChoMenu() {
+        if (pnMenuContainer.getParent() instanceof javax.swing.JViewport) {
+            return;
+        }
+
+        java.awt.Container parent = pnMenuContainer.getParent();
+        if (parent != null) {
+            parent.remove(pnMenuContainer);
+        }
+
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(pnMenuContainer);
+        scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBackground(SIDEBAR_BG);
+        scrollPane.getViewport().setBackground(SIDEBAR_BG);
+        pnSidebar.add(scrollPane, java.awt.BorderLayout.CENTER);
+    }
+
+    private void capNhatHienThiNhomMenu() {
+        javax.swing.JPanel[] groups = {
+                pnGroupTongQuan, pnGroupVanHanh, pnGroupDichVu,
+                pnGroupKhachHang, pnGroupTaiChinh, pnGroupNhanSu
+        };
+
+        for (javax.swing.JPanel group : groups) {
+            if (group == null) {
+                continue;
+            }
+
+            boolean hasVisibleButton = false;
+            for (java.awt.Component component : group.getComponents()) {
+                if (component instanceof javax.swing.JButton && component.isVisible()) {
+                    hasVisibleButton = true;
+                    break;
+                }
+            }
+            group.setVisible(hasVisibleButton);
+            group.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, group.getPreferredSize().height));
+        }
+
+        pnMenuContainer.revalidate();
+        pnMenuContainer.repaint();
+    }
+
+    private void setActiveMenu(javax.swing.JButton btn) {
         javax.swing.JButton[] menuButtons = {
                 btnMenuTongQuan, btnMenuChiNhanh, btnMenuKhongGian,
                 btnMenuDichVu, btnMenuLoaiDichVu, btnMenuKho, btnMenuPhien, btnMenuDatChoTruoc, btnMenuDichVuDat,
@@ -79,14 +282,21 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         };
 
         for (javax.swing.JButton b : menuButtons) {
+            if (b == null) {
+                continue;
+            }
+
             if (b == btn) {
-                b.setBackground(activeColor);
-                b.setForeground(activeTextColor);
+                b.putClientProperty("menu.active", true);
+                b.setForeground(MENU_ACTIVE_TEXT);
+                b.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
                 activeButton = b;
             } else {
-                b.setBackground(defaultColor);
-                b.setForeground(defaultTextColor);
+                b.putClientProperty("menu.active", false);
+                b.setForeground(MENU_TEXT);
+                b.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
             }
+            b.repaint();
         }
     }
 
@@ -98,31 +308,31 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
                 btnMenuHoaDon, btnMenuGiamGia, btnMenuHoiVien, btnMenuHangThanhVien, btnMenuNhanVien, btnMenuNguoiDung, btnMenuVaiTro
         };
 
-        java.awt.Color defaultColor = new java.awt.Color(255, 255, 255);
-        java.awt.Color hoverColor = new java.awt.Color(252, 235, 241); // Hồng phấn rất nhạt
 
         for (javax.swing.JButton btn : menuButtons) {
-            btn.setOpaque(true);
-            btn.setBackground(defaultColor);
+            if (btn == null) {
+                continue;
+            }
+
+            btn.setUI(new SidebarButtonUI());
+            btn.setOpaque(false);
+            btn.setForeground(MENU_TEXT);
             btn.setFocusPainted(false);
-            btn.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 30, 0, 0));
-
-            btn.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    if (btn != activeButton) {
-                        btn.setBackground(hoverColor);
-                    }
-                }
-
-                public void mouseExited(java.awt.event.MouseEvent evt) {
-                    if (btn != activeButton) {
-                        btn.setBackground(defaultColor);
-                    }
-                }
-            });
+            btn.setBorderPainted(false);
+            btn.setContentAreaFilled(false);
+            btn.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 48, 0, 10));
+            btn.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+            btn.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 32));
+            btn.setPreferredSize(new java.awt.Dimension(226, 32));
+            btn.setMinimumSize(new java.awt.Dimension(180, 32));
         }
 
-        btnDangXuat.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 30, 0, 0));
+        pnLogout.setPreferredSize(new java.awt.Dimension(250, 56));
+        pnLogout.setBackground(SIDEBAR_BG);
+        btnDangXuat.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 28, 0, 0));
+        btnDangXuat.setBorderPainted(false);
+        btnDangXuat.setContentAreaFilled(false);
+        capNhatHienThiNhomMenu();
     }
 
     // Hàm phân quyền động dựa vào MaChucNang từ DB
@@ -178,8 +388,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
             }
         }
 
-        pnMenuContainer.revalidate();
-        pnMenuContainer.repaint();
+        capNhatHienThiNhomMenu();
     }
 
     // Giữ lại method cũ (tương thích ngược)
@@ -198,6 +407,9 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuHoiVien.setVisible(true);
         btnMenuHangThanhVien.setVisible(true);
         btnMenuNhanVien.setVisible(true);
+        btnMenuLoaiDichVu.setVisible(true);
+        btnMenuNguoiDung.setVisible(true);
+        btnMenuVaiTro.setVisible(true);
 
         lblRole.setText("Vai trò: " + vaiTro);
 
@@ -213,8 +425,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         }
 
         // Gọi lệnh để Sidebar sắp xếp (co cụm) lại
-        pnMenuContainer.revalidate();
-        pnMenuContainer.repaint();
+        capNhatHienThiNhomMenu();
     }
 
     /**

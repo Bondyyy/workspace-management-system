@@ -9,6 +9,7 @@ public class KhongGianView {
     private final String tenLoaiKG;
     private final String viTri;
     private final String trangThaiKG;
+    private final String maCN;
     private final String tenCN;
     private final String thoiGianMoCua;
     private final String thoiGianDongCua;
@@ -40,6 +41,13 @@ public class KhongGianView {
     }
 
     public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                     String trangThaiKG, String maCN, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
+                     BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, maCN, tenCN, thoiGianMoCua, thoiGianDongCua,
+                donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, true, null);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
                      String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio,
                      boolean available, LocalDateTime busyUntil) {
         this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, tenCN, donGiaTheoGio,
@@ -58,11 +66,20 @@ public class KhongGianView {
                      String trangThaiKG, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
                      BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong,
                      boolean available, LocalDateTime busyUntil) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, thoiGianMoCua, thoiGianDongCua,
+                donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, available, busyUntil);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                     String trangThaiKG, String maCN, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
+                     BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong,
+                     boolean available, LocalDateTime busyUntil) {
         this.maKG = maKG;
         this.tenKG = tenKG;
         this.tenLoaiKG = tenLoaiKG;
         this.viTri = viTri;
         this.trangThaiKG = trangThaiKG;
+        this.maCN = maCN;
         this.tenCN = tenCN;
         this.thoiGianMoCua = thoiGianMoCua;
         this.thoiGianDongCua = thoiGianDongCua;
@@ -93,6 +110,10 @@ public class KhongGianView {
 
     public String getTrangThaiKG() {
         return trangThaiKG;
+    }
+
+    public String getMaCN() {
+        return maCN;
     }
 
     public String getTenCN() {

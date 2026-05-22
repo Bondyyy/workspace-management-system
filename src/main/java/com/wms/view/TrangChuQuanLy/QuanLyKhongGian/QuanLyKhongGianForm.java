@@ -81,7 +81,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         String maLoai = getMaFromCombo(cbxLoaiKhongGian);
         List<KhongGianDTO> list = controller.timKiemKhongGian(tuKhoa, maCN, maLoai);
         for (KhongGianDTO dto : list) {
-            String viTriHienThi = String.format("%d,%d,%d,%d",
+            String viTriHienThi = (dto.getToaDoX() == null || dto.getToaDoY() == null) ? "Chưa đặt" : String.format("%d,%d,%d,%d",
                     dto.getToaDoX(), dto.getToaDoY(), dto.getChieuDai(), dto.getChieuRong());
 
             String tenCN = (dto.getTenCN() != null) ? dto.getTenCN() : dto.getMaCN();
@@ -367,8 +367,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         dto.setMaLoaiKG(maLoaiKG);
         dto.setMaCN(maCN);
         // Default coordinates
-        dto.setToaDoX(1);
-        dto.setToaDoY(1);
+        // toaDoX và toaDoY mặc định là null
         dto.setChieuDai(1);
         dto.setChieuRong(1);
 

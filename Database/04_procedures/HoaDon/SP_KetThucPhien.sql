@@ -30,9 +30,9 @@ BEGIN
     FOR UPDATE NOWAIT;
 
     UPDATE PHIENLAMVIEC
-    SET ThoiGianKetThuc = SYSTIMESTAMP,
+    SET ThoiGianKetThuc = CURRENT_TIMESTAMP,
         TrangThaiPhien = 'Đã kết thúc',
-        CapNhatLanCuoi = SYSTIMESTAMP
+        CapNhatLanCuoi = CURRENT_TIMESTAMP
     WHERE MaPhien = TRIM(p_MaPhien);
 
     v_TongTien := FN_TinhTongTien(TRIM(p_MaPhien));
@@ -42,7 +42,7 @@ BEGIN
     SET TongTien = v_TongTien,
         ThanhTien = v_ThanhTien,
         MaNV = p_MaNV,
-        NgayLapHoaDon = SYSTIMESTAMP
+        NgayLapHoaDon = CURRENT_TIMESTAMP
     WHERE MaHoaDon = v_MaHoaDon;
 
     UPDATE KHONGGIAN

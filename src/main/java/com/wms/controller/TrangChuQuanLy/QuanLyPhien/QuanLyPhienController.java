@@ -45,7 +45,5 @@ public class QuanLyPhienController {
     public boolean xoaPhien(String maPhien) {
         return service.xoaPhien(maPhien);
     }
-    public boolean capNhatPhien(String maPhien, String trangThai, String tenKH) {
-        return service.capNhatPhien(maPhien, trangThai, tenKH);
-    }
+
 }

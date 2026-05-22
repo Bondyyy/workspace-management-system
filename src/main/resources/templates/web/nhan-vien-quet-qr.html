@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quét QR nhận chỗ</title>
+    <link rel="stylesheet" href="/css/webapp.css">
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
+</head>
+<body class="hienThiBangDieuKhien-page">
+<header class="hienThiBangDieuKhien-header">
+    <div>
+        <p class="eyebrow">Bảng điều phối nhân viên</p>
+        <h1>Quét QR nhận chỗ</h1>
+        <p th:text="'Đang đăng nhập bởi ' + ${user.hoTen}"></p>
+    </div>
+    <div class="header-actions">
+        <a class="button-secondary" th:href="@{/staff/bookings}">Quay lại</a>
+        <form th:action="@{/dangXuat}" method="post">
+            <button type="submit" class="button-secondary">Đăng xuất</button>
+        </form>
+    </div>
+</header>
+
+<main class="hienThiBangDieuKhien-grid single-column">
+    <section class="panel wide-panel khung-quet-qr">
+        <div class="panel-head">
+            <h2>Quét QR nhận chỗ</h2>
+            <a class="button-secondary small-button" th:href="@{/staff/bookings}">Danh sách đặt chỗ</a>
+        </div>
+
+        <div class="quet-qr-layout">
+            <div class="vung-camera-qr">
+                <div id="khung-camera-qr"></div>
+            </div>
+
+            <aside class="ket-qua-quet-qr" id="ketQuaQuetQR">
+                <span class="status-pill">Đưa mã QR của khách vào khung hình</span>
+                <p id="thongBaoQuetQR">Đưa mã QR của khách vào khung hình</p>
+                <dl class="ket-qua-chi-tiet" id="chiTietKetQuaQR" hidden>
+                    <div>
+                        <dt>Mã đặt chỗ</dt>
+                        <dd id="maDatChoKetQua">-</dd>
+                    </div>
+                    <div>
+                        <dt>Mã phiên</dt>
+                        <dd id="maPhienKetQua">-</dd>
+                    </div>
+                    <div>
+                        <dt>Khách hàng</dt>
+                        <dd id="tenKhachHangKetQua">-</dd>
+                    </div>
+                    <div>
+                        <dt>Không gian</dt>
+                        <dd id="tenKhongGianKetQua">-</dd>
+                    </div>
+                </dl>
+                <button type="button" class="button-primary full-width" id="btnQuetLai" hidden>Quét lại</button>
+            </aside>
+        </div>
+
+        <div class="nhap-qr-thu-cong">
+            <label for="noiDungQRThuCong">Nội dung QR</label>
+            <div class="manual-qr-row">
+                <input id="noiDungQRThuCong" type="text" autocomplete="off" placeholder="Dán hoặc nhập nội dung QR">
+                <button type="button" class="button-dark" id="btnXacNhanMaThuCong">Xác nhận mã thủ công</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    let dangXuLy = false;
+    let mayQuetQR = null;
+    let daKhoiDongCamera = false;
+
+    const ketQua = document.getElementById("ketQuaQuetQR");
+    const thongBao = document.getElementById("thongBaoQuetQR");
+    const btnQuetLai = document.getElementById("btnQuetLai");
+    const btnXacNhanMaThuCong = document.getElementById("btnXacNhanMaThuCong");
+    const noiDungQRThuCong = document.getElementById("noiDungQRThuCong");
+    const chiTietKetQuaQR = document.getElementById("chiTietKetQuaQR");
+
+    function capNhatTrangThai(noiDung, loai) {
+        ketQua.classList.remove("ket-qua-thanh-cong", "ket-qua-that-bai");
+        if (loai) {
+            ketQua.classList.add(loai);
+        }
+        thongBao.textContent = noiDung;
+    }
+
+    function datChiTiet(id, giaTri) {
+        document.getElementById(id).textContent = giaTri || "-";
+    }
+
+    function hienThiThanhCong(data) {
+        capNhatTrangThai(data.thongBao || "Mở phiên thành công", "ket-qua-thanh-cong");
+        datChiTiet("maDatChoKetQua", data.maDatCho);
+        datChiTiet("maPhienKetQua", data.maPhien);
+        datChiTiet("tenKhachHangKetQua", data.tenKhachHang);
+        datChiTiet("tenKhongGianKetQua", data.tenKhongGian);
+        chiTietKetQuaQR.hidden = false;
+        btnQuetLai.hidden = false;
+    }
+
+    function hienThiLoi(noiDung) {
+        capNhatTrangThai(noiDung || "QR không hợp lệ", "ket-qua-that-bai");
+        chiTietKetQuaQR.hidden = true;
+        btnQuetLai.hidden = false;
+    }
+
+    function dungMayQuet() {
+        if (mayQuetQR && daKhoiDongCamera) {
+            return mayQuetQR.stop()
+                .then(() => {
+                    daKhoiDongCamera = false;
+                })
+                .catch(() => {
+                    daKhoiDongCamera = false;
+                });
+        }
+        return Promise.resolve();
+    }
+
+    function khoiDongMayQuet() {
+        btnQuetLai.hidden = true;
+        chiTietKetQuaQR.hidden = true;
+        capNhatTrangThai("Đưa mã QR của khách vào khung hình");
+
+        if (!window.Html5Qrcode) {
+            hienThiLoi("Không mở được camera. Vui lòng nhập thủ công nội dung QR.");
+            return;
+        }
+        if (!mayQuetQR) {
+            mayQuetQR = new Html5Qrcode("khung-camera-qr");
+        }
+
+        mayQuetQR.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 260, height: 260 } },
+            decodedText => {
+                if (dangXuLy) return;
+                dungMayQuet().finally(() => xuLyMaQR(decodedText));
+            },
+            () => {}
+        ).then(() => {
+            daKhoiDongCamera = true;
+        }).catch(() => {
+            daKhoiDongCamera = false;
+            hienThiLoi("Không mở được camera. Vui lòng nhập thủ công nội dung QR.");
+        });
+    }
+
+    function xuLyMaQR(noiDungQR) {
+        if (dangXuLy) return;
+        dangXuLy = true;
+        capNhatTrangThai("Đang xử lý mã QR...");
+        btnQuetLai.hidden = true;
+        chiTietKetQuaQR.hidden = true;
+
+        fetch("/staff/api/bookings/nhan-cho-bang-qr", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ noiDungQR: noiDungQR })
+        })
+            .then(res => res.json().catch(() => ({
+                thanhCong: false,
+                thongBao: res.ok ? "QR không hợp lệ" : "Phiên đăng nhập đã hết hạn."
+            })))
+            .then(data => {
+                if (data.thanhCong) {
+                    hienThiThanhCong(data);
+                } else {
+                    hienThiLoi(data.thongBao || "QR không hợp lệ");
+                }
+            })
+            .catch(() => {
+                hienThiLoi("Không thể kết nối tới máy chủ.");
+            })
+            .finally(() => {
+                dangXuLy = false;
+            });
+    }
+
+    btnXacNhanMaThuCong.addEventListener("click", () => {
+        const noiDung = noiDungQRThuCong.value.trim();
+        if (!noiDung) {
+            hienThiLoi("Nội dung QR không hợp lệ.");
+            return;
+        }
+        dungMayQuet().finally(() => xuLyMaQR(noiDung));
+    });
+
+    noiDungQRThuCong.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            btnXacNhanMaThuCong.click();
+        }
+    });
+
+    btnQuetLai.addEventListener("click", () => {
+        dungMayQuet().finally(khoiDongMayQuet);
+    });
+
+    window.addEventListener("load", khoiDongMayQuet);
+    window.addEventListener("beforeunload", () => {
+        if (mayQuetQR && daKhoiDongCamera) {
+            mayQuetQR.stop().catch(() => {});
+        }
+    });
+</script>
+</body>
+</html>

@@ -86,7 +86,15 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             txtNgayTao.setCaretPosition(0);
 
             txtThanhToan.setText(hd.getPhuongThucThanhToan() != null ? hd.getPhuongThucThanhToan() : "Chưa chọn");
-            txtTruocGiamGia.setText(df.format(hd.getTongTien()));
+            
+            // Xử lý tiền trả trước và hiển thị
+            double soTienDaTraTruoc = hd.getSoTienDaTraTruoc();
+            if (soTienDaTraTruoc > 0) {
+                txtTruocGiamGia.setText(df.format(hd.getTongTien()) + " (Đã trả trước: " + df.format(soTienDaTraTruoc) + ")");
+            } else {
+                txtTruocGiamGia.setText(df.format(hd.getTongTien()));
+            }
+
             txtTrangThai.setText(hd.getTrangThaiThanhToan());
             if (txtHinhThuc != null) txtHinhThuc.setText(hd.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp");
             if (txtTrangThaiPhien != null) txtTrangThaiPhien.setText(hd.getTrangThaiPhien() != null ? hd.getTrangThaiPhien() : "N/A");
@@ -126,10 +134,16 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             }
 
             boolean choThanhToan = hd.getTrangThaiThanhToan().equals("Chưa thanh toán")
-                                || hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán");
+                                || hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán")
+                                || hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán phụ thu");
             boolean phienDaKetThuc = !"Đang hoạt động".equals(hd.getTrangThaiPhien());
             
             btnXacNhan.setEnabled(choThanhToan && phienDaKetThuc);
+            if (hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán phụ thu")) {
+                btnXacNhan.setText("Thanh toán phụ thu");
+            } else {
+                btnXacNhan.setText("Xác nhận Thanh toán");
+            }
             btnHuy.setEnabled(choThanhToan);
             break;
         }
@@ -220,7 +234,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         txtTimKiem.setBounds(20, 55, 280, 35);
 
         cbxLocTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxLocTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tất cả", "Chưa thanh toán", "Đã thanh toán", "Đã hủy" }));
+        cbxLocTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tất cả", "Chưa thanh toán", "Đang chờ thanh toán phụ thu", "Đã thanh toán", "Đã hủy" }));
         pnLeft.add(cbxLocTrangThai);
         cbxLocTrangThai.setBounds(400, 55, 180, 35);
 

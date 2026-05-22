@@ -157,7 +157,7 @@ public class PhienLamViecDAO {
                     ps.setDouble(3, thanhTien);
                     ps.setDouble(4, thanhTien);
                     ps.setString(5, "Chuyển khoản");
-                    ps.setString(6, "Đã thanh toán thành công");
+                    ps.setString(6, "Đã thanh toán trước");
                     ps.setString(7, maPhien);
                     ps.executeUpdate();
                 }
@@ -270,41 +270,6 @@ public class PhienLamViecDAO {
         return list;
     }
 
-    public boolean capNhatPhien(String maPhien, String trangThai, String tenKH) {
-        String sqlPhien = "UPDATE PHIENLAMVIEC SET TrangThaiPhien = ? WHERE MaPhien = ?";
-        String sqlKH = "UPDATE NGUOIDUNG SET HoTen = ? WHERE MaND = (SELECT MaND FROM KHACHHANG WHERE MaKH = (SELECT MaKH FROM PHIENLAMVIEC WHERE MaPhien = ?))";
-
-        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            boolean oldAutoCommit = conn.getAutoCommit();
-            try {
-                conn.setAutoCommit(false);
-                try (PreparedStatement pstmt = conn.prepareStatement(sqlPhien)) {
-                    pstmt.setString(1, trangThai);
-                    pstmt.setString(2, maPhien);
-                    pstmt.executeUpdate();
-                }
-                if (tenKH != null && !tenKH.isEmpty()) {
-                    try (PreparedStatement pstmt = conn.prepareStatement(sqlKH)) {
-                        pstmt.setString(1, tenKH);
-                        pstmt.setString(2, maPhien);
-                        pstmt.executeUpdate();
-                    }
-                }
-                conn.commit();
-                return true;
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                try {
-                    conn.setAutoCommit(oldAutoCommit);
-                } catch (SQLException ignored) {}
-            }
-        } catch (Exception e) {
-            System.err.println("[PhienLamViecDAO] Lỗi cập nhật phiên: " + e.getMessage());
-            return false;
-        }
-    }
 
     public boolean ketThucPhien(String maPhien) {
         String sqlPhien = "UPDATE PHIENLAMVIEC SET ThoiGianKetThuc = CURRENT_TIMESTAMP, TrangThaiPhien = 'Đã kết thúc', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?";
@@ -323,11 +288,29 @@ public class PhienLamViecDAO {
 
                 double tongTien = tinhTongTienPhien(conn, maPhien);
 
-                String sqlHoaDon = "UPDATE HOADON SET TongTien = ?, ThanhTien = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
+                double soTienDaTraTruoc = 0;
+                String sqlTraTruoc = "SELECT NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc " +
+                                     "FROM PHIENLAMVIEC p " +
+                                     "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
+                                     "WHERE p.MaPhien = ?";
+                try (PreparedStatement psTraTruoc = conn.prepareStatement(sqlTraTruoc)) {
+                    psTraTruoc.setString(1, maPhien);
+                    try (ResultSet rsTraTruoc = psTraTruoc.executeQuery()) {
+                        if (rsTraTruoc.next()) {
+                            soTienDaTraTruoc = rsTraTruoc.getDouble("SoTienDaTraTruoc");
+                        }
+                    }
+                }
+
+                double thanhTien = tongTien - soTienDaTraTruoc;
+                String trangThaiThanhToan = thanhTien <= 0 ? "Đã thanh toán thành công" : "Đang chờ thanh toán phụ thu";
+
+                String sqlHoaDon = "UPDATE HOADON SET TongTien = ?, ThanhTien = ?, TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
                 try (PreparedStatement pstmtHoaDon = conn.prepareStatement(sqlHoaDon)) {
                     pstmtHoaDon.setDouble(1, tongTien);
-                    pstmtHoaDon.setDouble(2, tongTien);
-                    pstmtHoaDon.setString(3, maPhien);
+                    pstmtHoaDon.setDouble(2, thanhTien);
+                    pstmtHoaDon.setString(3, trangThaiThanhToan);
+                    pstmtHoaDon.setString(4, maPhien);
                     pstmtHoaDon.executeUpdate();
                 }
 

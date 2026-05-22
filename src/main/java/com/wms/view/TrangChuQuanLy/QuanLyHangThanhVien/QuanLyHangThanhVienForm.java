@@ -27,8 +27,19 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
         initComponents();
         setupListeners();
         loadDataToTable();
-        lamMoiForm();
+        txtTenHang.setEditable(false);
         txtMaHang.setEditable(false);
+        
+        txtChiTieu.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { formatChiTieu(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { formatChiTieu(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { formatChiTieu(); }
+        });
+        
+        hienThiHangMacDinh();
         com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
@@ -64,18 +75,13 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
     }
 
     private void lamMoiForm() {
-        txtMaHang.setText("");
-        cbxTenHang.setSelectedIndex(0);
-        spnPhanTram.setValue(0.0);
-        txtChiTieu.setText("");
-        selectedHang = null;
-        tblHangTV.clearSelection();
+        hienThiHangMacDinh();
     }
 
     private HangThanhVienDTO getFormData() throws Exception {
         HangThanhVienDTO dto = (selectedHang != null) ? selectedHang : new HangThanhVienDTO();
         dto.setMaHangThanhVien(txtMaHang.getText().trim());
-        dto.setTenHangThanhVien(cbxTenHang.getSelectedItem().toString());
+        dto.setTenHangThanhVien(txtTenHang.getText().trim());
         dto.setPhanTramTienGiam(Double.valueOf(spnPhanTram.getValue().toString()));
         
         String chiTieuStr = txtChiTieu.getText().trim().replace(",", "");
@@ -99,7 +105,9 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
             HangThanhVienDTO dto = getFormData();
             controller.capNhatHangThanhVien(dto);
             JOptionPane.showMessageDialog(this, "Cập nhật hạng thành viên thành công!");
+            String currentMaHang = selectedHang.getMaHangThanhVien();
             loadDataToTable();
+            selectTier(currentMaHang);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -108,6 +116,57 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         String query = txtTimKiem.getText().trim();
         fillTable(query);
+    }
+
+    private void hienThiHangMacDinh() {
+        selectTier("HTV00");
+    }
+
+    private void selectTier(String maHang) {
+        if (hangList != null && !hangList.isEmpty()) {
+            for (int i = 0; i < tblHangTV.getRowCount(); i++) {
+                if (maHang.equals(tblHangTV.getValueAt(i, 0).toString())) {
+                    tblHangTV.setRowSelectionInterval(i, i);
+                    for (HangThanhVienDTO dto : hangList) {
+                        if (dto.getMaHangThanhVien().equals(maHang)) {
+                            selectedHang = dto;
+                            break;
+                        }
+                    }
+                    if (selectedHang != null) {
+                        txtMaHang.setText(selectedHang.getMaHangThanhVien());
+                        txtTenHang.setText(selectedHang.getTenHangThanhVien());
+                        spnPhanTram.setValue(selectedHang.getPhanTramTienGiam() != null ? selectedHang.getPhanTramTienGiam() : 0.0);
+                        txtChiTieu.setText(String.format("%,.0f", selectedHang.getTongChiTieuToiThieu()));
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private boolean isFormattingChiTieu = false;
+
+    private void formatChiTieu() {
+        if (isFormattingChiTieu) return;
+        SwingUtilities.invokeLater(() -> {
+            isFormattingChiTieu = true;
+            try {
+                String text = txtChiTieu.getText().replace(",", "").replace(".", "");
+                if (!text.isEmpty()) {
+                    long value = Long.parseLong(text);
+                    java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
+                    String formatted = df.format(value);
+                    if (!txtChiTieu.getText().equals(formatted)) {
+                        txtChiTieu.setText(formatted);
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                // Ignore invalid input
+            } finally {
+                isFormattingChiTieu = false;
+            }
+        });
     }
 
     /**
@@ -133,14 +192,14 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
         pnRight = new javax.swing.JPanel();
         lblDetailTitle = new javax.swing.JLabel();
         lblMaHang = new javax.swing.JLabel();
-        txtMaHang = new javax.swing.JTextField();
+        txtTenHang = new javax.swing.JTextField();
         lblTenHang = new javax.swing.JLabel();
-        cbxTenHang = new javax.swing.JComboBox<>();
         lblPhanTram = new javax.swing.JLabel();
         spnPhanTram = new javax.swing.JSpinner();
         lblChiTieu = new javax.swing.JLabel();
         txtChiTieu = new javax.swing.JTextField();
         btnCapNhat = new javax.swing.JButton();
+        txtMaHang = new javax.swing.JTextField();
 
         setPreferredSize(new java.awt.Dimension(1050, 640));
         setLayout(new java.awt.BorderLayout());
@@ -242,20 +301,16 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
         pnRight.add(lblMaHang);
         lblMaHang.setBounds(20, 60, 360, 20);
 
-        txtMaHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(txtMaHang);
-        txtMaHang.setBounds(20, 80, 360, 35);
+        txtTenHang.setBackground(new java.awt.Color(240, 240, 240));
+        txtTenHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtTenHang);
+        txtTenHang.setBounds(20, 150, 360, 35);
 
         lblTenHang.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTenHang.setForeground(new java.awt.Color(35, 30, 48));
         lblTenHang.setText("Tên hạng (*)");
         pnRight.add(lblTenHang);
         lblTenHang.setBounds(20, 130, 360, 20);
-
-        cbxTenHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        cbxTenHang.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Không có", "Đồng", "Bạc", "Vàng", "Kim cương" }));
-        pnRight.add(cbxTenHang);
-        cbxTenHang.setBounds(20, 150, 360, 35);
 
         lblPhanTram.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblPhanTram.setForeground(new java.awt.Color(35, 30, 48));
@@ -285,6 +340,11 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
         pnRight.add(btnCapNhat);
         btnCapNhat.setBounds(20, 350, 360, 35);
 
+        txtMaHang.setBackground(new java.awt.Color(240, 240, 240));
+        txtMaHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtMaHang);
+        txtMaHang.setBounds(20, 80, 360, 35);
+
         pnMain.add(pnRight);
         pnRight.setBounds(10, 70, 400, 540);
 
@@ -307,9 +367,9 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
             }
             if (selectedHang != null) {
                 txtMaHang.setText(selectedHang.getMaHangThanhVien());
-                cbxTenHang.setSelectedItem(selectedHang.getTenHangThanhVien());
+                txtTenHang.setText(selectedHang.getTenHangThanhVien());
                 spnPhanTram.setValue(selectedHang.getPhanTramTienGiam() != null ? selectedHang.getPhanTramTienGiam() : 0.0);
-                txtChiTieu.setText(String.format("%.0f", selectedHang.getTongChiTieuToiThieu()));
+                txtChiTieu.setText(String.format("%,.0f", selectedHang.getTongChiTieuToiThieu()));
             }
         }
     }
@@ -319,7 +379,6 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
     private javax.swing.JButton btnCapNhat;
     private javax.swing.JButton btnLamMoi;
     private javax.swing.JButton btnTimKiem;
-    private javax.swing.JComboBox<String> cbxTenHang;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblChiTieu;
     private javax.swing.JLabel lblDetailTitle;
@@ -337,6 +396,7 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
     private javax.swing.JTable tblHangTV;
     private javax.swing.JTextField txtChiTieu;
     private javax.swing.JTextField txtMaHang;
+    private javax.swing.JTextField txtTenHang;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
 }

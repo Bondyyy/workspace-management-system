@@ -143,9 +143,7 @@ public class PhienLamViecService {
         return phienDAO.xoaPhien(maPhien);
     }
 
-    public boolean capNhatPhien(String maPhien, String trangThai, String tenKH) {
-        return phienDAO.capNhatPhien(maPhien, trangThai, tenKH);
-    }
+
 
     private void guiEmailXacNhanDatCho(String maDatCho, String maPhien) {
         ThongTinXacNhanDatChoDTO thongTin = phienDAO.layThongTinXacNhanDatCho(maDatCho, maPhien);

@@ -18,10 +18,12 @@ public class HoaDonDAO {
     public List<HoaDonDTO> layDanhSachHoaDon(String searchText, String statusFilter) {
         List<HoaDonDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc "
+                "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc, "
+                        + "NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc "
                         +
                         "FROM HOADON h " +
                         "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
+                        "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
                         "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
                         "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                         "WHERE 1=1 ");
@@ -49,7 +51,7 @@ public class HoaDonDAO {
                 ps.setString(idx++, q);
                 ps.setString(idx++, q);
             }
-            if (statusFilter != null && !statusFilter.equals("Tất cả") && !statusFilter.equals("Chưa thanh toán")) {
+            if (statusFilter != null && !statusFilter.equals("Tất cả") && !statusFilter.equals("Chưa thanh toán") && !statusFilter.equals("Đã thanh toán")) {
                 ps.setString(idx++, statusFilter);
             }
 
@@ -58,6 +60,7 @@ public class HoaDonDAO {
                     HoaDonDTO hd = new HoaDonDTO();
                     hd.setMaHoaDon(rs.getString("MaHoaDon"));
                     hd.setSoHD(rs.getString("SoHD"));
+                    hd.setSoTienDaTraTruoc(rs.getDouble("SoTienDaTraTruoc"));
 
                     double tt = rs.getDouble("TongTien");
                     double thanh = rs.getDouble("ThanhTien");
@@ -124,13 +127,14 @@ public class HoaDonDAO {
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
         ThongTinHoaDonDTO thongTin = null;
         String sqlChung = "SELECT h.MaHoaDon, h.TongTien, h.ThanhTien, p.MaPhien, " +
-                "p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, " +
-                "nd.HoTen AS HoTenKH, kg.TenKG " +
+                "p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, " +
+                "nd.HoTen AS HoTenKH, kg.TenKG, NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc " +
                 "FROM HOADON h " +
                 "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                 "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
                 "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                 "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
                 "WHERE h.MaHoaDon = ?";
 
         String sqlDichVu = "SELECT dv.TenDV, ct.SoLuong, dv.DonGia " +
@@ -157,6 +161,8 @@ public class HoaDonDAO {
                     thongTin.setThanhTien(thanh);
                     thongTin.setMaPhien(rsChung.getString("MaPhien"));
                     thongTin.setTrangThaiPhien(rsChung.getString("TrangThaiPhien"));
+                    thongTin.setTrangThaiThanhToan(rsChung.getString("TrangThaiThanhToan"));
+                    thongTin.setSoTienDaTraTruoc(rsChung.getDouble("SoTienDaTraTruoc"));
 
                     Timestamp tBD = rsChung.getTimestamp("ThoiGianBatDau");
                     Timestamp tKT = rsChung.getTimestamp("ThoiGianKetThuc");

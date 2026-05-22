@@ -15,18 +15,40 @@ public class ChanXacThuc implements HandlerInterceptor {
             throws Exception {
         HttpSession session = request.getSession(false);
         NguoiDungPhien user = session == null ? null : (NguoiDungPhien) session.getAttribute("user");
+        String path = request.getRequestURI();
 
         if (user == null) {
+            if (path.startsWith("/staff/api")) {
+                ghiLoiJson(response, HttpServletResponse.SC_UNAUTHORIZED, "Phiên đăng nhập nhân viên đã hết hạn.");
+                return false;
+            }
             response.sendRedirect("/dangNhap");
             return false;
         }
 
-        String path = request.getRequestURI();
         if (path.startsWith("/staff") && !user.laNhanVien()) {
+            if (path.startsWith("/staff/api")) {
+                ghiLoiJson(response, HttpServletResponse.SC_FORBIDDEN, "Tài khoản không có quyền nhận chỗ.");
+                return false;
+            }
             response.sendRedirect("/portal");
             return false;
         }
 
         return true;
+    }
+
+    private void ghiLoiJson(HttpServletResponse response, int status, String thongBao) throws java.io.IOException {
+        response.setStatus(status);
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"thanhCong\":false,\"thongBao\":\"" + thoatJson(thongBao) + "\"}");
+    }
+
+    private String thoatJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

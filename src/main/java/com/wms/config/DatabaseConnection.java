@@ -47,6 +47,7 @@ public class DatabaseConnection {
 
             // Query kiem tra trang thai ket noi khoe manh
             config.setConnectionTestQuery("SELECT 1 FROM DUAL");
+            config.setConnectionInitSql("ALTER SESSION SET TIME_ZONE = '+07:00'");
 
             this.dataSource = new HikariDataSource(config);
             System.out.println("[DB] Khoi tao Pool ket noi HikariCP thanh cong!");

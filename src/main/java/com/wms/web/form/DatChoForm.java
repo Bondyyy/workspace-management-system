@@ -10,17 +10,17 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 
 public class DatChoForm {
-    @NotBlank(message = "Vui long chon khong gian.")
+    @NotBlank(message = "Vui lòng chọn không gian.")
     private String maKG;
 
-    @NotNull(message = "Vui long chon thoi gian den.")
-    @Future(message = "Thoi gian den phai o tuong lai.")
+    @NotNull(message = "Vui lòng chọn thời gian đến.")
+    @Future(message = "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime arrivalTime;
 
-    @NotNull(message = "Vui long chon so gio su dung.")
-    @Min(value = 1, message = "Toi thieu 1 gio.")
-    @Max(value = 8, message = "Toi da 8 gio cho ban demo.")
+    @NotNull(message = "Vui lòng chọn số giờ sử dụng.")
+    @Min(value = 1, message = "Tối thiểu 1 giờ.")
+    @Max(value = 8, message = "Tối đa 8 giờ cho bản demo.")
     private Integer durationHours;
 
     private String voucherCode;

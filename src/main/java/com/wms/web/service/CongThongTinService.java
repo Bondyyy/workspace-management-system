@@ -11,6 +11,8 @@ import com.wms.web.model.ChiNhanhView;
 import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.model.KhongGianView;
 import com.wms.web.model.PhieuGiamGiaView;
+import com.wms.web.model.KetQuaNhanChoBangQRView;
+import com.wms.web.model.ThongTinNhanChoBangQR;
 import com.wms.web.repository.CongThongTinWebRepository;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.EmailUtil;
@@ -25,6 +27,7 @@ import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +38,8 @@ import java.util.regex.Pattern;
 public class CongThongTinService {
 
     private static final Pattern MA_DAT_CHO_PATTERN = Pattern.compile("\\bDC\\d{3,12}\\b", Pattern.CASE_INSENSITIVE);
+    private static final ZoneId MUI_GIO_VIET_NAM = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final int SO_GIO_DAT_CHO_MAC_DINH = 2;
 
     private final CongThongTinWebRepository khoDuLieu;
 
@@ -106,23 +111,37 @@ public class CongThongTinService {
     public KhungGioDatCho khungGioDatChoMacDinh(ChiNhanhView branch) {
         LocalTime openTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianDongCua(), LocalTime.of(22, 0));
-        LocalDate today = LocalDate.now();
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime roundedStart = now.withMinute(0).withSecond(0).withNano(0);
-        if (now.getMinute() > 0 || now.getSecond() > 0 || now.getNano() > 0) {
-            roundedStart = roundedStart.plusHours(1);
+        LocalDateTime hienTai = layThoiGianHienTaiVietNam();
+        LocalDate ngayDat = hienTai.toLocalDate();
+        LocalTime gioBatDau;
+
+        if (hienTai.toLocalTime().isBefore(openTime)) {
+            gioBatDau = openTime;
+        } else if (!hienTai.toLocalTime().isBefore(closeTime)) {
+            ngayDat = ngayDat.plusDays(1);
+            gioBatDau = openTime;
+        } else {
+            gioBatDau = lamTronLenGioKeTiep(hienTai).toLocalTime();
         }
 
-        if (roundedStart.toLocalTime().isBefore(openTime)) {
-            roundedStart = LocalDateTime.of(today, openTime);
+        LocalTime gioKetThuc = gioBatDau.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
+        if (gioBatDau.isBefore(openTime)
+                || !gioBatDau.isBefore(closeTime)
+                || !gioKetThuc.isAfter(gioBatDau)
+                || gioKetThuc.isAfter(closeTime)) {
+            ngayDat = ngayDat.plusDays(1);
+            gioBatDau = openTime;
+            gioKetThuc = openTime.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
         }
 
-        if (!roundedStart.toLocalTime().plusHours(2).isAfter(closeTime)) {
-            return new KhungGioDatCho(roundedStart.toLocalDate(), roundedStart.toLocalTime(), roundedStart.toLocalTime().plusHours(2));
+        LocalDateTime thoiGianGoiY = LocalDateTime.of(ngayDat, gioBatDau);
+        if (!thoiGianGoiY.isAfter(hienTai)) {
+            ngayDat = hienTai.toLocalDate().plusDays(1);
+            gioBatDau = openTime;
+            gioKetThuc = openTime.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
         }
 
-        LocalDateTime tomorrowStart = LocalDateTime.of(today.plusDays(1), openTime);
-        return new KhungGioDatCho(tomorrowStart.toLocalDate(), tomorrowStart.toLocalTime(), tomorrowStart.toLocalTime().plusHours(2));
+        return new KhungGioDatCho(ngayDat, gioBatDau, gioKetThuc);
     }
 
     public List<String> layLuaChonGio(ChiNhanhView branch) {
@@ -244,6 +263,10 @@ public class CongThongTinService {
         }
     }
 
+    public boolean laThoiGianDatChoTrongTuongLai(LocalDateTime thoiGianDatCho) {
+        return thoiGianDatCho != null && thoiGianDatCho.isAfter(layThoiGianHienTaiVietNam());
+    }
+
     public ThanhToanDatChoView layThanhToanDatCho(NguoiDungPhien user, String maDatCho) {
         if (user == null || user.getMaKH() == null || user.getMaKH().isBlank()) {
             return null;
@@ -298,35 +321,126 @@ public class CongThongTinService {
     }
 
     @Transactional
+    public KetQuaNhanChoBangQRView nhanChoBangMaQR(String noiDungQR, NguoiDungPhien nhanVien) {
+        if (nhanVien == null || !nhanVien.laNhanVien()) {
+            return KetQuaNhanChoBangQRView.thatBai("Phiên đăng nhập nhân viên đã hết hạn.");
+        }
+        if (noiDungQR == null || noiDungQR.isBlank()) {
+            return KetQuaNhanChoBangQRView.thatBai("Nội dung QR không hợp lệ.");
+        }
+
+        String maQR = noiDungQR.trim();
+        Optional<ThongTinNhanChoBangQR> ketQuaTim = khoDuLieu.timDatChoTheoMaQRDeNhanCho(maQR);
+        if (ketQuaTim.isEmpty()) {
+            return KetQuaNhanChoBangQRView.thatBai("QR không tồn tại, đã hết hiệu lực hoặc đã được sử dụng.");
+        }
+
+        ThongTinNhanChoBangQR thongTin = ketQuaTim.get();
+        String trangThai = chuanHoa(thongTin.getTrangThaiDatTruoc());
+        if (trangThai.contains("su dung")) {
+            return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
+        }
+        if (!trangThai.contains("thanh toan thanh cong")) {
+            return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ chưa thanh toán thành công.");
+        }
+        if (khoDuLieu.daCoPhienTheoDatCho(thongTin.getMaDatCho())) {
+            return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
+        }
+
+        LocalDateTime bayGio = khoDuLieu.layThoiGianHeThong();
+        LocalDateTime gioDuKienToi = thongTin.getThoiGianDuKienToi();
+        if (gioDuKienToi == null) {
+            return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ thiếu thời gian dự kiến tới.");
+        }
+        if (bayGio.isBefore(gioDuKienToi)) {
+            return KetQuaNhanChoBangQRView.thatBai("Quá sớm, chưa đến giờ nhận chỗ hợp lệ.");
+        }
+        if (bayGio.isAfter(gioDuKienToi.plusHours(thongTin.laySoGioSuDungAnToan()))) {
+            return KetQuaNhanChoBangQRView.thatBai("Mã QR đã quá hạn nhận chỗ.");
+        }
+
+        String maPhien = taoMaPhienMoi();
+        try {
+            khoDuLieu.moPhienTuDatCho(maPhien, thongTin);
+            return KetQuaNhanChoBangQRView.thanhCong("Mở phiên thành công.", thongTin, maPhien);
+        } catch (RuntimeException ex) {
+            return KetQuaNhanChoBangQRView.thatBai(chuyenLoiNhanChoThanThien(ex));
+        }
+    }
+
+    private String taoMaPhienMoi() {
+        return khoDuLieu.taoMaPhienTiepTheo();
+    }
+
+    @Transactional
     public KetQuaWebhookThanhToan xuLyWebhookThanhToan(YeuCauWebhookThanhToan request) {
         if (request == null) {
             return new KetQuaWebhookThanhToan(false, "Webhook không có dữ liệu.");
         }
+        System.out.println("[CongThongTinService] Webhook thanh toán được gọi.");
         String maDatCho = tachMaDatCho(request.getNoiDung());
         if (maDatCho == null) {
+            System.err.println("[CongThongTinService] -> Webhook KHÔNG parse được MaDatCho từ nội dung: \"" + request.getNoiDung() + "\"");
             return new KetQuaWebhookThanhToan(false, "Không tìm thấy mã đặt chỗ trong nội dung chuyển khoản.");
+        } else {
+            System.out.println("[CongThongTinService] -> Webhook ĐÃ parse được MaDatCho: " + maDatCho);
         }
 
-        ThanhToanDatChoView payment = khoDuLieu.timThanhToanDatCho(maDatCho, null);
+        ThanhToanDatChoView payment;
+        try {
+            payment = khoDuLieu.timThanhToanDatChoForUpdate(maDatCho);
+        } catch (org.springframework.dao.PessimisticLockingFailureException ex) {
+            System.err.println("[CongThongTinService] -> Lỗi lock: Đặt chỗ đang được giao dịch khác xử lý. MaDatCho: " + maDatCho);
+            return new KetQuaWebhookThanhToan(false, "Đặt chỗ đang được giao dịch khác xử lý.", maDatCho);
+        } catch (org.springframework.dao.DataAccessException ex) {
+            if (ex.getMessage() != null && (ex.getMessage().contains("ORA-00054") || ex.getMessage().contains("lock"))) {
+                System.err.println("[CongThongTinService] -> Lỗi lock database ORA-00054: Đặt chỗ đang được giao dịch khác xử lý. MaDatCho: " + maDatCho);
+                return new KetQuaWebhookThanhToan(false, "Đặt chỗ đang được giao dịch khác xử lý.", maDatCho);
+            }
+            throw ex;
+        }
+
         if (payment == null) {
+            System.err.println("[CongThongTinService] -> Không tìm thấy đặt chỗ " + maDatCho + " trong hệ thống.");
             return new KetQuaWebhookThanhToan(false, "Không tìm thấy đặt chỗ " + maDatCho + ".", maDatCho);
         }
-        if (!chuanHoa(payment.getTrangThaiDatTruoc()).contains("cho thanh toan")) {
+
+        String normalizedStatus = chuanHoa(payment.getTrangThaiDatTruoc());
+        System.out.println("[CongThongTinService] -> Trạng thái trước khi xử lý: " + payment.getTrangThaiDatTruoc());
+
+        // Idempotent: check if already paid or used
+        if (normalizedStatus.contains("thanh cong") || normalizedStatus.contains("su dung")) {
+            System.out.println("[CongThongTinService] -> Đặt chỗ " + maDatCho + " đã Đã thanh toán thành công/Đã sử dụng. Trả success.");
+            System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: " + payment.getTrangThaiDatTruoc());
             return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.", maDatCho);
         }
 
-        if (!laTrangThaiWebhookThanhCong(request.getTrangThai())) {
-            return new KetQuaWebhookThanhToan(false, "Giao dịch ngân hàng chưa ở trạng thái thanh toán thành công.", maDatCho);
+        // Idempotent: check duplicate transaction ID
+        if (khoDuLieu.daTonTaiGiaoDich(maDatCho, request.getMaGiaoDich())) {
+            System.out.println("[CongThongTinService] -> Giao dịch trùng maGiaoDich: " + request.getMaGiaoDich() + ". Bỏ qua xử lý.");
+            System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: " + payment.getTrangThaiDatTruoc());
+            return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó với mã giao dịch này.", maDatCho);
         }
 
         BigDecimal expectedAmount = lamTronTienVnd(payment.getThanhTien());
         if (request.getSoTien() == null) {
+            System.err.println("[CongThongTinService] -> Thất bại: Webhook thiếu số tiền chuyển khoản.");
             return new KetQuaWebhookThanhToan(false, "Webhook thiếu số tiền chuyển khoản.", maDatCho);
         }
         BigDecimal paidAmount = lamTronTienVnd(request.getSoTien());
+        
+        System.out.println("[CongThongTinService] -> Số tiền webhook (soTien): " + paidAmount + " VNĐ");
+        System.out.println("[CongThongTinService] -> ThanhTien trong DATCHO: " + expectedAmount + " VNĐ");
+
+        if (!laTrangThaiWebhookThanhCong(request.getTrangThai())) {
+            System.err.println("[CongThongTinService] -> Thất bại: Trạng thái webhook không thành công: " + request.getTrangThai());
+            return new KetQuaWebhookThanhToan(false, "Giao dịch ngân hàng chưa ở trạng thái thanh toán thành công.", maDatCho);
+        }
+
         if (paidAmount.compareTo(expectedAmount) < 0) {
             String reason = "Số tiền chuyển khoản chưa đủ. Cần "
                     + dinhDangTien(expectedAmount) + ", nhận " + dinhDangTien(paidAmount) + ".";
+            System.err.println("[CongThongTinService] -> Thất bại: " + reason);
             return new KetQuaWebhookThanhToan(false, reason, maDatCho);
         }
 
@@ -342,8 +456,14 @@ public class CongThongTinService {
                         + " với số tiền " + dinhDangTien(paidAmount) + "."
         );
         if (!confirmed) {
+            System.out.println("[CongThongTinService] -> Đặt chỗ " + maDatCho + " đã được xử lý song song bởi giao dịch khác.");
+            System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: Đã thanh toán thành công");
             return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.", maDatCho);
         }
+
+        System.out.println("[CongThongTinService] -> Xác nhận thanh toán thành công cho " + maDatCho);
+        System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: Đã thanh toán thành công");
+
         thongTin.setMaQR(maQR);
         boolean emailSent = guiEmailXacNhanDatCho(thongTin);
         String message = emailSent
@@ -358,8 +478,13 @@ public class CongThongTinService {
         List<ThongTinXacNhanDatChoDTO> expiredBookings = khoDuLieu.timDatChoChoThanhToanDaHetHan();
         for (ThongTinXacNhanDatChoDTO thongTin : expiredBookings) {
             String reason = "Chưa nhận được thanh toán sau 10 phút giữ chỗ.";
-            if (khoDuLieu.ghiNhanThanhToanDatChoThatBai(thongTin.getMaDatCho(), reason)) {
+            System.out.println("[Scheduler] Phát hiện đặt chỗ hết hạn: " + thongTin.getMaDatCho() + ", trạng thái hiện tại: Đang chờ thanh toán");
+            boolean success = khoDuLieu.ghiNhanThanhToanDatChoThatBai(thongTin.getMaDatCho(), reason);
+            if (success) {
+                System.out.println("[Scheduler] -> Cập nhật thành công sang Thanh toán không thành công cho MaDatCho: " + thongTin.getMaDatCho() + " (rowsAffected = 1)");
                 guiEmailThanhToanThatBai(thongTin, reason);
+            } else {
+                System.out.println("[Scheduler] -> bỏ qua vì trạng thái đã thay đổi cho MaDatCho: " + thongTin.getMaDatCho() + " (rowsAffected = 0)");
             }
         }
     }
@@ -374,6 +499,27 @@ public class CongThongTinService {
 
     private String chuoiAnToan(String value) {
         return value == null || value.isBlank() ? "không có mã giao dịch" : value.trim();
+    }
+
+    private String chuyenLoiNhanChoThanThien(RuntimeException ex) {
+        String message = ex.getMessage() == null ? "" : ex.getMessage();
+        String normalized = chuanHoa(message);
+        if (normalized.contains("qua som") || normalized.contains("chua den gio")) {
+            return "Quá sớm, chưa đến giờ nhận chỗ hợp lệ.";
+        }
+        if (normalized.contains("qua han")) {
+            return "Mã QR đã quá hạn nhận chỗ.";
+        }
+        if (normalized.contains("da duoc su dung") || normalized.contains("da su dung")) {
+            return "Mã QR này đã được sử dụng.";
+        }
+        if (normalized.contains("chua thanh toan") || normalized.contains("giao dich that bai")) {
+            return "Đặt chỗ chưa thanh toán thành công.";
+        }
+        if (normalized.contains("khong gian")) {
+            return "Không gian chưa sẵn sàng để mở phiên.";
+        }
+        return "Không thể mở phiên từ mã QR này.";
     }
 
     private boolean laTrangThaiWebhookThanhCong(String status) {
@@ -412,10 +558,10 @@ public class CongThongTinService {
 
     private void kiemTraThoiGianDatCho(LocalDateTime arrivalTime, Integer durationHours) {
         if (arrivalTime == null || durationHours == null || durationHours < 1) {
-            throw new IllegalArgumentException("Vui long chon thoi gian den va thoi gian roi hop le.");
+            throw new IllegalArgumentException("Vui lòng chọn thời gian đến và thời gian rời hợp lệ.");
         }
-        if (arrivalTime.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Thoi gian den phai o tuong lai.");
+        if (!laThoiGianDatChoTrongTuongLai(arrivalTime)) {
+            throw new IllegalArgumentException("Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.");
         }
     }
 
@@ -445,6 +591,18 @@ public class CongThongTinService {
         } catch (RuntimeException ex) {
             return fallback;
         }
+    }
+
+    private LocalDateTime layThoiGianHienTaiVietNam() {
+        return LocalDateTime.now(MUI_GIO_VIET_NAM);
+    }
+
+    private LocalDateTime lamTronLenGioKeTiep(LocalDateTime thoiGian) {
+        LocalDateTime ketQua = thoiGian.withMinute(0).withSecond(0).withNano(0);
+        if (thoiGian.getMinute() > 0 || thoiGian.getSecond() > 0 || thoiGian.getNano() > 0) {
+            ketQua = ketQua.plusHours(1);
+        }
+        return ketQua;
     }
 
     public Optional<byte[]> layAnhQrDatChoPng(String maKH, String maDatCho) {

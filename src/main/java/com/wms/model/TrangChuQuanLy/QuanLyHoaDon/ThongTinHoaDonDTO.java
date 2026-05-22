@@ -14,7 +14,9 @@ public class ThongTinHoaDonDTO {
     private double thanhTien;
     private String maPhien;
     private String trangThaiPhien;
+    private String trangThaiThanhToan;
     private List<DichVuDaDungDTO> danhSachDichVu;
+    private double soTienDaTraTruoc;
 
     public ThongTinHoaDonDTO() {
         this.danhSachDichVu = new ArrayList<>();
@@ -40,4 +42,8 @@ public class ThongTinHoaDonDTO {
     public void setMaPhien(String maPhien) { this.maPhien = maPhien; }
     public String getTrangThaiPhien() { return trangThaiPhien; }
     public void setTrangThaiPhien(String trangThaiPhien) { this.trangThaiPhien = trangThaiPhien; }
+    public String getTrangThaiThanhToan() { return trangThaiThanhToan; }
+    public void setTrangThaiThanhToan(String trangThaiThanhToan) { this.trangThaiThanhToan = trangThaiThanhToan; }
+    public double getSoTienDaTraTruoc() { return soTienDaTraTruoc; }
+    public void setSoTienDaTraTruoc(double soTienDaTraTruoc) { this.soTienDaTraTruoc = soTienDaTraTruoc; }
 }

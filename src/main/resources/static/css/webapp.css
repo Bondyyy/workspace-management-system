@@ -152,6 +152,44 @@ hr {
     background: #fff0f1;
 }
 
+.flash.warning {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.form-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.form-hint.warning {
+    color: #b45309;
+}
+
+.form-hint.error {
+    color: #dc2626;
+}
+
+.booking-panel-alert {
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 700;
+}
+
+.booking-panel-alert.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.booking-panel-alert.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
 /* Public and auth pages */
 .site-header,
 .dashboard-header {
@@ -552,6 +590,167 @@ hr {
 .booking-table th {
     background: linear-gradient(#f8f9fb, #d8dde4);
     font-weight: 700;
+}
+
+.hienThiBangDieuKhien-page {
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+.hienThiBangDieuKhien-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 28px 6vw 18px;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+}
+
+.hienThiBangDieuKhien-header h1 {
+    margin: 4px 0 8px;
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+}
+
+.hienThiBangDieuKhien-header p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.hienThiBangDieuKhien-grid {
+    display: grid;
+    gap: 24px;
+    padding: 24px 6vw 48px;
+}
+
+.hienThiBangDieuKhien-grid.single-column {
+    grid-template-columns: 1fr;
+}
+
+.wide-panel {
+    width: 100%;
+}
+
+.small-button {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 0.88rem;
+}
+
+.khung-quet-qr {
+    display: grid;
+    gap: 22px;
+}
+
+.quet-qr-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(280px, 380px);
+    gap: 22px;
+    align-items: start;
+}
+
+.vung-camera-qr {
+    min-height: 380px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid #f1d9e4;
+    border-radius: var(--radius);
+    background:
+        repeating-linear-gradient(45deg, rgba(239, 92, 151, 0.06) 0 1px, transparent 1px 14px),
+        #fff;
+}
+
+.vung-camera-qr #khung-camera-qr {
+    width: min(100%, 540px);
+    min-height: 340px;
+}
+
+.ket-qua-quet-qr {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid #f1d9e4;
+    border-radius: var(--radius);
+    background: #fff8fb;
+}
+
+.ket-qua-quet-qr .status-pill {
+    width: auto;
+    justify-self: start;
+}
+
+.ket-qua-quet-qr p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.ket-qua-thanh-cong {
+    border-color: #b7e0c4;
+    background: #eefaf1;
+}
+
+.ket-qua-thanh-cong p {
+    color: #12633a;
+    font-weight: 850;
+}
+
+.ket-qua-that-bai {
+    border-color: #ffd1df;
+    background: #fff4f8;
+}
+
+.ket-qua-that-bai p {
+    color: #b81f2d;
+    font-weight: 850;
+}
+
+.ket-qua-chi-tiet {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+}
+
+.ket-qua-chi-tiet div {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(18, 99, 58, 0.16);
+}
+
+.ket-qua-chi-tiet div:last-child {
+    border-bottom: 0;
+}
+
+.ket-qua-chi-tiet dt,
+.ket-qua-chi-tiet dd {
+    margin: 0;
+}
+
+.ket-qua-chi-tiet dt {
+    color: var(--muted);
+    font-weight: 800;
+}
+
+.ket-qua-chi-tiet dd {
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.nhap-qr-thu-cong {
+    display: grid;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.manual-qr-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 12px;
+    align-items: center;
 }
 
 .empty-state {
@@ -2232,6 +2431,17 @@ hr {
 
     .member-nav a {
         min-height: 52px;
+    }
+
+    .hienThiBangDieuKhien-header,
+    .quet-qr-layout,
+    .manual-qr-row {
+        grid-template-columns: 1fr;
+    }
+
+    .hienThiBangDieuKhien-header {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .branch-actions {

@@ -52,7 +52,7 @@ public class KhongGianDAO {
     }
 
     public KhongGianDTO layTheoMa(String maKG) {
-        String sql = "SELECT kg.MaKG, kg.TenKG, kg.TrangThaiKG, kg.ViTri, kg.MaLoaiKG, lkg.TenLoaiKG, " +
+        String sql = "SELECT kg.MaKG, kg.TenKG, kg.TrangThaiKG, kg.ViTri, kg.MaLoaiKG, lkg.TenLoaiKG, lkg.TrangThai AS TrangThaiLoaiKG, " +
                 "kg.MaCN, cn.TenCN, kg.ToaDoX, kg.ToaDoY, kg.ChieuDai, kg.ChieuRong, lkg.DonGiaTheoGio " +
                 "FROM KHONGGIAN kg " +
                 "LEFT JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG " +
@@ -72,7 +72,7 @@ public class KhongGianDAO {
 
     public List<KhongGianDTO> timKiem(String tuKhoa, String maCN, String maLoaiKG) {
         StringBuilder sql = new StringBuilder(
-            "SELECT kg.MaKG, kg.TenKG, kg.TrangThaiKG, kg.ViTri, kg.MaLoaiKG, lkg.TenLoaiKG, " +
+            "SELECT kg.MaKG, kg.TenKG, kg.TrangThaiKG, kg.ViTri, kg.MaLoaiKG, lkg.TenLoaiKG, lkg.TrangThai AS TrangThaiLoaiKG, " +
             "kg.MaCN, cn.TenCN, kg.ToaDoX, kg.ToaDoY, kg.ChieuDai, kg.ChieuRong, lkg.DonGiaTheoGio " +
             "FROM KHONGGIAN kg " +
             "LEFT JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG " +
@@ -124,8 +124,8 @@ public class KhongGianDAO {
             ps.setString(4, dto.getViTri());
             ps.setString(5, dto.getMaLoaiKG());
             ps.setString(6, dto.getMaCN());
-            ps.setInt(7, dto.getToaDoX());
-            ps.setInt(8, dto.getToaDoY());
+            if (dto.getToaDoX() != null) ps.setInt(7, dto.getToaDoX()); else ps.setNull(7, Types.NUMERIC);
+            if (dto.getToaDoY() != null) ps.setInt(8, dto.getToaDoY()); else ps.setNull(8, Types.NUMERIC);
             ps.setInt(9, dto.getChieuDai());
             ps.setInt(10, dto.getChieuRong());
             return ps.executeUpdate() > 0;
@@ -144,8 +144,8 @@ public class KhongGianDAO {
             ps.setString(2, dto.getViTri());
             ps.setString(3, dto.getMaLoaiKG());
             ps.setString(4, dto.getTrangThaiKG());
-            ps.setInt(5, dto.getToaDoX());
-            ps.setInt(6, dto.getToaDoY());
+            if (dto.getToaDoX() != null) ps.setInt(5, dto.getToaDoX()); else ps.setNull(5, Types.NUMERIC);
+            if (dto.getToaDoY() != null) ps.setInt(6, dto.getToaDoY()); else ps.setNull(6, Types.NUMERIC);
             ps.setInt(7, dto.getChieuDai());
             ps.setInt(8, dto.getChieuRong());
             ps.setString(9, dto.getMaKG().trim());
@@ -235,9 +235,12 @@ public class KhongGianDAO {
         dto.setMaLoaiKG(rs.getString("MaLoaiKG"));
         dto.setMaCN(rs.getString("MaCN"));
         dto.setTenLoaiKG(rs.getString("TenLoaiKG"));
+        dto.setTrangThaiLoaiKG(rs.getString("TrangThaiLoaiKG"));
         dto.setTenCN(rs.getString("TenCN"));
-        dto.setToaDoX(rs.getInt("ToaDoX"));
-        dto.setToaDoY(rs.getInt("ToaDoY"));
+        int x = rs.getInt("ToaDoX");
+        dto.setToaDoX(rs.wasNull() ? null : x);
+        int y = rs.getInt("ToaDoY");
+        dto.setToaDoY(rs.wasNull() ? null : y);
         dto.setChieuDai(rs.getInt("ChieuDai"));
         dto.setChieuRong(rs.getInt("ChieuRong"));
         dto.setDonGia(rs.getDouble("DonGiaTheoGio"));

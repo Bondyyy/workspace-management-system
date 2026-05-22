@@ -22,9 +22,8 @@ public class QuanLyKhoDao {
     public List<DichVuDTO> layDanhSachKho(String keyword) {
         List<DichVuDTO> list = new ArrayList<>();
         String sql = "{CALL SP_LayDanhSachKho(?, ?)}";
-        Connection conn = getConn();
-        if (conn == null) return list;
-        try (CallableStatement cstmt = conn.prepareCall(sql)) {
+        try (Connection conn = getConn();
+             CallableStatement cstmt = conn.prepareCall(sql)) {
             if (keyword == null || keyword.trim().isEmpty()) cstmt.setNull(1, Types.VARCHAR);
             else cstmt.setString(1, keyword.trim());
             cstmt.registerOutParameter(2, OracleTypes.CURSOR);
@@ -61,13 +60,9 @@ public class QuanLyKhoDao {
 
     public boolean nhapKhoDichVu(String maDV, String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
         String sql = "{CALL SP_NhapKhoDichVu(?, ?, ?, ?, ?, ?, ?, ?)}";
-        Connection conn = getConn();
-        if (conn == null) {
-            System.err.println("[QuanLyKhoDao] Khong co ket noi database!");
-            return false;
-        }
         System.out.println("[QuanLyKhoDao] Bat dau nhapKhoDichVu: maDV=" + maDV + ", tenDV=" + tenDV + ", tenLoaiDV=" + tenLoaiDV + ", soLuong=" + soLuong + ", giaNhap=" + giaNhap);
-        try (CallableStatement cstmt = conn.prepareCall(sql)) {
+        try (Connection conn = getConn();
+             CallableStatement cstmt = conn.prepareCall(sql)) {
             if (maDV == null || maDV.trim().isEmpty()) cstmt.setNull(1, Types.VARCHAR);
             else cstmt.setString(1, maDV.trim());
             cstmt.setString(2, tenNV);

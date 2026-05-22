@@ -11,7 +11,8 @@ BEGIN
     sp_MoPhienLamViecTrucTiep(
         p_MaKG => '&&MA_KG',
         p_MaKH => '&&MA_KH',
-        p_ThoiGianDuKien => SYSTIMESTAMP + INTERVAL '2' HOUR,
+        p_ThoiGianBatDau => CURRENT_TIMESTAMP,
+        p_ThoiGianDuKien => CURRENT_TIMESTAMP + INTERVAL '2' HOUR,
         p_MaPhien => '&&MA_PHIEN',
         p_MaDatCho => NULL,
         p_outMessage => v_message

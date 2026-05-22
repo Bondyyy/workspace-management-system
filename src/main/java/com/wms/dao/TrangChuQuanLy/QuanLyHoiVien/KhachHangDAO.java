@@ -23,7 +23,7 @@ public class KhachHangDAO {
                 "FROM KHACHHANG kh " +
                 "JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                 "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
-                "WHERE kh.MaKH NOT LIKE 'KH_ADMIN_%' " +
+                "WHERE kh.MaKH NOT LIKE 'KH_ADMIN%' " +
                 "AND NOT EXISTS (SELECT 1 FROM NHANVIEN nv WHERE nv.MaND = kh.MaND) " +
                 "ORDER BY kh.MaKH DESC";
 
@@ -61,7 +61,7 @@ public class KhachHangDAO {
                 "FROM KHACHHANG kh " +
                 "JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                 "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
-                "WHERE kh.MaKH NOT LIKE 'KH_ADMIN_%' " +
+                "WHERE kh.MaKH NOT LIKE 'KH_ADMIN%' " +
                 "AND NOT EXISTS (SELECT 1 FROM NHANVIEN nv WHERE nv.MaND = kh.MaND) " +
                 "AND (nd.HoTen LIKE ? OR nd.SDT LIKE ? OR nd.Email LIKE ?) " +
                 "ORDER BY kh.MaKH DESC";
@@ -107,7 +107,7 @@ public class KhachHangDAO {
                 "FROM KHACHHANG kh " +
                 "JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                 "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
-                "WHERE kh.MaKH NOT LIKE 'KH_ADMIN_%' " +
+                "WHERE kh.MaKH NOT LIKE 'KH_ADMIN%' " +
                 "AND NOT EXISTS (SELECT 1 FROM NHANVIEN nv WHERE nv.MaND = kh.MaND) " +
                 "AND nd.SDT = ? " +
                 "ORDER BY kh.MaKH DESC";
@@ -157,10 +157,16 @@ public class KhachHangDAO {
     }
 
     public String taoMaKHMoi(Connection conn) throws SQLException {
-        boolean isStandalone = (conn == null);
-        Connection localConn = isStandalone ? getConn() : conn;
+        if (conn == null) {
+            try (Connection localConn = getConn()) {
+                return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
+            } catch (SQLException e) {
+                System.err.println("[KhachHangDAO] Lỗi tạo mã mới: " + e.getMessage());
+            }
+            return "HV000001";
+        }
         try {
-            return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
+            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
         } catch (SQLException e) {
             System.err.println("[KhachHangDAO] Lỗi tạo mã mới: " + e.getMessage());
         }

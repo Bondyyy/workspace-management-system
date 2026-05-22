@@ -160,13 +160,13 @@ public final class TienIchFormQuanLy {
         cauHinh.put("QuanLyHangTVForm", cauHinh(
                 null, "btnSua", "tblHangTV",
                 ten(),
-                ten("txtMaHang", "cbxTenHang", "spnPhanTram", "txtChiTieu"),
-                ten("cbxTenHang", "spnPhanTram", "txtChiTieu")));
+                ten("txtMaHang", "txtTenHang", "spnPhanTram", "txtChiTieu"),
+                ten("txtTenHang", "spnPhanTram", "txtChiTieu")));
         cauHinh.put("QuanLyHangThanhVienForm", cauHinh(
                 null, "btnCapNhat", "tblHangTV",
                 ten(),
-                ten("txtMaHang", "cbxTenHang", "spnPhanTram", "txtChiTieu"),
-                ten("cbxTenHang", "spnPhanTram", "txtChiTieu")));
+                ten("txtMaHang", "txtTenHang", "spnPhanTram", "txtChiTieu"),
+                ten("txtTenHang", "spnPhanTram", "txtChiTieu")));
         cauHinh.put("QuanLyVaiTroForm", cauHinh(
                 "btnThemMoi", "btnCapNhat", "tblNhomQuyen",
                 ten("txtTenNhom"),

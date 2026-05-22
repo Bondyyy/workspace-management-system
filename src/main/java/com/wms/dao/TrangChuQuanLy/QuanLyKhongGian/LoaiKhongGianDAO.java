@@ -73,16 +73,40 @@ public class LoaiKhongGianDAO {
 
     public boolean capNhat(LoaiKhongGianDTO dto) {
         String sql = "UPDATE LOAIKHONGGIAN SET TenLoaiKG = ?, SucChua = ?, DonGiaTheoGio = ?, TrangThai = ? WHERE MaLoaiKG = ?";
-        try (Connection conn = getConn();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, dto.getTenLoaiKG());
-            if (dto.getSucChua() != null) ps.setInt(2, dto.getSucChua());
-            else ps.setNull(2, Types.INTEGER);
-            if (dto.getDonGiaTheoGio() != null) ps.setDouble(3, dto.getDonGiaTheoGio());
-            else ps.setNull(3, Types.DOUBLE);
-            ps.setString(4, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động");
-            ps.setString(5, dto.getMaLoaiKG());
-            return ps.executeUpdate() > 0;
+        boolean autoCommit = true;
+        try (Connection conn = getConn()) {
+            autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, dto.getTenLoaiKG());
+                if (dto.getSucChua() != null) ps.setInt(2, dto.getSucChua());
+                else ps.setNull(2, Types.INTEGER);
+                if (dto.getDonGiaTheoGio() != null) ps.setDouble(3, dto.getDonGiaTheoGio());
+                else ps.setNull(3, Types.DOUBLE);
+                
+                String trangThai = dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động";
+                ps.setString(4, trangThai);
+                ps.setString(5, dto.getMaLoaiKG());
+                boolean success = ps.executeUpdate() > 0;
+                
+                // Nếu trạng thái là Ngừng hoạt động, gỡ tất cả các không gian của loại này khỏi sơ đồ
+                if (success && "Ngừng hoạt động".equals(trangThai)) {
+                    String sqlRemoveSpace = "UPDATE KHONGGIAN SET ToaDoX = NULL, ToaDoY = NULL WHERE MaLoaiKG = ?";
+                    try (PreparedStatement psRemove = conn.prepareStatement(sqlRemoveSpace)) {
+                        psRemove.setString(1, dto.getMaLoaiKG());
+                        psRemove.executeUpdate();
+                    }
+                }
+                
+                conn.commit();
+                return success;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(autoCommit);
+            }
         } catch (SQLException e) {
             System.err.println("[LoaiKhongGianDAO] Lỗi cập nhật: " + e.getMessage());
             return false;

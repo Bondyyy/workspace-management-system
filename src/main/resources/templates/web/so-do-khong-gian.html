@@ -75,7 +75,12 @@
         <aside class="booking-side">
             <h3>Đặt chỗ</h3>
 
+            <p class="booking-panel-alert error" th:if="${error}" th:text="${error}"></p>
+            <p class="booking-panel-alert warning" th:if="${canhBao}" th:text="${canhBao}"></p>
+            <p id="thongBaoDatCho" class="form-hint warning" style="display:none;"></p>
+
             <form th:action="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}" method="get" id="timeFilterForm" class="form-grid">
+                <input type="hidden" name="canhBao" id="canhBaoThoiGian">
                 <label>
                     Chi nhánh
                     <input type="text" th:value="${branch.tenCN}" readonly>
@@ -140,11 +145,15 @@
     const startInput = document.getElementById("startHour");
     const endInput = document.getElementById("endHour");
     const timeFilterForm = document.getElementById("timeFilterForm");
+    const bookingForm = document.getElementById("mapBookingForm");
+    const canhBaoThoiGianInput = document.getElementById("canhBaoThoiGian");
+    const thongBaoDatCho = document.getElementById("thongBaoDatCho");
     const totalLabel = document.getElementById("estimateTotal");
     const continueButton = document.getElementById("continueButton");
     let selectedPrice = 0;
 
     function minutes(value) {
+        if (!value) return 0;
         const [hour, minute] = value.split(":").map(Number);
         return hour * 60 + minute;
     }
@@ -156,23 +165,65 @@
     function syncHiddenTime() {
         const startMinutes = minutes(startInput.value);
         const endMinutes = minutes(endInput.value);
-        const duration = Math.max(1, Math.round((endMinutes - startMinutes) / 60));
+        const duration = Math.max(0, Math.round((endMinutes - startMinutes) / 60));
         durationInput.value = duration;
         arrivalInput.value = dateInput.value + "T" + startInput.value;
         totalLabel.textContent = formatMoney(selectedPrice * duration);
     }
 
-    function reloadForTimeChange() {
-        nodes.forEach((node) => node.disabled = true);
-        continueButton.disabled = true;
+    function capNhatTrangThaiNutThanhToan() {
+        continueButton.disabled = !maKGInput.value;
+    }
+
+    function hienThongBaoDatCho(noiDung, loai) {
+        if (!thongBaoDatCho) return;
+        thongBaoDatCho.textContent = noiDung;
+        thongBaoDatCho.className = "form-hint " + (loai || "warning");
+        thongBaoDatCho.style.display = noiDung ? "block" : "none";
+    }
+
+    function xoaLuaChonKhongGian() {
+        nodes.forEach((node) => node.classList.remove("selected"));
+        selectedPrice = 0;
         maKGInput.value = "";
-        selectedInput.value = "Đang cập nhật khung giờ...";
-        if (minutes(endInput.value) <= minutes(startInput.value)) {
-            const options = Array.from(endInput.options);
-            const next = options.find((option) => minutes(option.value) > minutes(startInput.value));
-            if (next) endInput.value = next.value;
+        selectedInput.value = "Chưa chọn";
+        syncHiddenTime();
+        capNhatTrangThaiNutThanhToan();
+    }
+
+    function hienThongBaoCanChonLaiKhongGian() {
+        hienThongBaoDatCho("Bạn đã thay đổi thời gian. Vui lòng chọn lại không gian phù hợp với khung giờ mới.", "warning");
+    }
+
+    function kiemTraThoiGianHopLe() {
+        syncHiddenTime();
+        if (!dateInput.value || !startInput.value || !endInput.value) {
+            return "Vui lòng chọn đầy đủ ngày giờ đặt chỗ.";
         }
-        timeFilterForm.submit();
+        if (minutes(endInput.value) <= minutes(startInput.value)) {
+            return "Giờ kết thúc phải sau giờ bắt đầu.";
+        }
+        const thoiGianBatDau = new Date(dateInput.value + "T" + startInput.value + ":00");
+        if (Number.isNaN(thoiGianBatDau.getTime()) || thoiGianBatDau <= new Date()) {
+            return "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
+        }
+        return "";
+    }
+
+    function khiDoiThoiGian() {
+        xoaLuaChonKhongGian();
+        const loiThoiGian = kiemTraThoiGianHopLe();
+        if (loiThoiGian) {
+            hienThongBaoDatCho(loiThoiGian, "error");
+            return;
+        }
+        hienThongBaoCanChonLaiKhongGian();
+        nodes.forEach((node) => node.disabled = true);
+        selectedInput.value = "Đang cập nhật khung giờ...";
+        if (canhBaoThoiGianInput) {
+            canhBaoThoiGianInput.value = "chon-lai-khong-gian";
+        }
+        window.setTimeout(() => timeFilterForm.submit(), 250);
     }
 
     nodes.forEach((node) => {
@@ -183,13 +234,27 @@
             selectedPrice = Number(node.dataset.price || 0);
             maKGInput.value = node.dataset.id;
             selectedInput.value = node.dataset.name;
-            continueButton.disabled = false;
             syncHiddenTime();
+            capNhatTrangThaiNutThanhToan();
+            hienThongBaoDatCho("", "warning");
         });
     });
 
-    [dateInput, startInput, endInput].forEach((input) => input.addEventListener("change", reloadForTimeChange));
+    [dateInput, startInput, endInput].forEach((input) => input.addEventListener("change", khiDoiThoiGian));
+    bookingForm.addEventListener("submit", (event) => {
+        const loiThoiGian = kiemTraThoiGianHopLe();
+        if (loiThoiGian) {
+            event.preventDefault();
+            hienThongBaoDatCho(loiThoiGian, "error");
+            return;
+        }
+        if (!maKGInput.value) {
+            event.preventDefault();
+            hienThongBaoCanChonLaiKhongGian();
+        }
+    });
     syncHiddenTime();
+    capNhatTrangThaiNutThanhToan();
 </script>
 </body>
 </html>

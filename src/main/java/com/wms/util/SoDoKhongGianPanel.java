@@ -81,6 +81,7 @@ public class SoDoKhongGianPanel extends JPanel {
         // Vẽ các ô không gian
         if (danhSachKG != null) {
             for (KhongGianDTO kg : danhSachKG) {
+                if (kg.getToaDoX() == null || kg.getToaDoY() == null) continue;
                 gbc.gridx = kg.getToaDoX();
                 gbc.gridy = kg.getToaDoY();
                 gbc.gridwidth = kg.getChieuDai() > 0 ? kg.getChieuDai() : 1;

@@ -42,6 +42,9 @@ public class SuperAdminCreator {
 
                 DbLabels labels = loadDbLabels(conn);
 
+                // Dọn dẹp các tài khoản admin cũ dạng ND_ADMIN_[Timestamp] để tránh xung đột
+                cleanLegacyAdminData(conn, username.trim());
+
                 String maND = upsertAdminUser(conn, username.trim(), password.trim(), labels);
                 ensureAdminCustomer(conn, maND);
                 ensureAdminEmployee(conn, maND, labels);
@@ -57,6 +60,51 @@ public class SuperAdminCreator {
             }
         } catch (Exception e) {
             System.err.println("[!] LOI KHOI TAO SUPER ADMIN: " + e.getMessage());
+        }
+    }
+
+    private static void cleanLegacyAdminData(Connection conn, String username) throws Exception {
+        List<String> legacyMaNDs = new ArrayList<>();
+        // Tìm các mã ND admin cũ (chứa dấu gạch dưới và số timestamp hoặc khớp tài khoản nhưng không phải mã cố định)
+        String sqlSelect = "SELECT MaND FROM NGUOIDUNG WHERE (TenTaiKhoan = ? OR MaND LIKE 'ND_ADMIN_%') AND MaND <> 'ND_ADMIN'";
+        try (PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    legacyMaNDs.add(rs.getString("MaND"));
+                }
+            }
+        }
+
+        if (!legacyMaNDs.isEmpty()) {
+            System.out.println("[SuperAdminCreator] Dang don dep du lieu admin cu: " + legacyMaNDs);
+            for (String oldMaND : legacyMaNDs) {
+                // Xóa chi tiết vai trò
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM CHITIETVAITRO WHERE MaND = ?")) {
+                    ps.setString(1, oldMaND);
+                    ps.executeUpdate();
+                }
+                // Xóa nhân viên
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM NHANVIEN WHERE MaND = ?")) {
+                    ps.setString(1, oldMaND);
+                    ps.executeUpdate();
+                }
+                // Xóa khách hàng
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM KHACHHANG WHERE MaND = ?")) {
+                    ps.setString(1, oldMaND);
+                    ps.executeUpdate();
+                }
+                // Xóa người dùng
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM NGUOIDUNG WHERE MaND = ?")) {
+                    ps.setString(1, oldMaND);
+                    ps.executeUpdate();
+                }
+            }
+        }
+
+        // Xóa bất kỳ tài khoản khách hàng admin legacy nào bắt đầu bằng KH_ADMIN_
+        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM KHACHHANG WHERE MaKH LIKE 'KH_ADMIN_%' AND MaKH <> 'KH_ADMIN'")) {
+            ps.executeUpdate();
         }
     }
 
@@ -170,7 +218,7 @@ public class SuperAdminCreator {
             return maND;
         }
 
-        maND = "ND_ADMIN_" + System.currentTimeMillis();
+        maND = "ND_ADMIN";
         try (PreparedStatement ps = conn.prepareStatement("""
                 INSERT INTO NGUOIDUNG
                     (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, Email, SDT, GioiTinh, TrangThaiND,
@@ -205,7 +253,7 @@ public class SuperAdminCreator {
                         (MaKH, LoaiKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND)
                     VALUES (?, 'VIP', 'HTV00', 0, CURRENT_TIMESTAMP, ?)
                     """)) {
-                ps.setString(1, "KH_ADMIN_" + System.currentTimeMillis());
+                ps.setString(1, "KH_ADMIN");
                 ps.setString(2, maND);
                 ps.executeUpdate();
             }

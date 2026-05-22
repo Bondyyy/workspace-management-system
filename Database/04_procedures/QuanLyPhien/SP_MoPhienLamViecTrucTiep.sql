@@ -1,6 +1,7 @@
 CREATE OR REPLACE PROCEDURE sp_MoPhienLamViecTrucTiep (
     p_MaKG           IN  VARCHAR2,
     p_MaKH           IN  VARCHAR2,
+    p_ThoiGianBatDau IN  TIMESTAMP,
     p_ThoiGianDuKien IN  TIMESTAMP,
     p_MaPhien        IN  VARCHAR2,
     p_MaDatCho       IN  VARCHAR2,
@@ -48,13 +49,13 @@ BEGIN
         CapNhatLanCuoi
     ) VALUES (
         TRIM(p_MaPhien),
-        SYSTIMESTAMP,
+        p_ThoiGianBatDau,
         p_ThoiGianDuKien,
         'Đang hoạt động',
         TRIM(p_MaKG),
         TRIM(p_MaKH),
         NULLIF(TRIM(p_MaDatCho), ''),
-        SYSTIMESTAMP
+        CURRENT_TIMESTAMP
     );
 
     UPDATE KHONGGIAN
@@ -65,7 +66,7 @@ BEGIN
         UPDATE DATCHO
         SET TrangThaiDatTruoc = 'Đã sử dụng',
             MaQR = NULL,
-            CapNhatLanCuoi = SYSTIMESTAMP
+            CapNhatLanCuoi = CURRENT_TIMESTAMP
         WHERE MaDatCho = TRIM(p_MaDatCho);
     END IF;
 

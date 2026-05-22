@@ -17,6 +17,7 @@ public class HoaDonDTO {
     private java.sql.Timestamp thoiGianBatDauPhien;
     private java.sql.Timestamp thoiGianKetThucPhien;
     private java.sql.Timestamp thoiGianDuKienKetThucPhien;
+    private double soTienDaTraTruoc;
 
     public HoaDonDTO() {
     }
@@ -149,4 +150,11 @@ public class HoaDonDTO {
         this.thoiGianBatDauPhien = thoiGianBatDauPhien;
     }
 
+    public double getSoTienDaTraTruoc() {
+        return soTienDaTraTruoc;
+    }
+
+    public void setSoTienDaTraTruoc(double soTienDaTraTruoc) {
+        this.soTienDaTraTruoc = soTienDaTraTruoc;
+    }
 }

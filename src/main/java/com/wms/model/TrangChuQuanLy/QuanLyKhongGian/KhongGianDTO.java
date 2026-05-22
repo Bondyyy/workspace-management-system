@@ -7,15 +7,22 @@ public class KhongGianDTO {
     private String viTri;
     private String maLoaiKG;
     private String tenLoaiKG;
+    private String trangThaiLoaiKG;
     private String maCN;
     private String tenCN;
-    private int toaDoX;
-    private int toaDoY;
     private int chieuDai;
     private int chieuRong;
     private Double donGia;
 
     public KhongGianDTO() {}
+
+    public String getTrangThaiLoaiKG() {
+        return trangThaiLoaiKG;
+    }
+
+    public void setTrangThaiLoaiKG(String trangThaiLoaiKG) {
+        this.trangThaiLoaiKG = trangThaiLoaiKG;
+    }
 
     public Double getDonGia() { return donGia; }
     public void setDonGia(Double donGia) { this.donGia = donGia; }
@@ -84,19 +91,22 @@ public class KhongGianDTO {
         this.maCN = maCN;
     }
     
-    public int getToaDoX() {
+    private Integer toaDoX;
+    private Integer toaDoY;
+
+    public Integer getToaDoX() {
         return toaDoX;
     }
 
-    public void setToaDoX(int toaDoX) {
+    public void setToaDoX(Integer toaDoX) {
         this.toaDoX = toaDoX;
     }
 
-    public int getToaDoY() {
+    public Integer getToaDoY() {
         return toaDoY;
     }
 
-    public void setToaDoY(int toaDoY) {
+    public void setToaDoY(Integer toaDoY) {
         this.toaDoY = toaDoY;
     }
 

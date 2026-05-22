@@ -13,19 +13,19 @@ public final class MaTuDongUtil {
     }
 
     public enum MaDoiTuong {
-        NGUOI_DUNG("NGUOIDUNG", "MaND", "ND", 6),
-        KHACH_HANG("KHACHHANG", "MaKH", "HV", 6),
-        NHAN_VIEN("NHANVIEN", "MaNV", "NV", 6),
-        CHI_NHANH("CHINHANH", "MaCN", "CN", 6),
-        KHONG_GIAN("KHONGGIAN", "MaKG", "KG", 6),
-        LOAI_KHONG_GIAN("LOAIKHONGGIAN", "MaLoaiKG", "LKG", 6),
-        DICH_VU("DICHVU", "MaDV", "DV", 6),
-        LOAI_DICH_VU("LOAIDICHVU", "MaLoaiDV", "LDV", 6),
-        DAT_CHO("DATCHO", "MaDatCho", "DC", 6),
-        PHIEN_LAM_VIEC("PHIENLAMVIEC", "MaPhien", "PLV", 6),
-        HOA_DON("HOADON", "MaHoaDon", "HD", 6),
-        PHIEU_GIAM_GIA("PHIEUGIAMGIA", "MaPGG", "PGG", 6),
-        CHUNG_TU_NHAP_KHO("CHUNGTUNHAPKHO", "MaChungTu", "CT", 6);
+        NGUOI_DUNG("NGUOIDUNG", "MaND", "ND", 4),
+        KHACH_HANG("KHACHHANG", "MaKH", "HV", 4),
+        NHAN_VIEN("NHANVIEN", "MaNV", "NV", 4),
+        CHI_NHANH("CHINHANH", "MaCN", "CN", 4),
+        KHONG_GIAN("KHONGGIAN", "MaKG", "KG", 4),
+        LOAI_KHONG_GIAN("LOAIKHONGGIAN", "MaLoaiKG", "LKG", 4),
+        DICH_VU("DICHVU", "MaDV", "DV", 4),
+        LOAI_DICH_VU("LOAIDICHVU", "MaLoaiDV", "LDV", 4),
+        DAT_CHO("DATCHO", "MaDatCho", "DC", 4),
+        PHIEN_LAM_VIEC("PHIENLAMVIEC", "MaPhien", "PLV", 4),
+        HOA_DON("HOADON", "MaHoaDon", "HD", 4),
+        PHIEU_GIAM_GIA("PHIEUGIAMGIA", "MaPGG", "PGG", 4),
+        CHUNG_TU_NHAP_KHO("CHUNGTUNHAPKHO", "MaChungTu", "CT", 4);
 
         private final String tableName;
         private final String columnName;

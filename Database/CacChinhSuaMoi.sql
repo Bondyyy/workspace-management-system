@@ -14,3 +14,9 @@ ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_TrangThai
 
 ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_TrangThai
     CHECK (TrangThai IN ('Đang hoạt động', 'Ngừng hoạt động'));
+
+
+ALTER TABLE PHIENLAMVIEC drop CONSTRAINT CHK_PLV_TrangThai;
+
+ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai
+    CHECK (TrangThaiPhien IN ('Đang hoạt động', 'Đã kết thúc'));
