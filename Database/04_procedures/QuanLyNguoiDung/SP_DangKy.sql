@@ -42,9 +42,9 @@ BEGIN
         Email, SDT, GioiTinh, NgaySinh,
         ThoiGianTao, CapNhatLanCuoi, TrangThaiND
     ) VALUES (
-        p_MaND, p_TenTaiKhoan, p_MatKhauMaHoa,
+        NULLIF(TRIM(p_MaND), ''), p_TenTaiKhoan, p_MatKhauMaHoa,
         p_Email, p_SDT, p_GioiTinh, p_NgaySinh,
-        SYSTIMESTAMP, SYSTIMESTAMP, 'Đang hoạt động'
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Đang hoạt động'
     );
 
     COMMIT;

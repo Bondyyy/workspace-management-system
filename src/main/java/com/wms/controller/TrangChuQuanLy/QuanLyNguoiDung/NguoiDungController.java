@@ -158,7 +158,7 @@ public class NguoiDungController {
             loadData();
             clearForm();
         } catch (Exception e) {
-            showError(e.getMessage());
+            showError(e.getMessage(), e);
         }
     }
 
@@ -179,16 +179,12 @@ public class NguoiDungController {
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật thông tin người dùng thành công!");
             loadData();
         } catch (Exception e) {
-            showError(e.getMessage());
+            showError(e.getMessage(), e);
         }
     }
 
     public void clearForm() {
-        try {
-            view.getTxtMaND().setText(service.generateNextMaND());
-        } catch (SQLException e) {
-            view.getTxtMaND().setText("");
-        }
+        view.getTxtMaND().setText("");
         view.getTxtTaiKhoan().setText("");
         view.getTxtHoTen().setText("");
         view.getCbxGioiTinh().setSelectedIndex(0);
@@ -284,6 +280,10 @@ public class NguoiDungController {
     }
 
     private void showError(String msg) {
-        com.wms.util.MessageUtil.showError(view, msg);
+        com.wms.util.MessageUtil.showError(view, msg, null);
+    }
+
+    private void showError(String msg, Throwable t) {
+        com.wms.util.MessageUtil.showError(view, msg, t);
     }
 }

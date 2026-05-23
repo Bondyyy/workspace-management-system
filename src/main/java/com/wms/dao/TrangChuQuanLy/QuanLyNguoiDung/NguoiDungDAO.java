@@ -2,7 +2,6 @@ package com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
-import com.wms.util.MaTuDongUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -111,38 +110,55 @@ public class NguoiDungDAO {
     }
 
     public void themNguoiDung(NguoiDungDTO user, String hoTen) throws SQLException {
-        String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, Email, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
-                + "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        String sqlND = """
+                BEGIN
+                    INSERT INTO NGUOIDUNG (
+                        HoTen, TenTaiKhoan, MatKhauMaHoa, Email, SDT, GioiTinh, NgaySinh, AnhDaiDien,
+                        TrangThaiND, ThoiGianTao, CapNhatLanCuoi
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                    )
+                    RETURNING MaND INTO ?;
+                END;
+                """;
 
-        String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH) " +
-                "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?, 'Hội viên')";
+        String sqlKH = """
+                BEGIN
+                    INSERT INTO KHACHHANG (
+                        MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH
+                    ) VALUES (
+                        'HTV01', 0, CURRENT_TIMESTAMP, ?, 'Hội viên'
+                    )
+                    RETURNING MaKH INTO ?;
+                END;
+                """;
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             boolean autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
 
-                String maND = user.getMaND();
-                if (maND == null || maND.isEmpty()) {
-                    maND = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
+                String maND;
+                try (CallableStatement cs = conn.prepareCall(sqlND)) {
+                    cs.setString(1, hoTen);
+                    cs.setString(2, user.getTenTaiKhoan());
+                    cs.setString(3, user.getMatKhauMaHoa());
+                    cs.setString(4, user.getEmail());
+                    cs.setString(5, user.getSdt());
+                    cs.setString(6, user.getGioiTinh());
+                    cs.setDate(7, user.getNgaySinh());
+                    cs.setBytes(8, user.getAnhDaiDien());
+                    cs.setString(9, user.getTrangThaiND() != null ? user.getTrangThaiND() : "Đang hoạt động");
+                    cs.registerOutParameter(10, Types.VARCHAR);
+                    cs.execute();
+                    maND = cs.getString(10);
                     user.setMaND(maND);
                 }
 
-                try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
-                    ps.setString(1, maND);
-                    ps.setString(2, hoTen);
-                    ps.setString(3, user.getTenTaiKhoan());
-                    ps.setString(4, user.getMatKhauMaHoa());
-                    ps.setString(5, user.getEmail());
-                    ps.setString(6, "Đang hoạt động");
-                    ps.executeUpdate();
-                }
-
-                try (PreparedStatement psKH = conn.prepareStatement(sqlKH)) {
-                    String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
-                    psKH.setString(1, maKH);
-                    psKH.setString(2, maND);
-                    psKH.executeUpdate();
+                try (CallableStatement csKH = conn.prepareCall(sqlKH)) {
+                    csKH.setString(1, maND);
+                    csKH.registerOutParameter(2, Types.VARCHAR);
+                    csKH.execute();
                 }
 
                 String sqlCheckVT = "SELECT COUNT(*) FROM VAITRO WHERE MaVaiTro = ?";
@@ -330,9 +346,7 @@ public class NguoiDungDAO {
     }
 
     public String generateNextMaND() throws SQLException {
-        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NGUOI_DUNG);
-        }
+        return "";
     }
 
     public java.util.List<String> layDanhSachChucNangCuaNguoiDung(String maND) {

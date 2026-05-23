@@ -1,6 +1,7 @@
 package com.wms.util;
 
 import com.wms.config.DatabaseConnection;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -13,6 +14,7 @@ import java.util.List;
 public class UnlockDbTest {
 
     @Test
+    @Tag("manual")
     public void inspectAndUnlockDatabase() {
         System.out.println("=== BAT DAU KIEM TRA VA GIAI PHONG KHOA CSDL ===");
 

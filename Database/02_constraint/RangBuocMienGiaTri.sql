@@ -32,7 +32,7 @@ ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_TrangThai
 
 -- 5. Bảng PHIENLAMVIEC
 ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai
-    CHECK (TrangThaiPhien IN ('Đang hoạt động', 'Đã đặt trước', 'Đã kết thúc'));
+    CHECK (TrangThaiPhien IN ('Đang hoạt động', 'Đã kết thúc'));
 
 -- 6. Bảng DICHVU & CHITIETDICHVU
 ALTER TABLE DICHVU ADD CONSTRAINT CHK_DV_DonGia 
@@ -53,6 +53,9 @@ ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_SucChua
 
 ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_DonGia 
     CHECK (DonGiaTheoGio > 0);
+
+ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_TrangThai
+    CHECK (TrangThai IN ('Đang hoạt động', 'Ngừng hoạt động'));
 
 -- 8. Bảng CHINHANH
 ALTER TABLE CHINHANH ADD CONSTRAINT CHK_CN_MoCua 
@@ -96,3 +99,6 @@ ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_ToiThieu
 
 ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_SLToiDa 
     CHECK (SLToiDa > 0);
+
+ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_TrangThai
+    CHECK (TrangThai IN ('Đang có hiệu lực', 'Chưa đến hạn bắt đầu', 'Hết hiệu lực', 'Đã vô hiệu hoá'));

@@ -107,11 +107,7 @@ public class LoaiDichVuController {
     }
 
     public void clearForm() {
-        try {
-            view.getTxtMaLoai().setText(service.generateNextMa());
-        } catch (SQLException e) {
-            view.getTxtMaLoai().setText("");
-        }
+        view.getTxtMaLoai().setText("");
         view.getTxtTenLoai().setText("");
         view.getCbxTrangThai().setSelectedIndex(0);
         view.getTblLoaiDichVu().clearSelection();

@@ -2,7 +2,6 @@ package com.wms.dao.TrangChuQuanLy.QuanLyThongTinDichVu;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO;
-import com.wms.util.MaTuDongUtil;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -49,7 +48,7 @@ public class DichVuDAO {
         String sql = "{call sp_ThemDichVu(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setString(1, dv.getMaDV());
+            cs.setString(1, null);
             cs.setString(2, dv.getTenDV());
             cs.setString(3, dv.getMaLoaiDV());
             cs.setDouble(4, dv.getDonGia());
@@ -103,26 +102,10 @@ public class DichVuDAO {
     }
 
     public String layMaxMaDV() {
-        String sql = "SELECT MAX(TO_NUMBER(SUBSTR(MaDV, 3))) FROM DICHVU WHERE MaDV LIKE 'DV%'";
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            if (rs.next()) {
-                int maxNum = rs.getInt(1);
-                return String.format("DV%03d", maxNum);
-            }
-        } catch (Exception e) {
-            System.err.println("[DichVuDAO] Lỗi lấy mã MAX: " + e.getMessage());
-        }
         return null;
     }
 
     public String taoMaMoi() {
-        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.DICH_VU);
-        } catch (Exception e) {
-            System.err.println("[DichVuDAO] Lỗi tạo mã mới: " + e.getMessage());
-            return "DV000001";
-        }
+        return "";
     }
 }

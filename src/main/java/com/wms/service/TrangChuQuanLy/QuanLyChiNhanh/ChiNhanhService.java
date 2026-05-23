@@ -26,7 +26,6 @@ public class ChiNhanhService {
         String loi = validate(cn, false);
         if (loi != null) return loi;
 
-        cn.setMaCN(chiNhanhDAO.taoMaMoi());
         return chiNhanhDAO.themChiNhanh(cn) ? null : "Thêm chi nhánh thất bại, vui lòng thử lại.";
     }
 

@@ -1,7 +1,0 @@
-CREATE TABLE CHITIETDICHVU (
-    MaDV VARCHAR2(50),
-    MaPhien VARCHAR2(50),
-    SoLuong NUMBER,
-    GhiChu VARCHAR2(255),
-    PRIMARY KEY (MaDV, MaPhien)
-);

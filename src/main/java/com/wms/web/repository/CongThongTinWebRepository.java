@@ -14,8 +14,6 @@ import com.wms.web.model.PhieuGiamGiaView;
 import com.wms.web.model.ThongTinNhanChoBangQR;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.ChuyenKhoanQrUtil;
-import com.wms.util.MaTuDongUtil;
-import com.wms.util.MaTuDongUtil.MaDoiTuong;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,6 +22,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.LocalDate;
@@ -89,26 +88,32 @@ public class CongThongTinWebRepository {
     }
 
     public void taoHoiVien(String fullName, String username, String email, String hashedPassword) {
-        String maND = sinhMaTuDong(MaDoiTuong.NGUOI_DUNG);
-        String maKH = sinhMaTuDong(MaDoiTuong.KHACH_HANG);
+        String maND = mauJdbc.execute((ConnectionCallback<String>) conn -> {
+            String sql = """
+                    BEGIN
+                        INSERT INTO NGUOIDUNG (
+                            HoTen, TenTaiKhoan, MatKhauMaHoa, Email,
+                            TrangThaiND, ThoiGianTao, CapNhatLanCuoi
+                        ) VALUES (
+                            ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                        )
+                        RETURNING MaND INTO ?;
+                    END;
+                    """;
+            try (var cs = conn.prepareCall(sql)) {
+                cs.setString(1, fullName);
+                cs.setString(2, username);
+                cs.setString(3, hashedPassword);
+                cs.setString(4, email);
+                cs.setString(5, giaTriDb("CHK_ND_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"));
+                cs.registerOutParameter(6, Types.VARCHAR);
+                cs.execute();
+                return cs.getString(6);
+            }
+        });
 
         mauJdbc.update(
-                """
-                INSERT INTO NGUOIDUNG
-                    (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, Email, TrangThaiND, ThoiGianTao, CapNhatLanCuoi)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                """,
-                maND,
-                fullName,
-                username,
-                hashedPassword,
-                email,
-                giaTriDb("CHK_ND_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động")
-        );
-
-        mauJdbc.update(
-                "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?)",
-                maKH,
+                "INSERT INTO KHACHHANG (MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES ('HTV01', 0, CURRENT_TIMESTAMP, ?)",
                 maND
         );
     }
@@ -445,15 +450,15 @@ public class CongThongTinWebRepository {
     }
 
     public String taoMaDatChoTiepTheo() {
-        return sinhMaTuDong(MaDoiTuong.DAT_CHO);
+        return "";
     }
 
     public String taoMaPhienTiepTheo() {
-        return sinhMaTuDong(MaDoiTuong.PHIEN_LAM_VIEC);
+        return "";
     }
 
     public String taoMaHoaDonTiepTheo() {
-        return sinhMaTuDong(MaDoiTuong.HOA_DON);
+        return "";
     }
 
     public Optional<ThongTinNhanChoBangQR> timDatChoTheoMaQRDeNhanCho(String noiDungQR) {
@@ -475,7 +480,7 @@ public class CongThongTinWebRepository {
                 LEFT JOIN KHACHHANG kh ON dc.MaKH = kh.MaKH
                 LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND
                 WHERE dc.MaQR = ?
-                FOR UPDATE OF dc.TrangThaiDatTruoc NOWAIT
+                FOR UPDATE OF dc.MaDatCho
                 """;
         List<ThongTinNhanChoBangQR> ketQua = mauJdbc.query(
                 sql,
@@ -505,68 +510,83 @@ public class CongThongTinWebRepository {
         return soLuong != null && soLuong > 0;
     }
 
-    public void moPhienTuDatCho(String maPhien, ThongTinNhanChoBangQR thongTin) {
+    public String moPhienTuDatCho(ThongTinNhanChoBangQR thongTin) {
         if (thongTin == null) {
             throw new IllegalArgumentException("Thiếu thông tin đặt chỗ để mở phiên.");
         }
-        mauJdbc.update(
-                """
-                INSERT INTO PHIENLAMVIEC (
-                    MaPhien,
-                    ThoiGianBatDau,
-                    ThoiGianDuKienKetThuc,
-                    TrangThaiPhien,
-                    ThoiGianKetThuc,
-                    CapNhatLanCuoi,
-                    MaKG,
-                    MaKH,
-                    MaDatCho
-                ) VALUES (
-                    ?,
-                    CURRENT_TIMESTAMP,
-                    CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
-                    ?,
-                    NULL,
-                    CURRENT_TIMESTAMP,
-                    ?,
-                    ?,
-                    ?
-                )
-                """,
-                maPhien,
-                thongTin.laySoGioSuDungAnToan(),
-                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
-                thongTin.getMaKG(),
-                thongTin.getMaKH(),
-                thongTin.getMaDatCho()
-        );
+        return mauJdbc.execute((ConnectionCallback<String>) conn -> {
+            String sql = """
+                    BEGIN
+                        INSERT INTO PHIENLAMVIEC (
+                            ThoiGianBatDau,
+                            ThoiGianDuKienKetThuc,
+                            TrangThaiPhien,
+                            ThoiGianKetThuc,
+                            CapNhatLanCuoi,
+                            MaKG,
+                            MaKH,
+                            MaDatCho
+                        ) VALUES (
+                            CURRENT_TIMESTAMP,
+                            CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
+                            ?,
+                            NULL,
+                            CURRENT_TIMESTAMP,
+                            ?,
+                            ?,
+                            ?
+                        )
+                        RETURNING MaPhien INTO ?;
+                    END;
+                    """;
+            try (var cs = conn.prepareCall(sql)) {
+                cs.setInt(1, thongTin.laySoGioSuDungAnToan());
+                cs.setString(2, giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"));
+                cs.setString(3, thongTin.getMaKG());
+                cs.setString(4, thongTin.getMaKH());
+                cs.setString(5, thongTin.getMaDatCho());
+                cs.registerOutParameter(6, Types.VARCHAR);
+                cs.execute();
+                return cs.getString(6);
+            }
+        });
     }
 
-    public void taoDatCho(String maDatCho, NguoiDungPhien user, String maKG, LocalDateTime arrivalTime,
+    public String taoDatCho(NguoiDungPhien user, String maKG, LocalDateTime arrivalTime,
                               Integer durationHours, BigDecimal totalAmount, String note) {
-        mauJdbc.update(
-                """
-                INSERT INTO DATCHO
-                    (MaDatCho, ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung,
-                     TrangThaiDatTruoc, ThanhTien, GhiChu, CapNhatLanCuoi, MaKH, MaKG)
-                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
-                """,
-                maDatCho,
-                Timestamp.valueOf(layThoiGianHienTaiVietNam()),
-                Timestamp.valueOf(arrivalTime),
-                durationHours,
-                giaTriDb("CHK_DC_TRANGTHAI", "dang cho thanh toan", 0, "Đang chờ thanh toán"),
-                totalAmount,
-                note,
-                user.getMaKH(),
-                maKG
-        );
+        String maDatCho = mauJdbc.execute((ConnectionCallback<String>) conn -> {
+            String sql = """
+                    BEGIN
+                        INSERT INTO DATCHO (
+                            ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung,
+                            TrangThaiDatTruoc, ThanhTien, GhiChu, CapNhatLanCuoi, MaKH, MaKG
+                        ) VALUES (
+                            ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?
+                        )
+                        RETURNING MaDatCho INTO ?;
+                    END;
+                    """;
+            try (var cs = conn.prepareCall(sql)) {
+                cs.setTimestamp(1, Timestamp.valueOf(layThoiGianHienTaiVietNam()));
+                cs.setTimestamp(2, Timestamp.valueOf(arrivalTime));
+                cs.setObject(3, durationHours);
+                cs.setString(4, giaTriDb("CHK_DC_TRANGTHAI", "dang cho thanh toan", 0, "Đang chờ thanh toán"));
+                cs.setBigDecimal(5, totalAmount);
+                cs.setString(6, note);
+                cs.setString(7, user.getMaKH());
+                cs.setString(8, maKG);
+                cs.registerOutParameter(9, Types.VARCHAR);
+                cs.execute();
+                return cs.getString(9);
+            }
+        });
 
         mauJdbc.update(
                 "UPDATE KHONGGIAN SET TrangThaiKG = ? WHERE MaKG = ?",
                 trangThaiKhongGianDb("Tam khoa"),
                 maKG
         );
+        return maDatCho;
     }
 
     private LocalDateTime layThoiGianHienTaiVietNam() {
@@ -650,6 +670,21 @@ public class CongThongTinWebRepository {
         }
     }
 
+    public String timGhiChuDatCho(String maDatCho) {
+        if (maDatCho == null || maDatCho.isBlank()) {
+            return null;
+        }
+        try {
+            return mauJdbc.queryForObject(
+                    "SELECT GhiChu FROM DATCHO WHERE MaDatCho = ?",
+                    String.class,
+                    maDatCho
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
     public ThanhToanDatChoView timThanhToanDatChoForUpdate(String maDatCho) {
         if (maDatCho == null || maDatCho.isBlank()) {
             return null;
@@ -689,15 +724,6 @@ public class CongThongTinWebRepository {
         } catch (EmptyResultDataAccessException ex) {
             return null;
         }
-    }
-
-    public boolean daTonTaiGiaoDich(String maDatCho, String maGiaoDich) {
-        if (maGiaoDich == null || maGiaoDich.isBlank()) {
-            return false;
-        }
-        String sql = "SELECT COUNT(*) FROM DATCHO WHERE MaDatCho = ? AND GhiChu LIKE ?";
-        Integer count = mauJdbc.queryForObject(sql, Integer.class, maDatCho, "%" + maGiaoDich.trim() + "%");
-        return count != null && count > 0;
     }
 
     public boolean xacNhanDatChoDaTraTien(String maDatCho, String maQR, String note) {
@@ -785,7 +811,7 @@ public class CongThongTinWebRepository {
                 trangThaiDatChoDb("Dang cho thanh toan"));
     }
 
-    public boolean taoPhienChoDatChoDaCheckIn(String maDatCho, String maPhien, String maHoaDon) {
+    public boolean taoPhienChoDatChoDaCheckIn(String maDatCho) {
         Integer inserted = mauJdbc.queryForObject(
                 """
                 SELECT COUNT(*)
@@ -802,48 +828,55 @@ public class CongThongTinWebRepository {
             return false;
         }
 
-        mauJdbc.update(
-                """
-                INSERT INTO PHIENLAMVIEC
-                    (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
-                     CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
-                SELECT ?, CURRENT_TIMESTAMP,
-                       CURRENT_TIMESTAMP + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR'),
-                       ?, CURRENT_TIMESTAMP, MaKG, MaKH, MaDatCho
-                FROM DATCHO
-                WHERE MaDatCho = ?
-                """,
-                maPhien,
-                giaTriDb("CHK_PLV_TRANGTHAI", "dat truoc", 1, "Đã đặt trước"),
-                maDatCho
-        );
+        String maPhien = mauJdbc.execute((ConnectionCallback<String>) conn -> {
+            String sql = """
+                    DECLARE
+                        v_SoGio NUMBER;
+                        v_MaKG DATCHO.MaKG%TYPE;
+                        v_MaKH DATCHO.MaKH%TYPE;
+                    BEGIN
+                        SELECT NVL(KhoangThoiGianSuDung, 1), MaKG, MaKH
+                        INTO v_SoGio, v_MaKG, v_MaKH
+                        FROM DATCHO
+                        WHERE MaDatCho = ?
+                        FOR UPDATE;
+
+                        INSERT INTO PHIENLAMVIEC (
+                            ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
+                            CapNhatLanCuoi, MaKG, MaKH, MaDatCho
+                        ) VALUES (
+                            CURRENT_TIMESTAMP,
+                            CURRENT_TIMESTAMP + NUMTODSINTERVAL(v_SoGio, 'HOUR'),
+                            ?, CURRENT_TIMESTAMP, v_MaKG, v_MaKH, ?
+                        )
+                        RETURNING MaPhien INTO ?;
+                    END;
+                    """;
+            try (var cs = conn.prepareCall(sql)) {
+                cs.setString(1, maDatCho);
+                cs.setString(2, giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"));
+                cs.setString(3, maDatCho);
+                cs.registerOutParameter(4, Types.VARCHAR);
+                cs.execute();
+                return cs.getString(4);
+            }
+        });
 
         mauJdbc.update(
                 """
-                UPDATE PHIENLAMVIEC
-                SET TrangThaiPhien = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP
+                UPDATE HOADON
+                SET TongTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    ThanhTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    NgayLapHoaDon = CURRENT_TIMESTAMP,
+                    PhuongThucThanhToan = ?,
+                    TrangThaiThanhToan = ?
                 WHERE MaPhien = ?
                 """,
-                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
-                maPhien
-        );
-
-        mauJdbc.update(
-                """
-                INSERT INTO HOADON
-                    (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon,
-                     PhuongThucThanhToan, TrangThaiThanhToan, MaPhien)
-                SELECT ?, ?, NVL(ThanhTien, 0), NVL(ThanhTien, 0), CURRENT_TIMESTAMP,
-                       ?, ?, ?
-                FROM DATCHO
-                WHERE MaDatCho = ?
-                """,
-                maHoaDon,
-                maHoaDon,
+                maDatCho,
+                maDatCho,
                 giaTriDb("CHK_HD_PTTT", "chuyen khoan", 0, "Chuyển khoản"),
                 trangThaiHoaDonDb("Da thanh toan thanh cong"),
-                maPhien,
-                maDatCho
+                maPhien
         );
 
         mauJdbc.update(
@@ -1323,10 +1356,6 @@ public class CongThongTinWebRepository {
 
     private String rongThanhNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
-    }
-
-    private String sinhMaTuDong(MaDoiTuong doiTuong) {
-        return mauJdbc.execute((ConnectionCallback<String>) conn -> MaTuDongUtil.sinhMaTiepTheo(conn, doiTuong));
     }
 
     private String transferContent(String maDatCho) {

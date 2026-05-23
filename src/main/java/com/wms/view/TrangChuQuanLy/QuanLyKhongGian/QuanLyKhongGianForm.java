@@ -20,7 +20,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         napComboBoxLoaiKhongGian();
         apDungPhanQuyen();
         taiDanhSach(null);
-        txtMaKhongGian.setText(controller.sinhMaKG());
+        txtMaKhongGian.setText("");
         com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
@@ -109,7 +109,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
     }
 
     private void laMoiForm() {
-        txtMaKhongGian.setText(controller.sinhMaKG());
+        txtMaKhongGian.setText("");
         txtTenKhongGian.setText("");
         txtTimKiem.setText("");
         cbxTrangThai.setSelectedIndex(0);

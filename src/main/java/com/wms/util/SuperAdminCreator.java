@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +25,28 @@ public class SuperAdminCreator {
                 throw new IllegalStateException("Không thể kết nối CSDL.");
             }
 
-            boolean autoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
+            // Disable Parallel DML at session level to completely avoid ORA-12838
+            try (Statement st = conn.createStatement()) {
+                st.execute("ALTER SESSION DISABLE PARALLEL DML");
+            } catch (SQLException e) {
+                System.err.println("[SuperAdminCreator] Khong the disable parallel DML: " + e.getMessage());
+            }
 
+            boolean autoCommit = conn.getAutoCommit();
+
+            // Phase 1: Initialize metadata / default tables with auto-commit = true
+            // to avoid ORA-12838 caused by subsequent reads/writes in the same transaction
+            conn.setAutoCommit(true);
             try {
                 DataInitializer.initializeAll(conn);
+            } catch (Exception ex) {
+                System.err.println("[DataInitializer] Loi khoi tao du lieu: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+
+            // Phase 2: Upsert Super Admin and Roles in a controlled transaction
+            conn.setAutoCommit(false);
+            try {
                 ensureAdminRole(conn);
 
                 Properties config = loadConfig();

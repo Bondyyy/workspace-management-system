@@ -22,18 +22,18 @@ BEGIN
         RETURN;
     END IF;
 
-    IF p_MaPhien IS NULL OR LENGTH(TRIM(p_MaPhien)) = 0 THEN
-        p_outMessage := 'Lỗi: Thiếu mã phiên làm việc.';
-        RETURN;
-    END IF;
-
     SELECT TrangThaiKG
     INTO v_TrangThaiKG
     FROM KHONGGIAN
     WHERE MaKG = TRIM(p_MaKG)
     FOR UPDATE NOWAIT;
 
-    IF v_TrangThaiKG <> 'Trống' THEN
+    IF p_MaDatCho IS NULL OR LENGTH(TRIM(p_MaDatCho)) = 0 THEN
+        IF v_TrangThaiKG <> 'Trống' THEN
+            p_outMessage := 'Không gian hiện không khả dụng. Trạng thái hiện tại: ' || v_TrangThaiKG;
+            RETURN;
+        END IF;
+    ELSIF v_TrangThaiKG NOT IN ('Trống', 'Đã đặt trước') THEN
         p_outMessage := 'Không gian hiện không khả dụng. Trạng thái hiện tại: ' || v_TrangThaiKG;
         RETURN;
     END IF;
@@ -48,7 +48,7 @@ BEGIN
         MaDatCho,
         CapNhatLanCuoi
     ) VALUES (
-        TRIM(p_MaPhien),
+        NULLIF(TRIM(p_MaPhien), ''),
         p_ThoiGianBatDau,
         p_ThoiGianDuKien,
         'Đang hoạt động',
@@ -79,7 +79,7 @@ EXCEPTION
         p_outMessage := 'Lỗi: Không tìm thấy không gian ' || p_MaKG || '.';
     WHEN DUP_VAL_ON_INDEX THEN
         ROLLBACK;
-        p_outMessage := 'Lỗi: Mã phiên đã tồn tại, vui lòng tạo lại mã phiên.';
+        p_outMessage := 'Lỗi: Mã phiên đã tồn tại.';
     WHEN ex_resource_busy THEN
         ROLLBACK;
         p_outMessage := 'Không gian đang được nhân viên khác thao tác. Vui lòng thử lại sau.';

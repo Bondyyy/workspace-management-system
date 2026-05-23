@@ -3,12 +3,8 @@ AFTER INSERT ON PHIENLAMVIEC
 FOR EACH ROW
 WHEN (NEW.TrangThaiPhien = 'Đang hoạt động')
 DECLARE
-    v_MaHoaDon VARCHAR2(50);
 BEGIN
-    v_MaHoaDon := 'HD-' || :NEW.MaPhien;
-
     INSERT INTO HOADON (
-        MaHoaDon,
         TongTien,
         ThanhTien,
         NgayLapHoaDon,
@@ -16,10 +12,9 @@ BEGIN
         MaPhien,
         MaNV
     ) VALUES (
-        v_MaHoaDon,
         0,
         0,
-        SYSTIMESTAMP,
+        CURRENT_TIMESTAMP,
         'Đang chờ thanh toán',
         :NEW.MaPhien,
         NULL

@@ -4,7 +4,6 @@ import com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDAO;
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyNhanVien.NhanVienDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
-import com.wms.util.MaTuDongUtil;
 import com.wms.util.PasswordUtil;
 
 import java.sql.*;
@@ -95,8 +94,6 @@ public class NhanVienDAO {
             try {
                 conn.setAutoCommit(false);
 
-                String maND = ndDAO.generateNextMaND();
-                String maKH = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
                 String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau)
                         : PasswordUtil.hash("123456");
 
@@ -104,39 +101,72 @@ public class NhanVienDAO {
                         ? nd.getTenTaiKhoan().trim() 
                         : nd.getSdt();
 
-                String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email, GioiTinh, AnhDaiDien, NgaySinh, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-                try (PreparedStatement ps = conn.prepareStatement(sqlND)) {
-                    ps.setString(1, maND);
-                    ps.setString(2, hoTen);
-                    ps.setString(3, username);
-                    ps.setString(4, hashedPw);
-                    ps.setString(5, nd.getSdt());
-                    ps.setString(6, nd.getEmail());
-                    ps.setString(7, nd.getGioiTinh());
-                    ps.setBytes(8, nd.getAnhDaiDien());
-                    ps.setDate(9, nd.getNgaySinh());
-                    ps.executeUpdate();
+                String sqlND = """
+                        BEGIN
+                            INSERT INTO NGUOIDUNG (
+                                HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email,
+                                GioiTinh, AnhDaiDien, NgaySinh, TrangThaiND,
+                                ThoiGianTao, CapNhatLanCuoi
+                            ) VALUES (
+                                ?, ?, ?, ?, ?, ?, ?, ?, 'Đang hoạt động',
+                                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                            )
+                            RETURNING MaND INTO ?;
+                        END;
+                        """;
+                String maND;
+                try (CallableStatement cs = conn.prepareCall(sqlND)) {
+                    cs.setString(1, hoTen);
+                    cs.setString(2, username);
+                    cs.setString(3, hashedPw);
+                    cs.setString(4, nd.getSdt());
+                    cs.setString(5, nd.getEmail());
+                    cs.setString(6, nd.getGioiTinh());
+                    cs.setBytes(7, nd.getAnhDaiDien());
+                    cs.setDate(8, nd.getNgaySinh());
+                    cs.registerOutParameter(9, Types.VARCHAR);
+                    cs.execute();
+                    maND = cs.getString(9);
+                    nd.setMaND(maND);
                 }
 
-                String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, 'HTV00', 0, CURRENT_TIMESTAMP, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(sqlKH)) {
-                    ps.setString(1, maKH);
-                    ps.setString(2, maND);
-                    ps.executeUpdate();
+                String sqlKH = """
+                        BEGIN
+                            INSERT INTO KHACHHANG (
+                                MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND
+                            ) VALUES (
+                                'HTV00', 0, CURRENT_TIMESTAMP, ?
+                            )
+                            RETURNING MaKH INTO ?;
+                        END;
+                        """;
+                try (CallableStatement cs = conn.prepareCall(sqlKH)) {
+                    cs.setString(1, maND);
+                    cs.registerOutParameter(2, Types.VARCHAR);
+                    cs.execute();
                 }
 
-                if (nv.getMaNV() == null || nv.getMaNV().isEmpty())
-                    nv.setMaNV(taoMaNVMoi(conn));
-                String sqlNV = "INSERT INTO NHANVIEN (MaNV, LoaiNV, NgayVaoLam, TrangThaiLamViec, CaLamViec, LuongCoBan, MaCN, MaND) VALUES (?, ?, CURRENT_DATE, ?, ?, ?, ?, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
-                    ps.setString(1, nv.getMaNV());
-                    ps.setString(2, nv.getLoaiNV());
-                    ps.setString(3, nv.getTrangThaiLamViec() != null ? nv.getTrangThaiLamViec() : "Đang làm việc");
-                    ps.setString(4, nv.getCaLamViec());
-                    ps.setDouble(5, nv.getLuongCoBan());
-                    ps.setString(6, nv.getMaCN());
-                    ps.setString(7, maND);
-                    ps.executeUpdate();
+                String sqlNV = """
+                        BEGIN
+                            INSERT INTO NHANVIEN (
+                                LoaiNV, NgayVaoLam, TrangThaiLamViec, CaLamViec,
+                                LuongCoBan, MaCN, MaND
+                            ) VALUES (
+                                ?, CURRENT_DATE, ?, ?, ?, ?, ?
+                            )
+                            RETURNING MaNV INTO ?;
+                        END;
+                        """;
+                try (CallableStatement cs = conn.prepareCall(sqlNV)) {
+                    cs.setString(1, nv.getLoaiNV());
+                    cs.setString(2, nv.getTrangThaiLamViec() != null ? nv.getTrangThaiLamViec() : "Đang làm việc");
+                    cs.setString(3, nv.getCaLamViec());
+                    cs.setDouble(4, nv.getLuongCoBan());
+                    cs.setString(5, nv.getMaCN());
+                    cs.setString(6, maND);
+                    cs.registerOutParameter(7, Types.VARCHAR);
+                    cs.execute();
+                    nv.setMaNV(cs.getString(7));
                 }
 
                 if (maVaiTro != null && !maVaiTro.isEmpty()) {
@@ -331,16 +361,7 @@ public class NhanVienDAO {
     }
 
     public String taoMaNVMoi(Connection conn) throws SQLException {
-        if (conn == null) {
-            try (Connection localConn = getConn()) {
-                return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.NHAN_VIEN);
-            } catch (Exception e) {
-                System.err.println("[NhanVienDAO] Lỗi tạo mã mới (standalone): " + e.getMessage());
-                return "NV000001";
-            }
-        } else {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.NHAN_VIEN);
-        }
+        return "";
     }
 
     public String layMaNVTuMaND(String maND) {

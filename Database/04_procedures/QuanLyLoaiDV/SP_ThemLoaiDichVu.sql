@@ -6,9 +6,11 @@ CREATE OR REPLACE PROCEDURE SP_ThemLoaiDichVu(
 ) AS
     v_Count NUMBER;
 BEGIN
-    SELECT COUNT(*) INTO v_Count FROM LOAIDICHVU WHERE MaLoaiDV = p_MaLoaiDV;
-    IF v_Count > 0 THEN
-        RAISE_APPLICATION_ERROR(-20210, 'Mã loại dịch vụ [' || p_MaLoaiDV || '] đã tồn tại!');
+    IF p_MaLoaiDV IS NOT NULL AND LENGTH(TRIM(p_MaLoaiDV)) > 0 THEN
+        SELECT COUNT(*) INTO v_Count FROM LOAIDICHVU WHERE MaLoaiDV = TRIM(p_MaLoaiDV);
+        IF v_Count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20210, 'Mã loại dịch vụ [' || p_MaLoaiDV || '] đã tồn tại!');
+        END IF;
     END IF;
 
     SELECT COUNT(*) INTO v_Count FROM LOAIDICHVU WHERE TenLoaiDV = p_TenLoaiDV;
@@ -22,7 +24,7 @@ BEGIN
     END IF;
 
     INSERT INTO LOAIDICHVU (MaLoaiDV, TenLoaiDV, TrangThaiLDV)
-    VALUES (p_MaLoaiDV, p_TenLoaiDV, p_TrangThaiLDV);
+    VALUES (NULLIF(TRIM(p_MaLoaiDV), ''), p_TenLoaiDV, p_TrangThaiLDV);
 
     COMMIT;
     p_outMessage := 'Thêm loại dịch vụ "' || p_TenLoaiDV || '" thành công!';

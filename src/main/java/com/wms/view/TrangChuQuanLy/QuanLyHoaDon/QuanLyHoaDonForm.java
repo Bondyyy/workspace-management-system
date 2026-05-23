@@ -139,7 +139,8 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             boolean phienDaKetThuc = !"Đang hoạt động".equals(hd.getTrangThaiPhien());
             
             btnXacNhan.setEnabled(choThanhToan && phienDaKetThuc);
-            if (hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán phụ thu")) {
+            if (hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán phụ thu")
+                || (hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán") && hd.getSoTienDaTraTruoc() > 0)) {
                 btnXacNhan.setText("Thanh toán phụ thu");
             } else {
                 btnXacNhan.setText("Xác nhận Thanh toán");

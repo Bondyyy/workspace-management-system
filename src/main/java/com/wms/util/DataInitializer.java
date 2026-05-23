@@ -9,8 +9,31 @@ import java.util.Arrays;
 
 public class DataInitializer {
 
+    public static boolean daKhoiTao(Connection conn) {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT COUNT(*) FROM CHUCNANG")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) >= 14;
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
     public static void initializeAll(Connection conn) {
+        if (daKhoiTao(conn)) {
+            System.out.println("[DataInitializer] Du lieu da ton tai, bo qua khoi tao.");
+            return;
+        }
         System.out.println("[DataInitializer] Bat dau khoi tao du lieu mac dinh...");
+
+        // Disable Parallel DML at session level to completely avoid ORA-12838
+        try (Statement st = conn.createStatement()) {
+            st.execute("ALTER SESSION DISABLE PARALLEL DML");
+        } catch (SQLException e) {
+            System.err.println("[DataInitializer] Khong the disable parallel DML: " + e.getMessage());
+        }
+
         khoiTaoChucNang(conn);
         khoiTaoHangThanhVien(conn);
         khoiTaoDichVuMacDinh(conn);
@@ -31,7 +54,7 @@ public class DataInitializer {
                     "WHEN MATCHED THEN UPDATE SET dest.TenLoaiDV = src.TenLoaiDV " +
                     "WHEN NOT MATCHED THEN INSERT (MaLoaiDV, TenLoaiDV, TrangThaiLDV) VALUES (src.MaLoaiDV, src.TenLoaiDV, src.TrangThaiLDV)";
             try (PreparedStatement ps = conn.prepareStatement(sqlLoaiDV)) {
-                ps.setString(1, "LDV000");
+                ps.setString(1, "LDV0000");
                 ps.setString(2, Normalizer.normalize("Tiện ích hệ thống", Normalizer.Form.NFC));
                 ps.setString(3, Normalizer.normalize("Đang hoạt động", Normalizer.Form.NFC));
                 ps.executeUpdate();
@@ -53,6 +76,9 @@ public class DataInitializer {
             }
 
             System.out.println("[DataInitializer] Dong bo du lieu Dich vu mac dinh thanh cong.");
+            if (!conn.getAutoCommit()) {
+                conn.commit();
+            }
         } catch (SQLException e) {
             System.err.println("[DataInitializer] Loi dong bo du lieu Dich vu: " + e.getMessage());
         }
@@ -79,6 +105,13 @@ public class DataInitializer {
         try {
             if (conn == null || conn.isClosed())
                 return;
+
+            // Disable Parallel DML at session level to completely avoid ORA-12838
+            try (Statement st = conn.createStatement()) {
+                st.execute("ALTER SESSION DISABLE PARALLEL DML");
+            } catch (SQLException e) {
+                // Ignore
+            }
             String mergeSql = "MERGE INTO CHUCNANG dest USING (SELECT ? AS MaChucNang, ? AS TenChucNang, ? AS MoTa FROM DUAL) src "
                     +
                     "ON (dest.MaChucNang = src.MaChucNang) " +
@@ -95,11 +128,18 @@ public class DataInitializer {
                 ps.executeBatch();
             }
 
+            if (!conn.getAutoCommit()) {
+                conn.commit();
+            }
+
             try (Statement st = conn.createStatement()) {
                 st.executeUpdate(
                         "DELETE FROM CHITIETCHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11','CN12','CN13','CN14')");
                 st.executeUpdate(
                         "DELETE FROM CHUCNANG WHERE MaChucNang NOT IN ('CN01','CN02','CN03','CN04','CN05','CN06','CN07','CN08','CN09','CN10','CN11','CN12','CN13','CN14')");
+            }
+            if (!conn.getAutoCommit()) {
+                conn.commit();
             }
             System.out.println("[DataInitializer] Dong bo du lieu bang CHUCNANG thanh cong.");
         } catch (SQLException e) {
@@ -133,6 +173,9 @@ public class DataInitializer {
                     ps.addBatch();
                 }
                 ps.executeBatch();
+            }
+            if (!conn.getAutoCommit()) {
+                conn.commit();
             }
             System.out.println("[DataInitializer] Dong bo du lieu bang HANGTHANHVIEN thanh cong.");
         } catch (SQLException e) {
@@ -186,6 +229,9 @@ public class DataInitializer {
                     ps.executeUpdate();
                 }
             }
+            if (!conn.getAutoCommit()) {
+                conn.commit();
+            }
         } catch (SQLException e) {
             System.err.println("[DataInitializer] Loi khoi tao vai tro: " + e.getMessage());
         }
@@ -213,6 +259,10 @@ public class DataInitializer {
             managerRights.add("CN11");
             ganQuyen(conn, "VT02", managerRights.toArray(new String[0]));
 
+            if (!conn.getAutoCommit()) {
+                conn.commit();
+            }
+
             System.out.println("[DataInitializer] Khoi tao phan quyen mac dinh thanh cong.");
         } catch (Exception e) {
             System.err.println("[DataInitializer] Loi phan quyen mac dinh: " + e.getMessage());
@@ -235,6 +285,9 @@ public class DataInitializer {
                 ps.addBatch();
             }
             ps.executeBatch();
+        }
+        if (!conn.getAutoCommit()) {
+            conn.commit();
         }
     }
 }

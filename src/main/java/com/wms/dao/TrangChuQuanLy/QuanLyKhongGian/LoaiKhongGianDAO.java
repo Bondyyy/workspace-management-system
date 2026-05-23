@@ -2,7 +2,6 @@ package com.wms.dao.TrangChuQuanLy.QuanLyKhongGian;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.LoaiKhongGianDTO;
-import com.wms.util.MaTuDongUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -50,20 +49,15 @@ public class LoaiKhongGianDAO {
     }
 
     public boolean them(LoaiKhongGianDTO dto) {
-        if (dto.getMaLoaiKG() == null || dto.getMaLoaiKG().trim().isEmpty()) {
-            dto.setMaLoaiKG(taoMaMoi());
-        }
-
-        String sql = "INSERT INTO LOAIKHONGGIAN (MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio, TrangThai) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO LOAIKHONGGIAN (TenLoaiKG, SucChua, DonGiaTheoGio, TrangThai) VALUES (?, ?, ?, ?)";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, dto.getMaLoaiKG());
-            ps.setString(2, dto.getTenLoaiKG());
-            if (dto.getSucChua() != null) ps.setInt(3, dto.getSucChua());
-            else ps.setNull(3, Types.INTEGER);
-            if (dto.getDonGiaTheoGio() != null) ps.setDouble(4, dto.getDonGiaTheoGio());
-            else ps.setNull(4, Types.DOUBLE);
-            ps.setString(5, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động");
+            ps.setString(1, dto.getTenLoaiKG());
+            if (dto.getSucChua() != null) ps.setInt(2, dto.getSucChua());
+            else ps.setNull(2, Types.INTEGER);
+            if (dto.getDonGiaTheoGio() != null) ps.setDouble(3, dto.getDonGiaTheoGio());
+            else ps.setNull(3, Types.DOUBLE);
+            ps.setString(4, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động");
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[LoaiKhongGianDAO] Lỗi thêm: " + e.getMessage());
@@ -152,12 +146,7 @@ public class LoaiKhongGianDAO {
     }
 
     public String taoMaMoi() {
-        try (Connection conn = getConn()) {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.LOAI_KHONG_GIAN);
-        } catch (SQLException e) {
-            System.err.println("[LoaiKhongGianDAO] Lỗi tạo mã mới: " + e.getMessage());
-        }
-        return "LKG000001";
+        return "";
     }
 
     private LoaiKhongGianDTO mapRow(ResultSet rs) throws SQLException {

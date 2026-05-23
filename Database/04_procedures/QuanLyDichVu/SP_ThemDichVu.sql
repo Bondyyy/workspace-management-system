@@ -26,18 +26,19 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20002, 'Loại dịch vụ không tồn tại trong hệ thống!');
     END IF;
 
-    -- Kiểm tra trùng lặp Mã Dịch Vụ
-    SELECT COUNT(*) INTO v_countDV
-    FROM DICHVU
-    WHERE MaDV = p_MaDV;
+    IF p_MaDV IS NOT NULL AND LENGTH(TRIM(p_MaDV)) > 0 THEN
+        SELECT COUNT(*) INTO v_countDV
+        FROM DICHVU
+        WHERE MaDV = TRIM(p_MaDV);
 
-    IF v_countDV > 0 THEN
-        RAISE_APPLICATION_ERROR(-20003, 'Mã dịch vụ này đã tồn tại, vui lòng sử dụng mã khác!');
+        IF v_countDV > 0 THEN
+            RAISE_APPLICATION_ERROR(-20003, 'Mã dịch vụ này đã tồn tại!');
+        END IF;
     END IF;
 
     -- Thêm dịch vụ vào bảng DICHVU
     INSERT INTO DICHVU (MaDV, TenDV, TrangThaiDV, DonGia, MaLoaiDV, HinhAnh, SoLuong, GiaNhap)
-    VALUES (p_MaDV, p_TenDV, p_TrangThaiDV, p_DonGia, p_MaLoaiDV, p_HinhAnh, p_SoLuong, p_GiaNhap);
+    VALUES (NULLIF(TRIM(p_MaDV), ''), p_TenDV, p_TrangThaiDV, p_DonGia, p_MaLoaiDV, p_HinhAnh, p_SoLuong, p_GiaNhap);
 
     COMMIT;
     p_outMessage := 'Đã thêm dịch vụ mới thành công!';

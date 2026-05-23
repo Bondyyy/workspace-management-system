@@ -23,7 +23,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         loadComboBoxData();
         apDungPhanQuyen();
         loadData();
-        txtMaNV.setText(controller.generateMaNV());
+        txtMaNV.setText("");
         com.wms.util.TienIchFormQuanLy.apDung(this);
     }
 
@@ -139,7 +139,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     private void lamMoiForm() {
         maNVDangChon = null;
         maNDDangChon = null;
-        txtMaNV.setText(controller.generateMaNV());
+        txtMaNV.setText("");
         txtHoTen.setText("");
         txtSDT.setText("");
         txtEmail.setText("");

@@ -3,7 +3,6 @@ package com.wms.dao.TrangChuQuanLy.QuanLyHoiVien;
 import com.wms.config.DatabaseConnection;
 import com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
-import com.wms.util.MaTuDongUtil;
 import com.wms.util.PasswordUtil;
 import java.sql.*;
 import java.util.ArrayList;
@@ -157,20 +156,7 @@ public class KhachHangDAO {
     }
 
     public String taoMaKHMoi(Connection conn) throws SQLException {
-        if (conn == null) {
-            try (Connection localConn = getConn()) {
-                return MaTuDongUtil.sinhMaTiepTheo(localConn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
-            } catch (SQLException e) {
-                System.err.println("[KhachHangDAO] Lỗi tạo mã mới: " + e.getMessage());
-            }
-            return "HV000001";
-        }
-        try {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHACH_HANG);
-        } catch (SQLException e) {
-            System.err.println("[KhachHangDAO] Lỗi tạo mã mới: " + e.getMessage());
-        }
-        return "HV000001";
+        return "";
     }
 
     public void insert(HoiVienDTO dto) throws SQLException {
@@ -182,44 +168,58 @@ public class KhachHangDAO {
             throw new SQLException("Số điện thoại " + dto.getSdt() + " đã tồn tại!");
         }
 
-        String maND = ndDAO.generateNextMaND();
-        
         Connection conn = getConn();
         if (conn == null)
             throw new SQLException("Lỗi kết nối CSDL!");
 
-        String maKH = taoMaKHMoi(conn);
-        dto.setMaND(maND);
-        dto.setMaKH(maKH);
-
-        String sqlND = "INSERT INTO NGUOIDUNG (MaND, HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email, NgaySinh, GioiTinh, AnhDaiDien, TrangThaiND, ThoiGianTao, CapNhatLanCuoi) "
-                +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-        String sqlKH = "INSERT INTO KHACHHANG (MaKH, MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH) " +
-                "VALUES (?, 'HTV01', 0, CURRENT_TIMESTAMP, ?, ?)";
+        String sqlND = """
+                BEGIN
+                    INSERT INTO NGUOIDUNG (
+                        HoTen, TenTaiKhoan, MatKhauMaHoa, SDT, Email, NgaySinh,
+                        GioiTinh, AnhDaiDien, TrangThaiND, ThoiGianTao, CapNhatLanCuoi
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                    )
+                    RETURNING MaND INTO ?;
+                END;
+                """;
+        String sqlKH = """
+                BEGIN
+                    INSERT INTO KHACHHANG (
+                        MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH
+                    ) VALUES (
+                        'HTV01', 0, CURRENT_TIMESTAMP, ?, ?
+                    )
+                    RETURNING MaKH INTO ?;
+                END;
+                """;
 
         boolean autoCommit = conn.getAutoCommit();
         try {
             conn.setAutoCommit(false);
-            try (PreparedStatement ps1 = conn.prepareStatement(sqlND)) {
+            String maND;
+            try (CallableStatement csND = conn.prepareCall(sqlND)) {
                 String username = (dto.getSdt() != null && !dto.getSdt().isEmpty()) ? dto.getSdt() : dto.getEmail();
-                ps1.setString(1, maND);
-                ps1.setString(2, dto.getHoTen());
-                ps1.setString(3, username);
-                ps1.setString(4, PasswordUtil.hash("123456"));
-                ps1.setString(5, dto.getSdt());
-                ps1.setString(6, dto.getEmail());
-                ps1.setDate(7, dto.getNgaySinh());
-                ps1.setString(8, dto.getGioiTinh());
-                ps1.setBytes(9, dto.getAnhDaiDien());
-                ps1.setString(10, "Đang hoạt động");
-                ps1.executeUpdate();
+                csND.setString(1, dto.getHoTen());
+                csND.setString(2, username);
+                csND.setString(3, PasswordUtil.hash("123456"));
+                csND.setString(4, dto.getSdt());
+                csND.setString(5, dto.getEmail());
+                csND.setDate(6, dto.getNgaySinh());
+                csND.setString(7, dto.getGioiTinh());
+                csND.setBytes(8, dto.getAnhDaiDien());
+                csND.setString(9, "Đang hoạt động");
+                csND.registerOutParameter(10, Types.VARCHAR);
+                csND.execute();
+                maND = csND.getString(10);
+                dto.setMaND(maND);
             }
-            try (PreparedStatement ps2 = conn.prepareStatement(sqlKH)) {
-                ps2.setString(1, maKH);
-                ps2.setString(2, maND);
-                ps2.setString(3, dto.getLoaiKH() != null ? dto.getLoaiKH() : "Hội viên");
-                ps2.executeUpdate();
+            try (CallableStatement csKH = conn.prepareCall(sqlKH)) {
+                csKH.setString(1, maND);
+                csKH.setString(2, dto.getLoaiKH() != null ? dto.getLoaiKH() : "Hội viên");
+                csKH.registerOutParameter(3, Types.VARCHAR);
+                csKH.execute();
+                dto.setMaKH(csKH.getString(3));
             }
             conn.commit();
         } catch (SQLException e) {

@@ -103,6 +103,12 @@ public final class MaTuDongUtil {
         return format(prefix, max + 1, width);
     }
 
+    /**
+     * @deprecated Không dùng hàm này để sinh mã khi insert dữ liệu.
+     * Mã chính thức do Oracle SEQUENCE + TRIGGER trong TaoMaTuDong.sql sinh.
+     * Chỉ giữ lại để hỗ trợ test/đối chiếu dữ liệu cũ.
+     */
+    @Deprecated
     public static String sinhMaTiepTheo(Connection conn, MaDoiTuong doiTuong) throws SQLException {
         Objects.requireNonNull(conn, "Connection không được null.");
         Objects.requireNonNull(doiTuong, "Đối tượng sinh mã không được null.");

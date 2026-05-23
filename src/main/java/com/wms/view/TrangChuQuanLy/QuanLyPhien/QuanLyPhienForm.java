@@ -622,9 +622,12 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
         btnKetThucPhien.setEnabled(false);
         txtTrangThai.setText("");
+        if (txtTrangThaiThanhToan != null) txtTrangThaiThanhToan.setText("");
+        if (txtHinhThuc != null) txtHinhThuc.setText("");
         txtBatDau.setText("");
         txtDuKien.setText("");
         txtKetThuc.setText(LABEL_CHUA_KET_THUC);
+        if (txtThoiGianDaDung != null) txtThoiGianDaDung.setText("");
         ((javax.swing.table.DefaultTableModel) tblDichVu.getModel()).setRowCount(0);
         tblPhienLamViec.clearSelection();
     }
@@ -716,7 +719,10 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                 }
             }
 
-            txtTrangThai.setText(tblPhienLamViec.getValueAt(row, 6).toString());
+            txtTrangThai.setText(trangThaiTable);
+            if (txtTrangThaiThanhToan != null) {
+                txtTrangThaiThanhToan.setText(tblPhienLamViec.getValueAt(row, 6).toString());
+            }
             if (txtHinhThuc != null) {
                 txtHinhThuc.setText(hinhThuc);
             }

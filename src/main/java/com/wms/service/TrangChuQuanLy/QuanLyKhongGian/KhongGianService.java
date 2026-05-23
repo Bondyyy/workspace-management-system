@@ -21,9 +21,6 @@ public class KhongGianService {
     }
 
     public boolean themKhongGian(KhongGianDTO dto) {
-        if (dto.getMaKG() == null || dto.getMaKG().isBlank()) {
-            dto.setMaKG(kgDAO.taoMaMoi());
-        }
         return kgDAO.them(dto);
     }
 
@@ -44,9 +41,6 @@ public class KhongGianService {
     }
 
     public boolean themLoai(LoaiKhongGianDTO dto) {
-        if (dto.getMaLoaiKG() == null || dto.getMaLoaiKG().isBlank()) {
-            dto.setMaLoaiKG(lkgDAO.taoMaMoi());
-        }
         return lkgDAO.them(dto);
     }
 

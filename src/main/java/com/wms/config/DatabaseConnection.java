@@ -37,12 +37,14 @@ public class DatabaseConnection {
             config.setDriverClassName("oracle.jdbc.OracleDriver");
 
             // Cau hinh toi uu cho Pool ket noi (nhe, muot cho Desktop App)
-            config.setMaximumPoolSize(10);        // So ket noi toi da duy tri
-            config.setMinimumIdle(2);            // So ket noi toi thieu luon san sang
-            config.setIdleTimeout(300000);       // Dong ket noi thua sau 5 phut
-            config.setMaxLifetime(1800000);      // Reset ket noi vat ly sau 30 phut
-            config.setConnectionTimeout(15000);  // Thoi gian cho ket noi toi da 15s
-            config.setLeakDetectionThreshold(5000); // Bat leak detection 5s
+            config.setMaximumPoolSize(3);        // So ket noi toi da duy tri
+            config.setMinimumIdle(0);            // So ket noi toi thieu luon san sang
+            config.setIdleTimeout(120000);       // Dong ket noi thua sau 2 phut
+            config.setMaxLifetime(300000);      // Reset ket noi vat ly sau 5 phut
+            config.setKeepaliveTime(120000);     // Thoi gian keepalive
+            config.setConnectionTimeout(10000);  // Thoi gian cho ket noi toi da 10s
+            config.setValidationTimeout(5000);   // Validate timeout 5s
+            config.setLeakDetectionThreshold(30000); // Bat leak detection 30s
             config.setPoolName("WMS-HikariPool");
 
             // Query kiem tra trang thai ket noi khoe manh

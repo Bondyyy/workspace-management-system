@@ -210,9 +210,7 @@ public class CongThongTinService {
                     : note + " | Ma giam gia: " + form.getMaGiamGia().trim();
         }
 
-        String maDatCho = khoDuLieu.taoMaDatChoTiepTheo();
-        khoDuLieu.taoDatCho(
-                maDatCho,
+        return khoDuLieu.taoDatCho(
                 user,
                 form.getMaKG(),
                 form.getThoiGianDen(),
@@ -220,7 +218,6 @@ public class CongThongTinService {
                 total,
                 note
         );
-        return maDatCho;
     }
 
     public BigDecimal tinhTien(KhongGianView space, Integer durationHours) {
@@ -310,11 +307,7 @@ public class CongThongTinService {
 
     @Transactional
     public void danhDauDatChoDaSuDung(String maDatCho) {
-        boolean created = khoDuLieu.taoPhienChoDatChoDaCheckIn(
-                maDatCho,
-                khoDuLieu.taoMaPhienTiepTheo(),
-                khoDuLieu.taoMaHoaDonTiepTheo()
-        );
+        boolean created = khoDuLieu.taoPhienChoDatChoDaCheckIn(maDatCho);
         if (!created) {
             throw new IllegalArgumentException("Đặt chỗ chưa thanh toán, đã sử dụng hoặc không tồn tại.");
         }
@@ -359,9 +352,8 @@ public class CongThongTinService {
             return KetQuaNhanChoBangQRView.thatBai("Mã QR đã quá hạn nhận chỗ.");
         }
 
-        String maPhien = taoMaPhienMoi();
         try {
-            khoDuLieu.moPhienTuDatCho(maPhien, thongTin);
+            String maPhien = khoDuLieu.moPhienTuDatCho(thongTin);
             return KetQuaNhanChoBangQRView.thanhCong("Mở phiên thành công.", thongTin, maPhien);
         } catch (RuntimeException ex) {
             return KetQuaNhanChoBangQRView.thatBai(chuyenLoiNhanChoThanThien(ex));
@@ -369,83 +361,87 @@ public class CongThongTinService {
     }
 
     private String taoMaPhienMoi() {
-        return khoDuLieu.taoMaPhienTiepTheo();
+        return "";
     }
 
     @Transactional
     public KetQuaWebhookThanhToan xuLyWebhookThanhToan(YeuCauWebhookThanhToan request) {
+        System.out.println("[Webhook] Webhook thanh toan duoc goi vao Service.");
         if (request == null) {
+            System.err.println("[Webhook] Request body bi NULL.");
             return new KetQuaWebhookThanhToan(false, "Webhook không có dữ liệu.");
         }
-        System.out.println("[CongThongTinService] Webhook thanh toán được gọi.");
+        
+        System.out.println("[Webhook] Payload chi tiet: transactionId='" + request.getMaGiaoDich() 
+                + "', amount=" + request.getSoTien() + ", content='" + request.getNoiDung() + "'");
+
         String maDatCho = tachMaDatCho(request.getNoiDung());
         if (maDatCho == null) {
-            System.err.println("[CongThongTinService] -> Webhook KHÔNG parse được MaDatCho từ nội dung: \"" + request.getNoiDung() + "\"");
+            System.err.println("[Webhook] KHONG parse duoc MaDatCho tu noi dung chuyen khoan: '" + request.getNoiDung() + "'");
             return new KetQuaWebhookThanhToan(false, "Không tìm thấy mã đặt chỗ trong nội dung chuyển khoản.");
-        } else {
-            System.out.println("[CongThongTinService] -> Webhook ĐÃ parse được MaDatCho: " + maDatCho);
+        }
+        System.out.println("[Webhook] Parse duoc MaDatCho: " + maDatCho);
+        System.out.println("[Webhook] So tien tu webhook (soTien): " + request.getSoTien() + " VND");
+
+        // Idempotency: Kiem tra trung maGiaoDich trong GhiChu
+        String currentGhiChu = khoDuLieu.timGhiChuDatCho(maDatCho);
+        if (currentGhiChu != null && request.getMaGiaoDich() != null && !request.getMaGiaoDich().isBlank()) {
+            if (currentGhiChu.contains(request.getMaGiaoDich())) {
+                System.out.println("[Webhook] Giao dich trung maGiaoDich: " + request.getMaGiaoDich() 
+                        + ". Bo qua khong xu ly lai. Trang thai hien tai: Đã thanh toán thành công");
+                return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó với mã giao dịch này.", maDatCho);
+            }
         }
 
         ThanhToanDatChoView payment;
         try {
             payment = khoDuLieu.timThanhToanDatChoForUpdate(maDatCho);
-        } catch (org.springframework.dao.PessimisticLockingFailureException ex) {
-            System.err.println("[CongThongTinService] -> Lỗi lock: Đặt chỗ đang được giao dịch khác xử lý. MaDatCho: " + maDatCho);
-            return new KetQuaWebhookThanhToan(false, "Đặt chỗ đang được giao dịch khác xử lý.", maDatCho);
         } catch (org.springframework.dao.DataAccessException ex) {
-            if (ex.getMessage() != null && (ex.getMessage().contains("ORA-00054") || ex.getMessage().contains("lock"))) {
-                System.err.println("[CongThongTinService] -> Lỗi lock database ORA-00054: Đặt chỗ đang được giao dịch khác xử lý. MaDatCho: " + maDatCho);
+            String msg = ex.getMessage() != null ? ex.getMessage() : "";
+            if (msg.contains("ORA-00054") 
+                    || ex instanceof org.springframework.dao.CannotAcquireLockException 
+                    || ex instanceof org.springframework.dao.PessimisticLockingFailureException) {
+                System.err.println("[Webhook] Dat cho " + maDatCho + " dang duoc giao dich khac xu ly (ORA-00054).");
                 return new KetQuaWebhookThanhToan(false, "Đặt chỗ đang được giao dịch khác xử lý.", maDatCho);
             }
             throw ex;
         }
 
         if (payment == null) {
-            System.err.println("[CongThongTinService] -> Không tìm thấy đặt chỗ " + maDatCho + " trong hệ thống.");
+            System.err.println("[Webhook] Khong tim thay DatCho trong CSDL: " + maDatCho);
             return new KetQuaWebhookThanhToan(false, "Không tìm thấy đặt chỗ " + maDatCho + ".", maDatCho);
         }
 
-        String normalizedStatus = chuanHoa(payment.getTrangThaiDatTruoc());
-        System.out.println("[CongThongTinService] -> Trạng thái trước khi xử lý: " + payment.getTrangThaiDatTruoc());
+        System.out.println("[Webhook] ThanhTien trong DATCHO: " + payment.getThanhTien() + " VND");
+        System.out.println("[Webhook] Trang thai truoc khi xu ly: " + payment.getTrangThaiDatTruoc());
 
-        // Idempotent: check if already paid or used
-        if (normalizedStatus.contains("thanh cong") || normalizedStatus.contains("su dung")) {
-            System.out.println("[CongThongTinService] -> Đặt chỗ " + maDatCho + " đã Đã thanh toán thành công/Đã sử dụng. Trả success.");
-            System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: " + payment.getTrangThaiDatTruoc());
+        // Idempotency: Neu dat cho da o trang thai thanh toan thanh cong
+        if (chuanHoa(payment.getTrangThaiDatTruoc()).contains("thanh cong")) {
+            System.out.println("[Webhook] Dat cho " + maDatCho + " da o trang thai thanh toan thanh cong. Trang thai sau khi xu ly: " + payment.getTrangThaiDatTruoc());
             return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.", maDatCho);
         }
 
-        // Idempotent: check duplicate transaction ID
-        if (khoDuLieu.daTonTaiGiaoDich(maDatCho, request.getMaGiaoDich())) {
-            System.out.println("[CongThongTinService] -> Giao dịch trùng maGiaoDich: " + request.getMaGiaoDich() + ". Bỏ qua xử lý.");
-            System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: " + payment.getTrangThaiDatTruoc());
-            return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó với mã giao dịch này.", maDatCho);
+        if (!laTrangThaiWebhookThanhCong(request.getTrangThai())) {
+            System.err.println("[Webhook] Trang thai trong request khong hop le: " + request.getTrangThai() + ". Trang thai sau khi xu ly: " + payment.getTrangThaiDatTruoc());
+            return new KetQuaWebhookThanhToan(false, "Giao dịch ngân hàng chưa ở trạng thái thanh toán thành công.", maDatCho);
         }
 
         BigDecimal expectedAmount = lamTronTienVnd(payment.getThanhTien());
         if (request.getSoTien() == null) {
-            System.err.println("[CongThongTinService] -> Thất bại: Webhook thiếu số tiền chuyển khoản.");
+            System.err.println("[Webhook] Thieu so tien trong request. Trang thai sau khi xu ly: " + payment.getTrangThaiDatTruoc());
             return new KetQuaWebhookThanhToan(false, "Webhook thiếu số tiền chuyển khoản.", maDatCho);
         }
         BigDecimal paidAmount = lamTronTienVnd(request.getSoTien());
-        
-        System.out.println("[CongThongTinService] -> Số tiền webhook (soTien): " + paidAmount + " VNĐ");
-        System.out.println("[CongThongTinService] -> ThanhTien trong DATCHO: " + expectedAmount + " VNĐ");
-
-        if (!laTrangThaiWebhookThanhCong(request.getTrangThai())) {
-            System.err.println("[CongThongTinService] -> Thất bại: Trạng thái webhook không thành công: " + request.getTrangThai());
-            return new KetQuaWebhookThanhToan(false, "Giao dịch ngân hàng chưa ở trạng thái thanh toán thành công.", maDatCho);
-        }
-
         if (paidAmount.compareTo(expectedAmount) < 0) {
             String reason = "Số tiền chuyển khoản chưa đủ. Cần "
                     + dinhDangTien(expectedAmount) + ", nhận " + dinhDangTien(paidAmount) + ".";
-            System.err.println("[CongThongTinService] -> Thất bại: " + reason);
+            System.err.println("[Webhook] " + reason + " Trang thai sau khi xu ly: " + payment.getTrangThaiDatTruoc());
             return new KetQuaWebhookThanhToan(false, reason, maDatCho);
         }
 
         ThongTinXacNhanDatChoDTO thongTin = khoDuLieu.timThongTinXacNhanTheoDatCho(maDatCho);
         if (thongTin == null) {
+            System.err.println("[Webhook] Khong lay duoc chi tiet dat cho: " + maDatCho + ". Trang thai sau khi xu ly: " + payment.getTrangThaiDatTruoc());
             return new KetQuaWebhookThanhToan(false, "Không lấy được chi tiết đặt chỗ " + maDatCho + ".", maDatCho);
         }
         String maQR = MaQRUtil.taoMaQRDatCho(maDatCho);
@@ -456,13 +452,11 @@ public class CongThongTinService {
                         + " với số tiền " + dinhDangTien(paidAmount) + "."
         );
         if (!confirmed) {
-            System.out.println("[CongThongTinService] -> Đặt chỗ " + maDatCho + " đã được xử lý song song bởi giao dịch khác.");
-            System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: Đã thanh toán thành công");
+            System.err.println("[Webhook] UPDATE that bai (co the do trang thai da bi doi boi giao dich song song). Trang thai sau khi xu ly: " + payment.getTrangThaiDatTruoc());
             return new KetQuaWebhookThanhToan(true, "Đặt chỗ " + maDatCho + " đã được xử lý trước đó.", maDatCho);
         }
-
-        System.out.println("[CongThongTinService] -> Xác nhận thanh toán thành công cho " + maDatCho);
-        System.out.println("[CongThongTinService] -> Trạng thái sau khi xử lý: Đã thanh toán thành công");
+        
+        System.out.println("[Webhook] Trang thai sau khi xu ly: Đã thanh toán thành công");
 
         thongTin.setMaQR(maQR);
         boolean emailSent = guiEmailXacNhanDatCho(thongTin);
@@ -476,15 +470,22 @@ public class CongThongTinService {
     @Transactional
     public void hetHanDatChoChoThanhToan() {
         List<ThongTinXacNhanDatChoDTO> expiredBookings = khoDuLieu.timDatChoChoThanhToanDaHetHan();
-        for (ThongTinXacNhanDatChoDTO thongTin : expiredBookings) {
-            String reason = "Chưa nhận được thanh toán sau 10 phút giữ chỗ.";
-            System.out.println("[Scheduler] Phát hiện đặt chỗ hết hạn: " + thongTin.getMaDatCho() + ", trạng thái hiện tại: Đang chờ thanh toán");
-            boolean success = khoDuLieu.ghiNhanThanhToanDatChoThatBai(thongTin.getMaDatCho(), reason);
-            if (success) {
-                System.out.println("[Scheduler] -> Cập nhật thành công sang Thanh toán không thành công cho MaDatCho: " + thongTin.getMaDatCho() + " (rowsAffected = 1)");
-                guiEmailThanhToanThatBai(thongTin, reason);
-            } else {
-                System.out.println("[Scheduler] -> bỏ qua vì trạng thái đã thay đổi cho MaDatCho: " + thongTin.getMaDatCho() + " (rowsAffected = 0)");
+        if (expiredBookings != null && !expiredBookings.isEmpty()) {
+            System.out.println("[Scheduler] Tim thay " + expiredBookings.size() + " dat cho cho thanh toan da het han.");
+            for (ThongTinXacNhanDatChoDTO thongTin : expiredBookings) {
+                String maDatCho = thongTin.getMaDatCho();
+                String reason = "Chưa nhận được thanh toán sau 10 phút giữ chỗ.";
+                System.out.println("[Scheduler] Tien hanh huy dat cho het han: MaDatCho=" + maDatCho 
+                        + ", KhachHang=" + thongTin.getHoTen() + ", Email=" + thongTin.getEmail()
+                        + ", ThanhTien=" + thongTin.getThanhTien());
+                
+                boolean updated = khoDuLieu.ghiNhanThanhToanDatChoThatBai(maDatCho, reason);
+                if (updated) {
+                    System.out.println("[Scheduler] Huy thanh cong " + maDatCho + ". gui email thong bao.");
+                    guiEmailThanhToanThatBai(thongTin, reason);
+                } else {
+                    System.out.println("[Scheduler] Bo qua vi trang thai da thay doi doi voi DatCho: " + maDatCho);
+                }
             }
         }
     }

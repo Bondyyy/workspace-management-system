@@ -63,7 +63,7 @@ public class QuanLyNhanVienController {
         return service.capNhatVaiTro(vt, dsMaCN);
     }
 
-    public boolean xoaVaiTro(String maVaiTro) {
+    public boolean xoaVaiTro(String maVaiTro) throws Exception {
         return service.xoaVaiTro(maVaiTro);
     }
 

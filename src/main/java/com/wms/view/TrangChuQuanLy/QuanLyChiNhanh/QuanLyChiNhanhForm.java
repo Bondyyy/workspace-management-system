@@ -72,7 +72,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         txtGioDongCua.setText("");
         txtHotline1.setText("");
         cbxTrangThai.setSelectedIndex(0);
-        txtMaCN.setText(controller.layMaCNTiepTheo());
+        txtMaCN.setText("");
         tblChiNhanh.clearSelection();
     }
 

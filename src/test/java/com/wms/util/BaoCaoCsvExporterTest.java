@@ -11,7 +11,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class DoanhThuReportExporterTest {
+class BaoCaoCsvExporterTest {
 
     @TempDir
     Path tempDir;
@@ -29,7 +29,7 @@ class DoanhThuReportExporterTest {
                 "Đã thanh toán\nhoàn tất"
         });
 
-        DoanhThuReportExporter.xuatCsv(output.toFile(), rows);
+        BaoCaoCsvExporter.xuatCsv(output.toFile(), rows);
 
         byte[] bytes = Files.readAllBytes(output);
         assertTrue(bytes.length > 3, "File CSV phải có dữ liệu.");

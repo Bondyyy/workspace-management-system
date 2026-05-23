@@ -23,7 +23,6 @@ public class LoaiDichVuService {
 
     public boolean addLoaiDichVu(LoaiDichVuDTO loai) throws SQLException {
         validate(loai);
-        loai.setMaLoaiDV(dao.generateNextMa());
         return dao.them(loai);
     }
 

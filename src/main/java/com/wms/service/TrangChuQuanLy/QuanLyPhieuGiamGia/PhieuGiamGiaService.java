@@ -12,10 +12,6 @@ public class PhieuGiamGiaService {
     }
 
     public boolean themMoi(PhieuGiamGiaDTO dto) {
-        if (dto.getMaPGG() == null || dto.getMaPGG().isBlank()) {
-            dto.setMaPGG(sinhMaMoi());
-        }
-        
         if (!kiemTraHopLe(dto)) return false;
         
         return dao.themMoi(dto);

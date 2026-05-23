@@ -31,20 +31,26 @@ public class PhienLamViecDAO {
             }
         }
 
-        String sql = "{call sp_MoPhienLamViecTrucTiep(?, ?, ?, ?, ?, ?)}";
+        // SP nhan 7 tham so: MaKG, MaKH, ThoiGianBatDau, ThoiGianDuKienKetThuc, MaPhien, MaDatCho, OUT message
+        String sql = "{call sp_MoPhienLamViecTrucTiep(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
                 CallableStatement cstmt = conn.prepareCall(sql)) {
             cstmt.setString(1, phien.getMaKG());
             cstmt.setString(2, phien.getMaKH());
-            cstmt.setTimestamp(3, phien.getThoiGianDuKienKetThuc());
-            cstmt.setString(4, phien.getMaPhien());
-            cstmt.setString(5, phien.getMaDatCho());
-            cstmt.registerOutParameter(6, java.sql.Types.VARCHAR);
+            // param 3: ThoiGianBatDau - dung thoi gian hien tai neu DTO chua co
+            Timestamp batDau = phien.getThoiGianBatDau() != null
+                    ? phien.getThoiGianBatDau()
+                    : new Timestamp(System.currentTimeMillis());
+            cstmt.setTimestamp(3, batDau);
+            cstmt.setTimestamp(4, phien.getThoiGianDuKienKetThuc());
+            cstmt.setString(5, phien.getMaPhien());
+            cstmt.setString(6, phien.getMaDatCho());
+            cstmt.registerOutParameter(7, java.sql.Types.VARCHAR);
 
             cstmt.execute();
 
-            String message = cstmt.getString(6);
+            String message = cstmt.getString(7);
             if (laThongBaoThanhCong(message)) {
                 return true;
             } else {
@@ -303,7 +309,7 @@ public class PhienLamViecDAO {
                 }
 
                 double thanhTien = tongTien - soTienDaTraTruoc;
-                String trangThaiThanhToan = thanhTien <= 0 ? "Đã thanh toán thành công" : "Đang chờ thanh toán phụ thu";
+                String trangThaiThanhToan = thanhTien <= 0 ? "Đã thanh toán thành công" : "Đang chờ thanh toán";
 
                 String sqlHoaDon = "UPDATE HOADON SET TongTien = ?, ThanhTien = ?, TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
                 try (PreparedStatement pstmtHoaDon = conn.prepareStatement(sqlHoaDon)) {

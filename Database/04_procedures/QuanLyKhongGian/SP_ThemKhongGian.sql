@@ -13,6 +13,7 @@ CREATE OR REPLACE PROCEDURE SP_ThemKhongGian(
     v_Count NUMBER;
     v_TrangThaiCN VARCHAR2(50);
     v_MaQR VARCHAR2(500);
+    v_MaKG KHONGGIAN.MaKG%TYPE;
 BEGIN
     BEGIN
         SELECT TrangThai INTO v_TrangThaiCN
@@ -27,9 +28,11 @@ BEGIN
             'Chi nhánh [' || p_MaCN || '] đang ngừng hoạt động!');
     END IF;
 
-    SELECT COUNT(*) INTO v_Count FROM KHONGGIAN WHERE MaKG = p_MaKG;
-    IF v_Count > 0 THEN
-        RAISE_APPLICATION_ERROR(-20112, 'Mã không gian [' || p_MaKG || '] đã tồn tại!');
+    IF p_MaKG IS NOT NULL AND LENGTH(TRIM(p_MaKG)) > 0 THEN
+        SELECT COUNT(*) INTO v_Count FROM KHONGGIAN WHERE MaKG = TRIM(p_MaKG);
+        IF v_Count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20112, 'Mã không gian [' || p_MaKG || '] đã tồn tại!');
+        END IF;
     END IF;
 
     SELECT COUNT(*) INTO v_Count
@@ -44,12 +47,12 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20114, 'Loại không gian [' || p_MaLoaiKG || '] không hợp lệ!');
     END IF;
 
-    v_MaQR := 'QR-' || p_MaKG || '-' || TO_CHAR(SYSTIMESTAMP, 'YYYYMMDDHH24MISSFF3');
-
     INSERT INTO KHONGGIAN (MaKG, TenKG, TrangThaiKG, ViTri, MaLoaiKG, MaCN, ToaDoX, ToaDoY, ChieuDai, ChieuRong)
-    VALUES (p_MaKG, p_TenKG, 'Trống', p_ViTri, p_MaLoaiKG, p_MaCN, p_ToaDoX, p_ToaDoY, p_ChieuDai, p_ChieuRong);
+    VALUES (NULLIF(TRIM(p_MaKG), ''), p_TenKG, 'Trống', p_ViTri, p_MaLoaiKG, p_MaCN, p_ToaDoX, p_ToaDoY, p_ChieuDai, p_ChieuRong)
+    RETURNING MaKG INTO v_MaKG;
 
     COMMIT;
+    v_MaQR := 'QR-' || v_MaKG || '-' || TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISSFF3');
     p_outMessage := 'Thêm không gian "' || p_TenKG || '" thành công! Mã QR: ' || v_MaQR;
 
 EXCEPTION

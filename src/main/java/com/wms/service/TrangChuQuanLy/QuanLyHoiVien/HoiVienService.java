@@ -43,11 +43,7 @@ public class HoiVienService {
     }
 
     public String generateMaKH() {
-        try {
-            return khachHangDAO.taoMaKHMoi(null);
-        } catch (Exception e) {
-            return "HV000001";
-        }
+        return "";
     }
 
     private void validate(HoiVienDTO dto) throws Exception {

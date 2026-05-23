@@ -29,24 +29,27 @@ public class VaiTroDAO {
         return list;
     }
 
-    public boolean themVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) {
+    public boolean themVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) throws SQLException {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             boolean autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
 
-                String maVT = vt.getMaVaiTro();
-                if (maVT == null || maVT.trim().isEmpty()) {
-                    maVT = taoMaVaiTroMoi(conn);
+                String maVT;
+                String sqlVT = """
+                        BEGIN
+                            INSERT INTO VAITRO (TenVaiTro, MoTa)
+                            VALUES (?, ?)
+                            RETURNING MaVaiTro INTO ?;
+                        END;
+                        """;
+                try (CallableStatement cs = conn.prepareCall(sqlVT)) {
+                    cs.setString(1, vt.getTenVaiTro());
+                    cs.setString(2, vt.getMoTa());
+                    cs.registerOutParameter(3, Types.VARCHAR);
+                    cs.execute();
+                    maVT = cs.getString(3);
                     vt.setMaVaiTro(maVT);
-                }
-
-                String sqlVT = "INSERT INTO VAITRO (MaVaiTro, TenVaiTro, MoTa) VALUES (?, ?, ?)";
-                try (PreparedStatement ps = conn.prepareStatement(sqlVT)) {
-                    ps.setString(1, maVT);
-                    ps.setString(2, vt.getTenVaiTro());
-                    ps.setString(3, vt.getMoTa());
-                    ps.executeUpdate();
                 }
 
                 String sqlNCN = "INSERT INTO NHOMCHUCNANG (MaNhomChucNang, TenNhomChucNang, MoTa) VALUES (?, ?, ?)";
@@ -81,25 +84,21 @@ public class VaiTroDAO {
                 conn.commit();
                 return true;
             } catch (SQLException e) {
-                System.err.println("[VaiTroDAO] Lỗi thêm vai trò: " + e.getMessage());
                 try {
                     conn.rollback();
                 } catch (SQLException ex) {
                 }
-                return false;
+                throw e;
             } finally {
                 try {
                     conn.setAutoCommit(autoCommit);
                 } catch (SQLException ex) {
                 }
             }
-        } catch (Exception e) {
-            System.err.println("[VaiTroDAO] Lỗi kết nối CSDL: " + e.getMessage());
-            return false;
         }
     }
 
-    public boolean capNhatVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) {
+    public boolean capNhatVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) throws SQLException {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             boolean autoCommit = conn.getAutoCommit();
             try {
@@ -130,20 +129,17 @@ public class VaiTroDAO {
                     conn.rollback();
                 } catch (SQLException ex) {
                 }
-                return false;
+                throw e;
             } finally {
                 try {
                     conn.setAutoCommit(autoCommit);
                 } catch (SQLException ex) {
                 }
             }
-        } catch (Exception e) {
-            System.err.println("[VaiTroDAO] Lỗi kết nối CSDL: " + e.getMessage());
-            return false;
         }
     }
 
-    public boolean xoaVaiTro(String maVaiTro) {
+    public boolean xoaVaiTro(String maVaiTro) throws SQLException {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             boolean autoCommit = conn.getAutoCommit();
             try {
@@ -178,16 +174,13 @@ public class VaiTroDAO {
                     conn.rollback();
                 } catch (SQLException ex) {
                 }
-                return false;
+                throw e;
             } finally {
                 try {
                     conn.setAutoCommit(autoCommit);
                 } catch (SQLException ex) {
                 }
             }
-        } catch (Exception e) {
-            System.err.println("[VaiTroDAO] Lỗi kết nối CSDL: " + e.getMessage());
-            return false;
         }
     }
 
@@ -247,30 +240,22 @@ public class VaiTroDAO {
         }
     }
 
-    private String taoMaVaiTroMoi(Connection conn) throws SQLException {
-        String sql = "SELECT MAX(MaVaiTro) AS MaxMa FROM VAITRO WHERE MaVaiTro LIKE 'VT%'";
-        try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                String maxMa = rs.getString("MaxMa");
-                if (maxMa != null) {
-                    try {
-                        int soThuTu = Integer.parseInt(maxMa.substring(2)) + 1;
-                        return String.format("VT%02d", soThuTu);
-                    } catch (NumberFormatException e) {
-                    }
-                }
-            }
-        }
-        return "VT01";
-    }
-
     public String sinhMaVT() {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            return taoMaVaiTroMoi(conn);
+            return sinhMaVT(conn);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("[VaiTroDAO] Lỗi tự động sinh mã vai trò: " + e.getMessage());
+            return "";
         }
-        return "VT01";
+    }
+
+    public String sinhMaVT(Connection conn) throws SQLException {
+        String sql = "SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(MaVaiTro, '[0-9]+$'))), -1) FROM VAITRO WHERE REGEXP_LIKE(MaVaiTro, '^VT[0-9]+$')";
+        try (Statement statement = conn.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            int max = rs.next() ? rs.getInt(1) : -1;
+            return String.format("VT%02d", max + 1);
+        }
     }
 
     public boolean capNhatChucNangCuaVaiTro(String maVaiTro, List<String> dsMaCN) {

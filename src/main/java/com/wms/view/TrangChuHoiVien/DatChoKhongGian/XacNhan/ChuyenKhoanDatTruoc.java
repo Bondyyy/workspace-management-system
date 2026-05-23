@@ -379,9 +379,7 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
 
         try {
             // 1. Tạo Đơn đặt chỗ (DATCHO)
-            String maDatCho = "DC" + System.currentTimeMillis();
             DatChoDTO dc = new DatChoDTO();
-            dc.setMaDatCho(maDatCho);
             dc.setMaKH(maKH);
             dc.setMaKG(maKG_Booking);
             dc.setThanhTien(thanhTien);
@@ -398,11 +396,10 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Lỗi khi lưu đơn đặt chỗ!");
                 return;
             }
+            String maDatCho = dc.getMaDatCho();
 
             // 2. Tạo Phiên làm việc (Liên kết với MaDatCho)
-            String maPhien = "PH" + System.currentTimeMillis();
             PhienLamViecDTO phien = new PhienLamViecDTO();
-            phien.setMaPhien(maPhien);
             phien.setMaKH(maKH);
             phien.setMaKG(maKG_Booking);
             phien.setMaDatCho(maDatCho); // QUAN TRỌNG: Gán mã đặt chỗ vào đây
@@ -414,18 +411,22 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
 
             PhienLamViecDAO pDAO = new PhienLamViecDAO();
             if (pDAO.taoPhienLamViecMoi(phien)) {
+                String maPhien = phien.getMaPhien();
                 // 3. Tạo Hóa đơn
-                String maHD = "HD" + System.currentTimeMillis();
                 HoaDonDTO hd = new HoaDonDTO();
-                hd.setMaHoaDon(maHD);
-                hd.setSoHD(maHD);
                 hd.setMaPhien(maPhien);
                 hd.setTongTien(tongTienBanDau);
                 hd.setThanhTien(thanhTien);
                 hd.setTrangThaiThanhToan("Đang chờ thanh toán");
 
                 HoaDonDAO hDAO = new HoaDonDAO();
-                if (hDAO.taoHoaDonMoi(hd)) {
+                HoaDonDTO hoaDonDaTao = hDAO.capNhatHoaDonDatTruocTheoPhien(maPhien, tongTienBanDau, thanhTien);
+                if (hoaDonDaTao == null && hDAO.taoHoaDonMoi(hd)) {
+                    hoaDonDaTao = hd;
+                }
+                if (hoaDonDaTao != null) {
+                    hd = hoaDonDaTao;
+                    String maHD = hd.getMaHoaDon();
                     // 3. Chuyển sang màn hình thành công
                     String htmlDetails = String.format("<html>" +
                         "<b>Mã hóa đơn:</b> %s<br/>" +

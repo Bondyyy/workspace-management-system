@@ -34,11 +34,6 @@ BEGIN
     WHERE MaPhien = TRIM(p_MaPhien)
     FOR UPDATE NOWAIT;
 
-    IF v_TrangThaiPhien = 'Đã kết thúc' THEN
-        p_outMessage := 'Lỗi: Phiên đã kết thúc, không thể thanh toán lại.';
-        RETURN;
-    END IF;
-
     SELECT MaHoaDon, TrangThaiThanhToan
     INTO v_MaHoaDon, v_TrangThaiThanhToan
     FROM HOADON

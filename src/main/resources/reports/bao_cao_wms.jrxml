@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="bao_cao_wms"
+              pageWidth="842"
+              pageHeight="595"
+              orientation="Landscape"
+              columnWidth="794"
+              leftMargin="24"
+              rightMargin="24"
+              topMargin="24"
+              bottomMargin="24"
+              whenNoDataType="AllSectionsNoDetail"
+              uuid="7dd8c8aa-ccf7-4f75-9d57-128768b542f1">
+    <property name="net.sf.jasperreports.default.font.name" value="DejaVu Sans"/>
+    <property name="net.sf.jasperreports.default.pdf.encoding" value="Identity-H"/>
+    <property name="net.sf.jasperreports.default.pdf.embedded" value="true"/>
+
+    <style name="Base" fontName="DejaVu Sans" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+    <style name="Small" style="Base" fontSize="8"/>
+    <style name="Normal" style="Base" fontSize="9"/>
+    <style name="Bold" style="Base" fontSize="9" isBold="true"/>
+    <style name="Title" style="Base" fontSize="18" isBold="true"/>
+    <style name="MetricLabel" style="Base" fontSize="8" isBold="true" forecolor="#59616D"/>
+    <style name="MetricValue" style="Base" fontSize="12" isBold="true" forecolor="#222222"/>
+
+    <parameter name="TIEU_DE_BAO_CAO" class="java.lang.String"/>
+    <parameter name="PHU_DE_BAO_CAO" class="java.lang.String"/>
+    <parameter name="TU_NGAY" class="java.lang.String"/>
+    <parameter name="DEN_NGAY" class="java.lang.String"/>
+    <parameter name="CHI_NHANH" class="java.lang.String"/>
+    <parameter name="NGUOI_XUAT" class="java.lang.String"/>
+    <parameter name="THOI_GIAN_XUAT" class="java.lang.String"/>
+    <parameter name="NHAN_TONG_1" class="java.lang.String"/>
+    <parameter name="GIA_TRI_TONG_1" class="java.lang.String"/>
+    <parameter name="NHAN_TONG_2" class="java.lang.String"/>
+    <parameter name="GIA_TRI_TONG_2" class="java.lang.String"/>
+    <parameter name="NHAN_TONG_3" class="java.lang.String"/>
+    <parameter name="GIA_TRI_TONG_3" class="java.lang.String"/>
+    <parameter name="GHI_CHU_BAO_CAO" class="java.lang.String"/>
+    <parameter name="LOAI_BAO_CAO" class="java.lang.String"/>
+    <parameter name="TEN_COT_1" class="java.lang.String"/>
+    <parameter name="TEN_COT_2" class="java.lang.String"/>
+    <parameter name="TEN_COT_3" class="java.lang.String"/>
+    <parameter name="TEN_COT_4" class="java.lang.String"/>
+    <parameter name="TEN_COT_5" class="java.lang.String"/>
+    <parameter name="TEN_COT_6" class="java.lang.String"/>
+    <parameter name="TEN_COT_7" class="java.lang.String"/>
+    <parameter name="TEN_COT_8" class="java.lang.String"/>
+
+    <field name="cot1" class="java.lang.String"/>
+    <field name="cot2" class="java.lang.String"/>
+    <field name="cot3" class="java.lang.String"/>
+    <field name="cot4" class="java.lang.String"/>
+    <field name="cot5" class="java.lang.String"/>
+    <field name="cot6" class="java.lang.String"/>
+    <field name="cot7" class="java.lang.String"/>
+    <field name="cot8" class="java.lang.String"/>
+
+    <title>
+        <band height="188">
+            <staticText>
+                <reportElement style="Bold" x="0" y="0" width="150" height="16" forecolor="#EB5E8D" uuid="21f94b1d-b1d1-41bd-9932-90bf88294ae3"/>
+                <text><![CDATA[SPRING MNGT]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Small" x="0" y="18" width="300" height="14" forecolor="#59616D" uuid="4c590d7e-22f2-4496-833c-7140873a95f2"/>
+                <text><![CDATA[HỆ THỐNG QUẢN LÝ KHÔNG GIAN LÀM VIỆC]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="38" width="794" height="1" forecolor="#E7EAF0" uuid="0c557ab1-4bb1-40c4-96cd-491536c77654"/>
+            </line>
+
+            <textField>
+                <reportElement style="Title" x="0" y="48" width="794" height="28" uuid="94a84158-b17c-4be6-bd44-49b33dd76d86"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$P{TIEU_DE_BAO_CAO}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement style="Normal" x="0" y="76" width="794" height="16" forecolor="#59616D" uuid="ea8a59f2-d2ce-439a-9673-99089e722c4c"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$P{PHU_DE_BAO_CAO}]]></textFieldExpression>
+            </textField>
+
+            <frame>
+                <reportElement mode="Opaque" x="0" y="102" width="794" height="34" backcolor="#FFF7FA" uuid="2616a241-3c15-4227-a2bf-fd64f20ba389"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#F1D4DF"/>
+                </box>
+                <staticText>
+                    <reportElement style="Bold" x="10" y="7" width="70" height="12" uuid="b9d311a5-7eaa-4231-93f6-e7a57b56e8f3"/>
+                    <text><![CDATA[Khoảng ngày:]]></text>
+                </staticText>
+                <textField>
+                    <reportElement style="Normal" x="82" y="7" width="142" height="12" uuid="7268c108-8ba7-4147-8850-34b76c3bcda6"/>
+                    <textFieldExpression><![CDATA[$P{TU_NGAY} + " - " + $P{DEN_NGAY}]]></textFieldExpression>
+                </textField>
+                <staticText>
+                    <reportElement style="Bold" x="240" y="7" width="55" height="12" uuid="c762cfdb-37b8-4b97-8a45-acfd14acaadc"/>
+                    <text><![CDATA[Chi nhánh:]]></text>
+                </staticText>
+                <textField isBlankWhenNull="true">
+                    <reportElement style="Normal" x="298" y="7" width="166" height="12" uuid="9e20f8b1-d152-4e41-8216-1b2c0d939190"/>
+                    <textFieldExpression><![CDATA[$P{CHI_NHANH}]]></textFieldExpression>
+                </textField>
+                <staticText>
+                    <reportElement style="Bold" x="480" y="7" width="60" height="12" uuid="736e2914-85fa-4352-bc97-4a0fd5ee9529"/>
+                    <text><![CDATA[Người xuất:]]></text>
+                </staticText>
+                <textField isBlankWhenNull="true">
+                    <reportElement style="Normal" x="542" y="7" width="92" height="12" uuid="c8123a4a-158b-4d99-8847-a249bf2de2d1"/>
+                    <textFieldExpression><![CDATA[$P{NGUOI_XUAT}]]></textFieldExpression>
+                </textField>
+                <staticText>
+                    <reportElement style="Bold" x="644" y="7" width="55" height="12" uuid="ce667654-70af-465a-bce0-3d46b71ea8ee"/>
+                    <text><![CDATA[Ngày xuất:]]></text>
+                </staticText>
+                <textField>
+                    <reportElement style="Normal" x="701" y="7" width="86" height="12" uuid="01f529f0-f77b-4cd3-b069-ce6b7f7f0156"/>
+                    <textFieldExpression><![CDATA[$P{THOI_GIAN_XUAT}]]></textFieldExpression>
+                </textField>
+                <staticText>
+                    <reportElement style="Bold" x="10" y="20" width="70" height="12" uuid="298cdd88-96ce-46fb-a53a-a27b3d4ec0cc"/>
+                    <text><![CDATA[Loại báo cáo:]]></text>
+                </staticText>
+                <textField isBlankWhenNull="true">
+                    <reportElement style="Normal" x="82" y="20" width="240" height="12" uuid="14133915-0e69-42c4-b963-04c9e1c4594e"/>
+                    <textFieldExpression><![CDATA[$P{LOAI_BAO_CAO}]]></textFieldExpression>
+                </textField>
+            </frame>
+
+            <frame>
+                <reportElement mode="Opaque" x="0" y="146" width="252" height="34" backcolor="#FFFFFF" uuid="8acfdab8-f042-46c7-b74a-5e42c88dbef1"/>
+                <box><pen lineWidth="0.5" lineColor="#E4E8EF"/></box>
+                <textField>
+                    <reportElement style="MetricLabel" x="10" y="5" width="232" height="12" uuid="ef7eb47d-07c5-48f9-95e8-ea5d64930789"/>
+                    <textFieldExpression><![CDATA[$P{NHAN_TONG_1}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="MetricValue" x="10" y="18" width="232" height="13" uuid="f42ea1f9-502f-4976-abf5-a364f44d2f41"/>
+                    <textFieldExpression><![CDATA[$P{GIA_TRI_TONG_1}]]></textFieldExpression>
+                </textField>
+            </frame>
+            <frame>
+                <reportElement mode="Opaque" x="271" y="146" width="252" height="34" backcolor="#FFFFFF" uuid="f5be771f-2745-496d-8189-5201dd80e2cf"/>
+                <box><pen lineWidth="0.5" lineColor="#E4E8EF"/></box>
+                <textField>
+                    <reportElement style="MetricLabel" x="10" y="5" width="232" height="12" uuid="17e89e89-a18a-4100-b140-bc403932ea1b"/>
+                    <textFieldExpression><![CDATA[$P{NHAN_TONG_2}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="MetricValue" x="10" y="18" width="232" height="13" uuid="07946f32-6517-4f58-b7ef-923969b8fb24"/>
+                    <textFieldExpression><![CDATA[$P{GIA_TRI_TONG_2}]]></textFieldExpression>
+                </textField>
+            </frame>
+            <frame>
+                <reportElement mode="Opaque" x="542" y="146" width="252" height="34" backcolor="#FFFFFF" uuid="b4f66555-b5e2-48b6-b9df-0138978562ad"/>
+                <box><pen lineWidth="0.5" lineColor="#E4E8EF"/></box>
+                <textField>
+                    <reportElement style="MetricLabel" x="10" y="5" width="232" height="12" uuid="fdcd6587-d616-4530-b2ef-e2e59459934e"/>
+                    <textFieldExpression><![CDATA[$P{NHAN_TONG_3}]]></textFieldExpression>
+                </textField>
+                <textField>
+                    <reportElement style="MetricValue" x="10" y="18" width="232" height="13" uuid="3f01385a-0ac3-491c-bbfb-a053af6cdecb"/>
+                    <textFieldExpression><![CDATA[$P{GIA_TRI_TONG_3}]]></textFieldExpression>
+                </textField>
+            </frame>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="27">
+            <textField><reportElement style="Bold" mode="Opaque" x="0" y="0" width="70" height="24" backcolor="#F2F5F9" uuid="fcbe66d8-9293-4519-98fa-b95a6d51a7e7"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_1}]]></textFieldExpression></textField>
+            <textField><reportElement style="Bold" mode="Opaque" x="70" y="0" width="84" height="24" backcolor="#F2F5F9" uuid="f0fd353d-03bf-44f8-a40b-565f8c0ebd25"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_2}]]></textFieldExpression></textField>
+            <textField><reportElement style="Bold" mode="Opaque" x="154" y="0" width="130" height="24" backcolor="#F2F5F9" uuid="b57528a6-4a83-473b-b2c9-2f5db74d929c"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_3}]]></textFieldExpression></textField>
+            <textField><reportElement style="Bold" mode="Opaque" x="284" y="0" width="108" height="24" backcolor="#F2F5F9" uuid="f3bb5f89-c968-40b7-a455-723840b850aa"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_4}]]></textFieldExpression></textField>
+            <textField><reportElement style="Bold" mode="Opaque" x="392" y="0" width="108" height="24" backcolor="#F2F5F9" uuid="f4fb020e-641c-4f62-bd45-05bbb0459042"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_5}]]></textFieldExpression></textField>
+            <textField><reportElement style="Bold" mode="Opaque" x="500" y="0" width="88" height="24" backcolor="#F2F5F9" uuid="d6375028-f8cc-48a4-b997-3a10e5e0d244"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_6}]]></textFieldExpression></textField>
+            <textField><reportElement style="Bold" mode="Opaque" x="588" y="0" width="88" height="24" backcolor="#F2F5F9" uuid="2c40b8e7-58cd-405e-a531-c5f572c5087e"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_7}]]></textFieldExpression></textField>
+            <textField><reportElement style="Bold" mode="Opaque" x="676" y="0" width="118" height="24" backcolor="#F2F5F9" uuid="7086a8c0-293a-41e6-bd64-fc3cbbfba492"/><box><pen lineWidth="0.25" lineColor="#D6DBE4"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$P{TEN_COT_8}]]></textFieldExpression></textField>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="23">
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="0" y="0" width="70" height="21" uuid="645dff1d-486f-4f1b-9825-8bc3fde48ae6"/><box leftPadding="3" rightPadding="3"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot1}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="70" y="0" width="84" height="21" uuid="49c99fdd-21b0-421c-9cad-c73c07a1475b"/><box leftPadding="3" rightPadding="3"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement textAlignment="Center" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot2}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="154" y="0" width="130" height="21" uuid="2f569085-6c5e-4774-8119-eea0e7049eb1"/><box leftPadding="4" rightPadding="3"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot3}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="284" y="0" width="108" height="21" uuid="f222a912-462a-4d58-a22f-68408a6cc765"/><box leftPadding="4" rightPadding="3"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot4}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="392" y="0" width="108" height="21" uuid="c2db5926-d0a1-4f3b-98f8-8dccae6217a1"/><box leftPadding="4" rightPadding="3"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot5}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="500" y="0" width="88" height="21" uuid="a13a6489-675c-473e-9cf0-3481210826c8"/><box leftPadding="3" rightPadding="4"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement textAlignment="Right" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot6}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="588" y="0" width="88" height="21" uuid="ccf9ed67-610b-4f24-b0f2-6e7eff9df0ec"/><box leftPadding="3" rightPadding="4"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement textAlignment="Right" verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot7}]]></textFieldExpression></textField>
+            <textField isBlankWhenNull="true"><reportElement style="Small" x="676" y="0" width="118" height="21" uuid="fc7a7d33-9c4c-47f1-98b5-34ff9ca3b719"/><box leftPadding="4" rightPadding="3"><bottomPen lineWidth="0.25" lineColor="#EDF0F5"/></box><textElement verticalAlignment="Middle"/><textFieldExpression><![CDATA[$F{cot8}]]></textFieldExpression></textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="18">
+            <staticText>
+                <reportElement style="Small" x="0" y="1" width="320" height="12" forecolor="#8A94A3" uuid="7ca153db-b8df-4966-84b1-adf0fff37f30"/>
+                <text><![CDATA[Spring MNGT - Báo cáo quản trị]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Small" x="690" y="1" width="55" height="12" forecolor="#8A94A3" uuid="a9170640-2211-4410-b4a9-3033d6039bb5"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA["Trang " + $V{PAGE_NUMBER} + "/"]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Small" x="745" y="1" width="49" height="12" forecolor="#8A94A3" uuid="07fbf590-b732-441a-9180-17eb65f6a395"/>
+                <textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <summary>
+        <band height="72">
+            <textField isBlankWhenNull="true">
+                <reportElement style="Small" x="0" y="8" width="794" height="28" forecolor="#59616D" uuid="ed1dfeba-6885-4328-ab5b-582ebc06d7c9"/>
+                <textElement verticalAlignment="Top"/>
+                <textFieldExpression><![CDATA[$P{GHI_CHU_BAO_CAO}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Small" x="0" y="48" width="260" height="12" forecolor="#59616D" uuid="daf946c2-bfa2-4c36-9b70-0e06151977a4"/>
+                <text><![CDATA[Báo cáo được xuất tự động từ hệ thống Spring MNGT]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Small" x="438" y="48" width="130" height="12" uuid="9e3be838-90b1-45db-8c6c-992d97810294"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Người lập báo cáo]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Small" x="626" y="48" width="130" height="12" uuid="fd824fc3-af9a-4c05-95c3-b3fc98ef0e7c"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Quản lý chi nhánh]]></text>
+            </staticText>
+        </band>
+    </summary>
+</jasperReport>

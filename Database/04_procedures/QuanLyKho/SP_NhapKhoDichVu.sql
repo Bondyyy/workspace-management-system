@@ -10,7 +10,6 @@ CREATE OR REPLACE PROCEDURE SP_NhapKhoDichVu (
 ) AS
     v_MaLoaiDV LOAIDICHVU.MaLoaiDV%TYPE;
     v_MaDV DICHVU.MaDV%TYPE;
-    v_MaChungTu CHUNGTUNHAPKHO.MaChungTu%TYPE;
     v_TenFile CHUNGTUNHAPKHO.TenFile%TYPE;
     v_SoLuongHienTai NUMBER;
     v_SoLuongLuu NUMBER;
@@ -73,9 +72,9 @@ BEGIN
                   AND ROWNUM = 1;
             EXCEPTION
                 WHEN NO_DATA_FOUND THEN
-                    v_MaLoaiDV := 'LDV' || LPAD(SEQ_LOAIDV_NEW.NEXTVAL, 6, '0');
-                    INSERT INTO LOAIDICHVU (MaLoaiDV, TenLoaiDV, TrangThaiLDV)
-                    VALUES (v_MaLoaiDV, TRIM(p_TenLoaiDV), 'Đang hoạt động');
+                    INSERT INTO LOAIDICHVU (TenLoaiDV, TrangThaiLDV)
+                    VALUES (TRIM(p_TenLoaiDV), 'Đang hoạt động')
+                    RETURNING MaLoaiDV INTO v_MaLoaiDV;
             END;
     END;
 
@@ -116,10 +115,8 @@ BEGIN
             FOR UPDATE NOWAIT;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                v_MaDV := 'DV' || LPAD(SEQ_DICHVU_NEW.NEXTVAL, 6, '0');
                 v_DaTaoDichVuMoi := 1;
                 INSERT INTO DICHVU (
-                    MaDV,
                     TenDV,
                     HinhAnh,
                     TrangThaiDV,
@@ -128,7 +125,6 @@ BEGIN
                     SoLuong,
                     GiaNhap
                 ) VALUES (
-                    v_MaDV,
                     TRIM(p_TenDV),
                     NULL,
                     'Đang hoạt động',
@@ -136,7 +132,8 @@ BEGIN
                     v_MaLoaiDV,
                     v_SoLuongLuu,
                     p_GiaNhap
-                );
+                )
+                RETURNING MaDV INTO v_MaDV;
         END;
     END IF;
 
@@ -151,7 +148,6 @@ BEGIN
         WHERE MaDV = v_MaDV;
     END IF;
 
-    v_MaChungTu := 'CT' || LPAD(SEQ_CHUNGTU.NEXTVAL, 6, '0');
     IF co_gia_tri(p_TenFile) THEN
         v_TenFile := TRIM(p_TenFile);
     ELSE
@@ -159,7 +155,6 @@ BEGIN
     END IF;
 
     INSERT INTO CHUNGTUNHAPKHO (
-        MaChungTu,
         MaDV,
         MaNV,
         MaCN,
@@ -168,7 +163,6 @@ BEGIN
         NgayNhap,
         SoLuongNhap
     ) VALUES (
-        v_MaChungTu,
         v_MaDV,
         v_MaNV,
         v_MaCN,

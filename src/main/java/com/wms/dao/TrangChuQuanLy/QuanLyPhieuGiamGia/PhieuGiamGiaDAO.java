@@ -1,7 +1,6 @@
 package com.wms.dao.TrangChuQuanLy.QuanLyPhieuGiamGia;
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
-import com.wms.util.MaTuDongUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,12 +56,7 @@ public class PhieuGiamGiaDAO {
     }
 
     public String taoMaMoi() {
-        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEU_GIAM_GIA);
-        } catch (SQLException e) {
-            System.err.println("[PhieuGiamGiaDAO] Lỗi tạo mã mới: " + e.getMessage());
-            return "PGG000001";
-        }
+        return "";
     }
 
     public List<PhieuGiamGiaDTO> layDanhSach() {
@@ -100,21 +94,20 @@ public class PhieuGiamGiaDAO {
     }
 
     public boolean themMoi(PhieuGiamGiaDTO dto) {
-        String sql = "INSERT INTO PHIEUGIAMGIA (MaPGG, MaChuSoPGG, GiaTriGiamGia, GiaTriApDungToiThieu, " +
+        String sql = "INSERT INTO PHIEUGIAMGIA (MaChuSoPGG, GiaTriGiamGia, GiaTriApDungToiThieu, " +
                      "NgayBatDauApDung, NgayKetThucApDung, SLDaDung, SLToiDa, NgayTaoPGG, MaNV, TrangThai) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, SYSTIMESTAMP, ?, ?)";
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, dto.getMaPGG());
-            ps.setString(2, dto.getMaChuSoPGG());
-            ps.setDouble(3, dto.getGiaTriGiamGia());
-            ps.setDouble(4, dto.getGiaTriApDungToiThieu());
-            ps.setTimestamp(5, new Timestamp(dto.getNgayBatDauApDung().getTime()));
-            ps.setTimestamp(6, new Timestamp(dto.getNgayKetThucApDung().getTime()));
-            ps.setInt(7, 0);
-            ps.setInt(8, dto.getSlToiDa());
-            ps.setString(9, dto.getMaNV());
-            ps.setString(10, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");
+            ps.setString(1, dto.getMaChuSoPGG());
+            ps.setDouble(2, dto.getGiaTriGiamGia());
+            ps.setDouble(3, dto.getGiaTriApDungToiThieu());
+            ps.setTimestamp(4, new Timestamp(dto.getNgayBatDauApDung().getTime()));
+            ps.setTimestamp(5, new Timestamp(dto.getNgayKetThucApDung().getTime()));
+            ps.setInt(6, 0);
+            ps.setInt(7, dto.getSlToiDa());
+            ps.setString(8, dto.getMaNV());
+            ps.setString(9, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[PhieuGiamGiaDAO] Lỗi thêm mới: " + e.getMessage());

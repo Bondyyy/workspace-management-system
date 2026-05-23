@@ -74,10 +74,6 @@ public class DichVuService {
     }
 
     public String generateMaLoai() {
-        try {
-            return loaiDichVuDAO.generateNextMa();
-        } catch (Exception e) {
-            return "LDV000001";
-        }
+        return "";
     }
 }

@@ -1,8 +1,0 @@
-CREATE TABLE KHACHHANG (
-    MaKH VARCHAR2(50) PRIMARY KEY,
-    LoaiKH VARCHAR2(50),
-    TongChiTieu NUMBER(18, 2),
-    CapNhatLanCuoi TIMESTAMP,
-    MaHangThanhVien VARCHAR2(50),
-    MaND VARCHAR2(50), UNIQUE(MaND)
-);

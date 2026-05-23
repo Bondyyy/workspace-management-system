@@ -47,11 +47,7 @@ public class NhanVienService {
     }
 
     public String generateMaNV() {
-        try {
-            return nhanVienDAO.taoMaNVMoi(null);
-        } catch (Exception e) {
-            return "NV" + (System.currentTimeMillis() % 1000000);
-        }
+        return "";
     }
 
     public List<String[]> layDanhSachChiNhanh() {
@@ -94,7 +90,7 @@ public class NhanVienService {
         vaiTroDAO.khoiTaoDuLieuChucNang();
     }
 
-    public boolean xoaVaiTro(String maVaiTro) {
+    public boolean xoaVaiTro(String maVaiTro) throws Exception {
         if (AppConstants.ROLE_CUSTOMER_CODE.equals(maVaiTro) || AppConstants.ROLE_ADMIN_CODE.equals(maVaiTro)) return false;
         return vaiTroDAO.xoaVaiTro(maVaiTro);
     }

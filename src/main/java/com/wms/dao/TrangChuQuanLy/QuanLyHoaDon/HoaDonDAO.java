@@ -36,6 +36,10 @@ public class HoaDonDAO {
                 sql.append("AND h.TrangThaiThanhToan = 'Đang chờ thanh toán' ");
             } else if (statusFilter.equals("Đã thanh toán")) {
                 sql.append("AND h.TrangThaiThanhToan = 'Đã thanh toán thành công' ");
+            } else if (statusFilter.equals("Đang chờ thanh toán phụ thu")) {
+                sql.append("AND h.TrangThaiThanhToan = 'Đang chờ thanh toán' AND NVL(dc.ThanhTien, 0) > 0 ");
+            } else if (statusFilter.equals("Đã hủy")) {
+                sql.append("AND h.TrangThaiThanhToan = 'Thanh toán không thành công' ");
             } else {
                 sql.append("AND h.TrangThaiThanhToan = ? ");
             }
@@ -51,7 +55,11 @@ public class HoaDonDAO {
                 ps.setString(idx++, q);
                 ps.setString(idx++, q);
             }
-            if (statusFilter != null && !statusFilter.equals("Tất cả") && !statusFilter.equals("Chưa thanh toán") && !statusFilter.equals("Đã thanh toán")) {
+            if (statusFilter != null && !statusFilter.equals("Tất cả") 
+                    && !statusFilter.equals("Chưa thanh toán") 
+                    && !statusFilter.equals("Đã thanh toán")
+                    && !statusFilter.equals("Đang chờ thanh toán phụ thu")
+                    && !statusFilter.equals("Đã hủy")) {
                 ps.setString(idx++, statusFilter);
             }
 
@@ -108,6 +116,56 @@ public class HoaDonDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public HoaDonDTO capNhatHoaDonDatTruocTheoPhien(String maPhien, double tongTien, double thanhTien) {
+        String sqlUpdate = "UPDATE HOADON SET TongTien = ?, ThanhTien = ? WHERE MaPhien = ?";
+        String sqlSelect = "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc, "
+                + "NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc "
+                + "FROM HOADON h "
+                + "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien "
+                + "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho "
+                + "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH "
+                + "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND "
+                + "WHERE h.MaPhien = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+            psUpdate.setDouble(1, tongTien);
+            psUpdate.setDouble(2, thanhTien);
+            psUpdate.setString(3, maPhien);
+            psUpdate.executeUpdate();
+
+            try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect)) {
+                psSelect.setString(1, maPhien);
+                try (ResultSet rs = psSelect.executeQuery()) {
+                    if (rs.next()) {
+                        HoaDonDTO hd = new HoaDonDTO();
+                        hd.setMaHoaDon(rs.getString("MaHoaDon"));
+                        hd.setSoHD(rs.getString("SoHD"));
+                        hd.setSoTienDaTraTruoc(rs.getDouble("SoTienDaTraTruoc"));
+                        hd.setTongTien(rs.getDouble("TongTien"));
+                        hd.setThanhTien(rs.getDouble("ThanhTien"));
+                        hd.setNgayLapHoaDon(rs.getTimestamp("NgayLapHoaDon"));
+                        hd.setPhuongThucThanhToan(rs.getString("PhuongThucThanhToan"));
+                        hd.setTrangThaiThanhToan(rs.getString("TrangThaiThanhToan"));
+                        hd.setMaPhien(rs.getString("MaPhien"));
+                        hd.setMaPGG(rs.getString("MaPGG"));
+                        hd.setMaNV(rs.getString("MaNV"));
+                        hd.setHoTenKH(rs.getString("HoTenKH"));
+                        hd.setMaDatCho(rs.getString("MaDatCho"));
+                        hd.setTrangThaiPhien(rs.getString("TrangThaiPhien"));
+                        hd.setThoiGianBatDauPhien(rs.getTimestamp("ThoiGianBatDau"));
+                        hd.setThoiGianKetThucPhien(rs.getTimestamp("ThoiGianKetThuc"));
+                        hd.setThoiGianDuKienKetThucPhien(rs.getTimestamp("ThoiGianDuKienKetThuc"));
+                        return hd;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public boolean capNhatTrangThaiThanhToanTheoPhien(String maPhien, String trangThai) {
@@ -202,14 +260,12 @@ public class HoaDonDAO {
 
                     // Phần còn lại chính là tiền thuê không gian
                     double tienKhongGian = thongTin.getTongTien() - tongTienDichVu;
-                    if (tienKhongGian > 0) {
-                        double donGiaKg = (thongTin.getTongSoGio() > 0) ? (tienKhongGian / thongTin.getTongSoGio()) : tienKhongGian;
-                        // Thêm vào đầu danh sách để hiển thị đầu tiên
-                        thongTin.getDanhSachDichVu().add(0, new DichVuDaDungDTO(
-                                "Thuê " + thongTin.getTenKhongGian(),
-                                (int) thongTin.getTongSoGio(),
-                                donGiaKg));
-                    }
+                    double donGiaKg = (thongTin.getTongSoGio() > 0) ? (tienKhongGian / thongTin.getTongSoGio()) : tienKhongGian;
+                    // Thêm vào đầu danh sách để hiển thị đầu tiên, ngay cả khi số giờ hoặc tiền = 0
+                    thongTin.getDanhSachDichVu().add(0, new DichVuDaDungDTO(
+                            "Thuê " + thongTin.getTenKhongGian(),
+                            (int) thongTin.getTongSoGio(),
+                            donGiaKg));
                 }
             }
         } catch (Exception e) {

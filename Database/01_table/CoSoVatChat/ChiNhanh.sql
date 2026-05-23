@@ -1,9 +1,0 @@
-CREATE TABLE CHINHANH (
-    MaCN VARCHAR2(50) PRIMARY KEY,
-    TenCN VARCHAR2(100),
-    ThoiGianMoCua VARCHAR2(8),
-    ThoiGianDongCua VARCHAR2(8),
-    DuongDayNong VARCHAR2(20),
-    TrangThai VARCHAR2(50),
-    DiaChi VARCHAR2(255)
-);

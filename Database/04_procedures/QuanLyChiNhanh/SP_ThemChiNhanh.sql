@@ -10,9 +10,11 @@ CREATE OR REPLACE PROCEDURE SP_ThemChiNhanh(
 ) AS
     v_Count NUMBER;
 BEGIN
-    SELECT COUNT(*) INTO v_Count FROM CHINHANH WHERE MaCN = p_MaCN;
-    IF v_Count > 0 THEN
-        RAISE_APPLICATION_ERROR(-20090, 'Mã chi nhánh [' || p_MaCN || '] đã tồn tại!');
+    IF p_MaCN IS NOT NULL AND LENGTH(TRIM(p_MaCN)) > 0 THEN
+        SELECT COUNT(*) INTO v_Count FROM CHINHANH WHERE MaCN = TRIM(p_MaCN);
+        IF v_Count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20090, 'Mã chi nhánh [' || p_MaCN || '] đã tồn tại!');
+        END IF;
     END IF;
 
     SELECT COUNT(*) INTO v_Count FROM CHINHANH WHERE TenCN = p_TenCN;
@@ -25,7 +27,7 @@ BEGIN
         ThoiGianMoCua, ThoiGianDongCua,
         DuongDayNong, TrangThai
     ) VALUES (
-        p_MaCN, p_TenCN, p_DiaChi,
+        NULLIF(TRIM(p_MaCN), ''), p_TenCN, p_DiaChi,
         p_ThoiGianMoCua, p_ThoiGianDongCua,
         p_DuongDayNong, p_TrangThai
     );

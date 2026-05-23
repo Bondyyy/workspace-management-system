@@ -14,6 +14,31 @@ public class MessageUtil {
     }
 
     public static void showError(Component parent, String message) {
+        showError(parent, message, null);
+    }
+
+    public static void showError(Component parent, String message, Throwable t) {
+        if (t != null) {
+            t.printStackTrace(System.err);
+        }
+        System.err.println("[DATABASE/SYSTEM ERROR]: " + message);
+        
+        if (message != null && message.contains("ORA-01400")) {
+            System.err.println("\n=================== HƯỚNG DẪN KHẮC PHỤC LỖI DATABASE ===================");
+            System.err.println("Lỗi ORA-01400 (Cannot insert NULL) xảy ra khi CSDL yêu cầu một trường giá trị bắt buộc");
+            System.err.println("(như MaND, MaVaiTro, MaKH,...) nhưng giá trị được gửi lên CSDL lại bị NULL hoặc thiếu.");
+            System.err.println("\nNguyên nhân chính:");
+            System.err.println("1. Các Triggers và Sequences tự động sinh mã trong file 'Database/01_table/TaoMaTuDong.sql'");
+            System.err.println("   (ví dụ: TRG_TAO_MA_VAITRO, TRG_TAO_MA_NGUOIDUNG) CHƯA được biên dịch hoặc bị DISABLE");
+            System.err.println("   trên CSDL Oracle của bạn.");
+            System.err.println("2. Khi Trigger không hoạt động, Oracle không tự sinh mã chính nên báo lỗi.");
+            System.err.println("\nGiải pháp khắc phục:");
+            System.err.println("-> Hãy copy toàn bộ mã nguồn trong file 'Database/01_table/TaoMaTuDong.sql'");
+            System.err.println("-> Mở công cụ quản trị Oracle (SQL Developer, PL/SQL Developer, DBeaver,...)");
+            System.err.println("-> Kết nối vào tài khoản CSDL của ứng dụng (ADMIN/...) và chạy toàn bộ mã lệnh.");
+            System.err.println("=======================================================================\n");
+        }
+        
         String friendlyMessage = translateError(message);
         JOptionPane.showMessageDialog(parent, friendlyMessage, "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
     }

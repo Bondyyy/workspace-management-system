@@ -7,6 +7,7 @@ public class ProjectLauncher {
 
     public static void main(String[] args) {
         System.out.println("[Launcher] Starting WMS Multi-Platform System...");
+        System.out.println("[Launcher] ProjectLauncher dang chay che do full Desktop + Web.");
 
         Thread webThread = new Thread(() -> {
             try {

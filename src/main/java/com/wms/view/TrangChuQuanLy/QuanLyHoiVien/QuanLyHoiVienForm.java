@@ -59,7 +59,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         txtEmail.setText("");
         txtNgaySinh.setText("");
         txtTongChiTieu.setText("0");
-        txtMaHV.setText(controller.generateMaKH());
+        txtMaHV.setText("");
         cbxGioiTinh.setSelectedIndex(0);
         cbxTrangThai.setSelectedIndex(0);
         cbxHangTV.setSelectedItem("Đồng");

@@ -17,7 +17,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         taiDanhSach(null);
-        txtMaLoaiKG.setText(controller.sinhMaLoaiKG());
+        txtMaLoaiKG.setText("");
         
         txtDonGia.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
@@ -69,7 +69,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
     }
 
     private void laMoiForm() {
-        txtMaLoaiKG.setText(controller.sinhMaLoaiKG());
+        txtMaLoaiKG.setText("");
         txtTenLoaiKG.setText("");
         txtSucChua.setText("");
         txtDonGia.setText("");

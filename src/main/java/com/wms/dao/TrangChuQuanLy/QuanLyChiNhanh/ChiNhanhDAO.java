@@ -2,11 +2,9 @@ package com.wms.dao.TrangChuQuanLy.QuanLyChiNhanh;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
-import com.wms.util.MaTuDongUtil;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +22,7 @@ public class ChiNhanhDAO {
         String sql = "{call SP_ThemChiNhanh(?, ?, ?, ?, ?, ?, ?, ?)}";
         try (Connection conn = getConn();
              CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setString(1, chiNhanh.getMaCN());
+            cs.setString(1, null);
             cs.setString(2, chiNhanh.getTenCN());
             cs.setString(3, chiNhanh.getDiaChi());
             cs.setString(4, chiNhanh.getThoiGianMoCua());
@@ -123,11 +121,6 @@ public class ChiNhanhDAO {
     }
 
     public String taoMaMoi() {
-        try (Connection conn = getConn()) {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.CHI_NHANH);
-        } catch (Exception e) {
-            System.err.println("Lỗi tạo mã chi nhánh mới: " + e.getMessage());
-            return "CN000001";
-        }
+        return "";
     }
 }

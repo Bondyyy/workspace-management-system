@@ -22,7 +22,7 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         initComponents();
         txtMaVT.setEditable(false);
         txtMaVT.setBackground(new java.awt.Color(240, 240, 240));
-        txtMaVT.setText(controller.sinhMaVT());
+        txtMaVT.setText("");
         loadCbxChucNang();
         loadDanhSachVaiTro();
         initEvents();
@@ -75,7 +75,7 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
 
     private void lamMoiPanel() {
         maVaiTroDangChon = null;
-        txtMaVT.setText(controller.sinhMaVT());
+        txtMaVT.setText("");
         txtTenNhom.setText("");
         txtMoTa.setText("");
         ((DefaultTableModel) tblChucNangDaChon.getModel()).setRowCount(0);
@@ -135,12 +135,16 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         vt.setMaVaiTro(txtMaVT.getText().trim());
         vt.setTenVaiTro(ten);
         vt.setMoTa(txtMoTa.getText().trim());
-        if (controller.themVaiTro(vt, layDanhSachMaCNTuBang())) {
-            JOptionPane.showMessageDialog(this, "Thêm mới thành công!");
-            lamMoiPanel();
-            loadDanhSachVaiTro();
-        } else {
-            JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        try {
+            if (controller.themVaiTro(vt, layDanhSachMaCNTuBang())) {
+                JOptionPane.showMessageDialog(this, "Thêm mới thành công!");
+                lamMoiPanel();
+                loadDanhSachVaiTro();
+            } else {
+                JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -155,11 +159,15 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         vt.setMaVaiTro(maVaiTroDangChon);
         vt.setTenVaiTro(ten);
         vt.setMoTa(txtMoTa.getText().trim());
-        if (controller.capNhatVaiTro(vt, layDanhSachMaCNTuBang())) {
-            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-            loadDanhSachVaiTro();
-        } else {
-            JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        try {
+            if (controller.capNhatVaiTro(vt, layDanhSachMaCNTuBang())) {
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                loadDanhSachVaiTro();
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -167,12 +175,16 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         if (maVaiTroDangChon == null) return;
         int xacNhan = JOptionPane.showConfirmDialog(this, "Xóa vai trò này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (xacNhan == JOptionPane.YES_OPTION) {
-            if (controller.xoaVaiTro(maVaiTroDangChon)) {
-                JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                lamMoiPanel();
-                loadDanhSachVaiTro();
-            } else {
-                JOptionPane.showMessageDialog(this, "Xóa thất bại! (Có thể vai trò đang được gán cho nhân viên)", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            try {
+                if (controller.xoaVaiTro(maVaiTroDangChon)) {
+                    JOptionPane.showMessageDialog(this, "Xóa thành công!");
+                    lamMoiPanel();
+                    loadDanhSachVaiTro();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Xóa thất bại! (Có thể vai trò đang được gán cho nhân viên)", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
             }
         }
     }

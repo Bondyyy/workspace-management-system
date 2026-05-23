@@ -6,6 +6,7 @@ CREATE OR REPLACE PROCEDURE SP_ThemKhachHang(
     p_outMessage OUT VARCHAR2
 ) AS
     v_Count NUMBER;
+    v_MaKH KHACHHANG.MaKH%TYPE;
 BEGIN
     SELECT COUNT(*) INTO v_Count FROM NGUOIDUNG WHERE MaND = p_MaND;
     IF v_Count = 0 THEN
@@ -22,9 +23,11 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20032, 'Hạng thành viên [' || p_MaHangThanhVien || '] không hợp lệ!');
     END IF;
 
-    SELECT COUNT(*) INTO v_Count FROM KHACHHANG WHERE MaKH = p_MaKH;
-    IF v_Count > 0 THEN
-        RAISE_APPLICATION_ERROR(-20033, 'Mã hội viên [' || p_MaKH || '] đã tồn tại!');
+    IF p_MaKH IS NOT NULL AND LENGTH(TRIM(p_MaKH)) > 0 THEN
+        SELECT COUNT(*) INTO v_Count FROM KHACHHANG WHERE MaKH = TRIM(p_MaKH);
+        IF v_Count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20033, 'Mã hội viên [' || p_MaKH || '] đã tồn tại!');
+        END IF;
     END IF;
 
     INSERT INTO KHACHHANG (
@@ -32,13 +35,14 @@ BEGIN
         TongChiTieu, CapNhatLanCuoi,
         MaHangThanhVien, MaND
     ) VALUES (
-        p_MaKH, 'Hội viên',
-        0, SYSTIMESTAMP,
+        NULLIF(TRIM(p_MaKH), ''), 'Hội viên',
+        0, CURRENT_TIMESTAMP,
         p_MaHangThanhVien, p_MaND
-    );
+    )
+    RETURNING MaKH INTO v_MaKH;
 
     COMMIT;
-    p_outMessage := 'Thêm hội viên thành công! Mã hội viên: ' || p_MaKH;
+    p_outMessage := 'Thêm hội viên thành công! Mã hội viên: ' || v_MaKH;
 
 EXCEPTION
     WHEN OTHERS THEN

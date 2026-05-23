@@ -6,6 +6,8 @@ package com.wms.view.TrangChuQuanLy.QuanLyDatChoTruoc;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyDatChoTruoc.QuanLyDatChoTruocController;
 import com.wms.model.TrangChuQuanLy.QuanLyDatChoTruoc.DatChoTruocDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -334,12 +336,45 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private void capNhatDatCho() {
         try {
             DatChoTruocDTO dto = readForm();
+            String trangThaiMoi = String.valueOf(cbxTrangThai.getSelectedItem());
+
+            if ("Đã sử dụng".equals(trangThaiMoi)) {
+                KetQuaNhanChoDTO ketQua = controller.moPhienTuDatChoThuCong(dto);
+                if (ketQua.isThanhCong()) {
+                    JOptionPane.showMessageDialog(this,
+                            "Đã tạo phiên mới: " + ketQua.getMaPhien() + "\nKhách có thể sử dụng ngay.",
+                            "Tạo phiên thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Không thể tạo phiên thủ công.\nLưu ý: " + ketQua.getThongBao(),
+                            "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
+                loadData(txtTimKiem.getText());
+                return;
+            }
+
+            if ("Đã thanh toán thành công".equals(trangThaiMoi)) {
+                ThongTinXacNhanDatChoDTO thongTin = controller.xacNhanThanhToanThuCong(dto.getMaDatCho());
+                if (thongTin != null) {
+                    JOptionPane.showMessageDialog(this,
+                            "Đã xác nhận thanh toán!\nEmail QR nhận chỗ đã gửi tới: " + thongTin.getEmail(),
+                            "Xác nhận thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Không thể xác nhận thanh toán thủ công.\n"
+                                    + "Đặt chỗ không ở trạng thái chờ thanh toán, đã có QR, hoặc đã được xác nhận trước đó.",
+                            "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
+                loadData(txtTimKiem.getText());
+                return;
+            }
+
             if (controller.capNhat(dto)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật đặt chỗ thành công!");
                 loadData(txtTimKiem.getText());
-            } else {
-                JOptionPane.showMessageDialog(this, "Không thể cập nhật đặt chỗ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+            JOptionPane.showMessageDialog(this, "Không thể cập nhật đặt chỗ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
         }

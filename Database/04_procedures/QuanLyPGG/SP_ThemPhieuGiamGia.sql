@@ -11,9 +11,11 @@ CREATE OR REPLACE PROCEDURE SP_ThemPhieuGiamGia(
 ) AS
     v_Count NUMBER;
 BEGIN
-    SELECT COUNT(*) INTO v_Count FROM PHIEUGIAMGIA WHERE MaPGG = p_MaPGG;
-    IF v_Count > 0 THEN
-        RAISE_APPLICATION_ERROR(-20040, 'Mã phiếu [' || p_MaPGG || '] đã tồn tại!');
+    IF p_MaPGG IS NOT NULL AND LENGTH(TRIM(p_MaPGG)) > 0 THEN
+        SELECT COUNT(*) INTO v_Count FROM PHIEUGIAMGIA WHERE MaPGG = TRIM(p_MaPGG);
+        IF v_Count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20040, 'Mã phiếu [' || p_MaPGG || '] đã tồn tại!');
+        END IF;
     END IF;
 
     SELECT COUNT(*) INTO v_Count FROM PHIEUGIAMGIA WHERE MaChuSoPGG = p_MaChuSoPGG;
@@ -44,9 +46,9 @@ BEGIN
         GiaTriApDungToiThieu, NgayBatDauApDung, NgayKetThucApDung,
         SLDaDung, SLToiDa, NgayTaoPGG, MaNV
     ) VALUES (
-        p_MaPGG, p_MaChuSoPGG, p_GiaTriGiamGia,
+        NULLIF(TRIM(p_MaPGG), ''), p_MaChuSoPGG, p_GiaTriGiamGia,
         p_GiaTriApDungToiThieu, p_NgayBatDauApDung, p_NgayKetThucApDung,
-        0, p_SLToiDa, SYSTIMESTAMP, p_MaNV
+        0, p_SLToiDa, CURRENT_TIMESTAMP, p_MaNV
     );
 
     COMMIT;

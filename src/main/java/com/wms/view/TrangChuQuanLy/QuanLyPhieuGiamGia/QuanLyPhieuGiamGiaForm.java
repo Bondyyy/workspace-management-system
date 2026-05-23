@@ -16,7 +16,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
     public QuanLyPhieuGiamGiaForm() {
         initComponents();
         setupTable();
-        txtMaPGG.setText(controller.sinhMaMoi());
+        txtMaPGG.setText("");
         
         // Thêm định dạng tiền tệ khi nhập
         addCurrencyFormatting(txtGiaTriGiamGia);
@@ -80,7 +80,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
     }
 
     private void laMoiForm() {
-        txtMaPGG.setText(controller.sinhMaMoi());
+        txtMaPGG.setText("");
         txtMaChuSoPGG.setText("");
         txtGiaTriGiamGia.setText("");
         txtGiaTriApDungToiThieu.setText("");

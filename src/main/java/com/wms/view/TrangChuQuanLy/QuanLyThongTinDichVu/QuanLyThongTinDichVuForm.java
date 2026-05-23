@@ -19,7 +19,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         initComponents();
         loadLoaiDV();
         loadData(null);
-        txtMaDV.setText(controller.generateMaDV());
+        txtMaDV.setText("");
         
         txtDonGia.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
@@ -352,7 +352,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
     }
 
     private void lamMoiForm() {
-        txtMaDV.setText(controller.generateMaDV());
+        txtMaDV.setText("");
         txtTenDV.setText("");
         txtDonGia.setText("");
         cbxLoaiDV.setSelectedIndex(0);

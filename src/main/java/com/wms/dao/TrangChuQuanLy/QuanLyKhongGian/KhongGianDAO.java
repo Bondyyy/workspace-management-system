@@ -2,7 +2,6 @@ package com.wms.dao.TrangChuQuanLy.QuanLyKhongGian;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
-import com.wms.util.MaTuDongUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,20 +113,19 @@ public class KhongGianDAO {
     }
 
     public boolean them(KhongGianDTO dto) {
-        String sql = "INSERT INTO KHONGGIAN (MaKG, TenKG, TrangThaiKG, ViTri, MaLoaiKG, MaCN, ToaDoX, ToaDoY, ChieuDai, ChieuRong) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO KHONGGIAN (TenKG, TrangThaiKG, ViTri, MaLoaiKG, MaCN, ToaDoX, ToaDoY, ChieuDai, ChieuRong) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, dto.getMaKG());
-            ps.setString(2, dto.getTenKG());
-            ps.setString(3, dto.getTrangThaiKG());
-            ps.setString(4, dto.getViTri());
-            ps.setString(5, dto.getMaLoaiKG());
-            ps.setString(6, dto.getMaCN());
-            if (dto.getToaDoX() != null) ps.setInt(7, dto.getToaDoX()); else ps.setNull(7, Types.NUMERIC);
-            if (dto.getToaDoY() != null) ps.setInt(8, dto.getToaDoY()); else ps.setNull(8, Types.NUMERIC);
-            ps.setInt(9, dto.getChieuDai());
-            ps.setInt(10, dto.getChieuRong());
+            ps.setString(1, dto.getTenKG());
+            ps.setString(2, dto.getTrangThaiKG());
+            ps.setString(3, dto.getViTri());
+            ps.setString(4, dto.getMaLoaiKG());
+            ps.setString(5, dto.getMaCN());
+            if (dto.getToaDoX() != null) ps.setInt(6, dto.getToaDoX()); else ps.setNull(6, Types.NUMERIC);
+            if (dto.getToaDoY() != null) ps.setInt(7, dto.getToaDoY()); else ps.setNull(7, Types.NUMERIC);
+            ps.setInt(8, dto.getChieuDai());
+            ps.setInt(9, dto.getChieuRong());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("[KhongGianDAO] Lỗi thêm: " + e.getMessage());
@@ -181,12 +179,7 @@ public class KhongGianDAO {
     }
 
     public String taoMaMoi() {
-        try (Connection conn = getConn()) {
-            return MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.KHONG_GIAN);
-        } catch (SQLException e) {
-            System.err.println("[KhongGianDAO] Lỗi tạo mã mới: " + e.getMessage());
-        }
-        return "KG000001";
+        return "";
     }
 
     public boolean kiemTraTinhTrangKhongGian(String tenLoaiKG, String ngayDat, String gioToi) {

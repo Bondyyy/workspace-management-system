@@ -2,31 +2,44 @@ package com.wms.dao.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.model.TrangChuHoiVien.DatChoDTO;
 import com.wms.config.DatabaseConnection;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 
 public class DatChoDAO {
     public boolean taoDatChoMoi(DatChoDTO dc) {
-        String sql = "INSERT INTO DATCHO (MaDatCho, ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung, " +
-                "TrangThaiDatTruoc, ThanhTien, GhiChu, MaKH, MaKG) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = """
+                BEGIN
+                    INSERT INTO DATCHO (
+                        ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung,
+                        TrangThaiDatTruoc, ThanhTien, GhiChu, MaKH, MaKG, CapNhatLanCuoi
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+                    )
+                    RETURNING MaDatCho INTO ?;
+                END;
+                """;
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, dc.getMaDatCho());
-            pstmt.setTimestamp(2, dc.getThoiGianDat());
-            pstmt.setTimestamp(3, dc.getThoiGianDuKienToi());
+             CallableStatement pstmt = conn.prepareCall(sql)) {
+            pstmt.setTimestamp(1, dc.getThoiGianDat());
+            pstmt.setTimestamp(2, dc.getThoiGianDuKienToi());
             if (dc.getKhoangThoiGianSuDung() != null)
-                pstmt.setInt(4, dc.getKhoangThoiGianSuDung());
+                pstmt.setInt(3, dc.getKhoangThoiGianSuDung());
             else
-                pstmt.setNull(4, java.sql.Types.INTEGER);
-            pstmt.setString(5, dc.getTrangThaiDatTruoc());
-            pstmt.setDouble(6, dc.getThanhTien());
-            pstmt.setString(7, dc.getGhiChu());
-            pstmt.setString(8, dc.getMaKH());
-            pstmt.setString(9, dc.getMaKG());
+                pstmt.setNull(3, java.sql.Types.INTEGER);
+            pstmt.setString(4, dc.getTrangThaiDatTruoc());
+            pstmt.setDouble(5, dc.getThanhTien());
+            pstmt.setString(6, dc.getGhiChu());
+            pstmt.setString(7, dc.getMaKH());
+            pstmt.setString(8, dc.getMaKG());
+            pstmt.registerOutParameter(9, Types.VARCHAR);
 
-            return pstmt.executeUpdate() > 0;
+            pstmt.execute();
+            dc.setMaDatCho(pstmt.getString(9));
+            return true;
         } catch (SQLException e) {
             System.err.println("[DatChoDAO] Lỗi khi tạo đơn đặt chỗ: " + e.getMessage());
             return false;

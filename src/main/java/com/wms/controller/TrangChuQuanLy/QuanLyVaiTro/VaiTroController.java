@@ -25,15 +25,15 @@ public class VaiTroController {
         return service.layChucNangCuaVaiTro(maVaiTro);
     }
 
-    public boolean themVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) {
+    public boolean themVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) throws java.sql.SQLException {
         return service.themVaiTro(vt, danhSachMaChucNang);
     }
 
-    public boolean capNhatVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) {
+    public boolean capNhatVaiTro(VaiTroDTO vt, List<String> danhSachMaChucNang) throws java.sql.SQLException {
         return service.capNhatVaiTro(vt, danhSachMaChucNang);
     }
 
-    public boolean xoaVaiTro(String maVaiTro) {
+    public boolean xoaVaiTro(String maVaiTro) throws java.sql.SQLException {
         return service.xoaVaiTro(maVaiTro);
     }
 }

@@ -2,10 +2,10 @@ package com.wms.view.TrangChuQuanLy.TongQuan;
 
 import com.wms.controller.TrangChuQuanLy.TongQuan.TongQuanController;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
-import com.wms.model.TrangChuQuanLy.TongQuan.DoanhThuReportRowDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.DuLieuBaoCaoTongQuatDTO;
 import com.wms.model.TrangChuQuanLy.TongQuan.TongQuanDTO;
-import com.wms.util.DoanhThuJasperReportExporter;
-import com.wms.util.DoanhThuReportExporter;
+import com.wms.service.TrangChuQuanLy.TongQuan.TongQuanService;
+import com.wms.util.BaoCaoCsvExporter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -48,6 +48,7 @@ public class TongQuanForm extends JPanel {
     private JTextField txtTuNgay;
     private JTextField txtDenNgay;
     private JComboBox<String> cbxChiNhanh;
+    private JComboBox<String> cbxLoaiBaoCao;
     private JComboBox<String> cbxLoaiDichVu;
     private JLabel lblDoanhThuThuc;
     private JLabel lblTruocGiam;
@@ -63,6 +64,7 @@ public class TongQuanForm extends JPanel {
         initComponents();
         initDefaultDates();
         loadComboChiNhanh();
+        capNhatTrangThaiLoaiDoanhThu();
         capNhatDuLieu();
     }
 
@@ -109,6 +111,15 @@ public class TongQuanForm extends JPanel {
         txtTuNgay = new JTextField();
         txtDenNgay = new JTextField();
         cbxChiNhanh = new JComboBox<>();
+        cbxLoaiBaoCao = new JComboBox<>(new String[]{
+                TongQuanService.BAO_CAO_DOANH_THU,
+                TongQuanService.BAO_CAO_NHAP_KHO_DICH_VU,
+                TongQuanService.BAO_CAO_CHI_PHI_NHAP_KHO,
+                TongQuanService.BAO_CAO_DICH_VU_BAN_CHAY,
+                TongQuanService.BAO_CAO_LOI_NHUAN_GOP_UOC_TINH
+        });
+        cbxLoaiBaoCao.addActionListener(e -> capNhatTrangThaiLoaiDoanhThu());
+
         cbxLoaiDichVu = new JComboBox<>(new String[]{
                 "Tất cả",
                 "Thuê không gian",
@@ -122,15 +133,12 @@ public class TongQuanForm extends JPanel {
         JButton btnXuatCSV = button("Xuất CSV", mauHong);
         btnXuatCSV.addActionListener(e -> xuatCsv());
 
-        JButton btnXuatPDF = button("Xuất PDF", mauCam);
-        btnXuatPDF.addActionListener(e -> xuatPdf());
+        JButton btnXuatPDF = button("Xuất báo cáo PDF", new Color(80, 120, 80));
+        btnXuatPDF.addActionListener(e -> xuatBaoCaoPdf());
 
-        JButton btnXuatJasper = button("Xuất PDF Jasper", new Color(80, 120, 80));
-        btnXuatJasper.addActionListener(e -> xuatPdfJasper());
-
-        for (JButton b : new JButton[]{btnXemBaoCao, btnXuatCSV, btnXuatPDF, btnXuatJasper}) {
-            b.setPreferredSize(new Dimension(150, 36));
-            b.setMinimumSize(new Dimension(130, 36));
+        for (JButton b : new JButton[]{btnXemBaoCao, btnXuatCSV, btnXuatPDF}) {
+            b.setPreferredSize(new Dimension(170, 36));
+            b.setMinimumSize(new Dimension(140, 36));
             b.setToolTipText(b.getText());
         }
 
@@ -142,23 +150,23 @@ public class TongQuanForm extends JPanel {
         addFilterField(panel, gbc, 0, "Từ ngày", txtTuNgay);
         addFilterField(panel, gbc, 1, "Đến ngày", txtDenNgay);
         addFilterField(panel, gbc, 2, "Chi nhánh", cbxChiNhanh);
-        addFilterField(panel, gbc, 3, "Loại doanh thu", cbxLoaiDichVu);
+        addFilterField(panel, gbc, 3, "Loại báo cáo", cbxLoaiBaoCao);
+        addFilterField(panel, gbc, 4, "Loại doanh thu", cbxLoaiDichVu);
 
-        gbc.gridx = 4;
+        gbc.gridx = 5;
         gbc.gridy = 0;
         gbc.gridheight = 2;
         gbc.weightx = 0;
         panel.add(btnXemBaoCao, gbc);
 
-        JPanel actions = new JPanel(new GridLayout(1, 3, 10, 0));
+        JPanel actions = new JPanel(new GridLayout(1, 2, 10, 0));
         actions.setOpaque(false);
         actions.add(btnXuatCSV);
         actions.add(btnXuatPDF);
-        actions.add(btnXuatJasper);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 5;
+        gbc.gridwidth = 6;
         gbc.gridheight = 1;
         gbc.weightx = 1;
         panel.add(actions, gbc);
@@ -279,12 +287,11 @@ public class TongQuanForm extends JPanel {
     }
 
     private void xemBaoCao() {
-        if (txtTuNgay.getText().trim().isEmpty() || txtDenNgay.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ Từ ngày - Đến ngày.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+        if (!boLocHopLe()) {
             return;
         }
         capNhatDuLieu();
-        JOptionPane.showMessageDialog(this, "Đã cập nhật dữ liệu báo cáo doanh thu.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Đã cập nhật dữ liệu tổng quan.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void capNhatDuLieu() {
@@ -312,95 +319,108 @@ public class TongQuanForm extends JPanel {
     }
 
     private void xuatCsv() {
-        String tuNgay = txtTuNgay.getText().trim();
-        String denNgay = txtDenNgay.getText().trim();
-        String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
-        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
+        if (!boLocHopLe()) {
+            return;
+        }
 
+        String loaiBaoCao = (String) cbxLoaiBaoCao.getSelectedItem();
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Lưu báo cáo doanh thu CSV");
-        fileChooser.setSelectedFile(new File("BaoCaoDoanhThu_" + tuNgay.replace("/", "") + "_" + denNgay.replace("/", "") + ".csv"));
+        fileChooser.setDialogTitle("Lưu báo cáo CSV");
+        fileChooser.setSelectedFile(new File(tenFileBaoCao(loaiBaoCao, "csv")));
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
 
         if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File file = ensureExtension(fileChooser.getSelectedFile(), ".csv");
             try {
-                List<Object[]> rows = controller.layDanhSachHoaDonTheoDieuKien(tuNgay, denNgay, chiNhanh, loaiDT);
-                DoanhThuReportExporter.xuatCsv(file, rows);
-                JOptionPane.showMessageDialog(this, "Xuất báo cáo doanh thu CSV thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                DuLieuBaoCaoTongQuatDTO duLieu = taoDuLieuBaoCao();
+                BaoCaoCsvExporter.xuatCsv(file, duLieu);
+                JOptionPane.showMessageDialog(this, "Xuất báo cáo CSV thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Lỗi khi xuất CSV: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    private void xuatPdf() {
-        String tuNgay = txtTuNgay.getText().trim();
-        String denNgay = txtDenNgay.getText().trim();
-        String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
-        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
-
-        if (duLieuHienTai == null) {
-            capNhatDuLieu();
+    private void xuatBaoCaoPdf() {
+        if (!boLocHopLe()) {
+            return;
         }
 
+        String loaiBaoCao = (String) cbxLoaiBaoCao.getSelectedItem();
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Lưu báo cáo doanh thu PDF");
-        fileChooser.setSelectedFile(new File("BaoCaoDoanhThu_" + tuNgay.replace("/", "") + "_" + denNgay.replace("/", "") + ".pdf"));
+        fileChooser.setDialogTitle("Lưu báo cáo PDF");
+        fileChooser.setSelectedFile(new File(tenFileBaoCao(loaiBaoCao, "pdf")));
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF Files", "pdf"));
 
         if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File file = ensureExtension(fileChooser.getSelectedFile(), ".pdf");
             try {
-                List<Object[]> rows = controller.layDanhSachHoaDonTheoDieuKien(tuNgay, denNgay, chiNhanh, loaiDT);
-                DoanhThuReportExporter.ReportData reportData = new DoanhThuReportExporter.ReportData(
-                        tuNgay,
-                        denNgay,
-                        chiNhanh == null ? "Tất cả chi nhánh" : chiNhanh,
-                        duLieuHienTai.getDoanhThuThuc(),
-                        rows.size(),
-                        rows
+                controller.xuatBaoCaoPdf(
+                        file,
+                        loaiBaoCao,
+                        txtTuNgay.getText().trim(),
+                        txtDenNgay.getText().trim(),
+                        (String) cbxChiNhanh.getSelectedItem(),
+                        (String) cbxLoaiDichVu.getSelectedItem(),
+                        nguoiXuatHienTai()
                 );
-                DoanhThuReportExporter.xuatPdf(file, reportData);
-                JOptionPane.showMessageDialog(this, "Xuất báo cáo doanh thu PDF thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Xuất báo cáo PDF thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Lỗi khi xuất báo cáo PDF: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    private void xuatPdfJasper() {
-        String tuNgay = txtTuNgay.getText().trim();
-        String denNgay = txtDenNgay.getText().trim();
-        String chiNhanh = (String) cbxChiNhanh.getSelectedItem();
-        String loaiDT = (String) cbxLoaiDichVu.getSelectedItem();
+    private DuLieuBaoCaoTongQuatDTO taoDuLieuBaoCao() {
+        return controller.taoDuLieuBaoCao(
+                (String) cbxLoaiBaoCao.getSelectedItem(),
+                txtTuNgay.getText().trim(),
+                txtDenNgay.getText().trim(),
+                (String) cbxChiNhanh.getSelectedItem(),
+                (String) cbxLoaiDichVu.getSelectedItem(),
+                nguoiXuatHienTai()
+        );
+    }
 
-        if (duLieuHienTai == null) {
-            capNhatDuLieu();
+    private boolean boLocHopLe() {
+        if (txtTuNgay.getText().trim().isEmpty() || txtDenNgay.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ Từ ngày - Đến ngày.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            return false;
         }
+        return true;
+    }
 
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Lưu báo cáo doanh thu JasperReports");
-        fileChooser.setSelectedFile(new File("BaoCaoDoanhThu_Jasper_" + tuNgay.replace("/", "") + "_" + denNgay.replace("/", "") + ".pdf"));
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF Files", "pdf"));
-
-        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File file = ensureExtension(fileChooser.getSelectedFile(), ".pdf");
-            try {
-                List<DoanhThuReportRowDTO> rows = controller.layDongBaoCaoDoanhThu(tuNgay, denNgay, chiNhanh, loaiDT);
-                DoanhThuJasperReportExporter.ReportParams params = new DoanhThuJasperReportExporter.ReportParams(
-                        tuNgay,
-                        denNgay,
-                        chiNhanh == null ? "Tất cả chi nhánh" : chiNhanh,
-                        duLieuHienTai.getDoanhThuThuc(),
-                        rows.size()
-                );
-                DoanhThuJasperReportExporter.exportPdf(file, params, rows);
-                JOptionPane.showMessageDialog(this, "Xuất báo cáo doanh thu JasperReports thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xuất PDF Jasper: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
+    private void capNhatTrangThaiLoaiDoanhThu() {
+        if (cbxLoaiDichVu == null || cbxLoaiBaoCao == null) {
+            return;
         }
+        boolean laBaoCaoDoanhThu = TongQuanService.BAO_CAO_DOANH_THU.equals(cbxLoaiBaoCao.getSelectedItem());
+        cbxLoaiDichVu.setEnabled(laBaoCaoDoanhThu);
+        if (!laBaoCaoDoanhThu) {
+            cbxLoaiDichVu.setSelectedIndex(0);
+        }
+    }
+
+    private String nguoiXuatHienTai() {
+        String userName = System.getProperty("user.name");
+        return userName == null || userName.isBlank() ? "Người dùng hệ thống" : userName;
+    }
+
+    private String tenFileBaoCao(String loaiBaoCao, String extension) {
+        String ngay = new SimpleDateFormat("ddMMyyyy").format(new Date());
+        String slug;
+        if (TongQuanService.BAO_CAO_NHAP_KHO_DICH_VU.equals(loaiBaoCao)) {
+            slug = "NhapKhoDichVu";
+        } else if (TongQuanService.BAO_CAO_CHI_PHI_NHAP_KHO.equals(loaiBaoCao)) {
+            slug = "ChiPhiNhapKho";
+        } else if (TongQuanService.BAO_CAO_DICH_VU_BAN_CHAY.equals(loaiBaoCao)) {
+            slug = "DichVuBanChay";
+        } else if (TongQuanService.BAO_CAO_LOI_NHUAN_GOP_UOC_TINH.equals(loaiBaoCao)) {
+            slug = "LoiNhuanGopUocTinh";
+        } else {
+            slug = "DoanhThu";
+        }
+        return "BaoCao_" + slug + "_" + ngay + "." + extension;
     }
 
     private File ensureExtension(File file, String extension) {

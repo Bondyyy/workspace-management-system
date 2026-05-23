@@ -2,6 +2,8 @@ package com.wms.dao.TrangChuQuanLy.TongQuan;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.TongQuan.DoanhThuReportRowDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.DongBaoCaoTongQuatDTO;
+import com.wms.model.TrangChuQuanLy.TongQuan.DuLieuBaoCaoTongQuatDTO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,8 +18,12 @@ import java.util.Map;
 
 public class ThongKeDAO {
 
-    private static final String ALL_BRANCHES = "Tất cả chi nhánh";
-    private static final String PAID_STATUS_FILTER = "Đã thanh toán%";
+    private static final String TAT_CA_CHI_NHANH = "Tất cả chi nhánh";
+    private static final String TRANG_THAI_DA_THANH_TOAN = "Đã thanh toán thành công";
+    private static final DecimalFormat FORMAT_TIEN = new DecimalFormat("#,##0 VNĐ");
+    private static final DecimalFormat FORMAT_SO = new DecimalFormat("#,##0");
+    private static final SimpleDateFormat FORMAT_NGAY_GIO = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+    private static final SimpleDateFormat FORMAT_NGAY = new SimpleDateFormat("dd/MM/yyyy");
 
     public List<Object[]> layRecentTransactions() {
         List<Object[]> list = new ArrayList<>();
@@ -30,15 +36,15 @@ public class ThongKeDAO {
                 "FETCH FIRST 5 ROWS ONLY";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             Statement st = conn.createStatement(); 
+             Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             DecimalFormat df = new DecimalFormat("#,###");
             while (rs.next()) {
                 list.add(new Object[]{
                         rs.getString("MaHoaDon"),
-                        rs.getString("HoTenKH") == null ? "Khách vãng lai" : rs.getString("HoTenKH"),
+                        giaTriMacDinh(rs.getString("HoTenKH"), "Khách vãng lai"),
                         df.format(rs.getDouble("ThanhTien")),
-                        rs.getString("TrangThaiThanhToan")
+                        giaTriMacDinh(rs.getString("TrangThaiThanhToan"), "")
                 });
             }
         } catch (Exception e) {
@@ -54,17 +60,20 @@ public class ThongKeDAO {
         ketQua.put("chietKhau", 0.0);
 
         StringBuilder sql = new StringBuilder(
-                "SELECT SUM(h.ThanhTien) AS DoanhThuThuc, SUM(h.TongTien) AS TruocGiam " +
+                "SELECT NVL(SUM(h.ThanhTien), 0) AS DoanhThuThuc, NVL(SUM(h.TongTien), 0) AS TruocGiam " +
                         "FROM HOADON h " +
                         "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                         "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                        "WHERE h.TrangThaiThanhToan LIKE ? ");
+                        "WHERE h.TrangThaiThanhToan = ? ");
 
-        appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
+        appendDateAndBranchFilters(sql, "h.NgayLapHoaDon", true, "kg.MaCN", tuNgay, denNgay, maChiNhanh);
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
+            int idx = 1;
+            ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     double thuc = rs.getDouble("DoanhThuThuc");
@@ -83,11 +92,11 @@ public class ThongKeDAO {
     public List<Double> layDoanhThu7NgayGanNhat(String maChiNhanh) {
         List<Double> data = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT TRUNC(h.NgayLapHoaDon) AS Ngay, SUM(h.ThanhTien) AS Tong " +
+                "SELECT TRUNC(h.NgayLapHoaDon) AS Ngay, NVL(SUM(h.ThanhTien), 0) AS Tong " +
                         "FROM HOADON h " +
                         "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                         "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                        "WHERE h.TrangThaiThanhToan LIKE ? " +
+                        "WHERE h.TrangThaiThanhToan = ? " +
                         "AND h.NgayLapHoaDon >= TRUNC(SYSDATE) - 6 ");
 
         if (hasBranchFilter(maChiNhanh)) {
@@ -97,7 +106,7 @@ public class ThongKeDAO {
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            ps.setString(1, PAID_STATUS_FILTER);
+            ps.setString(1, TRANG_THAI_DA_THANH_TOAN);
             if (hasBranchFilter(maChiNhanh)) {
                 ps.setString(2, extractBranchCode(maChiNhanh));
             }
@@ -130,12 +139,12 @@ public class ThongKeDAO {
         stats.put("TM", 0);
 
         String sql = "SELECT PhuongThucThanhToan, COUNT(*) AS SoLuong FROM HOADON " +
-                "WHERE TrangThaiThanhToan LIKE ? " +
+                "WHERE TrangThaiThanhToan = ? " +
                 "GROUP BY PhuongThucThanhToan";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, PAID_STATUS_FILTER);
+            ps.setString(1, TRANG_THAI_DA_THANH_TOAN);
             try (ResultSet rs = ps.executeQuery()) {
                 int tong = 0;
                 int ckCount = 0;
@@ -173,26 +182,28 @@ public class ThongKeDAO {
                         "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
                         "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                         "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                        "WHERE h.TrangThaiThanhToan LIKE ? ");
+                        "WHERE h.TrangThaiThanhToan = ? ");
 
-        appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
+        appendDateAndBranchFilters(sql, "h.NgayLapHoaDon", true, "kg.MaCN", tuNgay, denNgay, maChiNhanh);
         sql.append("ORDER BY h.NgayLapHoaDon DESC");
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
+            int idx = 1;
+            ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
                 DecimalFormat df = new DecimalFormat("#,###");
                 while (rs.next()) {
                     list.add(new Object[]{
                             rs.getString("MaHoaDon"),
-                            rs.getString("HoTenKH") == null ? "Khách vãng lai" : rs.getString("HoTenKH"),
-                            rs.getTimestamp("NgayLapHoaDon") != null ? sdf.format(rs.getTimestamp("NgayLapHoaDon")) : "",
+                            giaTriMacDinh(rs.getString("HoTenKH"), "Khách vãng lai"),
+                            rs.getTimestamp("NgayLapHoaDon") != null ? FORMAT_NGAY_GIO.format(rs.getTimestamp("NgayLapHoaDon")) : "",
                             df.format(rs.getDouble("TongTien")),
                             df.format(rs.getDouble("ThanhTien")),
-                            rs.getString("PhuongThucThanhToan"),
-                            rs.getString("TrangThaiThanhToan")
+                            giaTriMacDinh(rs.getString("PhuongThucThanhToan"), ""),
+                            giaTriMacDinh(rs.getString("TrangThaiThanhToan"), "")
                     });
                 }
             }
@@ -213,28 +224,30 @@ public class ThongKeDAO {
                         "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                         "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
                         "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN " +
-                        "WHERE h.TrangThaiThanhToan LIKE ? ");
+                        "WHERE h.TrangThaiThanhToan = ? ");
 
-        appendDateAndBranchFilters(sql, tuNgay, denNgay, maChiNhanh);
+        appendDateAndBranchFilters(sql, "h.NgayLapHoaDon", true, "kg.MaCN", tuNgay, denNgay, maChiNhanh);
         sql.append("ORDER BY h.NgayLapHoaDon DESC");
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            bindPaidDateAndBranch(ps, tuNgay, denNgay, maChiNhanh);
+            int idx = 1;
+            ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
                 DecimalFormat df = new DecimalFormat("#,###");
                 while (rs.next()) {
                     list.add(new DoanhThuReportRowDTO(
                             rs.getString("MaHoaDon"),
-                            rs.getTimestamp("NgayLapHoaDon") != null ? sdf.format(rs.getTimestamp("NgayLapHoaDon")) : "",
-                            valueOrDefault(rs.getString("HoTenKH"), "Khách vãng lai"),
-                            valueOrDefault(rs.getString("TenCN"), "Không xác định"),
-                            valueOrDefault(rs.getString("TenKG"), "Không xác định"),
+                            rs.getTimestamp("NgayLapHoaDon") != null ? FORMAT_NGAY_GIO.format(rs.getTimestamp("NgayLapHoaDon")) : "",
+                            giaTriMacDinh(rs.getString("HoTenKH"), "Khách vãng lai"),
+                            giaTriMacDinh(rs.getString("TenCN"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenKG"), "Không xác định"),
                             df.format(rs.getDouble("TongTien")),
                             df.format(rs.getDouble("ThanhTien")),
-                            valueOrDefault(rs.getString("PhuongThucThanhToan"), ""),
-                            valueOrDefault(rs.getString("TrangThaiThanhToan"), "")
+                            giaTriMacDinh(rs.getString("PhuongThucThanhToan"), ""),
+                            giaTriMacDinh(rs.getString("TrangThaiThanhToan"), "")
                     ));
                 }
             }
@@ -244,37 +257,431 @@ public class ThongKeDAO {
         return list;
     }
 
-    private void appendDateAndBranchFilters(StringBuilder sql, String tuNgay, String denNgay, String maChiNhanh) {
+    public DuLieuBaoCaoTongQuatDTO layBaoCaoDoanhThu(String tuNgay, String denNgay, String maChiNhanh, String loaiDT) {
+        DuLieuBaoCaoTongQuatDTO duLieu = taoBaoCaoCoBan(
+                "Báo cáo doanh thu",
+                "BÁO CÁO DOANH THU",
+                List.of("Mã HĐ", "Ngày lập", "Khách hàng", "Chi nhánh", "Không gian", "Tổng tiền", "Thành tiền", "Thanh toán"),
+                "Chỉ tính hóa đơn có trạng thái Đã thanh toán thành công."
+        );
+        List<DongBaoCaoTongQuatDTO> rows = new ArrayList<>();
+        double tongTien = 0;
+        double thanhTien = 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT h.MaHoaDon, h.NgayLapHoaDon, nd.HoTen AS HoTenKH, cn.TenCN, kg.TenKG, " +
+                        "NVL(h.TongTien, 0) AS TongTien, NVL(h.ThanhTien, 0) AS ThanhTien, " +
+                        "h.PhuongThucThanhToan, h.TrangThaiThanhToan " +
+                        "FROM HOADON h " +
+                        "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
+                        "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                        "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
+                        "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                        "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN " +
+                        "WHERE h.TrangThaiThanhToan = ? ");
+
+        appendDateAndBranchFilters(sql, "h.NgayLapHoaDon", true, "kg.MaCN", tuNgay, denNgay, maChiNhanh);
+        sql.append("ORDER BY h.NgayLapHoaDon DESC");
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    double dongTongTien = rs.getDouble("TongTien");
+                    double dongThanhTien = rs.getDouble("ThanhTien");
+                    tongTien += dongTongTien;
+                    thanhTien += dongThanhTien;
+                    rows.add(new DongBaoCaoTongQuatDTO(
+                            giaTriMacDinh(rs.getString("MaHoaDon"), ""),
+                            dinhDangNgayGio(rs.getTimestamp("NgayLapHoaDon")),
+                            giaTriMacDinh(rs.getString("HoTenKH"), "Khách vãng lai"),
+                            giaTriMacDinh(rs.getString("TenCN"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenKG"), "Không xác định"),
+                            dinhDangTien(dongTongTien),
+                            dinhDangTien(dongThanhTien),
+                            dinhDangThanhToan(rs.getString("PhuongThucThanhToan"), rs.getString("TrangThaiThanhToan"))
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        duLieu.setDanhSachDongBaoCao(rows);
+        duLieu.setNhanTongGiaTri1("Tổng doanh thu");
+        duLieu.setTongGiaTri1(dinhDangTien(thanhTien));
+        duLieu.setNhanTongGiaTri2("Trước giảm giá");
+        duLieu.setTongGiaTri2(dinhDangTien(tongTien));
+        duLieu.setNhanTongGiaTri3("Tổng chiết khấu");
+        duLieu.setTongGiaTri3(dinhDangTien(Math.max(0, tongTien - thanhTien)));
+        return duLieu;
+    }
+
+    public DuLieuBaoCaoTongQuatDTO layBaoCaoNhapKhoDichVu(String tuNgay, String denNgay, String maChiNhanh) {
+        DuLieuBaoCaoTongQuatDTO duLieu = taoBaoCaoCoBan(
+                "Báo cáo nhập kho dịch vụ",
+                "BÁO CÁO NHẬP KHO DỊCH VỤ",
+                List.of("Mã chứng từ", "Ngày nhập", "Dịch vụ", "Nhân viên", "Chi nhánh", "Số lượng", "Tệp chứng từ", "Ghi chú"),
+                "Dữ liệu lấy từ chứng từ nhập kho dịch vụ trong hệ thống."
+        );
+        List<DongBaoCaoTongQuatDTO> rows = new ArrayList<>();
+        int tongPhieu = 0;
+        double tongSoLuong = 0;
+        double tongGiaTri = 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT ctn.MaChungTu, ctn.NgayNhap, dv.TenDV, nd.HoTen AS TenNhanVien, cn.TenCN, " +
+                        "NVL(ctn.SoLuongNhap, 0) AS SoLuongNhap, ctn.TenFile, dv.GiaNhap " +
+                        "FROM CHUNGTUNHAPKHO ctn " +
+                        "LEFT JOIN DICHVU dv ON ctn.MaDV = dv.MaDV " +
+                        "LEFT JOIN NHANVIEN nv ON ctn.MaNV = nv.MaNV " +
+                        "LEFT JOIN NGUOIDUNG nd ON nv.MaND = nd.MaND " +
+                        "LEFT JOIN CHINHANH cn ON ctn.MaCN = cn.MaCN " +
+                        "WHERE 1 = 1 ");
+
+        appendDateAndBranchFilters(sql, "ctn.NgayNhap", false, "ctn.MaCN", tuNgay, denNgay, maChiNhanh);
+        sql.append("ORDER BY ctn.NgayNhap DESC, ctn.MaChungTu DESC");
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = bindDateRange(ps, 1, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    double soLuong = rs.getDouble("SoLuongNhap");
+                    Double giaNhap = layDoubleNullable(rs, "GiaNhap");
+                    tongPhieu++;
+                    tongSoLuong += soLuong;
+                    tongGiaTri += soLuong * (giaNhap == null ? 0 : giaNhap);
+                    rows.add(new DongBaoCaoTongQuatDTO(
+                            giaTriMacDinh(rs.getString("MaChungTu"), ""),
+                            dinhDangNgay(rs.getDate("NgayNhap")),
+                            giaTriMacDinh(rs.getString("TenDV"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenNhanVien"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenCN"), "Không xác định"),
+                            FORMAT_SO.format(soLuong),
+                            giaTriMacDinh(rs.getString("TenFile"), "Không có tệp"),
+                            giaNhap == null ? "Chưa có giá nhập" : ""
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        duLieu.setDanhSachDongBaoCao(rows);
+        duLieu.setNhanTongGiaTri1("Tổng phiếu nhập");
+        duLieu.setTongGiaTri1(FORMAT_SO.format(tongPhieu));
+        duLieu.setNhanTongGiaTri2("Tổng số lượng nhập");
+        duLieu.setTongGiaTri2(FORMAT_SO.format(tongSoLuong));
+        duLieu.setNhanTongGiaTri3("Tổng giá trị nhập");
+        duLieu.setTongGiaTri3(dinhDangTien(tongGiaTri));
+        return duLieu;
+    }
+
+    public DuLieuBaoCaoTongQuatDTO layBaoCaoChiPhiNhapKho(String tuNgay, String denNgay, String maChiNhanh) {
+        DuLieuBaoCaoTongQuatDTO duLieu = taoBaoCaoCoBan(
+                "Báo cáo chi phí nhập kho",
+                "BÁO CÁO CHI PHÍ NHẬP KHO",
+                List.of("Mã chứng từ", "Ngày nhập", "Dịch vụ", "Loại dịch vụ", "Chi nhánh", "Số lượng", "Giá nhập", "Chi phí nhập"),
+                "Chi phí nhập kho = Số lượng nhập * Giá nhập. Nếu dịch vụ chưa có giá nhập, chi phí được tính là 0."
+        );
+        List<DongBaoCaoTongQuatDTO> rows = new ArrayList<>();
+        int tongPhieu = 0;
+        int soDongThieuGiaNhap = 0;
+        double tongSoLuong = 0;
+        double tongChiPhi = 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT ctn.MaChungTu, ctn.NgayNhap, dv.TenDV, ldv.TenLoaiDV, cn.TenCN, " +
+                        "NVL(ctn.SoLuongNhap, 0) AS SoLuongNhap, dv.GiaNhap " +
+                        "FROM CHUNGTUNHAPKHO ctn " +
+                        "LEFT JOIN DICHVU dv ON ctn.MaDV = dv.MaDV " +
+                        "LEFT JOIN LOAIDICHVU ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
+                        "LEFT JOIN CHINHANH cn ON ctn.MaCN = cn.MaCN " +
+                        "WHERE 1 = 1 ");
+
+        appendDateAndBranchFilters(sql, "ctn.NgayNhap", false, "ctn.MaCN", tuNgay, denNgay, maChiNhanh);
+        sql.append("ORDER BY ctn.NgayNhap DESC, ctn.MaChungTu DESC");
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = bindDateRange(ps, 1, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    double soLuong = rs.getDouble("SoLuongNhap");
+                    Double giaNhap = layDoubleNullable(rs, "GiaNhap");
+                    double chiPhi = soLuong * (giaNhap == null ? 0 : giaNhap);
+                    tongPhieu++;
+                    tongSoLuong += soLuong;
+                    tongChiPhi += chiPhi;
+                    if (giaNhap == null) {
+                        soDongThieuGiaNhap++;
+                    }
+                    rows.add(new DongBaoCaoTongQuatDTO(
+                            giaTriMacDinh(rs.getString("MaChungTu"), ""),
+                            dinhDangNgay(rs.getDate("NgayNhap")),
+                            giaTriMacDinh(rs.getString("TenDV"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenLoaiDV"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenCN"), "Không xác định"),
+                            FORMAT_SO.format(soLuong),
+                            giaNhap == null ? "Chưa có giá nhập" : dinhDangTien(giaNhap),
+                            dinhDangTien(chiPhi)
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        duLieu.setDanhSachDongBaoCao(rows);
+        duLieu.setNhanTongGiaTri1("Tổng chi phí nhập kho");
+        duLieu.setTongGiaTri1(dinhDangTien(tongChiPhi));
+        duLieu.setNhanTongGiaTri2("Tổng số lượng nhập");
+        duLieu.setTongGiaTri2(FORMAT_SO.format(tongSoLuong));
+        duLieu.setNhanTongGiaTri3("Tổng phiếu nhập");
+        duLieu.setTongGiaTri3(FORMAT_SO.format(tongPhieu));
+        if (soDongThieuGiaNhap > 0) {
+            duLieu.setGhiChuBaoCao(duLieu.getGhiChuBaoCao() + " Có " + soDongThieuGiaNhap + " dòng chưa có giá nhập nên chi phí được tính là 0.");
+        }
+        return duLieu;
+    }
+
+    public DuLieuBaoCaoTongQuatDTO layBaoCaoDichVuBanChay(String tuNgay, String denNgay, String maChiNhanh) {
+        DuLieuBaoCaoTongQuatDTO duLieu = taoBaoCaoCoBan(
+                "Báo cáo dịch vụ bán chạy",
+                "BÁO CÁO DỊCH VỤ BÁN CHẠY",
+                List.of("Mã DV", "Dịch vụ", "Loại dịch vụ", "Số lượng bán", "Doanh thu DV", "Số phiên", "Đơn giá", "Ghi chú"),
+                "Chỉ tính dịch vụ thuộc các hóa đơn đã thanh toán thành công. Doanh thu dịch vụ là số lượng * đơn giá dịch vụ."
+        );
+        List<DongBaoCaoTongQuatDTO> rows = new ArrayList<>();
+        int soDichVu = 0;
+        double tongSoLuong = 0;
+        double tongDoanhThuDichVu = 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT dv.MaDV, dv.TenDV, ldv.TenLoaiDV, NVL(SUM(NVL(ctdv.SoLuong, 0)), 0) AS SoLuongBan, " +
+                        "NVL(SUM(NVL(ctdv.SoLuong, 0) * NVL(dv.DonGia, 0)), 0) AS DoanhThuDichVu, " +
+                        "COUNT(DISTINCT ctdv.MaPhien) AS SoPhien, NVL(dv.DonGia, 0) AS DonGia " +
+                        "FROM CHITIETDICHVU ctdv " +
+                        "JOIN DICHVU dv ON ctdv.MaDV = dv.MaDV " +
+                        "LEFT JOIN LOAIDICHVU ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
+                        "JOIN PHIENLAMVIEC p ON ctdv.MaPhien = p.MaPhien " +
+                        "JOIN HOADON h ON p.MaPhien = h.MaPhien " +
+                        "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                        "WHERE h.TrangThaiThanhToan = ? ");
+
+        appendDateAndBranchFilters(sql, "h.NgayLapHoaDon", true, "kg.MaCN", tuNgay, denNgay, maChiNhanh);
+        sql.append("GROUP BY dv.MaDV, dv.TenDV, ldv.TenLoaiDV, dv.DonGia ");
+        sql.append("ORDER BY SoLuongBan DESC, DoanhThuDichVu DESC");
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    double soLuong = rs.getDouble("SoLuongBan");
+                    double doanhThu = rs.getDouble("DoanhThuDichVu");
+                    soDichVu++;
+                    tongSoLuong += soLuong;
+                    tongDoanhThuDichVu += doanhThu;
+                    rows.add(new DongBaoCaoTongQuatDTO(
+                            giaTriMacDinh(rs.getString("MaDV"), ""),
+                            giaTriMacDinh(rs.getString("TenDV"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenLoaiDV"), "Không xác định"),
+                            FORMAT_SO.format(soLuong),
+                            dinhDangTien(doanhThu),
+                            FORMAT_SO.format(rs.getInt("SoPhien")),
+                            dinhDangTien(rs.getDouble("DonGia")),
+                            "Ước tính theo đơn giá hiện tại"
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        duLieu.setDanhSachDongBaoCao(rows);
+        duLieu.setNhanTongGiaTri1("Doanh thu dịch vụ ước tính");
+        duLieu.setTongGiaTri1(dinhDangTien(tongDoanhThuDichVu));
+        duLieu.setNhanTongGiaTri2("Tổng số lượng bán");
+        duLieu.setTongGiaTri2(FORMAT_SO.format(tongSoLuong));
+        duLieu.setNhanTongGiaTri3("Số dịch vụ có bán");
+        duLieu.setTongGiaTri3(FORMAT_SO.format(soDichVu));
+        return duLieu;
+    }
+
+    public DuLieuBaoCaoTongQuatDTO layBaoCaoLoiNhuanGopUocTinh(String tuNgay, String denNgay, String maChiNhanh) {
+        DuLieuBaoCaoTongQuatDTO duLieu = taoBaoCaoCoBan(
+                "Báo cáo lợi nhuận gộp ước tính",
+                "BÁO CÁO LỢI NHUẬN GỘP ƯỚC TÍNH",
+                List.of("Mã DV", "Dịch vụ", "Loại dịch vụ", "Số lượng bán", "Doanh thu DV", "Giá vốn", "Lợi nhuận DV", "Ghi chú"),
+                "Lợi nhuận gộp ước tính = doanh thu hóa đơn đã thanh toán - giá vốn dịch vụ. Chưa bao gồm lương, thuê mặt bằng, điện nước, thuế hoặc các chi phí chưa được lưu trong database."
+        );
+        List<DongBaoCaoTongQuatDTO> rows = new ArrayList<>();
+        double doanhThuHoaDon = layTongDoanhThuHoaDonDaThanhToan(tuNgay, denNgay, maChiNhanh);
+        double tongGiaVon = 0;
+        int soDichVuThieuGiaNhap = 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT dv.MaDV, dv.TenDV, ldv.TenLoaiDV, NVL(SUM(NVL(ctdv.SoLuong, 0)), 0) AS SoLuongBan, " +
+                        "NVL(SUM(NVL(ctdv.SoLuong, 0) * NVL(dv.DonGia, 0)), 0) AS DoanhThuDichVu, " +
+                        "NVL(SUM(NVL(ctdv.SoLuong, 0) * NVL(dv.GiaNhap, 0)), 0) AS GiaVon, " +
+                        "COUNT(CASE WHEN dv.GiaNhap IS NULL THEN 1 END) AS SoDongThieuGiaNhap " +
+                        "FROM CHITIETDICHVU ctdv " +
+                        "JOIN DICHVU dv ON ctdv.MaDV = dv.MaDV " +
+                        "LEFT JOIN LOAIDICHVU ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
+                        "JOIN PHIENLAMVIEC p ON ctdv.MaPhien = p.MaPhien " +
+                        "JOIN HOADON h ON p.MaPhien = h.MaPhien " +
+                        "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                        "WHERE h.TrangThaiThanhToan = ? ");
+
+        appendDateAndBranchFilters(sql, "h.NgayLapHoaDon", true, "kg.MaCN", tuNgay, denNgay, maChiNhanh);
+        sql.append("GROUP BY dv.MaDV, dv.TenDV, ldv.TenLoaiDV ");
+        sql.append("ORDER BY GiaVon DESC, DoanhThuDichVu DESC");
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    double doanhThuDichVu = rs.getDouble("DoanhThuDichVu");
+                    double giaVon = rs.getDouble("GiaVon");
+                    int soDongThieuGiaNhap = rs.getInt("SoDongThieuGiaNhap");
+                    tongGiaVon += giaVon;
+                    if (soDongThieuGiaNhap > 0) {
+                        soDichVuThieuGiaNhap++;
+                    }
+                    rows.add(new DongBaoCaoTongQuatDTO(
+                            giaTriMacDinh(rs.getString("MaDV"), ""),
+                            giaTriMacDinh(rs.getString("TenDV"), "Không xác định"),
+                            giaTriMacDinh(rs.getString("TenLoaiDV"), "Không xác định"),
+                            FORMAT_SO.format(rs.getDouble("SoLuongBan")),
+                            dinhDangTien(doanhThuDichVu),
+                            dinhDangTien(giaVon),
+                            dinhDangTien(doanhThuDichVu - giaVon),
+                            soDongThieuGiaNhap > 0 ? "Thiếu giá nhập" : "Ước tính"
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        duLieu.setDanhSachDongBaoCao(rows);
+        duLieu.setNhanTongGiaTri1("Doanh thu thực tế");
+        duLieu.setTongGiaTri1(dinhDangTien(doanhThuHoaDon));
+        duLieu.setNhanTongGiaTri2("Giá vốn ước tính");
+        duLieu.setTongGiaTri2(dinhDangTien(tongGiaVon));
+        duLieu.setNhanTongGiaTri3("Lợi nhuận gộp ước tính");
+        duLieu.setTongGiaTri3(dinhDangTien(doanhThuHoaDon - tongGiaVon));
+        if (soDichVuThieuGiaNhap > 0) {
+            duLieu.setGhiChuBaoCao(duLieu.getGhiChuBaoCao() + " Một số dịch vụ chưa có giá nhập nên lợi nhuận chỉ mang tính tham khảo.");
+        }
+        return duLieu;
+    }
+
+    private double layTongDoanhThuHoaDonDaThanhToan(String tuNgay, String denNgay, String maChiNhanh) {
+        double tong = 0;
+        StringBuilder sql = new StringBuilder(
+                "SELECT NVL(SUM(h.ThanhTien), 0) AS TongDoanhThu " +
+                        "FROM HOADON h " +
+                        "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
+                        "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                        "WHERE h.TrangThaiThanhToan = ? ");
+        appendDateAndBranchFilters(sql, "h.NgayLapHoaDon", true, "kg.MaCN", tuNgay, denNgay, maChiNhanh);
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            bindBranch(ps, idx, maChiNhanh);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    tong = rs.getDouble("TongDoanhThu");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tong;
+    }
+
+    private DuLieuBaoCaoTongQuatDTO taoBaoCaoCoBan(String loaiBaoCao, String tieuDe,
+                                                   List<String> danhSachTieuDeCot, String ghiChu) {
+        DuLieuBaoCaoTongQuatDTO duLieu = new DuLieuBaoCaoTongQuatDTO();
+        duLieu.setLoaiBaoCao(loaiBaoCao);
+        duLieu.setTieuDeBaoCao(tieuDe);
+        duLieu.setDanhSachTieuDeCot(danhSachTieuDeCot);
+        duLieu.setGhiChuBaoCao(ghiChu);
+        duLieu.setDanhSachDongBaoCao(new ArrayList<>());
+        duLieu.setNhanTongGiaTri1("");
+        duLieu.setTongGiaTri1("0");
+        duLieu.setNhanTongGiaTri2("");
+        duLieu.setTongGiaTri2("0");
+        duLieu.setNhanTongGiaTri3("");
+        duLieu.setTongGiaTri3("0");
+        return duLieu;
+    }
+
+    private void appendDateAndBranchFilters(StringBuilder sql, String dateColumn, boolean timestampColumn,
+                                            String branchColumn, String tuNgay, String denNgay, String maChiNhanh) {
+        String dateFunction = timestampColumn ? "TO_TIMESTAMP" : "TO_DATE";
         if (tuNgay != null && !tuNgay.isBlank()) {
-            sql.append("AND h.NgayLapHoaDon >= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
+            sql.append("AND ").append(dateColumn).append(" >= ")
+                    .append(dateFunction).append("(?, 'YYYY-MM-DD HH24:MI:SS') ");
         }
         if (denNgay != null && !denNgay.isBlank()) {
-            sql.append("AND h.NgayLapHoaDon <= TO_TIMESTAMP(?, 'YYYY-MM-DD HH24:MI:SS') ");
+            sql.append("AND ").append(dateColumn).append(" <= ")
+                    .append(dateFunction).append("(?, 'YYYY-MM-DD HH24:MI:SS') ");
         }
-        if (hasBranchFilter(maChiNhanh)) {
-            sql.append("AND kg.MaCN = ? ");
+        if (hasBranchFilter(maChiNhanh) && branchColumn != null && !branchColumn.isBlank()) {
+            sql.append("AND ").append(branchColumn).append(" = ? ");
         }
     }
 
-    private void bindPaidDateAndBranch(PreparedStatement ps, String tuNgay, String denNgay, String maChiNhanh) throws java.sql.SQLException {
-        int idx = 1;
-        ps.setString(idx++, PAID_STATUS_FILTER);
+    private int bindDateRange(PreparedStatement ps, int idx, String tuNgay, String denNgay) throws java.sql.SQLException {
         if (tuNgay != null && !tuNgay.isBlank()) {
             ps.setString(idx++, convertFormat(tuNgay) + " 00:00:00");
         }
         if (denNgay != null && !denNgay.isBlank()) {
             ps.setString(idx++, convertFormat(denNgay) + " 23:59:59");
         }
+        return idx;
+    }
+
+    private int bindBranch(PreparedStatement ps, int idx, String maChiNhanh) throws java.sql.SQLException {
         if (hasBranchFilter(maChiNhanh)) {
-            ps.setString(idx, extractBranchCode(maChiNhanh));
+            ps.setString(idx++, extractBranchCode(maChiNhanh));
         }
+        return idx;
     }
 
     private boolean hasBranchFilter(String maChiNhanh) {
-        return maChiNhanh != null && !maChiNhanh.isBlank() && !ALL_BRANCHES.equals(maChiNhanh);
+        if (maChiNhanh == null || maChiNhanh.isBlank()) {
+            return false;
+        }
+        String normalized = maChiNhanh.trim();
+        return !TAT_CA_CHI_NHANH.equalsIgnoreCase(normalized)
+                && !normalized.toLowerCase().startsWith("tất cả");
     }
 
     private String extractBranchCode(String maChiNhanh) {
+        if (maChiNhanh == null) {
+            return "";
+        }
         return maChiNhanh.split(" - ")[0].trim();
     }
 
@@ -287,7 +694,30 @@ public class ThongKeDAO {
         }
     }
 
-    private String valueOrDefault(String value, String defaultValue) {
+    private String giaTriMacDinh(String value, String defaultValue) {
         return value == null || value.isBlank() ? defaultValue : value;
+    }
+
+    private String dinhDangTien(double value) {
+        return FORMAT_TIEN.format(value);
+    }
+
+    private String dinhDangNgayGio(java.util.Date value) {
+        return value == null ? "" : FORMAT_NGAY_GIO.format(value);
+    }
+
+    private String dinhDangNgay(java.util.Date value) {
+        return value == null ? "" : FORMAT_NGAY.format(value);
+    }
+
+    private String dinhDangThanhToan(String phuongThuc, String trangThai) {
+        String thanhToan = giaTriMacDinh(phuongThuc, "Chưa có phương thức");
+        String trangThaiHienThi = giaTriMacDinh(trangThai, "");
+        return trangThaiHienThi.isBlank() ? thanhToan : thanhToan + " / " + trangThaiHienThi;
+    }
+
+    private Double layDoubleNullable(ResultSet rs, String column) throws java.sql.SQLException {
+        double value = rs.getDouble(column);
+        return rs.wasNull() ? null : value;
     }
 }
