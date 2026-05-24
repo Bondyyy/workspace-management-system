@@ -87,14 +87,13 @@ ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_PTTT
 ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TrangThai
     CHECK (TrangThaiThanhToan IN ('Đang chờ thanh toán', 'Đã trả trước', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
 
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TongTien 
-    CHECK (TongTien >= 0);
-
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_ThanhTien 
-    CHECK (ThanhTien >= 0);
-
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_DaTraTruoc
-    CHECK (DaTraTruoc >= 0);
+ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TienHopLe
+    CHECK (
+        TongTien >= 0
+        AND ThanhTien >= 0
+        AND DaTraTruoc >= 0
+        AND ThanhTien <= TongTien
+    );
 -- 11. Bảng PHIEUGIAMGIA
 ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_GiaTri 
     CHECK (GiaTriGiamGia > 0);
