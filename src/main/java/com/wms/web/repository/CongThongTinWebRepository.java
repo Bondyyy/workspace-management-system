@@ -514,7 +514,10 @@ public class CongThongTinWebRepository {
         if (thongTin == null) {
             throw new IllegalArgumentException("Thiếu thông tin đặt chỗ để mở phiên.");
         }
-        return mauJdbc.execute((ConnectionCallback<String>) conn -> {
+        java.time.LocalDateTime thoiGianDuKienKetThuc = thongTin.getThoiGianDuKienToi() != null
+                ? thongTin.getThoiGianDuKienToi().plusHours(thongTin.laySoGioSuDungAnToan())
+                : layThoiGianHienTaiVietNam().plusHours(thongTin.laySoGioSuDungAnToan());
+        String maPhien = mauJdbc.execute((ConnectionCallback<String>) conn -> {
             String sql = """
                     BEGIN
                         INSERT INTO PHIENLAMVIEC (
@@ -528,7 +531,7 @@ public class CongThongTinWebRepository {
                             MaDatCho
                         ) VALUES (
                             CURRENT_TIMESTAMP,
-                            CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
+                            ?,
                             ?,
                             NULL,
                             CURRENT_TIMESTAMP,
@@ -540,7 +543,7 @@ public class CongThongTinWebRepository {
                     END;
                     """;
             try (var cs = conn.prepareCall(sql)) {
-                cs.setInt(1, thongTin.laySoGioSuDungAnToan());
+                cs.setTimestamp(1, java.sql.Timestamp.valueOf(thoiGianDuKienKetThuc));
                 cs.setString(2, giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"));
                 cs.setString(3, thongTin.getMaKG());
                 cs.setString(4, thongTin.getMaKH());
@@ -550,6 +553,47 @@ public class CongThongTinWebRepository {
                 return cs.getString(6);
             }
         });
+
+        mauJdbc.update(
+                """
+                UPDATE HOADON
+                SET DaTraTruoc = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    TongTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    ThanhTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    NgayLapHoaDon = CURRENT_TIMESTAMP,
+                    PhuongThucThanhToan = ?,
+                    TrangThaiThanhToan = ?
+                WHERE MaPhien = ?
+                """,
+                thongTin.getMaDatCho(),
+                thongTin.getMaDatCho(),
+                thongTin.getMaDatCho(),
+                giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
+                trangThaiHoaDonDb("Da tra truoc"),
+                maPhien
+        );
+
+        mauJdbc.update(
+                """
+                UPDATE DATCHO
+                SET TrangThaiDatTruoc = ?, MaQR = NULL, CapNhatLanCuoi = CURRENT_TIMESTAMP
+                WHERE MaDatCho = ?
+                """,
+                trangThaiDatChoDb("Da su dung"),
+                thongTin.getMaDatCho()
+        );
+
+        mauJdbc.update(
+                """
+                UPDATE KHONGGIAN
+                SET TrangThaiKG = ?
+                WHERE MaKG = ?
+                """,
+                trangThaiKhongGianDb("Dang hoat dong"),
+                thongTin.getMaKG()
+        );
+
+        return maPhien;
     }
 
     public String taoDatCho(NguoiDungPhien user, String maKG, LocalDateTime arrivalTime,
@@ -603,7 +647,8 @@ public class CongThongTinWebRepository {
         }
         String sql = """
                 SELECT dc.MaDatCho, nd.HoTen, kg.TenKG, cn.TenCN, dc.ThoiGianDuKienToi,
-                       dc.KhoangThoiGianSuDung, dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu
+                       dc.KhoangThoiGianSuDung, dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu,
+                       (SELECT COUNT(*) FROM PHIENLAMVIEC plv WHERE plv.MaDatCho = dc.MaDatCho) AS SoPhien
                 FROM DATCHO dc
                 JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
                 JOIN NGUOIDUNG nd ON nd.MaND = kh.MaND
@@ -618,7 +663,8 @@ public class CongThongTinWebRepository {
     public List<DatChoView> timTatCaDatCho() {
         String sql = """
                 SELECT dc.MaDatCho, nd.HoTen, kg.TenKG, cn.TenCN, dc.ThoiGianDuKienToi,
-                       dc.KhoangThoiGianSuDung, dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu
+                       dc.KhoangThoiGianSuDung, dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu,
+                       (SELECT COUNT(*) FROM PHIENLAMVIEC plv WHERE plv.MaDatCho = dc.MaDatCho) AS SoPhien
                 FROM DATCHO dc
                 JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
                 JOIN NGUOIDUNG nd ON nd.MaND = kh.MaND
@@ -865,7 +911,8 @@ public class CongThongTinWebRepository {
         mauJdbc.update(
                 """
                 UPDATE HOADON
-                SET TongTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                SET DaTraTruoc = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    TongTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
                     ThanhTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
                     NgayLapHoaDon = CURRENT_TIMESTAMP,
                     PhuongThucThanhToan = ?,
@@ -874,8 +921,8 @@ public class CongThongTinWebRepository {
                 """,
                 maDatCho,
                 maDatCho,
-                giaTriDb("CHK_HD_PTTT", "chuyen khoan", 0, "Chuyển khoản"),
-                trangThaiHoaDonDb("Da thanh toan thanh cong"),
+                giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
+                trangThaiHoaDonDb("Da tra truoc"),
                 maPhien
         );
 
@@ -1022,7 +1069,8 @@ public class CongThongTinWebRepository {
                        NVL(h.TongTien, dc.ThanhTien) AS TongTien,
                        NVL(h.ThanhTien, dc.ThanhTien) AS ThanhTien,
                        NVL(h.TrangThaiThanhToan, dc.TrangThaiDatTruoc) AS TrangThaiThanhToan,
-                       h.NgayLapHoaDon
+                       h.NgayLapHoaDon,
+                       CASE WHEN p.MaPhien IS NULL THEN 0 ELSE 1 END AS SoPhien
                 FROM DATCHO dc
                 JOIN KHONGGIAN kg ON kg.MaKG = dc.MaKG
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
@@ -1037,6 +1085,10 @@ public class CongThongTinWebRepository {
             Timestamp actualEnd = rs.getTimestamp("ThoiGianKetThuc");
             Timestamp invoiceDate = rs.getTimestamp("NgayLapHoaDon");
             String maPhien = rs.getString("MaPhien");
+            int soPhien = rs.getInt("SoPhien");
+            String trangThaiHienThi = maPhien == null
+                    ? hienThiTrangThaiDatCho(rs.getString("TrangThaiPhien"), soPhien)
+                    : hienThiTrangThaiPhien(rs.getString("TrangThaiPhien"));
             return new LichSuDatChoView(
                     maPhien,
                     rs.getString("MaDatCho"),
@@ -1047,9 +1099,7 @@ public class CongThongTinWebRepository {
                     start == null ? null : start.toLocalDateTime(),
                     expectedEnd == null ? null : expectedEnd.toLocalDateTime(),
                     actualEnd == null ? null : actualEnd.toLocalDateTime(),
-                    maPhien == null
-                            ? hienThiTrangThai(rs.getString("TrangThaiPhien"))
-                            : hienThiTrangThaiPhien(rs.getString("TrangThaiPhien")),
+                    trangThaiHienThi,
                     hienThiTrangThaiHoaDon(rs.getString("TrangThaiThanhToan")),
                     rs.getBigDecimal("TongTien"),
                     rs.getBigDecimal("ThanhTien"),
@@ -1170,7 +1220,10 @@ public class CongThongTinWebRepository {
                 SET TongTien = NVL(TongTien, 0) + ?,
                     ThanhTien = NVL(ThanhTien, 0) + ?,
                     PhuongThucThanhToan = NVL(PhuongThucThanhToan, ?),
-                    TrangThaiThanhToan = ?,
+                    TrangThaiThanhToan = CASE
+                        WHEN NVL(TrangThaiThanhToan, '') = 'Đã trả trước' THEN 'Đã trả trước'
+                        ELSE ?
+                    END,
                     NgayLapHoaDon = CURRENT_TIMESTAMP
                 WHERE MaPhien = ?
                 """,
@@ -1203,6 +1256,7 @@ public class CongThongTinWebRepository {
         Timestamp arrivalTime = rs.getTimestamp("ThoiGianDuKienToi");
         int durationHours = rs.getInt("KhoangThoiGianSuDung");
         boolean durationNull = rs.wasNull();
+        int soPhien = rs.getInt("SoPhien");
         return new DatChoView(
                 rs.getString("MaDatCho"),
                 rs.getString("HoTen"),
@@ -1210,7 +1264,7 @@ public class CongThongTinWebRepository {
                 rs.getString("TenCN"),
                 arrivalTime == null ? null : arrivalTime.toLocalDateTime(),
                 durationNull ? null : durationHours,
-                hienThiTrangThai(rs.getString("TrangThaiDatTruoc")),
+                hienThiTrangThaiDatCho(rs.getString("TrangThaiDatTruoc"), soPhien),
                 rs.getBigDecimal("ThanhTien"),
                 rs.getString("GhiChu")
         );
@@ -1282,43 +1336,50 @@ public class CongThongTinWebRepository {
     private String trangThaiDatChoDb(String status) {
         String normalized = chuanHoa(status);
         if (normalized.contains("khong thanh cong")) {
-            return giaTriDb("CHK_DC_TRANGTHAI", "khong thanh cong", 2, "Thanh toán không thành công");
+            return "Thanh toán không thành công";
         }
         if (normalized.contains("thanh cong")) {
-            return giaTriDb("CHK_DC_TRANGTHAI", "thanh cong", 1, "Đã thanh toán thành công");
+            return "Đã thanh toán thành công";
         }
         if (normalized.contains("su dung")) {
-            return giaTriDb("CHK_DC_TRANGTHAI", "su dung", 3, "Đã sử dụng");
+            return "Đã sử dụng";
         }
-        return giaTriDb("CHK_DC_TRANGTHAI", "cho thanh toan", 0, "Đang chờ thanh toán");
+        if (normalized.contains("qua han nhan cho")) {
+            return "Quá hạn nhận chỗ";
+        }
+        return "Đang chờ thanh toán";
     }
 
     private String trangThaiHoaDonDb(String status) {
         String normalized = chuanHoa(status);
         if (normalized.contains("khong thanh cong")) {
-            return giaTriDb("CHK_HD_TRANGTHAI", "khong thanh cong", 2, "Thanh toán không thành công");
+            return "Thanh toán không thành công";
+        }
+        if (normalized.contains("tra truoc")) {
+            return "Đã trả trước";
         }
         if (normalized.contains("thanh cong")) {
-            return giaTriDb("CHK_HD_TRANGTHAI", "thanh cong", 1, "Đã thanh toán thành công");
+            return "Đã thanh toán thành công";
         }
-        return giaTriDb("CHK_HD_TRANGTHAI", "cho thanh toan", 0, "Đang chờ thanh toán");
+        return "Đang chờ thanh toán";
     }
 
     private String trangThaiKhongGianDb(String status) {
         String normalized = chuanHoa(status);
         if (normalized.contains("tam khoa")) {
-            return giaTriDb("CHK_KG_TRANGTHAI", "tam khoa", 1, "Tạm khoá");
+            return "Tạm khoá";
         }
         if (normalized.contains("dat truoc")) {
-            return giaTriDb("CHK_KG_TRANGTHAI", "dat truoc", 1, "Đã đặt trước");
+            return "Đã đặt trước";
         }
         if (normalized.contains("dang hoat dong")) {
-            return giaTriDb("CHK_KG_TRANGTHAI", "dang hoat dong", 2, "Đang hoạt động");
+            return "Đang hoạt động";
         }
         if (normalized.contains("bao tri")) {
-            return giaTriDb("CHK_KG_TRANGTHAI", "bao tri", 5, "Bảo trì");
+            return "Bảo trì";
         }
-        return giaTriDb("CHK_KG_TRANGTHAI", "trong", 0, "Trống");
+
+        return "Trống";
     }
 
     private List<String> layGiaTriRangBuoc(String constraintName) {
@@ -1363,6 +1424,10 @@ public class CongThongTinWebRepository {
     }
 
     private String hienThiTrangThai(String value) {
+        return hienThiTrangThaiDatCho(value, 0);
+    }
+
+    private String hienThiTrangThaiDatCho(String value, int soPhien) {
         if (value == null || value.isBlank()) {
             return "Chưa có trạng thái";
         }
@@ -1378,7 +1443,13 @@ public class CongThongTinWebRepository {
         if (normalized.contains("thanh toan thanh cong")) {
             return "Đã thanh toán thành công";
         }
+        if (normalized.contains("qua han nhan cho")) {
+            return com.wms.config.AppConstants.TRANG_THAI_DAT_CHO_QUA_HAN;
+        }
         if (normalized.contains("da su dung")) {
+            if (soPhien > 0) {
+                return "Đã nhận chỗ";
+            }
             return "Đã sử dụng";
         }
         return decoded;
@@ -1411,6 +1482,9 @@ public class CongThongTinWebRepository {
         if (normalized.contains("cho thanh toan")) {
             return "Đang chờ thanh toán";
         }
+        if (normalized.contains("tra truoc")) {
+            return "Đã trả trước";
+        }
         if (normalized.contains("thanh toan khong thanh cong")) {
             return "Thanh toán không thành công";
         }
@@ -1424,7 +1498,166 @@ public class CongThongTinWebRepository {
         if (service == null) {
             return false;
         }
-        return "DV000".equalsIgnoreCase(service.getMaDV()) || chuanHoa(service.getTenDV()).contains("gia han gio");
+        return "DV0000".equalsIgnoreCase(service.getMaDV()) || chuanHoa(service.getTenDV()).contains("gia han gio");
+    }
+
+    public List<DatChoView> timDatChoDaThanhToanNhungKhongDenQuaGio() {
+        String sql = """
+                SELECT dc.MaDatCho, nd.HoTen, kg.TenKG, cn.TenCN, dc.ThoiGianDuKienToi,
+                       dc.KhoangThoiGianSuDung, dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu,
+                       (SELECT COUNT(*) FROM PHIENLAMVIEC plv WHERE plv.MaDatCho = dc.MaDatCho) AS SoPhien
+                FROM DATCHO dc
+                JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
+                JOIN NGUOIDUNG nd ON nd.MaND = kh.MaND
+                JOIN KHONGGIAN kg ON kg.MaKG = dc.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
+                WHERE dc.TrangThaiDatTruoc = ?
+                  AND SYSTIMESTAMP > dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM PHIENLAMVIEC plv
+                      WHERE plv.MaDatCho = dc.MaDatCho
+                  )
+                """;
+        return mauJdbc.query(sql, (rs, rowNum) -> anhXaDatCho(rs), trangThaiDatChoDb("Da thanh toan thanh cong"));
+    }
+
+    public List<java.util.Map<String, Object>> timDatChoDaThanhToanDeDebug() {
+        String daThanhToan = trangThaiDatChoDb("Da thanh toan thanh cong");
+        String sql = """
+                SELECT dc.MaDatCho,
+                       dc.TrangThaiDatTruoc,
+                       TO_CHAR(dc.ThoiGianDuKienToi, 'YYYY-MM-DD HH24:MI:SS') AS ThoiGianDuKienToi,
+                       dc.KhoangThoiGianSuDung,
+                       TO_CHAR(SYSTIMESTAMP, 'YYYY-MM-DD HH24:MI:SS.FF') AS GioHeThong,
+                       (SELECT COUNT(*) FROM PHIENLAMVIEC plv WHERE plv.MaDatCho = dc.MaDatCho) AS SoPhien
+                FROM DATCHO dc
+                WHERE dc.TrangThaiDatTruoc = ?
+                ORDER BY dc.ThoiGianDat DESC
+                """;
+        try {
+            return mauJdbc.queryForList(sql + " FETCH FIRST 5 ROWS ONLY", daThanhToan);
+        } catch (Exception ex) {
+            return mauJdbc.queryForList("""
+                SELECT * FROM (
+                    SELECT dc.MaDatCho,
+                           dc.TrangThaiDatTruoc,
+                           TO_CHAR(dc.ThoiGianDuKienToi, 'YYYY-MM-DD HH24:MI:SS') AS ThoiGianDuKienToi,
+                           dc.KhoangThoiGianSuDung,
+                           TO_CHAR(SYSTIMESTAMP, 'YYYY-MM-DD HH24:MI:SS.FF') AS GioHeThong,
+                           (SELECT COUNT(*) FROM PHIENLAMVIEC plv WHERE plv.MaDatCho = dc.MaDatCho) AS SoPhien
+                    FROM DATCHO dc
+                    WHERE dc.TrangThaiDatTruoc = ?
+                    ORDER BY dc.ThoiGianDat DESC
+                ) WHERE ROWNUM <= 5
+            """, daThanhToan);
+        }
+    }
+
+    public int danhDauDatChoKhongDenThanhDaSuDung(String maDatCho) {
+        String sql = """
+                UPDATE DATCHO
+                SET TrangThaiDatTruoc = ?,
+                    MaQR = NULL,
+                    GhiChu = CASE
+                        WHEN GhiChu LIKE '%[SYSTEM_NO_SHOW]%' THEN GhiChu
+                        ELSE NVL(GhiChu, '') || ' | [SYSTEM_NO_SHOW] Tự động kết thúc do quá hạn nhận chỗ.'
+                    END,
+                    CapNhatLanCuoi = CURRENT_TIMESTAMP
+                WHERE MaDatCho = ?
+                  AND TrangThaiDatTruoc = ?
+                  AND SYSTIMESTAMP > ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM PHIENLAMVIEC plv
+                      WHERE plv.MaDatCho = DATCHO.MaDatCho
+                  )
+                """;
+        return mauJdbc.update(
+                sql,
+                trangThaiDatChoDb("Qua han nhan cho"),
+                maDatCho,
+                trangThaiDatChoDb("Da thanh toan thanh cong")
+        );
+    }
+
+    public void capNhatTrangThaiKhongGianSauKhiDatChoHetHieuLuc(String maKG) {
+        String sql = """
+                UPDATE KHONGGIAN kg
+                SET TrangThaiKG =
+                    CASE
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM PHIENLAMVIEC p
+                            WHERE p.MaKG = kg.MaKG
+                              AND p.TrangThaiPhien = ?
+                        ) THEN ?
+                
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM DATCHO dc
+                            WHERE dc.MaKG = kg.MaKG
+                              AND dc.TrangThaiDatTruoc = ?
+                              AND SYSTIMESTAMP <= dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')
+                        ) THEN ?
+                
+                        ELSE ?
+                    END
+                WHERE kg.MaKG = ?
+                """;
+        mauJdbc.update(
+                sql,
+                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
+                trangThaiKhongGianDb("Dang hoat dong"),
+                trangThaiDatChoDb("Da thanh toan thanh cong"),
+                trangThaiKhongGianDb("Da dat truoc"),
+                trangThaiKhongGianDb("Trong"),
+                maKG
+        );
+    }
+
+    public String timMaKGCuaDatCho(String maDatCho) {
+        if (maDatCho == null || maDatCho.isBlank()) {
+            return null;
+        }
+        try {
+            return mauJdbc.queryForObject(
+                    "SELECT MaKG FROM DATCHO WHERE MaDatCho = ?",
+                    String.class,
+                    maDatCho
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public Optional<ThongTinNhanChoBangQR> timDatChoTheoMaDatChoDeNhanCho(String maDatCho) {
+        if (maDatCho == null || maDatCho.isBlank()) {
+            return Optional.empty();
+        }
+        String sql = """
+                SELECT dc.MaDatCho,
+                       dc.MaQR,
+                       dc.TrangThaiDatTruoc,
+                       dc.ThoiGianDuKienToi,
+                       dc.KhoangThoiGianSuDung,
+                       dc.MaKH,
+                       dc.MaKG,
+                       kg.TenKG,
+                       nd.HoTen AS TenKhachHang
+                FROM DATCHO dc
+                JOIN KHONGGIAN kg ON dc.MaKG = kg.MaKG
+                LEFT JOIN KHACHHANG kh ON dc.MaKH = kh.MaKH
+                LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND
+                WHERE dc.MaDatCho = ?
+                FOR UPDATE OF dc.MaDatCho
+                """;
+        List<ThongTinNhanChoBangQR> ketQua = mauJdbc.query(
+                sql,
+                (rs, rowNum) -> anhXaThongTinNhanChoBangQR(rs),
+                maDatCho.trim()
+        );
+        return ketQua.stream().findFirst();
     }
 
     private String giaiMaLoiFont(String value) {

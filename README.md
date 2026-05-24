@@ -1,7 +1,7 @@
 # 🏢 Hệ thống Quản lý Không gian Làm việc & Học tập (Workspace Management System)
 
 ## 📖 Giới thiệu 
-Dự án này cung cấp giải pháp phần mềm toàn diện cho việc quản lý và vận hành chuỗi không gian làm việc/học tập. Hệ thống giải quyết trọn vẹn bài toán vận hành Online to Offline, từ khâu khách hàng đặt chỗ trực tuyến/tại quầy, quản lý thời gian sử dụng thực tế, gọi món F&B, cho đến thanh toán tổng hợp, áp dụng khuyến mãi thành viên và dọn dẹp không gian.
+Dự án này cung cấp giải pháp phần mềm toàn diện cho việc quản lý và vận hành chuỗi không gian làm việc/học tập. Hệ thống giải quyết trọn vẹn bài toán vận hành Online to Offline, từ khâu khách hàng đặt chỗ trực tuyến/tại quầy, quản lý thời gian sử dụng thực tế, gọi món F&B, cho đến thanh toán tổng hợp, áp dụng khuyến mãi thành viên và giải phóng không gian.
 
 ---
 
@@ -29,7 +29,7 @@ Hệ thống xoay quanh 6 phân hệ cốt lõi được ánh xạ chặt chẽ 
 ### 2. Phân hệ Phiên làm việc & Trạng thái Không gian (Sessions & Spaces)
 Đây là phân hệ tách bạch hoàn toàn dữ liệu giao dịch tĩnh (Booking) và vòng đời sử dụng thực tế (Session).
 * **Check-in:** Lễ tân tạo `Sessions` mới. Ngay lập tức, không gian chuyển sang `OCCUPIED` (Có người ngồi). Đồng thời, đơn Booking gốc sẽ được đồng bộ ngược thành `ACTIVE` và ghi nhận `check_in_time`.
-* **Check-out:** Khi ghi nhận `checkout_time`, không gian tự động chuyển sang trạng thái chờ dọn dẹp (`CLEANING`). Đơn đặt chỗ hoàn tất với trạng thái `COMPLETED`, và trạng thái của chính Session đó cũng tự động được đóng lại (`COMPLETED`).
+* **Check-out:** Khi ghi nhận `checkout_time`, không gian tự động chuyển sang trạng thái trống (`AVAILABLE`). Đơn đặt chỗ hoàn tất với trạng thái `COMPLETED`, và trạng thái của chính Session đó cũng tự động được đóng lại (`COMPLETED`).
 
 ### 3. Phân hệ F&B và Gia hạn (Services & Extensions)
 * **Tính toán Order Tự động:** Khi khách hàng gọi thêm món, thay đổi số lượng hoặc hủy món trong `SessionOrderDetails`, hệ thống tự động tính thành tiền (`subtotal = quantity * unit_price`) và tự động dùng thuật toán delta (cộng/trừ chênh lệch) để cập nhật tổng hóa đơn (`total_price`) vào `SessionOrders` mà không làm nghẽn hệ thống.

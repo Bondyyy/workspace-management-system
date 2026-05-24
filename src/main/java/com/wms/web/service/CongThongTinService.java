@@ -313,6 +313,67 @@ public class CongThongTinService {
         }
     }
 
+    private String parseMaDatChoTuQR(String qrContent) {
+        if (qrContent == null || qrContent.isBlank()) {
+            return null;
+        }
+        String parsed = tachMaDatCho(qrContent);
+        if (parsed != null) {
+            return parsed;
+        }
+        Pattern p = Pattern.compile("DATCHO=(DC\\d{3,12})", Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(qrContent);
+        if (m.find()) {
+            return m.group(1).toUpperCase();
+        }
+        return null;
+    }
+
+    @Transactional
+    public void tuDongKetThucPhienQuaHanDatCho() {
+        new com.wms.dao.TrangChuQuanLy.QuanLyPhien.PhienLamViecDAO().tuDongKetThucPhienQuaHanDatCho();
+    }
+
+    @Transactional
+    public void xuLyDatChoDaThanhToanNhungKhongDen() {
+        System.out.println("[Scheduler] Bat dau kiem tra dat cho da thanh toan nhung khach khong den");
+        List<DatChoView> quaHanList = khoDuLieu.timDatChoDaThanhToanNhungKhongDenQuaGio();
+        int size = (quaHanList != null) ? quaHanList.size() : 0;
+        System.out.println("[Scheduler] So dat cho qua han tim thay: " + size);
+        if (quaHanList != null && !quaHanList.isEmpty()) {
+            for (DatChoView dc : quaHanList) {
+                String maDatCho = dc.getMaDatCho();
+                String maKG = khoDuLieu.timMaKGCuaDatCho(maDatCho);
+                if (maKG == null) {
+                    continue;
+                }
+                int rows = khoDuLieu.danhDauDatChoKhongDenThanhDaSuDung(maDatCho);
+                if (rows == 1) {
+                    khoDuLieu.capNhatTrangThaiKhongGianSauKhiDatChoHetHieuLuc(maKG);
+                    System.out.println("[Scheduler] Da nha MaDatCho=" + maDatCho + ", MaKG=" + maKG);
+                }
+            }
+        } else {
+            try {
+                List<java.util.Map<String, Object>> list = khoDuLieu.timDatChoDaThanhToanDeDebug();
+                if (list == null || list.isEmpty()) {
+                    System.out.println("[Scheduler] Debug: Khong tim thay bat ky dat cho nao o trang thai 'Da thanh toan thanh cong' de phan tich.");
+                } else {
+                    for (java.util.Map<String, Object> map : list) {
+                        System.out.println("[Scheduler] Debug dat cho dang cho: MaDatCho=" + map.get("MaDatCho")
+                                + ", TrangThaiDatTruoc=" + map.get("TrangThaiDatTruoc")
+                                + ", ThoiGianDuKienToi=" + map.get("ThoiGianDuKienToi")
+                                + ", KhoangThoiGianSuDung=" + map.get("KhoangThoiGianSuDung")
+                                + ", SYSTIMESTAMP=" + map.get("GioHeThong")
+                                + ", SoPhien=" + map.get("SoPhien"));
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("[Scheduler] Debug: Khong the truy van thong tin debug dat cho: " + e.getMessage());
+            }
+        }
+    }
+
     @Transactional
     public KetQuaNhanChoBangQRView nhanChoBangMaQR(String noiDungQR, NguoiDungPhien nhanVien) {
         if (nhanVien == null || !nhanVien.laNhanVien()) {
@@ -323,21 +384,40 @@ public class CongThongTinService {
         }
 
         String maQR = noiDungQR.trim();
-        Optional<ThongTinNhanChoBangQR> ketQuaTim = khoDuLieu.timDatChoTheoMaQRDeNhanCho(maQR);
+        String maDatCho = parseMaDatChoTuQR(maQR);
+        Optional<ThongTinNhanChoBangQR> ketQuaTim = Optional.empty();
+        
+        if (maDatCho != null) {
+            ketQuaTim = khoDuLieu.timDatChoTheoMaDatChoDeNhanCho(maDatCho);
+        }
+        if (ketQuaTim.isEmpty()) {
+            ketQuaTim = khoDuLieu.timDatChoTheoMaQRDeNhanCho(maQR);
+        }
+
         if (ketQuaTim.isEmpty()) {
             return KetQuaNhanChoBangQRView.thatBai("QR không tồn tại, đã hết hiệu lực hoặc đã được sử dụng.");
         }
 
         ThongTinNhanChoBangQR thongTin = ketQuaTim.get();
         String trangThai = chuanHoa(thongTin.getTrangThaiDatTruoc());
+        boolean coPhien = khoDuLieu.daCoPhienTheoDatCho(thongTin.getMaDatCho());
+
+        if (trangThai.contains("qua han nhan cho")) {
+            return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ này đã quá hạn nhận chỗ.");
+        }
+
         if (trangThai.contains("su dung")) {
+            if (coPhien) {
+                return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
+            }
+        }
+        
+        if (coPhien) {
             return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
         }
+
         if (!trangThai.contains("thanh toan thanh cong")) {
             return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ chưa thanh toán thành công.");
-        }
-        if (khoDuLieu.daCoPhienTheoDatCho(thongTin.getMaDatCho())) {
-            return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
         }
 
         LocalDateTime bayGio = khoDuLieu.layThoiGianHeThong();
@@ -345,11 +425,25 @@ public class CongThongTinService {
         if (gioDuKienToi == null) {
             return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ thiếu thời gian dự kiến tới.");
         }
+        
+        LocalDateTime thoiGianDuKienKetThuc = gioDuKienToi.plusHours(thongTin.laySoGioSuDungAnToan());
+        if (bayGio.isAfter(thoiGianDuKienKetThuc)) {
+            int rows = khoDuLieu.danhDauDatChoKhongDenThanhDaSuDung(thongTin.getMaDatCho());
+            if (rows == 1) {
+                khoDuLieu.capNhatTrangThaiKhongGianSauKhiDatChoHetHieuLuc(thongTin.getMaKG());
+            }
+            return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ đã quá giờ nhận chỗ. Hệ thống đã nhả không gian.");
+        }
+
         if (bayGio.isBefore(gioDuKienToi)) {
             return KetQuaNhanChoBangQRView.thatBai("Quá sớm, chưa đến giờ nhận chỗ hợp lệ.");
         }
         if (bayGio.isAfter(gioDuKienToi.plusHours(thongTin.laySoGioSuDungAnToan()))) {
-            return KetQuaNhanChoBangQRView.thatBai("Mã QR đã quá hạn nhận chỗ.");
+            int rows = khoDuLieu.danhDauDatChoKhongDenThanhDaSuDung(thongTin.getMaDatCho());
+            if (rows == 1) {
+                khoDuLieu.capNhatTrangThaiKhongGianSauKhiDatChoHetHieuLuc(thongTin.getMaKG());
+            }
+            return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ đã quá giờ nhận chỗ. Hệ thống đã nhả không gian.");
         }
 
         try {
@@ -568,14 +662,24 @@ public class CongThongTinService {
 
     private void kiemTraKhungGioChiNhanh(KhongGianView space, LocalDateTime arrivalTime, Integer durationHours) {
         if (space == null || arrivalTime == null || durationHours == null) {
-            throw new IllegalArgumentException("Vui long chon khong gian va khung gio hop le.");
+            throw new IllegalArgumentException("Vui lòng chọn không gian và khung giờ hợp lệ.");
         }
         LocalTime openTime = docGioChiNhanh(space.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(space.getThoiGianDongCua(), LocalTime.of(22, 0));
         LocalTime start = arrivalTime.toLocalTime();
         LocalTime end = arrivalTime.plusHours(durationHours).toLocalTime();
-        if (start.isBefore(openTime) || end.isAfter(closeTime) || !end.isAfter(start)) {
-            throw new IllegalArgumentException("Khung gio phai nam trong thoi gian mo cua cua chi nhanh.");
+
+        String openStr = String.format("%02d:%02d", openTime.getHour(), openTime.getMinute());
+        String closeStr = String.format("%02d:%02d", closeTime.getHour(), closeTime.getMinute());
+
+        if (start.isBefore(openTime) || !start.isBefore(closeTime)) {
+            throw new IllegalArgumentException("Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
+        }
+        if (end.isAfter(closeTime) || (end.equals(LocalTime.MIDNIGHT) && !closeTime.equals(LocalTime.MIDNIGHT))) {
+            throw new IllegalArgumentException("Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.");
+        }
+        if (!end.isAfter(start) && !end.equals(LocalTime.MIDNIGHT)) {
+            throw new IllegalArgumentException("Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
         }
     }
 

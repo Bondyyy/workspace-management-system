@@ -28,8 +28,8 @@ BEGIN
         SELECT 
             HD.MaHoaDon,
             HD.SoHD,
-            HD.TongTien,
-            HD.ThanhTien,
+            NVL(HD.TongTien, FN_TinhTongTien(PLV.MaPhien)) AS TongTien,
+            NVL(HD.ThanhTien, GREATEST(0, FN_TinhTongTien(PLV.MaPhien) - NVL(HD.DaTraTruoc, 0))) AS ThanhTien,
             HD.NgayLapHoaDon,
             HD.TrangThaiThanhToan,
             HD.PhuongThucThanhToan,
@@ -56,19 +56,29 @@ BEGIN
     -- 3. Chi tiết tiền không gian
     OPEN p_RS_ChiTietKhongGian FOR
         SELECT 
-            KG.TenKG,
+            CASE 
+                WHEN PLV.MaDatCho IS NOT NULL THEN 'Thuê ' || KG.TenKG || ' (đã đặt trước)'
+                ELSE KG.TenKG 
+            END AS TenKG,
             LKG.TenLoaiKG,
-            LKG.DonGiaTheoGio,
-            ROUND(
-                EXTRACT(DAY FROM (PLV.ThoiGianKetThuc - PLV.ThoiGianBatDau)) * 24 +
-                EXTRACT(HOUR FROM (PLV.ThoiGianKetThuc - PLV.ThoiGianBatDau)) +
-                EXTRACT(MINUTE FROM (PLV.ThoiGianKetThuc - PLV.ThoiGianBatDau)) / 60,
-                2
-            ) AS SoGioSuDung,
+            CASE 
+                WHEN PLV.MaDatCho IS NOT NULL AND DC.KhoangThoiGianSuDung > 0 THEN ROUND(DC.ThanhTien / DC.KhoangThoiGianSuDung, 2)
+                ELSE LKG.DonGiaTheoGio 
+            END AS DonGiaTheoGio,
+            CASE 
+                WHEN PLV.MaDatCho IS NOT NULL THEN DC.KhoangThoiGianSuDung
+                ELSE ROUND(
+                    EXTRACT(DAY FROM (PLV.ThoiGianKetThuc - PLV.ThoiGianBatDau)) * 24 +
+                    EXTRACT(HOUR FROM (PLV.ThoiGianKetThuc - PLV.ThoiGianBatDau)) +
+                    EXTRACT(MINUTE FROM (PLV.ThoiGianKetThuc - PLV.ThoiGianBatDau)) / 60,
+                    2
+                )
+            END AS SoGioSuDung,
             FN_TinhTienKhongGian(p_MaPhien) AS ThanhTien
         FROM PHIENLAMVIEC PLV
         JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
         JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG
+        LEFT JOIN DATCHO DC ON PLV.MaDatCho = DC.MaDatCho
         WHERE PLV.MaPhien = p_MaPhien;
     
     -- 4. Chi tiết dịch vụ đã gọi

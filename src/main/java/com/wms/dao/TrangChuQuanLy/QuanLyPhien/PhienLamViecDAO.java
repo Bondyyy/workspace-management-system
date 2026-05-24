@@ -21,6 +21,29 @@ public class PhienLamViecDAO {
         }
     }
 
+    public String[] layGioHoatDongTheoKhongGian(String maKG) {
+        String sql = "SELECT cn.ThoiGianMoCua, cn.ThoiGianDongCua, cn.TenCN " +
+                     "FROM KHONGGIAN kg " +
+                     "JOIN CHINHANH cn ON cn.MaCN = kg.MaCN " +
+                     "WHERE kg.MaKG = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, maKG);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new String[] {
+                        rs.getString("ThoiGianMoCua"),
+                        rs.getString("ThoiGianDongCua"),
+                        rs.getString("TenCN")
+                    };
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[PhienLamViecDAO] Loi lay gio hoat dong: " + e.getMessage());
+        }
+        return null;
+    }
+
     public boolean taoPhienLamViecMoi(PhienLamViecDTO phien) {
         if (phien.getMaPhien() == null || phien.getMaPhien().isEmpty()) {
             try {
@@ -54,12 +77,14 @@ public class PhienLamViecDAO {
             if (laThongBaoThanhCong(message)) {
                 return true;
             } else {
-                System.err.println("[PhienLamViecDAO] Lỗi từ SP: " + message);
-                return false;
+                System.err.println("[PhienLamViecDAO] Loi tu SP: " + boDau(message));
+                throw new IllegalArgumentException(boDau(message));
             }
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            System.err.println("[PhienLamViecDAO] Lỗi khi gọi SP tạo phiên: " + e.getMessage());
-            return false;
+            System.err.println("[PhienLamViecDAO] Loi khi goi SP tao phien: " + boDau(e.getMessage()));
+            throw new IllegalArgumentException("[DATABASE/SYSTEM ERROR]: Loi khi mo phien lam viec! Vui long kiem tra lai ket noi hoac du lieu.");
         }
     }
 
@@ -70,7 +95,8 @@ public class PhienLamViecDAO {
 
         String bookingSql = """
                 SELECT dc.MaDatCho, dc.MaQR, dc.TrangThaiDatTruoc, dc.KhoangThoiGianSuDung,
-                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG, dc.MaKH
+                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG, dc.MaKH, dc.GhiChu,
+                       dc.ThoiGianDuKienToi
                 FROM DATCHO dc
                 WHERE dc.MaDatCho = ?
                 FOR UPDATE
@@ -85,6 +111,8 @@ public class PhienLamViecDAO {
                 double thanhTien;
                 String maKG;
                 String maKH;
+                String ghiChu;
+                Timestamp thoiGianDuKienToi;
 
                 try (PreparedStatement ps = conn.prepareStatement(bookingSql)) {
                     ps.setString(1, maDatCho.trim());
@@ -99,6 +127,80 @@ public class PhienLamViecDAO {
                         thanhTien = rs.getDouble("ThanhTien");
                         maKG = rs.getString("MaKG");
                         maKH = rs.getString("MaKH");
+                        ghiChu = rs.getString("GhiChu");
+                        thoiGianDuKienToi = rs.getTimestamp("ThoiGianDuKienToi");
+                    }
+                }
+
+                if (chuanHoa(trangThai).contains("qua han nhan cho")) {
+                    conn.rollback();
+                    return new KetQuaNhanChoDTO(false, "Đặt chỗ này đã quá hạn nhận chỗ.");
+                }
+
+                if (chuanHoa(trangThai).contains("su dung")) {
+                    boolean coPhien = false;
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "SELECT COUNT(*) FROM PHIENLAMVIEC WHERE MaDatCho = ?")) {
+                        ps.setString(1, maDatCho.trim());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next() && rs.getInt(1) > 0) {
+                                coPhien = true;
+                            }
+                        }
+                    }
+                    conn.rollback();
+                    if (coPhien) {
+                        return new KetQuaNhanChoDTO(false, "Mã QR này đã được sử dụng.");
+                    }
+                    return new KetQuaNhanChoDTO(false, "Đặt chỗ này đã quá hạn nhận chỗ.");
+                }
+
+                if (thoiGianDuKienToi != null) {
+                    long gioDuKienKetThucMillis = thoiGianDuKienToi.getTime() + (long) soGio * 3600 * 1000;
+                    long bayGioMillis = System.currentTimeMillis();
+                    if (bayGioMillis > gioDuKienKetThucMillis) {
+                        try (PreparedStatement ps = conn.prepareStatement("""
+                                UPDATE DATCHO
+                                SET TrangThaiDatTruoc = 'Quá hạn nhận chỗ',
+                                    MaQR = NULL,
+                                    GhiChu = CASE
+                                        WHEN GhiChu LIKE '%[SYSTEM_NO_SHOW]%' THEN GhiChu
+                                        ELSE NVL(GhiChu, '') || ' | [SYSTEM_NO_SHOW] Tự động kết thúc do quá hạn nhận chỗ.'
+                                    END,
+                                    CapNhatLanCuoi = CURRENT_TIMESTAMP
+                                WHERE MaDatCho = ?
+                                """)) {
+                            ps.setString(1, maDatCho.trim());
+                            ps.executeUpdate();
+                        }
+                        try (PreparedStatement ps = conn.prepareStatement("""
+                                UPDATE KHONGGIAN kg
+                                SET TrangThaiKG =
+                                    CASE
+                                        WHEN EXISTS (
+                                            SELECT 1
+                                            FROM PHIENLAMVIEC p
+                                            WHERE p.MaKG = kg.MaKG
+                                              AND p.TrangThaiPhien = 'Đang hoạt động'
+                                        ) THEN 'Đang hoạt động'
+                                
+                                        WHEN EXISTS (
+                                            SELECT 1
+                                            FROM DATCHO dc
+                                            WHERE dc.MaKG = kg.MaKG
+                                              AND dc.TrangThaiDatTruoc = 'Đã thanh toán thành công'
+                                              AND SYSTIMESTAMP <= dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')
+                                        ) THEN 'Đã đặt trước'
+                                
+                                        ELSE 'Trống'
+                                    END
+                                WHERE kg.MaKG = ?
+                                """)) {
+                            ps.setString(1, maKG);
+                            ps.executeUpdate();
+                        }
+                        conn.commit();
+                        return new KetQuaNhanChoDTO(false, "Đặt chỗ đã quá giờ nhận chỗ. Hệ thống đã nhả không gian.");
                     }
                 }
 
@@ -127,44 +229,38 @@ public class PhienLamViecDAO {
                 }
 
                 String maPhien = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
-                String maHoaDon = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.HOA_DON);
+                java.sql.Timestamp thoiGianDuKienKetThuc = thoiGianDuKienToi != null
+                        ? java.sql.Timestamp.from(thoiGianDuKienToi.toInstant().plus(soGio, java.time.temporal.ChronoUnit.HOURS))
+                        : java.sql.Timestamp.from(java.time.Instant.now().plus(soGio, java.time.temporal.ChronoUnit.HOURS));
 
                 try (PreparedStatement ps = conn.prepareStatement("""
                         INSERT INTO PHIENLAMVIEC
                             (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
                              CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
-                        VALUES (?, CURRENT_TIMESTAMP,
-                                CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
-                                ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        VALUES (?, CURRENT_TIMESTAMP, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, ?, ?, ?)
                         """)) {
                     ps.setString(1, maPhien);
-                    ps.setInt(2, soGio);
-                    ps.setString(3, "Đã đặt trước");
-                    ps.setString(4, maKG);
-                    ps.setString(5, maKH);
-                    ps.setString(6, maDatCho.trim());
-                    ps.executeUpdate();
-                }
-
-                try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE PHIENLAMVIEC SET TrangThaiPhien = 'Đang hoạt động', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?")) {
-                    ps.setString(1, maPhien);
+                    ps.setTimestamp(2, thoiGianDuKienKetThuc);
+                    ps.setString(3, maKG);
+                    ps.setString(4, maKH);
+                    ps.setString(5, maDatCho.trim());
                     ps.executeUpdate();
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement("""
-                        INSERT INTO HOADON
-                            (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon,
-                             PhuongThucThanhToan, TrangThaiThanhToan, MaPhien)
-                        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        UPDATE HOADON
+                        SET DaTraTruoc = ?,
+                            TongTien = ?,
+                            ThanhTien = ?,
+                            PhuongThucThanhToan = 'Đặt trước',
+                            TrangThaiThanhToan = 'Đã trả trước',
+                            NgayLapHoaDon = CURRENT_TIMESTAMP
+                        WHERE MaPhien = ?
                         """)) {
-                    ps.setString(1, maHoaDon);
-                    ps.setString(2, maHoaDon);
+                    ps.setDouble(1, thanhTien);
+                    ps.setDouble(2, thanhTien);
                     ps.setDouble(3, thanhTien);
-                    ps.setDouble(4, thanhTien);
-                    ps.setString(5, "Chuyển khoản");
-                    ps.setString(6, "Đã thanh toán trước");
-                    ps.setString(7, maPhien);
+                    ps.setString(4, maPhien);
                     ps.executeUpdate();
                 }
 
@@ -220,6 +316,14 @@ public class PhienLamViecDAO {
                 .replaceAll("[^a-z0-9 ]", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    private String boDau(String str) {
+        if (str == null) return "";
+        return Normalizer.normalize(str, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D');
     }
 
     public List<PhienLamViecFullDTO> layDanhSachPhien(String keyword, String maCN) {
@@ -281,9 +385,9 @@ public class PhienLamViecDAO {
         String sqlPhien = "UPDATE PHIENLAMVIEC SET ThoiGianKetThuc = CURRENT_TIMESTAMP, TrangThaiPhien = 'Đã kết thúc', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            boolean oldAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
             try {
-                conn.setAutoCommit(false);
+                // Cập nhật trạng thái phiên - kết thúc
                 try (PreparedStatement pstmtPhien = conn.prepareStatement(sqlPhien)) {
                     pstmtPhien.setString(1, maPhien);
                     if (pstmtPhien.executeUpdate() == 0) {
@@ -292,25 +396,42 @@ public class PhienLamViecDAO {
                     }
                 }
 
-                double tongTien = tinhTongTienPhien(conn, maPhien);
-
+                // Lấy tiền đã đặt trước (DaTraTruoc)
                 double soTienDaTraTruoc = 0;
-                String sqlTraTruoc = "SELECT NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc " +
-                                     "FROM PHIENLAMVIEC p " +
-                                     "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
-                                     "WHERE p.MaPhien = ?";
+                String maPGG = null;
+                String sqlTraTruoc = "SELECT NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc "
+                                     + ", h.MaPGG AS MaPGG "
+                                     + "FROM HOADON h "
+                                     + "WHERE h.MaPhien = ?";
                 try (PreparedStatement psTraTruoc = conn.prepareStatement(sqlTraTruoc)) {
                     psTraTruoc.setString(1, maPhien);
                     try (ResultSet rsTraTruoc = psTraTruoc.executeQuery()) {
                         if (rsTraTruoc.next()) {
                             soTienDaTraTruoc = rsTraTruoc.getDouble("SoTienDaTraTruoc");
+                            maPGG = rsTraTruoc.getString("MaPGG");
                         }
                     }
                 }
 
-                double thanhTien = tongTien - soTienDaTraTruoc;
-                String trangThaiThanhToan = thanhTien <= 0 ? "Đã thanh toán thành công" : "Đang chờ thanh toán";
+                double tongTien = tinhTongTienPhien(conn, maPhien);
+                double tongTienSauGiam = tongTien;
+                if (maPGG != null && !maPGG.trim().isEmpty()) {
+                    String sqlTongTienSauGiam = "SELECT FN_TinhThanhTien(?, ?) AS TONGTIENSAUGIAM FROM DUAL";
+                    try (PreparedStatement psTongTienSauGiam = conn.prepareStatement(sqlTongTienSauGiam)) {
+                        psTongTienSauGiam.setString(1, maPhien);
+                        psTongTienSauGiam.setString(2, maPGG.trim());
+                        try (ResultSet rsTongTienSauGiam = psTongTienSauGiam.executeQuery()) {
+                            if (rsTongTienSauGiam.next()) {
+                                tongTienSauGiam = rsTongTienSauGiam.getDouble("TONGTIENSAUGIAM");
+                            }
+                        }
+                    }
+                }
 
+                double thanhTien = Math.max(0, tongTienSauGiam - soTienDaTraTruoc);
+                String trangThaiThanhToan = thanhTien <= 0 ? "Đã thanh toán thành công" : "Đã trả trước";
+
+                // Cập nhật hóa đơn
                 String sqlHoaDon = "UPDATE HOADON SET TongTien = ?, ThanhTien = ?, TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
                 try (PreparedStatement pstmtHoaDon = conn.prepareStatement(sqlHoaDon)) {
                     pstmtHoaDon.setDouble(1, tongTien);
@@ -323,15 +444,14 @@ public class PhienLamViecDAO {
                 conn.commit();
                 return true;
             } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            } finally {
                 try {
-                    conn.setAutoCommit(oldAutoCommit);
+                    conn.rollback();
                 } catch (SQLException ignored) {}
+                System.err.println("[PhienLamViecDAO] Lỗi kết thúc phiên: " + e.getMessage());
+                return false;
             }
         } catch (Exception e) {
-            System.err.println("[PhienLamViecDAO] Lỗi kết thúc phiên: " + e.getMessage());
+            System.err.println("[PhienLamViecDAO] Lỗi kết thúc phiên (connection): " + e.getMessage());
             return false;
         }
     }
@@ -502,6 +622,43 @@ public class PhienLamViecDAO {
         } catch (Exception e) {
             System.err.println("[PhienLamViecDAO] Lỗi khi xóa phiên: " + e.getMessage());
             return false;
+        }
+    }
+
+    public void tuDongKetThucPhienQuaHanDatCho() {
+        String querySql = "SELECT MaPhien FROM PHIENLAMVIEC " +
+                          "WHERE TrangThaiPhien = 'Đang hoạt động' " +
+                          "  AND MaDatCho IS NOT NULL " +
+                          "  AND SYSTIMESTAMP >= ThoiGianDuKienKetThuc";
+        
+        List<String> dsPhienQuaHan = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(querySql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                dsPhienQuaHan.add(rs.getString("MaPhien"));
+            }
+        } catch (Exception e) {
+            System.err.println("[PhienLamViecDAO] Loi khi quet phien qua han: " + e.getMessage());
+        }
+
+        if (!dsPhienQuaHan.isEmpty()) {
+            System.out.println("[Scheduler/Auto-End] Phat hien " + dsPhienQuaHan.size() + " phien dat truoc qua han dang hoat dong.");
+            String callSql = "{call SP_KetThucPhien(?, ?, ?)}";
+            for (String maPhien : dsPhienQuaHan) {
+                try (Connection conn = DatabaseConnection.getInstance().getConnection();
+                     CallableStatement cstmt = conn.prepareCall(callSql)) {
+                    cstmt.setString(1, maPhien);
+                    cstmt.setString(2, null); // p_MaNV = null for system auto-end
+                    cstmt.registerOutParameter(3, java.sql.Types.VARCHAR);
+                    
+                    cstmt.execute();
+                    String outMsg = cstmt.getString(3);
+                    System.out.println("[Scheduler/Auto-End] Da tu dong ket thuc MaPhien=" + maPhien + ". Ket qua SP: " + outMsg);
+                } catch (Exception e) {
+                    System.err.println("[Scheduler/Auto-End] Loi khi tu dong ket thuc MaPhien=" + maPhien + ": " + e.getMessage());
+                }
+            }
         }
     }
 }

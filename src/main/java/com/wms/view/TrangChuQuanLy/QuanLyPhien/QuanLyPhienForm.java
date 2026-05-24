@@ -640,9 +640,9 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         }
 
         com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO phien = timPhienTheoMa(maPhien);
-        if (laDaKetThuc(phien) || laDaThanhToan(phien)) {
+        if (laDaKetThuc(phien)) {
             javax.swing.JOptionPane.showMessageDialog(this,
-                    "Phi\u00ean \u0111\u00e3 k\u1ebft th\u00fac ho\u1eb7c h\u00f3a \u0111\u01a1n \u0111\u00e3 thanh to\u00e1n, kh\u00f4ng th\u1ec3 k\u1ebft th\u00fac l\u1ea1i.");
+                    "Phiên đã kết thúc, không thể kết thúc lại.");
             khoaThaoTacPhien(true);
             return;
         }
@@ -701,7 +701,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             String trangThaiTable = hienTrangThaiPhien(selected);
             String hinhThuc = tblPhienLamViec.getValueAt(row, 7).toString();
 
-            boolean khoaThaoTac = laDaKetThuc(selected) || laDaThanhToan(selected);
+            boolean khoaThaoTac = laDaKetThuc(selected);
             if (khoaThaoTac) {
                 khoaThaoTacPhien(true);
                 txtKhachHang.setEditable(false);

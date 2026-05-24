@@ -8,12 +8,9 @@ import com.wms.controller.TrangChuQuanLy.QuanLyDatChoTruoc.QuanLyDatChoTruocCont
 import com.wms.model.TrangChuQuanLy.QuanLyDatChoTruoc.DatChoTruocDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -70,13 +67,15 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         lblThoiGianSuDung = new javax.swing.JLabel();
         spnThoiGianSuDung = new javax.swing.JSpinner();
         lblThanhTien = new javax.swing.JLabel();
-        txtThanhTien = new javax.swing.JTextField();
+        txtTrangThai = new javax.swing.JTextField();
         lblTrangThai = new javax.swing.JLabel();
-        cbxTrangThai = new javax.swing.JComboBox<>();
         lblGhiChu = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtGhiChu = new javax.swing.JTextArea();
         btnCapNhat = new javax.swing.JButton();
+        btnNhanCho = new javax.swing.JButton();
+        btnChuyenKhoan = new javax.swing.JButton();
+        txtThanhTien = new javax.swing.JTextField();
 
         setPreferredSize(new java.awt.Dimension(1050, 640));
         setLayout(new java.awt.BorderLayout());
@@ -227,21 +226,16 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         pnRight.add(lblThanhTien);
         lblThanhTien.setBounds(20, 250, 360, 20);
 
-        txtThanhTien.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        txtThanhTien.setForeground(new java.awt.Color(51, 153, 0));
-        pnRight.add(txtThanhTien);
-        txtThanhTien.setBounds(20, 270, 360, 35);
+        txtTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtTrangThai.setForeground(new java.awt.Color(51, 153, 0));
+        pnRight.add(txtTrangThai);
+        txtTrangThai.setBounds(20, 340, 360, 35);
 
         lblTrangThai.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTrangThai.setForeground(new java.awt.Color(35, 30, 48));
         lblTrangThai.setText("Trạng thái đặt chỗ");
         pnRight.add(lblTrangThai);
         lblTrangThai.setBounds(20, 315, 360, 20);
-
-        cbxTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        cbxTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đang chờ thanh toán", "Đã thanh toán thành công", "Thanh toán không thành công", "Đã sử dụng" }));
-        pnRight.add(cbxTrangThai);
-        cbxTrangThai.setBounds(20, 335, 360, 35);
 
         lblGhiChu.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblGhiChu.setForeground(new java.awt.Color(35, 30, 48));
@@ -265,14 +259,55 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         pnRight.add(btnCapNhat);
         btnCapNhat.setBounds(20, 460, 360, 35);
 
+        btnNhanCho.setBackground(new java.awt.Color(235, 94, 141));
+        btnNhanCho.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnNhanCho.setForeground(new java.awt.Color(255, 255, 255));
+        btnNhanCho.setText("Đã nhận chỗ");
+        btnNhanCho.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnNhanCho.addActionListener(this::btnNhanChoActionPerformed);
+        pnRight.add(btnNhanCho);
+        btnNhanCho.setBounds(210, 500, 170, 35);
+
+        btnChuyenKhoan.setBackground(new java.awt.Color(235, 94, 141));
+        btnChuyenKhoan.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnChuyenKhoan.setForeground(new java.awt.Color(255, 255, 255));
+        btnChuyenKhoan.setText("Đã chuyển khoản");
+        btnChuyenKhoan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnChuyenKhoan.addActionListener(this::btnChuyenKhoanActionPerformed);
+        pnRight.add(btnChuyenKhoan);
+        btnChuyenKhoan.setBounds(20, 500, 170, 35);
+
+        txtThanhTien.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtThanhTien.setForeground(new java.awt.Color(51, 153, 0));
+        pnRight.add(txtThanhTien);
+        txtThanhTien.setBounds(20, 270, 360, 35);
+
         pnMain.add(pnRight);
         pnRight.setBounds(20, 70, 400, 540);
 
         add(pnMain, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnNhanChoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNhanChoActionPerformed
+        xacNhanNhanCho();
+    }//GEN-LAST:event_btnNhanChoActionPerformed
+
+    private void btnChuyenKhoanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChuyenKhoanActionPerformed
+        xacNhanChuyenKhoan();
+    }//GEN-LAST:event_btnChuyenKhoanActionPerformed
+
     private void initLogic() {
         txtMaDatCho.setEditable(false);
+        txtMaKG.setEditable(false);
+        txtDuKienToi.setEditable(false);
+        spnThoiGianSuDung.setEnabled(false);
+        txtThanhTien.setEditable(false);
+        txtTrangThai.setEditable(false);
+        txtThanhTien.setBackground(new java.awt.Color(240, 240, 240));
+        txtTrangThai.setBackground(new java.awt.Color(240, 240, 240));
+        txtMaKG.setBackground(new java.awt.Color(240, 240, 240));
+        txtDuKienToi.setBackground(new java.awt.Color(240, 240, 240));
+
         btnTimKiem.addActionListener(evt -> loadData(txtTimKiem.getText()));
         btnLamMoi.addActionListener(evt -> {
             txtTimKiem.setText("");
@@ -318,8 +353,9 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         txtDuKienToi.setText(formatDateTime(dto.getThoiGianDuKienToi()));
         spnThoiGianSuDung.setValue(dto.getKhoangThoiGianSuDung() == null ? 1 : dto.getKhoangThoiGianSuDung());
         txtThanhTien.setText(dto.getThanhTien() == null ? "0" : moneyFormat.format(dto.getThanhTien()));
-        cbxTrangThai.setSelectedItem(dto.getTrangThaiDatTruoc());
+        txtTrangThai.setText(dto.getTrangThaiDatTruoc() == null ? "" : dto.getTrangThaiDatTruoc());
         txtGhiChu.setText(dto.getGhiChu() == null ? "" : dto.getGhiChu());
+        apDungKhoaTheoTrangThai(dto.getTrangThaiDatTruoc());
     }
 
     private void clearDetail() {
@@ -329,101 +365,125 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         txtDuKienToi.setText("");
         spnThoiGianSuDung.setValue(1);
         txtThanhTien.setText("");
-        cbxTrangThai.setSelectedIndex(0);
+        txtTrangThai.setText("");
         txtGhiChu.setText("");
+        btnChuyenKhoan.setEnabled(false);
+        btnNhanCho.setEnabled(false);
+    }
+
+    private void apDungKhoaTheoTrangThai(String trangThai) {
+        boolean choThanhToan = "Đang chờ thanh toán".equals(trangThai);
+        boolean daThanhToan = "Đã thanh toán thành công".equals(trangThai);
+        btnChuyenKhoan.setEnabled(choThanhToan);
+        btnNhanCho.setEnabled(daThanhToan);
+    }
+
+    private void xacNhanChuyenKhoan() {
+        if (txtMaDatCho.getText().isBlank()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một đặt chỗ từ danh sách.",
+                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (!"Đang chờ thanh toán".equals(txtTrangThai.getText())) {
+            JOptionPane.showMessageDialog(this,
+                    "Chỉ có thể xác nhận chuyển khoản khi đặt chỗ đang chờ thanh toán.",
+                    "Không thể thực hiện", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Đảm bảo đơn đặt trước đã chuyển khoản thanh toán thành công?",
+                "Xác nhận chuyển khoản",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        String maDatCho = txtMaDatCho.getText().trim();
+        ThongTinXacNhanDatChoDTO thongTin = controller.xacNhanThanhToanThuCong(maDatCho);
+        if (thongTin != null) {
+            JOptionPane.showMessageDialog(this,
+                    "Đã xác nhận thanh toán!\nEmail QR nhận chỗ đã gửi tới: " + thongTin.getEmail(),
+                    "Xác nhận thành công", JOptionPane.INFORMATION_MESSAGE);
+            taiLaiVaChon(maDatCho);
+            return;
+        }
+        JOptionPane.showMessageDialog(this,
+                "Không thể xác nhận chuyển khoản.\n"
+                        + "Đặt chỗ không ở trạng thái chờ thanh toán, đã có QR, hoặc đã được xác nhận trước đó.",
+                "Thông báo", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void xacNhanNhanCho() {
+        if (txtMaDatCho.getText().isBlank()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một đặt chỗ từ danh sách.",
+                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (!"Đã thanh toán thành công".equals(txtTrangThai.getText())) {
+            JOptionPane.showMessageDialog(this,
+                    "Chỉ có thể nhận chỗ khi đặt trước đã thanh toán thành công.",
+                    "Không thể thực hiện", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Xác nhận mở phiên làm việc mới cho đặt chỗ này?\nKhách sẽ có thể sử dụng không gian ngay.",
+                "Xác nhận nhận chỗ",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        String maDatCho = txtMaDatCho.getText().trim();
+        DatChoTruocDTO dto = new DatChoTruocDTO();
+        dto.setMaDatCho(maDatCho);
+        KetQuaNhanChoDTO ketQua = controller.moPhienTuDatChoThuCong(dto);
+        if (ketQua.isThanhCong()) {
+            JOptionPane.showMessageDialog(this,
+                    "Đã tạo phiên mới: " + ketQua.getMaPhien() + "\nKhách có thể sử dụng ngay.",
+                    "Nhận chỗ thành công", JOptionPane.INFORMATION_MESSAGE);
+            taiLaiVaChon(maDatCho);
+            return;
+        }
+        JOptionPane.showMessageDialog(this,
+                "Không thể nhận chỗ.\nLý do: " + ketQua.getThongBao(),
+                "Thông báo", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void taiLaiVaChon(String maDatCho) {
+        loadData(txtTimKiem.getText());
+        for (int i = 0; i < currentList.size(); i++) {
+            if (maDatCho.equals(currentList.get(i).getMaDatCho())) {
+                tblDatCho.setRowSelectionInterval(i, i);
+                fillDetail(currentList.get(i));
+                break;
+            }
+        }
     }
 
     private void capNhatDatCho() {
         try {
-            DatChoTruocDTO dto = readForm();
-            String trangThaiMoi = String.valueOf(cbxTrangThai.getSelectedItem());
-
-            if ("Đã sử dụng".equals(trangThaiMoi)) {
-                KetQuaNhanChoDTO ketQua = controller.moPhienTuDatChoThuCong(dto);
-                if (ketQua.isThanhCong()) {
-                    JOptionPane.showMessageDialog(this,
-                            "Đã tạo phiên mới: " + ketQua.getMaPhien() + "\nKhách có thể sử dụng ngay.",
-                            "Tạo phiên thành công", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this,
-                            "Không thể tạo phiên thủ công.\nLưu ý: " + ketQua.getThongBao(),
-                            "Thông báo", JOptionPane.WARNING_MESSAGE);
-                }
-                loadData(txtTimKiem.getText());
-                return;
+            if (txtMaDatCho.getText().isBlank()) {
+                throw new IllegalArgumentException("Vui lòng chọn một đặt chỗ từ danh sách.");
+            }
+            if (txtMaKH.getText().isBlank()) {
+                throw new IllegalArgumentException("Mã khách hàng không được để trống.");
             }
 
-            if ("Đã thanh toán thành công".equals(trangThaiMoi)) {
-                ThongTinXacNhanDatChoDTO thongTin = controller.xacNhanThanhToanThuCong(dto.getMaDatCho());
-                if (thongTin != null) {
-                    JOptionPane.showMessageDialog(this,
-                            "Đã xác nhận thanh toán!\nEmail QR nhận chỗ đã gửi tới: " + thongTin.getEmail(),
-                            "Xác nhận thành công", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this,
-                            "Không thể xác nhận thanh toán thủ công.\n"
-                                    + "Đặt chỗ không ở trạng thái chờ thanh toán, đã có QR, hoặc đã được xác nhận trước đó.",
-                            "Thông báo", JOptionPane.WARNING_MESSAGE);
-                }
-                loadData(txtTimKiem.getText());
-                return;
-            }
+            DatChoTruocDTO dto = new DatChoTruocDTO();
+            dto.setMaDatCho(txtMaDatCho.getText().trim());
+            dto.setMaKH(txtMaKH.getText().trim());
+            dto.setGhiChu(txtGhiChu.getText().trim());
 
-            if (controller.capNhat(dto)) {
-                JOptionPane.showMessageDialog(this, "Cập nhật đặt chỗ thành công!");
-                loadData(txtTimKiem.getText());
+            if (controller.capNhatThongTinKhach(dto)) {
+                JOptionPane.showMessageDialog(this, "Cập nhật thông tin khách thành công!");
+                taiLaiVaChon(dto.getMaDatCho());
                 return;
             }
-            JOptionPane.showMessageDialog(this, "Không thể cập nhật đặt chỗ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin khách.", "Lỗi", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-
-    private DatChoTruocDTO readForm() {
-        if (txtMaDatCho.getText().isBlank()) {
-            throw new IllegalArgumentException("Vui lòng chọn một đặt chỗ từ danh sách.");
-        }
-        if (txtMaKH.getText().isBlank() || txtMaKG.getText().isBlank()) {
-            throw new IllegalArgumentException("Mã khách hàng và mã không gian không được để trống.");
-        }
-        DatChoTruocDTO dto = new DatChoTruocDTO();
-        dto.setMaDatCho(txtMaDatCho.getText().trim());
-        dto.setMaKH(txtMaKH.getText().trim());
-        dto.setMaKG(txtMaKG.getText().trim());
-        dto.setThoiGianDuKienToi(parseTimestamp(txtDuKienToi.getText()));
-        dto.setKhoangThoiGianSuDung((Integer) spnThoiGianSuDung.getValue());
-        dto.setThanhTien(parseMoney(txtThanhTien.getText()));
-        dto.setTrangThaiDatTruoc(String.valueOf(cbxTrangThai.getSelectedItem()));
-        dto.setGhiChu(txtGhiChu.getText().trim());
-        return dto;
-    }
-
-    private Timestamp parseTimestamp(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        String normalized = value.trim();
-        try {
-            return Timestamp.valueOf(LocalDateTime.parse(normalized, dateTimeFormat));
-        } catch (DateTimeParseException ignored) {
-            try {
-                return Timestamp.valueOf(normalized);
-            } catch (IllegalArgumentException ex) {
-                throw new IllegalArgumentException("Thời gian dự kiến phải theo dạng YYYY-MM-DD HH:mm.");
-            }
-        }
-    }
-
-    private BigDecimal parseMoney(String value) {
-        if (value == null || value.isBlank()) {
-            return BigDecimal.ZERO;
-        }
-        String normalized = value.replace(",", "").replace(".", "").replace("VNĐ", "").trim();
-        try {
-            return new BigDecimal(normalized);
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Thành tiền phải là số hợp lệ.");
         }
     }
 
@@ -446,9 +506,10 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCapNhat;
+    private javax.swing.JButton btnChuyenKhoan;
     private javax.swing.JButton btnLamMoi;
+    private javax.swing.JButton btnNhanCho;
     private javax.swing.JButton btnTimKiem;
-    private javax.swing.JComboBox<String> cbxTrangThai;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblDetailTitle;
@@ -476,5 +537,6 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtMaKH;
     private javax.swing.JTextField txtThanhTien;
     private javax.swing.JTextField txtTimKiem;
+    private javax.swing.JTextField txtTrangThai;
     // End of variables declaration//GEN-END:variables
 }

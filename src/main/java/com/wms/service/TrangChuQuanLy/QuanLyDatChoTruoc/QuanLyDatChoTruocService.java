@@ -19,8 +19,8 @@ public class QuanLyDatChoTruocService {
         return dao.layDanhSach(keyword);
     }
 
-    public boolean capNhat(DatChoTruocDTO dto) {
-        return dao.capNhat(dto);
+    public boolean capNhatThongTinKhach(DatChoTruocDTO dto) {
+        return dao.capNhatThongTinKhach(dto);
     }
 
     public ThongTinXacNhanDatChoDTO xacNhanThanhToanThuCong(String maDatCho) {

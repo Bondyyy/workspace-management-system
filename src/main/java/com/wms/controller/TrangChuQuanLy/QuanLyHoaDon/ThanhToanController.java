@@ -2,6 +2,7 @@ package com.wms.controller.TrangChuQuanLy.QuanLyHoaDon;
 
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyHoaDon.ThanhToanService;
 import com.wms.service.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaService;
 
@@ -20,7 +21,16 @@ public class ThanhToanController {
     }
 
     public boolean xacNhanThanhToan(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
-        return (maHoaDon != null && !maHoaDon.isEmpty()) && thanhToanService.thucHienThanhToan(maHoaDon, phuongThuc, maPGG, thanhTien);
+        String ketQua = thanhToanService.thucHienThanhToan(maHoaDon, phuongThuc, maPGG, thanhTien);
+        return ketQua == null;
+    }
+
+    public KetQuaThanhToanDTO thucHienThanhToanMoi(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
+        return thanhToanService.thucHienThanhToanMoi(maHoaDon, phuongThuc, maPGG, thanhTien);
+    }
+
+    public String thucHienThanhToanCoThongBao(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
+        return thanhToanService.thucHienThanhToan(maHoaDon, phuongThuc, maPGG, thanhTien);
     }
     
     public XacNhanPhieuGiamGiaDTO kiemTraPhieuGiamGia(String maChuSoPGG, double tongTienGoc) {

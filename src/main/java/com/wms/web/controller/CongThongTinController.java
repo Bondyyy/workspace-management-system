@@ -115,6 +115,21 @@ public class CongThongTinController {
                 null, doiMaCanhBaoDatCho(canhBao), model);
     }
 
+    private LocalTime docGioChiNhanh(String value, LocalTime fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        String normalized = value.trim();
+        if (normalized.length() > 5) {
+            normalized = normalized.substring(0, 5);
+        }
+        try {
+            return LocalTime.parse(normalized);
+        } catch (RuntimeException ex) {
+            return fallback;
+        }
+    }
+
     private String napModelSoDoKhongGian(NguoiDungPhien user,
                                          ThongTinTaiKhoanView profile,
                                          ChiNhanhView branch,
@@ -125,28 +140,49 @@ public class CongThongTinController {
                                          String canhBao,
                                          Model model) {
         var defaultWindow = congThongTinService.khungGioDatChoMacDinh(branch);
-        List<String> layLuaChonGio = congThongTinService.layLuaChonGio(branch);
-        LocalTime latestEnd = layLuaChonGio.isEmpty()
-                ? defaultWindow.endTime()
-                : LocalTime.parse(layLuaChonGio.get(layLuaChonGio.size() - 1));
+        
+        LocalTime openTime = docGioChiNhanh(branch.getThoiGianMoCua(), LocalTime.of(7, 0));
+        LocalTime closeTime = docGioChiNhanh(branch.getThoiGianDongCua(), LocalTime.of(22, 0));
+
+        String openStr = String.format("%02d:%02d", openTime.getHour(), openTime.getMinute());
+        String closeStr = String.format("%02d:%02d", closeTime.getHour(), closeTime.getMinute());
+
+        if (startTime != null && (startTime.isBefore(openTime) || !startTime.isBefore(closeTime))) {
+            thongBaoLoi = "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
+        } else if (endTime != null && (endTime.isAfter(closeTime) || (endTime.equals(LocalTime.MIDNIGHT) && !closeTime.equals(LocalTime.MIDNIGHT)))) {
+            thongBaoLoi = "Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.";
+        }
+
         LocalDate selectedDate = bookingDate == null ? defaultWindow.date() : bookingDate;
         LocalTime selectedStart = startTime == null ? defaultWindow.startTime() : startTime;
         LocalTime selectedEnd = endTime == null ? defaultWindow.endTime() : endTime;
-        if (selectedStart.plusHours(1).isAfter(latestEnd)) {
-            selectedStart = latestEnd.minusHours(1);
-            selectedEnd = latestEnd;
+
+        if (selectedStart.isBefore(openTime) || !selectedStart.isBefore(closeTime)) {
+            selectedStart = defaultWindow.startTime();
         }
-        if (selectedEnd.isAfter(latestEnd)) {
-            selectedEnd = latestEnd;
+        if (selectedEnd.isAfter(closeTime) || selectedEnd.isBefore(selectedStart.plusHours(1))) {
+            selectedEnd = selectedStart.plusHours(1).isAfter(closeTime) ? closeTime : selectedStart.plusHours(1);
         }
+
         if (!selectedEnd.isAfter(selectedStart)) {
             thongBaoLoi = "Giờ kết thúc phải sau giờ bắt đầu.";
             selectedEnd = selectedStart.plusHours(1);
         }
+        
         LocalDateTime selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
         LocalDateTime selectedEndDateTime = LocalDateTime.of(selectedDate, selectedEnd);
         if (thongBaoLoi == null && !congThongTinService.laThoiGianDatChoTrongTuongLai(selectedStartDateTime)) {
             thongBaoLoi = "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
+        }
+
+        java.util.ArrayList<String> layLuaChonGioBatDau = new java.util.ArrayList<>();
+        for (LocalTime time = openTime; time.isBefore(closeTime); time = time.plusHours(1)) {
+            layLuaChonGioBatDau.add(String.format("%02d:00", time.getHour()));
+        }
+
+        java.util.ArrayList<String> layLuaChonGioKetThuc = new java.util.ArrayList<>();
+        for (LocalTime time = openTime.plusHours(1); !time.isAfter(closeTime); time = time.plusHours(1)) {
+            layLuaChonGioKetThuc.add(String.format("%02d:00", time.getHour()));
         }
 
         List<KhongGianView> spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
@@ -167,7 +203,8 @@ public class CongThongTinController {
         model.addAttribute("activePage", "booking");
         model.addAttribute("branch", branch);
         model.addAttribute("spaces", spaces);
-        model.addAttribute("layLuaChonGio", layLuaChonGio);
+        model.addAttribute("layLuaChonGioBatDau", layLuaChonGioBatDau);
+        model.addAttribute("layLuaChonGioKetThuc", layLuaChonGioKetThuc);
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("selectedStart", selectedStart);
         model.addAttribute("selectedEnd", selectedEnd);

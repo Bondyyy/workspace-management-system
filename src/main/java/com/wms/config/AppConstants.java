@@ -11,4 +11,7 @@ public class AppConstants {
     public static final String ROLE_MANAGER_NAME = "Quản lý";
 
     public static final String ROLE_STAFF_NAME = "Nhân viên";
+
+    /** Trạng thái DATCHO khi khách đã thanh toán nhưng không đến nhận chỗ đúng hạn. */
+    public static final String TRANG_THAI_DAT_CHO_QUA_HAN = "Quá hạn nhận chỗ";
 }

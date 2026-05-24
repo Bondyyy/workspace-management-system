@@ -18,17 +18,17 @@ BEGIN
     END IF;
 
     SELECT
-        NVL(SUM(HD.ThanhTien), 0),
+        NVL(SUM(HD.ThanhTien + NVL(HD.DaTraTruoc, 0)), 0),
         NVL(SUM(HD.TongTien), 0),
-        NVL(SUM(HD.TongTien - HD.ThanhTien), 0),
+        NVL(SUM(HD.TongTien - (HD.ThanhTien + NVL(HD.DaTraTruoc, 0))), 0),
         COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Đã thanh toán thành công' THEN 1 END),
         COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Thanh toán không thành công' THEN 1 END),
         NVL(SUM(CASE WHEN HD.PhuongThucThanhToan = 'Tiền mặt'
                       AND HD.TrangThaiThanhToan = 'Đã thanh toán thành công'
-                     THEN HD.ThanhTien ELSE 0 END), 0),
+                     THEN (HD.ThanhTien + NVL(HD.DaTraTruoc, 0)) ELSE 0 END), 0),
         NVL(SUM(CASE WHEN HD.PhuongThucThanhToan = 'Chuyển khoản'
                       AND HD.TrangThaiThanhToan = 'Đã thanh toán thành công'
-                     THEN HD.ThanhTien ELSE 0 END), 0)
+                     THEN (HD.ThanhTien + NVL(HD.DaTraTruoc, 0)) ELSE 0 END), 0)
     INTO
         p_outTongThanhTien, p_outTongTruocGiam, p_outTongChietKhau,
         p_outSoHDThanhCong, p_outSoHDKhongTT,

@@ -67,11 +67,11 @@ public class DataInitializer {
                     "WHEN MATCHED THEN UPDATE SET dest.TenDV = src.TenDV " +
                     "WHEN NOT MATCHED THEN INSERT (MaDV, TenDV, DonGia, TrangThaiDV, MaLoaiDV, SoLuong, GiaNhap) VALUES (src.MaDV, src.TenDV, src.DonGia, src.TrangThaiDV, src.MaLoaiDV, src.SoLuong, src.GiaNhap)";
             try (PreparedStatement ps = conn.prepareStatement(sqlDV)) {
-                ps.setString(1, "DV000");
+                ps.setString(1, "DV0000");
                 ps.setString(2, Normalizer.normalize("Gia hạn giờ", Normalizer.Form.NFC));
                 ps.setDouble(3, 1000);
                 ps.setString(4, Normalizer.normalize("Đang hoạt động", Normalizer.Form.NFC));
-                ps.setString(5, "LDV000");
+                ps.setString(5, "LDV0000");
                 ps.executeUpdate();
             }
 

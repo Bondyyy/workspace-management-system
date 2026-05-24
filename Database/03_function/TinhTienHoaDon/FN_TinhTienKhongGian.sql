@@ -10,25 +10,38 @@ AS
     v_PhutLe NUMBER;
     v_SoGioSuDung NUMBER;
     v_TienKhongGian NUMBER(18, 2);
+    v_MaDatCho VARCHAR2(50);
+    v_TienDatCho NUMBER(18, 2);
 BEGIN
     BEGIN
         SELECT 
             LKG.DonGiaTheoGio,
             PLV.ThoiGianBatDau,
-            NVL(PLV.ThoiGianKetThuc, SYSTIMESTAMP) 
+            NVL(PLV.ThoiGianKetThuc, SYSTIMESTAMP),
+            PLV.MaDatCho,
+            DC.ThanhTien
         INTO 
             v_DonGiaTheoGio,
             v_ThoiGianBatDau,
-            v_ThoiGianKetThuc
+            v_ThoiGianKetThuc,
+            v_MaDatCho,
+            v_TienDatCho
         FROM PHIENLAMVIEC PLV
         JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
         JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG
+        LEFT JOIN DATCHO DC ON PLV.MaDatCho = DC.MaDatCho
         WHERE PLV.MaPhien = p_MaPhien;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
             RETURN 0;
     END;
 
+    -- Nếu là phiên đặt trước, chỉ trả về tiền thuê không gian đã thanh toán trước (phần quá giờ sẽ được tính như dịch vụ trong SP_KetThucPhien)
+    IF v_MaDatCho IS NOT NULL THEN
+        RETURN ROUND(NVL(v_TienDatCho, 0), 2);
+    END IF;
+
+    -- Nếu là phiên trực tiếp, tính theo thời gian thực tế
     v_TongPhut := EXTRACT(DAY FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) * 24 * 60 +
                   EXTRACT(HOUR FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) * 60 +
                   EXTRACT(MINUTE FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) +

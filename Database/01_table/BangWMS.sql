@@ -180,6 +180,7 @@ CREATE TABLE HOADON (
     NgayLapHoaDon TIMESTAMP,
     PhuongThucThanhToan VARCHAR2(50),
     TrangThaiThanhToan VARCHAR2(50),
+    DaTraTruoc NUMBER(18, 2) DEFAULT 0 NOT NULL,
     MaPhien VARCHAR2(50),
     MaPGG VARCHAR2(50),
     MaNV VARCHAR2(50),

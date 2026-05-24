@@ -4,6 +4,7 @@ import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO;
 import java.sql.*;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
@@ -19,7 +20,7 @@ public class HoaDonDAO {
         List<HoaDonDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc, "
-                        + "NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc "
+                        + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc "
                         +
                         "FROM HOADON h " +
                         "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
@@ -34,6 +35,8 @@ public class HoaDonDAO {
         if (statusFilter != null && !statusFilter.equals("Tất cả")) {
             if (statusFilter.equals("Chưa thanh toán")) {
                 sql.append("AND h.TrangThaiThanhToan = 'Đang chờ thanh toán' ");
+            } else if (statusFilter.equals("Đã trả trước")) {
+                sql.append("AND h.TrangThaiThanhToan = 'Đã trả trước' ");
             } else if (statusFilter.equals("Đã thanh toán")) {
                 sql.append("AND h.TrangThaiThanhToan = 'Đã thanh toán thành công' ");
             } else if (statusFilter.equals("Đang chờ thanh toán phụ thu")) {
@@ -57,6 +60,7 @@ public class HoaDonDAO {
             }
             if (statusFilter != null && !statusFilter.equals("Tất cả") 
                     && !statusFilter.equals("Chưa thanh toán") 
+                    && !statusFilter.equals("Đã trả trước")
                     && !statusFilter.equals("Đã thanh toán")
                     && !statusFilter.equals("Đang chờ thanh toán phụ thu")
                     && !statusFilter.equals("Đã hủy")) {
@@ -69,6 +73,7 @@ public class HoaDonDAO {
                     hd.setMaHoaDon(rs.getString("MaHoaDon"));
                     hd.setSoHD(rs.getString("SoHD"));
                     hd.setSoTienDaTraTruoc(rs.getDouble("SoTienDaTraTruoc"));
+                    hd.setDaTraTruoc(rs.getDouble("SoTienDaTraTruoc") > 0);
 
                     double tt = rs.getDouble("TongTien");
                     double thanh = rs.getDouble("ThanhTien");
@@ -121,7 +126,7 @@ public class HoaDonDAO {
     public HoaDonDTO capNhatHoaDonDatTruocTheoPhien(String maPhien, double tongTien, double thanhTien) {
         String sqlUpdate = "UPDATE HOADON SET TongTien = ?, ThanhTien = ? WHERE MaPhien = ?";
         String sqlSelect = "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc, "
-                + "NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc "
+                + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc "
                 + "FROM HOADON h "
                 + "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien "
                 + "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho "
@@ -144,6 +149,7 @@ public class HoaDonDAO {
                         hd.setMaHoaDon(rs.getString("MaHoaDon"));
                         hd.setSoHD(rs.getString("SoHD"));
                         hd.setSoTienDaTraTruoc(rs.getDouble("SoTienDaTraTruoc"));
+                    hd.setDaTraTruoc(rs.getDouble("SoTienDaTraTruoc") > 0);
                         hd.setTongTien(rs.getDouble("TongTien"));
                         hd.setThanhTien(rs.getDouble("ThanhTien"));
                         hd.setNgayLapHoaDon(rs.getTimestamp("NgayLapHoaDon"));
@@ -184,9 +190,15 @@ public class HoaDonDAO {
 
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
         ThongTinHoaDonDTO thongTin = null;
-        String sqlChung = "SELECT h.MaHoaDon, h.TongTien, h.ThanhTien, p.MaPhien, " +
-                "p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, " +
-                "nd.HoTen AS HoTenKH, kg.TenKG, NVL(dc.ThanhTien, 0) AS SoTienDaTraTruoc " +
+        String sqlChung = "SELECT h.MaHoaDon, " +
+            "NVL(h.TongTien, FN_TinhTongTien(p.MaPhien)) AS TongTien, " +
+            "NVL(h.ThanhTien, GREATEST(0, NVL(h.TongTien, FN_TinhTongTien(p.MaPhien)) - NVL(h.DaTraTruoc, 0))) AS ThanhTien, " +
+            "p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, " +
+            "nd.HoTen AS HoTenKH, kg.TenKG, p.MaDatCho, dc.KhoangThoiGianSuDung, "
+            + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc, "
+            + "NVL(h.DaTraTruoc, 0) AS DaTraTruoc, "
+            + "FN_TinhTienKhongGian(p.MaPhien) AS TienKhongGian, "
+            + "FN_TinhTongTien(p.MaPhien) AS TongTienGoc " +
                 "FROM HOADON h " +
                 "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                 "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
@@ -210,17 +222,27 @@ public class HoaDonDAO {
                     thongTin.setHoTenKH(rsChung.getString("HoTenKH"));
                     thongTin.setTenKhongGian(rsChung.getString("TenKG"));
 
-                    double tt = rsChung.getDouble("TongTien");
+                    double tt = rsChung.getDouble("TongTienGoc");
+                    if (tt <= 0) {
+                        tt = rsChung.getDouble("TongTien");
+                    }
+
                     double thanh = rsChung.getDouble("ThanhTien");
-                    if (tt == 0 && thanh > 0)
-                        tt = thanh;
+                    double soTienDaTraTruoc = rsChung.getDouble("SoTienDaTraTruoc");
+                    if (thanh < 0) {
+                        thanh = 0;
+                    }
+                    if (thanh == 0 && tt > 0 && soTienDaTraTruoc >= 0) {
+                        thanh = Math.max(0, tt - soTienDaTraTruoc);
+                    }
 
                     thongTin.setTongTien(tt);
                     thongTin.setThanhTien(thanh);
                     thongTin.setMaPhien(rsChung.getString("MaPhien"));
                     thongTin.setTrangThaiPhien(rsChung.getString("TrangThaiPhien"));
                     thongTin.setTrangThaiThanhToan(rsChung.getString("TrangThaiThanhToan"));
-                    thongTin.setSoTienDaTraTruoc(rsChung.getDouble("SoTienDaTraTruoc"));
+                    thongTin.setSoTienDaTraTruoc(soTienDaTraTruoc);
+                    thongTin.setDaTraTruoc(soTienDaTraTruoc > 0);
 
                     Timestamp tBD = rsChung.getTimestamp("ThoiGianBatDau");
                     Timestamp tKT = rsChung.getTimestamp("ThoiGianKetThuc");
@@ -252,19 +274,33 @@ public class HoaDonDAO {
                         }
                     }
 
-                    // Tính toán tiền dịch vụ đã load
-                    double tongTienDichVu = 0;
-                    for (DichVuDaDungDTO dv : thongTin.getDanhSachDichVu()) {
-                        tongTienDichVu += dv.getThanhTien();
+                    double tienKhongGian = rsChung.getDouble("TienKhongGian");
+                    if (tienKhongGian <= 0) {
+                        double tongTienDichVu = 0;
+                        for (DichVuDaDungDTO dv : thongTin.getDanhSachDichVu()) {
+                            tongTienDichVu += dv.getThanhTien();
+                        }
+                        tienKhongGian = Math.max(0, thongTin.getTongTien() - tongTienDichVu);
+                    }
+                    
+                    String tenKGDisplay = thongTin.getTenKhongGian();
+                    double soGioDisplay = thongTin.getTongSoGio();
+                    String maDatCho = rsChung.getString("MaDatCho");
+                    
+                    if (maDatCho != null && !maDatCho.trim().isEmpty()) {
+                        tenKGDisplay = "Thuê " + tenKGDisplay + " (đã đặt trước)";
+                        soGioDisplay = rsChung.getDouble("KhoangThoiGianSuDung");
+                    } else {
+                        tenKGDisplay = "Thuê " + tenKGDisplay;
                     }
 
-                    // Phần còn lại chính là tiền thuê không gian
-                    double tienKhongGian = thongTin.getTongTien() - tongTienDichVu;
-                    double donGiaKg = (thongTin.getTongSoGio() > 0) ? (tienKhongGian / thongTin.getTongSoGio()) : tienKhongGian;
-                    // Thêm vào đầu danh sách để hiển thị đầu tiên, ngay cả khi số giờ hoặc tiền = 0
+                    double donGiaKg = (soGioDisplay > 0)
+                            ? (tienKhongGian / soGioDisplay)
+                            : tienKhongGian;
+                            
                     thongTin.getDanhSachDichVu().add(0, new DichVuDaDungDTO(
-                            "Thuê " + thongTin.getTenKhongGian(),
-                            (int) thongTin.getTongSoGio(),
+                            tenKGDisplay,
+                            (int) soGioDisplay,
                             donGiaKg));
                 }
             }
@@ -309,11 +345,23 @@ public class HoaDonDAO {
 
             String message = cstmt.getString(5);
             System.out.println("[HoaDonDAO] " + message);
+            if (laThongBaoDaTraTruoc(message)) {
+                throw new IllegalStateException(message);
+            }
             return laThongBaoThanhCong(message);
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
             System.err.println("[HoaDonDAO] Lỗi gọi SP_ThanhToanVoiPhieuGiamGia: " + e.getMessage());
             return false;
         }
+    }
+
+    private boolean laThongBaoDaTraTruoc(String message) {
+        if (message == null) {
+            return false;
+        }
+        return message.contains("đã được thanh toán trước qua đặt chỗ");
     }
 
     private boolean laThongBaoThanhCong(String message) {
@@ -347,6 +395,45 @@ public class HoaDonDAO {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public KetQuaThanhToanDTO thanhToanVoiPhieuGiamGiaMoi(String maPhien, String maNV, String maPGG, String phuongThucThanhToan) {
+        String sql = "{call SP_ThanhToanVoiPhieuGiamGia(?, ?, ?, ?, ?)}";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             CallableStatement cstmt = conn.prepareCall(sql)) {
+             
+            cstmt.setString(1, maPhien);
+            cstmt.setString(2, maNV);
+            if (maPGG == null || maPGG.trim().isEmpty()) {
+                cstmt.setNull(3, Types.VARCHAR);
+            } else {
+                cstmt.setString(3, maPGG.trim());
+            }
+            cstmt.setString(4, phuongThucThanhToan);
+            cstmt.registerOutParameter(5, Types.VARCHAR);
+            
+            cstmt.execute();
+            String message = cstmt.getString(5);
+            
+            if (message != null && message.toLowerCase(Locale.ROOT).contains("lỗi")) {
+                return new KetQuaThanhToanDTO(false, message);
+            }
+            
+            return new KetQuaThanhToanDTO(true, message != null ? message : "Thanh toán thành công");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new KetQuaThanhToanDTO(false, "Lỗi khi cập nhật thanh toán: " + e.getMessage());
+        }
+    }
+
+    public KetQuaThanhToanDTO thanhToanTrucTiepMoi(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG, double thanhTien) {
+        // Fallback implementation if SP is not used
+        boolean success = xacNhanThanhToan(maHoaDon, phuongThucThanhToan, maNV, maPGG, thanhTien);
+        if (success) {
+            return new KetQuaThanhToanDTO(true, "Thanh toán thành công");
+        } else {
+            return new KetQuaThanhToanDTO(false, "Lỗi khi cập nhật thanh toán");
         }
     }
 }

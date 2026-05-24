@@ -28,10 +28,19 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
     private List<com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO> dsKGHienTai;
     private String soDienThoaiDaXacNhan = "";
     private boolean tenKhachHangTuDongDien = false;
+    private javax.swing.JLabel lblGioHoatDong;
 
     public MoPhienMoiForm(String maCN) {
         initComponents();
         controller = new MoPhienMoiController(this);
+
+        // Khoi tao nhan hien thi gio hoat dong
+        lblGioHoatDong = new javax.swing.JLabel();
+        lblGioHoatDong.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 14));
+        lblGioHoatDong.setForeground(java.awt.Color.decode("#666666"));
+        lblGioHoatDong.setText("Gio hoat dong: --:-- - --:--");
+        pnLeftMap.add(lblGioHoatDong);
+        lblGioHoatDong.setBounds(220, 15, 200, 30);
 
         if (maCN != null && !maCN.isEmpty()) {
             this.maCNHienTai = maCN;
@@ -66,25 +75,102 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
     private void updateEndTime() {
         try {
-            Date now = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
-            txtThoiGianBatDau.setText(sdf.format(now));
+            java.time.ZoneId zoneId = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+            java.time.ZonedDateTime nowHcm = java.time.ZonedDateTime.now(zoneId);
+            
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
+            txtThoiGianBatDau.setText(sdf.format(java.util.Date.from(nowHcm.toInstant())));
 
             String suDungStr = txtThoiGianSuDung.getText().trim();
             if (suDungStr.isEmpty()) {
                 txtThoiGianKetThuc.setText("");
-                return;
-            }
-            int hours = Integer.parseInt(suDungStr);
-            if (hours <= 0) {
-                txtThoiGianKetThuc.setText("Số giờ > 0");
+                txtThoiGianKetThuc.setForeground(new java.awt.Color(102, 102, 102));
+                btnMoPhien.setEnabled(true);
                 return;
             }
             
-            long end = now.getTime() + (long) hours * 3600 * 1000;
-            txtThoiGianKetThuc.setText(sdf.format(new Date(end)));
+            int hours = Integer.parseInt(suDungStr);
+            if (hours <= 0) {
+                txtThoiGianKetThuc.setText("So gio > 0");
+                txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
+                btnMoPhien.setEnabled(false);
+                return;
+            }
+            
+            java.time.ZonedDateTime expectedEnd = nowHcm.plusHours(hours);
+            txtThoiGianKetThuc.setText(sdf.format(java.util.Date.from(expectedEnd.toInstant())));
+
+            if (khongGianChonDTO != null) {
+                String[] gioHoatDong = controller.layGioHoatDongTheoKhongGian(khongGianChonDTO.getMaKG());
+                if (gioHoatDong != null) {
+                    String gioMoCua = gioHoatDong[0];
+                    String gioDongCua = gioHoatDong[1];
+
+                    // Xu ly "24:00": Java LocalTime khong ho tro 24:00 nen phai xu ly rieng.
+                    // "24:00" = het ngay = nua dem ngay hom sau (00:00 sang hom sau)
+                    final boolean dongCuaLaNuaDemSauNgay = "24:00".equals(gioDongCua.trim());
+
+                    java.time.LocalTime openLocalTime = java.time.LocalTime.parse(gioMoCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+                    java.time.ZonedDateTime openDateTime = nowHcm.with(openLocalTime).withSecond(0).withNano(0);
+
+                    // closeDateTime: neu la "24:00" thi tinh la 00:00 cua ngay hom sau
+                    java.time.ZonedDateTime closeDateTime;
+                    if (dongCuaLaNuaDemSauNgay) {
+                        closeDateTime = nowHcm.toLocalDate().plusDays(1)
+                                .atStartOfDay(nowHcm.getZone());
+                    } else {
+                        java.time.LocalTime closeLocalTime = java.time.LocalTime.parse(gioDongCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+                        closeDateTime = nowHcm.with(closeLocalTime).withSecond(0).withNano(0);
+                        // Neu gio dong cua < gio mo cua (vi du: dong cua 02:00, mo cua 08:00)
+                        // thi closeDateTime thuoc sang hom sau
+                        if (closeDateTime.isBefore(openDateTime)) {
+                            closeDateTime = closeDateTime.plusDays(1);
+                        }
+                    }
+
+                    // Kiem tra: gio hien tai truoc gio mo cua?
+                    // (Neu mo cua la 00:00 va dong cua la 24:00 = hoat dong ca ngay, bo qua kiem tra nay)
+                    boolean hoatDongCaNgay = openLocalTime.equals(java.time.LocalTime.MIDNIGHT) && dongCuaLaNuaDemSauNgay;
+                    if (!hoatDongCaNgay && nowHcm.isBefore(openDateTime)) {
+                        txtThoiGianKetThuc.setText("Chua den gio hoat dong (Mo: " + gioMoCua + ")");
+                        txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
+                        btnMoPhien.setEnabled(false);
+                        return;
+                    }
+
+                    // Kiem tra: gio hien tai da qua gio dong cua?
+                    if (!nowHcm.isBefore(closeDateTime)) {
+                        txtThoiGianKetThuc.setText("Da qua gio hoat dong (Dong: " + gioDongCua + ")");
+                        txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
+                        btnMoPhien.setEnabled(false);
+                        return;
+                    }
+
+                    // Kiem tra: gio ket thuc du kien co vuot qua gio dong cua?
+                    if (expectedEnd.isAfter(closeDateTime)) {
+                        txtThoiGianKetThuc.setText("Vuot qua gio dong cua chi nhanh (" + gioDongCua + ")");
+                        txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
+                        btnMoPhien.setEnabled(false);
+                        return;
+                    }
+
+                    // Kiem tra: con du thoi gian de mo phien moi (toi thieu 1 gio)?
+                    long remainingSeconds = java.time.Duration.between(nowHcm, closeDateTime).getSeconds();
+                    if (remainingSeconds < 3600) {
+                        txtThoiGianKetThuc.setText("Thoi gian con lai den gio dong cua khong du de mo phien moi.");
+                        txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
+                        btnMoPhien.setEnabled(false);
+                        return;
+                    }
+                }
+            }
+            
+            txtThoiGianKetThuc.setForeground(new java.awt.Color(102, 102, 102));
+            btnMoPhien.setEnabled(true);
         } catch (NumberFormatException e) {
-            txtThoiGianKetThuc.setText("Chỉ nhập số nguyên");
+            txtThoiGianKetThuc.setText("Chi nhap so nguyen");
+            txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
+            btnMoPhien.setEnabled(false);
         }
     }
 
@@ -159,6 +245,17 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtLoaiKhongGian.setText(kg.getTenLoaiKG() != null ? kg.getTenLoaiKG() : "Không xác định");
         txtMaKGian.setText(kg.getMaKG());
         txtGiaTien.setText(kg.getDonGia() != null ? String.format("%,.0f", kg.getDonGia()) : "0");
+
+        // Cap nhat gio hoat dong cua chi nhanh tuong ung voi khong gian da chon
+        String[] gioHoatDong = controller.layGioHoatDongTheoKhongGian(kg.getMaKG());
+        if (gioHoatDong != null) {
+            lblGioHoatDong.setText("Gio hoat dong: " + gioHoatDong[0] + " - " + gioHoatDong[1]);
+        } else {
+            lblGioHoatDong.setText("Gio hoat dong: --:-- - --:--");
+        }
+        
+        // Cap nhat va kiem tra thoi gian ngay lap tuc
+        updateEndTime();
     }
 
     private void startClock() {
@@ -240,6 +337,9 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtKhongGianChon.setText("(Chưa chọn chỗ ngồi)");
         txtLoaiKhongGian.setText("");
         txtMaKGian.setText("");
+        if (lblGioHoatDong != null) {
+            lblGioHoatDong.setText("Gio hoat dong: --:-- - --:--");
+        }
 
         khongGianChonDTO = null;
         if (mapPanel != null) {
@@ -536,13 +636,19 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
             // Giữ giá 0 nếu ô giá chưa có dữ liệu hợp lệ.
         }
 
-        if (controller.moPhienMoi(tenKH, sdt, khongGianChonDTO.getMaKG(), soGio, giaTien)) {
-            com.wms.util.MessageUtil.showInfo(this, "Mở phiên thành công cho khách: " + tenKH + "\nVị trí: " + khongGian);
-            khongGianChonDTO = null;
-            initMap();
-            btnLamMoiActionPerformed(evt);
-        } else {
-            com.wms.util.MessageUtil.showError(this, "Lỗi khi mở phiên làm việc! Vui lòng kiểm tra lại kết nối hoặc dữ liệu.");
+        try {
+            if (controller.moPhienMoi(tenKH, sdt, khongGianChonDTO.getMaKG(), soGio, giaTien)) {
+                com.wms.util.MessageUtil.showInfo(this, "Mở phiên thành công cho khách: " + tenKH + "\nVị trí: " + khongGian);
+                khongGianChonDTO = null;
+                initMap();
+                btnLamMoiActionPerformed(evt);
+            } else {
+                com.wms.util.MessageUtil.showError(this, "[DATABASE/SYSTEM ERROR]: Loi khi mo phien lam viec! Vui long kiem tra lai ket noi hoac du lieu.");
+            }
+        } catch (IllegalArgumentException e) {
+            com.wms.util.MessageUtil.showError(this, e.getMessage());
+        } catch (Exception e) {
+            com.wms.util.MessageUtil.showError(this, "[DATABASE/SYSTEM ERROR]: Loi khi mo phien: " + e.getMessage());
         }
     }//GEN-LAST:event_btnMoPhienActionPerformed
 

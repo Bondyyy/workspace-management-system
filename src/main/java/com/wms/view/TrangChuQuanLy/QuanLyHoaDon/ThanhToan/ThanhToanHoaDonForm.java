@@ -47,6 +47,8 @@ public class ThanhToanHoaDonForm extends JPanel {
     private PhieuGiamGiaDTO maGiamGiaDangAp = null;
     private double tongTienGoc = 0, tienGiamGia = 0, thanhTien = 0;
     private boolean daDongTienMat = false, daDongChuyenKhoan = false;
+    private boolean dangXuLyThanhToan = false;
+    private boolean daThanhToanThanhCong = false;
 
     private final ThanhToanController thanhToanController = new ThanhToanController();
     private final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
@@ -132,7 +134,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelTong.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         panelTong.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-        JLabel lblTextTong = new JLabel("Tổng tiền:");
+        JLabel lblTextTong = new JLabel("Tổng cộng:");
         lblTextTong.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTextTong.setForeground(mauXamDam);
         panelTong.add(lblTextTong, BorderLayout.WEST);
@@ -209,7 +211,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelThanhTien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
         panelThanhTien.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-        JLabel lblTextThanhTien = new JLabel("THÀNH TIỀN:");
+        JLabel lblTextThanhTien = new JLabel("CÒN PHẢI THANH TOÁN:");
         lblTextThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTextThanhTien.setForeground(mauXamDam);
         panelThanhTien.add(lblTextThanhTien, BorderLayout.WEST);
@@ -293,7 +295,11 @@ public class ThanhToanHoaDonForm extends JPanel {
         containerTienMat.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                moManHinhTienMat();
+                if (!dangXuLyThanhToan && !daThanhToanThanhCong && containerTienMat.isEnabled()) {
+                    moManHinhTienMat();
+                } else if (daThanhToanThanhCong) {
+                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, "Hóa đơn đã thanh toán, không thể chọn phương thức khác.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
             }
         });
         panel.add(containerTienMat);
@@ -303,7 +309,11 @@ public class ThanhToanHoaDonForm extends JPanel {
         containerChuyenKhoan.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                moManHinhChuyenKhoan();
+                if (!dangXuLyThanhToan && !daThanhToanThanhCong && containerChuyenKhoan.isEnabled()) {
+                    moManHinhChuyenKhoan();
+                } else if (daThanhToanThanhCong) {
+                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, "Hóa đơn đã thanh toán, không thể chọn phương thức khác.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
             }
         });
         panel.add(containerChuyenKhoan);
@@ -496,8 +506,8 @@ public class ThanhToanHoaDonForm extends JPanel {
 
         this.hoaDonHienTai = hoaDon;
         this.tongTienGoc = hoaDon.getTongTien();
-        this.thanhTien = (hoaDon.getThanhTien() > 0) ? hoaDon.getThanhTien() : tongTienGoc;
-        if (this.tongTienGoc == 0 && this.thanhTien > 0)
+        this.thanhTien = Math.max(0, this.tongTienGoc - hoaDon.getSoTienDaTraTruoc() - tienGiamGia);
+        if (this.tongTienGoc <= 0 && this.thanhTien > 0)
             this.tongTienGoc = this.thanhTien;
 
         lblMaHD.setText(hoaDon.getMaHoaDon() != null ? hoaDon.getMaHoaDon() : "-");
@@ -620,36 +630,69 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void moManHinhTienMat() {
-        if (hoaDonHienTai == null)
+        if (hoaDonHienTai == null || "Đã thanh toán thành công".equals(hoaDonHienTai.getTrangThaiThanhToan()))
             return;
+        if (thanhTien <= 0) {
+            JOptionPane.showMessageDialog(this, "Không có số tiền cần thanh toán.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         TienMatForm dialog = new TienMatForm(JOptionPane.getFrameForComponent(this), true, thanhTien);
         dialog.setVisible(true);
         if (dialog.isDaThanhToan()) {
-            daDongTienMat = true;
-            capNhatTrangThaiThanhToan();
             xuLyThanhToan("Tiền mặt");
         }
     }
 
     private void moManHinhChuyenKhoan() {
-        if (hoaDonHienTai == null)
+        if (hoaDonHienTai == null || "Đã thanh toán thành công".equals(hoaDonHienTai.getTrangThaiThanhToan()))
             return;
+        if (thanhTien <= 0) {
+            JOptionPane.showMessageDialog(this, "Không có số tiền cần thanh toán.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         ChuyenKhoanForm dialog = new ChuyenKhoanForm(JOptionPane.getFrameForComponent(this), true, thanhTien,
                 hoaDonHienTai.getMaHoaDon());
         dialog.setVisible(true);
         if (dialog.isDaThanhToan()) {
-            daDongChuyenKhoan = true;
-            capNhatTrangThaiThanhToan();
             xuLyThanhToan("Chuyển khoản");
         }
     }
 
     private void xuLyThanhToan(String phuongThuc) {
+        if (dangXuLyThanhToan || daThanhToanThanhCong) {
+            return;
+        }
+        dangXuLyThanhToan = true;
+        containerTienMat.setEnabled(false);
+        containerChuyenKhoan.setEnabled(false);
+        if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(false);
+
         String maPGG = maGiamGiaDangAp != null ? maGiamGiaDangAp.getMaPGG() : null;
-        if (thanhToanController.xacNhanThanhToan(hoaDonHienTai.getMaHoaDon(), phuongThuc, maPGG, thanhTien)) {
-            JOptionPane.showMessageDialog(this, "Thanh toán thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO result = thanhToanController.thucHienThanhToanMoi(hoaDonHienTai.getMaHoaDon(), phuongThuc, maPGG, thanhTien);
+
+        dangXuLyThanhToan = false;
+
+        if (result.isSuccess()) {
+            daThanhToanThanhCong = true;
+            if ("Tiền mặt".equals(phuongThuc)) daDongTienMat = true;
+            if ("Chuyển khoản".equals(phuongThuc)) daDongChuyenKhoan = true;
+            
+            capNhatTrangThaiThanhToan();
+            loadDuLieuHoaDon(hoaDonHienTai.getMaHoaDon());
+            
+            JOptionPane.showMessageDialog(this, result.getMessage(), "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật thanh toán", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            if (result.getMessage().contains("đã được thanh toán trước qua đặt chỗ") || result.getMessage().contains("đã thanh toán trước đó")) {
+                daThanhToanThanhCong = true;
+                capNhatTrangThaiThanhToan();
+                loadDuLieuHoaDon(hoaDonHienTai.getMaHoaDon());
+                JOptionPane.showMessageDialog(this, result.getMessage(), "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                containerTienMat.setEnabled(true);
+                containerChuyenKhoan.setEnabled(true);
+                if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(true);
+                JOptionPane.showMessageDialog(this, result.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

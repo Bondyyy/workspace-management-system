@@ -59,7 +59,7 @@ public class PhienLamViecService {
         String maQR = MaQRUtil.taoMaQRPhien(maPhien, maDatCho);
         boolean dcOk = datChoDAO.xacNhanThanhToan(maDatCho);
         boolean qrOk = dcOk && datChoDAO.capNhatMaQR(maDatCho, maQR);
-        boolean hdOk = hoaDonDAO.capNhatTrangThaiThanhToanTheoPhien(maPhien, "Đã thanh toán thành công");
+        boolean hdOk = hoaDonDAO.capNhatTrangThaiThanhToanTheoPhien(maPhien, "Đã trả trước");
         if (dcOk && qrOk && hdOk) {
             guiEmailXacNhanDatCho(maDatCho, maPhien);
         }
@@ -112,20 +112,66 @@ public class PhienLamViecService {
         return null;
     }
 
+    public String[] layGioHoatDongTheoKhongGian(String maKG) {
+        return phienDAO.layGioHoatDongTheoKhongGian(maKG);
+    }
+
     public boolean taoPhienMoi(String maKH, String maKG, int soGioSuDung, double donGiaTheoGio) {
+        String[] gioHoatDong = phienDAO.layGioHoatDongTheoKhongGian(maKG);
+        if (gioHoatDong == null) {
+            throw new IllegalArgumentException("Loi: Khong tim thay khong gian hoac chi nhanh lien ket.");
+        }
+
+        String gioMoCua = gioHoatDong[0];
+        String gioDongCua = gioHoatDong[1];
+
+        java.time.ZoneId zoneId = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+        java.time.ZonedDateTime nowHcm = java.time.ZonedDateTime.now(zoneId);
+
+        java.time.LocalTime openLocalTime = java.time.LocalTime.parse(gioMoCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+        java.time.LocalTime closeLocalTime = java.time.LocalTime.parse(gioDongCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+
+        java.time.ZonedDateTime todayOpen = nowHcm.with(openLocalTime).withSecond(0).withNano(0);
+        java.time.ZonedDateTime todayClose = nowHcm.with(closeLocalTime).withSecond(0).withNano(0);
+        
+        if (gioDongCua.trim().equals("24:00") || !todayClose.isAfter(todayOpen)) {
+            todayClose = todayClose.plusDays(1);
+        }
+
+        java.time.ZonedDateTime yesterdayOpen = todayOpen.minusDays(1);
+        java.time.ZonedDateTime yesterdayClose = todayClose.minusDays(1);
+
+        boolean inTodayShift = !nowHcm.isBefore(todayOpen) && nowHcm.isBefore(todayClose);
+        boolean inYesterdayShift = !nowHcm.isBefore(yesterdayOpen) && nowHcm.isBefore(yesterdayClose);
+
+        if (!inTodayShift && !inYesterdayShift) {
+            if (nowHcm.isBefore(todayOpen) && !nowHcm.isBefore(yesterdayClose)) {
+                throw new IllegalArgumentException("Loi: Chi nhanh chua den gio mo cua. Gio mo cua: " + gioMoCua + ".");
+            } else {
+                throw new IllegalArgumentException("Loi: Chi nhanh da qua gio hoat dong. Khong the mo phien moi.");
+            }
+        }
+
+        java.time.ZonedDateTime expectedEnd = nowHcm.plusHours(soGioSuDung);
+        java.time.ZonedDateTime activeCloseTime = inTodayShift ? todayClose : yesterdayClose;
+        if (expectedEnd.isAfter(activeCloseTime)) {
+            throw new IllegalArgumentException("Loi: Thoi gian su dung vuot qua gio dong cua cua chi nhanh. Chi nhanh dong cua luc " + gioDongCua + ".");
+        }
+
         PhienLamViecDTO phien = new PhienLamViecDTO();
         phien.setMaKH(maKH);
         phien.setMaKG(maKG);
         phien.setTrangThaiPhien("Đang hoạt động");
         phien.setDonGiaTheoGio(donGiaTheoGio);
 
-        long now = System.currentTimeMillis();
-        phien.setThoiGianBatDau(new java.sql.Timestamp(now));
+        phien.setThoiGianBatDau(java.sql.Timestamp.from(nowHcm.toInstant()));
+        phien.setThoiGianDuKienKetThuc(java.sql.Timestamp.from(expectedEnd.toInstant()));
 
-        long durationMillis = (long) soGioSuDung * 3600 * 1000;
-        phien.setThoiGianDuKienKetThuc(new java.sql.Timestamp(now + durationMillis));
-
-        return phienDAO.taoPhienLamViecMoi(phien);
+        boolean res = phienDAO.taoPhienLamViecMoi(phien);
+        if (!res) {
+            throw new IllegalArgumentException("Loi khi mo phien lam viec! Vui long kiem tra lai ket noi hoac du lieu.");
+        }
+        return true;
     }
 
     public KetQuaNhanChoDTO nhanChoBangQr(String noiDungQr) {
@@ -141,6 +187,10 @@ public class PhienLamViecService {
 
     public boolean xoaPhien(String maPhien) {
         return phienDAO.xoaPhien(maPhien);
+    }
+
+    public void tuDongKetThucPhienQuaHanDatCho() {
+        phienDAO.tuDongKetThucPhienQuaHanDatCho();
     }
 
 

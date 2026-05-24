@@ -23,6 +23,10 @@ public class MoPhienMoiController {
         return service.layKhongGian(maCN);
     }
 
+    public String[] layGioHoatDongTheoKhongGian(String maKG) {
+        return service.layGioHoatDongTheoKhongGian(maKG);
+    }
+
     public HoiVienDTO timKhachHangTheoSdt(String sdt) {
         return service.timKhachHangTheoSdt(sdt);
     }

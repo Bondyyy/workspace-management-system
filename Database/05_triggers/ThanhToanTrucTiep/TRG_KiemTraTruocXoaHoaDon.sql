@@ -5,8 +5,8 @@ DECLARE
     v_TrangThaiPhien PHIENLAMVIEC.TrangThaiPhien%TYPE;
 BEGIN
     -- 1. Không cho phép xóa hóa đơn đã thanh toán
-    IF :OLD.TrangThaiThanhToan = 'Đã thanh toán thành công' OR :OLD.TrangThaiThanhToan = 'Đã thanh toán' THEN
-        RAISE_APPLICATION_ERROR(-20050, 'Loi - Khong the xoa hoa don da thanh toan thanh cong!');
+    IF :OLD.TrangThaiThanhToan IN ('Đã trả trước', 'Đã thanh toán thành công', 'Đã thanh toán') THEN
+        RAISE_APPLICATION_ERROR(-20050, 'Loi - Khong the xoa hoa don da thanh toan hoac da tra truoc!');
     END IF;
 
     -- 2. Không cho phép xóa hóa đơn nếu phiên làm việc đang chạy

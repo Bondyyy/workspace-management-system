@@ -17,6 +17,11 @@ BEGIN
     -- Tạo SoHD theo format: HD-YYYYMMDD-XXXX
     :NEW.SoHD := 'HD-' || v_NgayHienTai || '-' || LPAD(v_SoThuTu, 4, '0');
     
+    -- Tự động sinh MaHoaDon nếu NULL
+    IF :NEW.MaHoaDon IS NULL THEN
+        :NEW.MaHoaDon := 'HD' || LPAD(SEQ_HOADON.NEXTVAL, 4, '0');
+    END IF;
+
     -- Tự động gán NgayLapHoaDon nếu NULL
     IF :NEW.NgayLapHoaDon IS NULL THEN
         :NEW.NgayLapHoaDon := SYSTIMESTAMP;

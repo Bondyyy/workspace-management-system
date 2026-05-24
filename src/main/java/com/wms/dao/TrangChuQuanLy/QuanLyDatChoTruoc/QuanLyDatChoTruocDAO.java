@@ -7,11 +7,12 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.MaQRUtil;
 import com.wms.util.MaTuDongUtil;
 
-import java.nio.charset.StandardCharsets;
+import java.time.temporal.ChronoUnit;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,8 @@ public class QuanLyDatChoTruocDAO {
         String sql = """
                 SELECT dc.MaDatCho, dc.MaKH, nd.HoTen, dc.MaKG, kg.TenKG,
                        dc.ThoiGianDuKienToi, dc.KhoangThoiGianSuDung,
-                       dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu
+                       dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu,
+                       (SELECT COUNT(*) FROM PHIENLAMVIEC plv WHERE plv.MaDatCho = dc.MaDatCho) AS SoPhien
                 FROM DATCHO dc
                 JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
                 JOIN NGUOIDUNG nd ON nd.MaND = kh.MaND
@@ -55,15 +57,13 @@ public class QuanLyDatChoTruocDAO {
         return list;
     }
 
-    public boolean capNhat(DatChoTruocDTO dto) {
+    /**
+     * Chỉ cập nhật thông tin khách (mã KH, ghi chú). Không thay đổi không gian, thời gian, tiền hay trạng thái.
+     */
+    public boolean capNhatThongTinKhach(DatChoTruocDTO dto) {
         String sql = """
                 UPDATE DATCHO
                 SET MaKH = ?,
-                    MaKG = ?,
-                    ThoiGianDuKienToi = ?,
-                    KhoangThoiGianSuDung = ?,
-                    ThanhTien = ?,
-                    TrangThaiDatTruoc = ?,
                     GhiChu = ?,
                     CapNhatLanCuoi = CURRENT_TIMESTAMP
                 WHERE MaDatCho = ?
@@ -71,44 +71,17 @@ public class QuanLyDatChoTruocDAO {
         if (dto == null || dto.getMaDatCho() == null || dto.getMaDatCho().isBlank()) {
             return false;
         }
-        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            boolean oldAutoCommit = conn.getAutoCommit();
-            try {
-                conn.setAutoCommit(false);
-                String trangThaiHienThi = hienThiTrangThaiDatCho(dto.getTrangThaiDatTruoc());
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    ps.setString(1, dto.getMaKH());
-                    ps.setString(2, dto.getMaKG());
-                    ps.setTimestamp(3, dto.getThoiGianDuKienToi());
-                    if (dto.getKhoangThoiGianSuDung() == null) {
-                        ps.setNull(4, java.sql.Types.INTEGER);
-                    } else {
-                        ps.setInt(4, dto.getKhoangThoiGianSuDung());
-                    }
-                    ps.setBigDecimal(5, dto.getThanhTien());
-                    ps.setString(6, trangThaiDatChoDb(conn, trangThaiHienThi));
-                    ps.setString(7, dto.getGhiChu());
-                    ps.setString(8, dto.getMaDatCho());
-                    int updated = ps.executeUpdate();
-                    capNhatTrangThaiKhongGian(conn, dto);
-                    conn.commit();
-                    return updated > 0;
-                }
-            } catch (SQLException ex) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ignored) {
-                }
-                System.err.println("[QuanLyDatChoTruocDAO] Lỗi cập nhật đặt chỗ: " + ex.getMessage());
-                return false;
-            } finally {
-                try {
-                    conn.setAutoCommit(oldAutoCommit);
-                } catch (SQLException ignored) {
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("[QuanLyDatChoTruocDAO] Lỗi kết nối CSDL: " + e.getMessage());
+        if (dto.getMaKH() == null || dto.getMaKH().isBlank()) {
+            return false;
+        }
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, dto.getMaKH().trim());
+            ps.setString(2, dto.getGhiChu());
+            ps.setString(3, dto.getMaDatCho().trim());
+            return ps.executeUpdate() > 0;
+        } catch (Exception ex) {
+            System.err.println("[QuanLyDatChoTruocDAO] Lỗi cập nhật thông tin khách: " + ex.getMessage());
             return false;
         }
     }
@@ -226,7 +199,8 @@ public class QuanLyDatChoTruocDAO {
         String maDatCho = dto.getMaDatCho().trim();
         String bookingSql = """
                 SELECT dc.MaDatCho, dc.TrangThaiDatTruoc, dc.KhoangThoiGianSuDung,
-                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG, dc.MaKH
+                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG, dc.MaKH,
+                       dc.ThoiGianDuKienToi
                 FROM DATCHO dc
                 WHERE dc.MaDatCho = ?
                 FOR UPDATE
@@ -240,6 +214,7 @@ public class QuanLyDatChoTruocDAO {
                 double thanhTien;
                 String maKG;
                 String maKH;
+                java.sql.Timestamp thoiGianDuKienToi;
 
                 try (PreparedStatement ps = conn.prepareStatement(bookingSql)) {
                     ps.setString(1, maDatCho);
@@ -253,6 +228,16 @@ public class QuanLyDatChoTruocDAO {
                         thanhTien = rs.getDouble("ThanhTien");
                         maKG = rs.getString("MaKG");
                         maKH = rs.getString("MaKH");
+                        thoiGianDuKienToi = rs.getTimestamp("ThoiGianDuKienToi");
+                        if (chuanHoa(trangThai).contains("su dung")) {
+                            boolean coPhien = layMaPhienDaCo(conn, maDatCho) != null;
+                            conn.rollback();
+                            if (coPhien) {
+                                return new KetQuaNhanChoDTO(false, "Mã QR này đã được sử dụng.");
+                            } else {
+                                return new KetQuaNhanChoDTO(false, "Đặt chỗ này đã hết hiệu lực do quá giờ nhận chỗ.");
+                            }
+                        }
                     }
                 }
 
@@ -268,18 +253,18 @@ public class QuanLyDatChoTruocDAO {
                 }
 
                 String maPhien = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
-                String maHoaDon = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.HOA_DON);
+                java.sql.Timestamp thoiGianDuKienKetThuc = thoiGianDuKienToi != null
+                        ? java.sql.Timestamp.from(thoiGianDuKienToi.toInstant().plus(soGio, ChronoUnit.HOURS))
+                        : java.sql.Timestamp.from(java.time.Instant.now().plus(soGio, ChronoUnit.HOURS));
 
                 try (PreparedStatement ps = conn.prepareStatement("""
                         INSERT INTO PHIENLAMVIEC
                             (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
                              CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
-                        VALUES (?, CURRENT_TIMESTAMP,
-                                CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
-                                ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        VALUES (?, CURRENT_TIMESTAMP, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
                         """)) {
                     ps.setString(1, maPhien);
-                    ps.setInt(2, soGio);
+                    ps.setTimestamp(2, thoiGianDuKienKetThuc);
                     ps.setString(3, "Đang hoạt động");
                     ps.setString(4, maKG);
                     ps.setString(5, maKH);
@@ -288,18 +273,19 @@ public class QuanLyDatChoTruocDAO {
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement("""
-                        INSERT INTO HOADON
-                            (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon,
-                             PhuongThucThanhToan, TrangThaiThanhToan, MaPhien)
-                        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        UPDATE HOADON
+                        SET DaTraTruoc = ?,
+                            TongTien = ?,
+                            ThanhTien = ?,
+                            PhuongThucThanhToan = 'Đặt trước',
+                            TrangThaiThanhToan = 'Đã trả trước',
+                            NgayLapHoaDon = CURRENT_TIMESTAMP
+                        WHERE MaPhien = ?
                         """)) {
-                    ps.setString(1, maHoaDon);
-                    ps.setString(2, maHoaDon);
+                    ps.setDouble(1, thanhTien);
+                    ps.setDouble(2, thanhTien);
                     ps.setDouble(3, thanhTien);
-                    ps.setDouble(4, thanhTien);
-                    ps.setString(5, "Chuyển khoản");
-                    ps.setString(6, "Đã thanh toán trước");
-                    ps.setString(7, maPhien);
+                    ps.setString(4, maPhien);
                     ps.executeUpdate();
                 }
 
@@ -361,26 +347,6 @@ public class QuanLyDatChoTruocDAO {
         }
     }
 
-    private void capNhatTrangThaiKhongGian(Connection conn, DatChoTruocDTO dto) throws SQLException {
-        String status = hienThiTrangThaiDatCho(dto.getTrangThaiDatTruoc());
-        String trangThaiKG = null;
-        if ("Đang chờ thanh toán".equals(status)) {
-            trangThaiKG = trangThaiKhongGianDb(conn, "Tam khoa");
-        } else if ("Đã thanh toán thành công".equals(status)) {
-            trangThaiKG = trangThaiKhongGianDb(conn, "Da dat truoc");
-        } else if ("Thanh toán không thành công".equals(status)) {
-            trangThaiKG = trangThaiKhongGianDb(conn, "Trong");
-        }
-        if (trangThaiKG == null) {
-            return;
-        }
-        try (PreparedStatement ps = conn.prepareStatement("UPDATE KHONGGIAN SET TrangThaiKG = ? WHERE MaKG = ?")) {
-            ps.setString(1, trangThaiKG);
-            ps.setString(2, dto.getMaKG());
-            ps.executeUpdate();
-        }
-    }
-
     private DatChoTruocDTO map(ResultSet rs) throws SQLException {
         DatChoTruocDTO dto = new DatChoTruocDTO();
         dto.setMaDatCho(rs.getString("MaDatCho"));
@@ -391,9 +357,15 @@ public class QuanLyDatChoTruocDAO {
         dto.setThoiGianDuKienToi(rs.getTimestamp("ThoiGianDuKienToi"));
         int duration = rs.getInt("KhoangThoiGianSuDung");
         dto.setKhoangThoiGianSuDung(rs.wasNull() ? null : duration);
-        dto.setTrangThaiDatTruoc(hienThiTrangThaiDatCho(rs.getString("TrangThaiDatTruoc")));
         dto.setThanhTien(rs.getBigDecimal("ThanhTien"));
-        dto.setGhiChu(rs.getString("GhiChu"));
+        
+        String ghiChu = rs.getString("GhiChu");
+        dto.setGhiChu(ghiChu);
+        
+        int soPhien = rs.getInt("SoPhien");
+        String trangThaiDb = rs.getString("TrangThaiDatTruoc");
+        dto.setTrangThaiDatTruoc(hienThiTrangThaiDatCho(trangThaiDb, soPhien));
+        
         return dto;
     }
 
@@ -407,6 +379,9 @@ public class QuanLyDatChoTruocDAO {
         }
         if (normalized.contains("su dung")) {
             return giaTriDb(conn, "CHK_DC_TRANGTHAI", "su dung", 3, "Đã sử dụng");
+        }
+        if (normalized.contains("qua han nhan cho")) {
+            return giaTriDb(conn, "CHK_DC_TRANGTHAI", "qua han nhan cho", 4, com.wms.config.AppConstants.TRANG_THAI_DAT_CHO_QUA_HAN);
         }
         return giaTriDb(conn, "CHK_DC_TRANGTHAI", "cho thanh toan", 0, "Đang chờ thanh toán");
     }
@@ -468,6 +443,10 @@ public class QuanLyDatChoTruocDAO {
     }
 
     private String hienThiTrangThaiDatCho(String value) {
+        return hienThiTrangThaiDatCho(value, 0);
+    }
+
+    private String hienThiTrangThaiDatCho(String value, int soPhien) {
         if (value == null || value.isBlank()) {
             return "Chưa có trạng thái";
         }
@@ -482,7 +461,13 @@ public class QuanLyDatChoTruocDAO {
         if (normalized.contains("thanh cong")) {
             return "Đã thanh toán thành công";
         }
+        if (normalized.contains("qua han nhan cho")) {
+            return com.wms.config.AppConstants.TRANG_THAI_DAT_CHO_QUA_HAN;
+        }
         if (normalized.contains("su dung")) {
+            if (soPhien > 0) {
+                return "Đã nhận chỗ";
+            }
             return "Đã sử dụng";
         }
         return decoded;

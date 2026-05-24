@@ -93,7 +93,7 @@
                     <label>
                         Từ giờ
                         <select name="start" id="startHour">
-                            <option th:each="time : ${layLuaChonGio}"
+                            <option th:each="time : ${layLuaChonGioBatDau}"
                                     th:value="${time}"
                                     th:text="${time}"
                                     th:selected="${time == selectedStart.toString()}"></option>
@@ -102,7 +102,7 @@
                     <label>
                         Đến giờ
                         <select name="end" id="endHour">
-                            <option th:each="time : ${layLuaChonGio}"
+                            <option th:each="time : ${layLuaChonGioKetThuc}"
                                     th:value="${time}"
                                     th:text="${time}"
                                     th:selected="${time == selectedEnd.toString()}"></option>
@@ -200,9 +200,24 @@
         if (!dateInput.value || !startInput.value || !endInput.value) {
             return "Vui lòng chọn đầy đủ ngày giờ đặt chỗ.";
         }
-        if (minutes(endInput.value) <= minutes(startInput.value)) {
+        
+        const moCua = [[${branch.thoiGianMoCua}]];
+        const dongCua = [[${branch.thoiGianDongCua}]];
+        const startMin = minutes(startInput.value);
+        const endMin = minutes(endInput.value);
+        const openMin = minutes(moCua);
+        const closeMin = minutes(dongCua);
+
+        if (startMin < openMin || startMin >= closeMin) {
+            return "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + moCua + " - " + dongCua + ".";
+        }
+        if (endMin > closeMin) {
+            return "Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.";
+        }
+        if (endMin <= startMin) {
             return "Giờ kết thúc phải sau giờ bắt đầu.";
         }
+
         const thoiGianBatDau = new Date(dateInput.value + "T" + startInput.value + ":00");
         if (Number.isNaN(thoiGianBatDau.getTime()) || thoiGianBatDau <= new Date()) {
             return "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";

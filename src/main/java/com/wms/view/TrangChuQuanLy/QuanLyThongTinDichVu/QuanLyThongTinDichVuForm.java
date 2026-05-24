@@ -320,8 +320,8 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         try {
             DichVuDTO dv = getFormData();
             
-            // Không cho phép thay đổi trạng thái của dịch vụ hệ thống
-            if ("DV000".equals(dv.getMaDV()) && !"Đang hoạt động".equals(dv.getTrangThaiDV())) {
+            // Chặn ngừng kinh doanh cho dịch vụ hệ thống
+            if ("DV0000".equals(dv.getMaDV()) && !"Đang hoạt động".equals(dv.getTrangThaiDV())) {
                 JOptionPane.showMessageDialog(this, "Không thể ngừng kinh doanh dịch vụ hệ thống (Gia hạn giờ)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }

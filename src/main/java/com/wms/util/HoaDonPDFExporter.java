@@ -63,47 +63,39 @@ public class HoaDonPDFExporter {
                         normalFont));
                 document.add(new Paragraph(" "));
 
-                PdfPTable table = new PdfPTable(3);
+                PdfPTable table = new PdfPTable(4);
                 table.setWidthPercentage(100);
                 table.addCell(new Phrase("Ten dich vu", boldFont));
-                table.addCell(new Phrase("So luong", boldFont));
+                table.addCell(new Phrase("SL/Gio", boldFont));
                 table.addCell(new Phrase("Don gia (VND)", boldFont));
+                table.addCell(new Phrase("Thanh tien (VND)", boldFont));
 
-                // Danh sách dịch vụ (đã bao gồm tiền thuê không gian từ DAO)
+                // Danh sách dịch vụ, trong đó dòng đầu tiên là tiền thuê không gian thực tế
                 if (hoaDon.getDanhSachDichVu() != null) {
                     for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
                         table.addCell(new Phrase(removeAccents(dv.getTenDichVu()), normalFont));
-                        // Nếu là tiền thuê, hiển thị đơn vị 'gio'
-                        String slStr = String.valueOf(dv.getSoLuong());
-                        if (dv.getTenDichVu().startsWith("Thuê")) {
-                             slStr += " gio";
-                        }
+                        String slStr = dv.getTenDichVu().startsWith("Thuê") ? String.format(Locale.US, "%.1f gio", (double) dv.getSoLuong()) : String.valueOf(dv.getSoLuong());
                         table.addCell(new Phrase(slStr, normalFont));
                         table.addCell(new Phrase(String.format("%,.0f", dv.getDonGia()), normalFont));
+                        table.addCell(new Phrase(String.format("%,.0f", dv.getThanhTien()), normalFont));
                     }
                 }
                 document.add(table);
                 document.add(new Paragraph(" "));
 
                 double tongTienGoc = hoaDon.getTongTien();
+                double tienDaTraTruoc = hoaDon.getSoTienDaTraTruoc();
+                double conPhaiThanhToan = Math.max(0, tongTienGoc - tienDaTraTruoc - tienGiamGia);
 
                 document.add(new Paragraph("TONG CONG: " + formatTien.format(tongTienGoc), boldFont));
-                if (hoaDon.getSoTienDaTraTruoc() > 0) {
-                    document.add(new Paragraph("DA TRA TRUOC (ONLINE): -" + formatTien.format(hoaDon.getSoTienDaTraTruoc()), normalFont));
+                if (tienDaTraTruoc > 0) {
+                    document.add(new Paragraph("DA TRA TRUOC (ONLINE): -" + formatTien.format(tienDaTraTruoc), normalFont));
                 }
                 if (tienGiamGia > 0) {
                     document.add(new Paragraph("GIAM GIA: -" + formatTien.format(tienGiamGia), normalFont));
                 }
 
-                double thanhTien;
-                if (tienGiamGia > 0 || hoaDon.getSoTienDaTraTruoc() > 0) {
-                    thanhTien = Math.max(0, tongTienGoc - hoaDon.getSoTienDaTraTruoc() - tienGiamGia);
-                } else {
-                    thanhTien = hoaDon.getThanhTien() > 0 ? hoaDon.getThanhTien() : tongTienGoc;
-                }
-                
-                String labelThanhTien = hoaDon.getSoTienDaTraTruoc() > 0 ? "CON PHAI THU: " : "THANH TIEN: ";
-                document.add(new Paragraph(labelThanhTien + formatTien.format(thanhTien), boldFont));
+                document.add(new Paragraph("CON PHAI THANH TOAN: " + formatTien.format(conPhaiThanhToan), boldFont));
                 Paragraph end = new Paragraph("\n      --- CAM ON QUY KHACH ---");
                 end.setAlignment(Element.ALIGN_CENTER);
                 document.add(end);

@@ -28,7 +28,8 @@ ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_ThoiGianSD
 
 ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_TrangThai 
     CHECK (TrangThaiDatTruoc IN (
-        'Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công', 'Đã sử dụng'));
+        'Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công',
+        'Đã sử dụng', 'Quá hạn nhận chỗ'));
 
 -- 5. Bảng PHIENLAMVIEC
 ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai
@@ -46,7 +47,7 @@ ALTER TABLE CHITIETDICHVU ADD CONSTRAINT CHK_CTDV_SoLuong
 
 -- 7. Bảng KHONGGIAN & LOAIKHONGGIAN
 ALTER TABLE KHONGGIAN ADD CONSTRAINT CHK_KG_TrangThai
-    CHECK (TrangThaiKG IN ('Trống', 'Tạm khoá', 'Đã đặt trước', 'Đang hoạt động', 'Dọn dẹp', 'Bảo trì'));
+    CHECK (TrangThaiKG IN ('Trống', 'Tạm khoá', 'Đã đặt trước', 'Đang hoạt động', 'Bảo trì'));
 
 ALTER TABLE LOAIKHONGGIAN ADD CONSTRAINT CHK_LKG_SucChua 
     CHECK (SucChua > 0);
@@ -78,11 +79,11 @@ ALTER TABLE NHANVIEN ADD CONSTRAINT CHK_NV_PhuCap
     CHECK (PhuCap >= 0);
 
 -- 10. Bảng HOADON
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_PTTT 
-    CHECK (PhuongThucThanhToan IN ('Chuyển khoản', 'Tiền mặt'));
+ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_PTTT
+    CHECK (PhuongThucThanhToan IN ('Chuyển khoản', 'Tiền mặt', 'Đặt trước'));
 
 ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TrangThai
-    CHECK (TrangThaiThanhToan IN ('Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
+    CHECK (TrangThaiThanhToan IN ('Đang chờ thanh toán', 'Đã trả trước', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
 
 ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TongTien 
     CHECK (TongTien >= 0);

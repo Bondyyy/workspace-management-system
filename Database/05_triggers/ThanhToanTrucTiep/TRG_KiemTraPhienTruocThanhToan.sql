@@ -8,7 +8,7 @@ BEGIN
     IF ((:NEW.TrangThaiThanhToan IN ('Đã thanh toán thành công', 'Đã thanh toán'))
         AND (NVL(:OLD.TrangThaiThanhToan, '') NOT IN ('Đã thanh toán thành công', 'Đã thanh toán')))
        OR
-       (:NEW.PhuongThucThanhToan IS NOT NULL AND :OLD.PhuongThucThanhToan IS NULL) THEN
+       (:NEW.PhuongThucThanhToan IS NOT NULL AND :OLD.PhuongThucThanhToan IS NULL AND :NEW.TrangThaiThanhToan <> 'Đã trả trước') THEN
 
         BEGIN
             SELECT TrangThaiPhien, MaPhien

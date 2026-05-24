@@ -18,6 +18,11 @@ public class QuanLyPhienController {
     }
 
     public void loadDanhSachPhien(String keyword, String maCN) {
+        try {
+            service.tuDongKetThucPhienQuaHanDatCho();
+        } catch (Exception e) {
+            System.err.println("[Swing App] Loi khi tu dong quet va ket thuc phien: " + e.getMessage());
+        }
         view.hienThiDanhSachPhien(service.layDanhSachPhien(keyword, maCN));
     }
 

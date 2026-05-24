@@ -124,7 +124,7 @@ public class ChiTietDichVuDAO {
                 }
 
                 // Nếu là dịch vụ "Gia hạn giờ", tự động tăng thời gian kết thúc dự kiến (mỗi số lượng = 1 giờ)
-                if ("DV000".equals(maDV) || "Gia hạn giờ".equalsIgnoreCase(tenDV)) {
+                if ("DV0000".equals(maDV) || "Gia hạn giờ".equalsIgnoreCase(tenDV)) {
                     String updateTimeSql = "UPDATE PHIENLAMVIEC SET ThoiGianDuKienKetThuc = ThoiGianDuKienKetThuc + NUMTODSINTERVAL(?, 'HOUR') WHERE MaPhien = ?";
                     try (PreparedStatement psTime = conn.prepareStatement(updateTimeSql)) {
                         psTime.setInt(1, soLuong);
