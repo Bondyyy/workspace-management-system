@@ -105,3 +105,6 @@ ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_SLToiDa
 
 ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_TrangThai
     CHECK (TrangThai IN ('Đang có hiệu lực', 'Chưa đến hạn bắt đầu', 'Hết hiệu lực', 'Đã vô hiệu hoá'));
+
+ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_SLDaDung
+    CHECK (SLDaDung >= 0 AND SLDaDung <= SLToiDa);
