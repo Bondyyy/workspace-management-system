@@ -53,7 +53,7 @@
                     </div>
                     <div class="hienThiLichSu-money">
                         <span>Tổng cộng</span>
-                        <strong th:text="${item.thanhTien != null ? #numbers.formatDecimal(item.thanhTien, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</strong>
+                        <strong th:text="${item.thanhTien != null ? #numbers.formatDecimal(item.thanhTien, 0, 'POINT', 0, 'COMMA') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</strong>
                         <small th:text="${item.trangThaiThanhToan}">Trạng thái</small>
                     </div>
                 </div>
@@ -96,8 +96,8 @@
                                 <small th:text="${service.tenLoaiDV != null ? service.tenLoaiDV : 'Dịch vụ'}">Loại</small>
                             </span>
                             <span th:text="${service.soLuong != null ? service.soLuong : 0}">0</span>
-                            <span th:text="${service.donGia != null ? #numbers.formatDecimal(service.donGia, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
-                            <span th:text="${service.thanhTien != null ? #numbers.formatDecimal(service.thanhTien, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
+                            <span th:text="${service.donGia != null ? #numbers.formatDecimal(service.donGia, 0, 'POINT', 0, 'COMMA') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
+                            <span th:text="${service.thanhTien != null ? #numbers.formatDecimal(service.thanhTien, 0, 'POINT', 0, 'COMMA') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</span>
                         </div>
                     </div>
                     <p class="empty-state compact" th:if="${#lists.isEmpty(item.dichVuDaDung)}">Phiên này chưa phát sinh dịch vụ đi kèm.</p>

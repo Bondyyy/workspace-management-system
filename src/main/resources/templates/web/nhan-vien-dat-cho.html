@@ -55,7 +55,7 @@
                     <td th:text="${booking.thoiGianDuKienToi != null ? #temporals.format(booking.thoiGianDuKienToi, 'dd/MM/yyyy HH:mm') : 'Chưa có'}"></td>
                     <td th:text="${booking.khoangThoiGianSuDung != null ? booking.khoangThoiGianSuDung : 'Chưa có'}"></td>
                     <td th:text="${booking.trangThaiDatTruoc}"></td>
-                    <td th:text="${booking.thanhTien != null ? #numbers.formatDecimal(booking.thanhTien, 0, 'COMMA', 0, 'POINT') : '0'}"></td>
+                    <td th:text="${booking.thanhTien != null ? #numbers.formatDecimal(booking.thanhTien, 0, 'POINT', 0, 'COMMA') : '0'}"></td>
                     <td class="action-cell">
                         <form th:action="@{'/staff/bookings/' + ${booking.maDatCho} + '/xacNhan'}" method="post">
                             <button type="submit" class="button-primary small-button">Xác nhận</button>
@@ -73,5 +73,6 @@
         </div>
     </section>
 </main>
+<script src="/js/input-format.js"></script>
 </body>
 </html>

@@ -22,7 +22,7 @@ public class QuanLyKhoController {
             view.hienThiDuLieu(danhSach);
         } catch (Exception e) {
             e.printStackTrace();
-            view.hienThiThongBaoLoi("Lỗi khi tải dữ liệu từ CSDL: " + e.getMessage());
+            view.hienThiThongBaoLoi(com.wms.util.ErrorMessageUtil.toUserMessage(e));
         }
     }
 

@@ -156,9 +156,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                     System.out.println("[QuanLyPhienForm] load danh sach phien mat "
                             + (System.currentTimeMillis() - start) + " ms");
                 } catch (Exception ex) {
-                    javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
-                            "Lỗi tải danh sách phiên: " + ex.getMessage(),
-                            "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(QuanLyPhienForm.this, "Lỗi tải danh sách phiên.", ex);
                 } finally {
                     setDangTaiDanhSach(false);
                 }
@@ -201,7 +199,8 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO> list) {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblDichVu.getModel();
         model.setRowCount(0);
-        java.text.DecimalFormat df = new java.text.DecimalFormat("#,### VNĐ");
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,### VNĐ",
+                java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
         for (com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO dv : list) {
             model.addRow(new Object[] {
                     dv.getTenDV(),
@@ -691,9 +690,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                             btnKetThucPhien.setEnabled(true);
                         }
                     } catch (Exception ex) {
-                        javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
-                                "Lỗi khi kết thúc phiên: " + ex.getMessage(),
-                                "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+                        com.wms.util.MessageUtil.showError(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên.", ex);
                         btnKetThucPhien.setEnabled(true);
                     }
                 }
@@ -814,9 +811,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                 try {
                     hienThiDichVuTrongPhien(get());
                 } catch (Exception ex) {
-                    javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
-                            "Lỗi tải dịch vụ trong phiên: " + ex.getMessage(),
-                            "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(QuanLyPhienForm.this, "Lỗi tải dịch vụ trong phiên.", ex);
                     model.setRowCount(0);
                 }
             }

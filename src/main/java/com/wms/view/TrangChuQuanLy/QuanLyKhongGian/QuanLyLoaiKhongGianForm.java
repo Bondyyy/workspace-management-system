@@ -5,55 +5,23 @@ import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.LoaiKhongGianDTO;
 
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import java.text.DecimalFormat;
 import java.util.List;
 
 public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
     private final KhongGianController controller = new KhongGianController();
-    private static final DecimalFormat FORMAT_TIEN = new DecimalFormat("#,###");
 
     public QuanLyLoaiKhongGianForm(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtDonGia);
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtSucChua);
         taiDanhSach(null);
         txtMaLoaiKG.setText("");
-        
-        txtDonGia.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
-        });
 
         pack();
         setLocationRelativeTo(parent);
         com.wms.util.TienIchFormQuanLy.apDung(this);
-    }
-
-    private boolean isFormatting = false;
-
-    private void formatDonGia() {
-        if (isFormatting) return;
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            isFormatting = true;
-            try {
-                String text = txtDonGia.getText().replace(",", "").replace(".", "");
-                if (!text.isEmpty()) {
-                    long value = Long.parseLong(text);
-                    String formatted = FORMAT_TIEN.format(value);
-                    if (!txtDonGia.getText().equals(formatted)) {
-                        txtDonGia.setText(formatted);
-                    }
-                }
-            } catch (NumberFormatException ex) {
-                // Ignore invalid input
-            } finally {
-                isFormatting = false;
-            }
-        });
     }
 
     private void taiDanhSach(String tuKhoa) {
@@ -61,8 +29,8 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         model.setRowCount(0);
         List<LoaiKhongGianDTO> list = controller.timKiemLoai(tuKhoa);
         for (LoaiKhongGianDTO dto : list) {
-            String sucChua = dto.getSucChua() != null ? String.valueOf(dto.getSucChua()) : "-";
-            String donGia = dto.getDonGiaTheoGio() != null ? FORMAT_TIEN.format(dto.getDonGiaTheoGio()) : "-";
+            String sucChua = dto.getSucChua() != null ? com.wms.util.InputFormatUtil.formatThousands(dto.getSucChua()) : "-";
+            String donGia = dto.getDonGiaTheoGio() != null ? com.wms.util.InputFormatUtil.formatThousands(dto.getDonGiaTheoGio()) : "-";
             String trangThai = dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động";
             model.addRow(new Object[]{dto.getMaLoaiKG(), dto.getTenLoaiKG(), sucChua, donGia, trangThai});
         }
@@ -286,24 +254,8 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
     }//GEN-LAST:event_cbxTrangThaiActionPerformed
 
     private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        String tenLoai = txtTenLoaiKG.getText().trim();
-        String donGiaStr = txtDonGia.getText().trim().replace(",", "");
-
-        if (tenLoai.isEmpty() || donGiaStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin bắt buộc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         try {
-            double donGia = Double.parseDouble(donGiaStr);
-            Integer sucChua = txtSucChua.getText().trim().isEmpty() ? null : Integer.parseInt(txtSucChua.getText().trim());
-
-            LoaiKhongGianDTO dto = new LoaiKhongGianDTO();
-            dto.setMaLoaiKG(txtMaLoaiKG.getText().trim());
-            dto.setTenLoaiKG(tenLoai);
-            dto.setSucChua(sucChua);
-            dto.setDonGiaTheoGio(donGia);
-            dto.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang hoạt động");
+            LoaiKhongGianDTO dto = getFormData();
 
             if (controller.themLoai(dto)) {
                 JOptionPane.showMessageDialog(this, "Thêm thành công!");
@@ -312,8 +264,8 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
             } else {
                 JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Định dạng số không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
     }
 
@@ -325,12 +277,8 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         }
 
         try {
-            LoaiKhongGianDTO dto = new LoaiKhongGianDTO();
+            LoaiKhongGianDTO dto = getFormData();
             dto.setMaLoaiKG(maLoai);
-            dto.setTenLoaiKG(txtTenLoaiKG.getText().trim());
-            dto.setSucChua(txtSucChua.getText().trim().isEmpty() ? null : Integer.parseInt(txtSucChua.getText().trim()));
-            dto.setDonGiaTheoGio(Double.parseDouble(txtDonGia.getText().trim().replace(",", "")));
-            dto.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang hoạt động");
 
             if (controller.capNhatLoai(dto)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
@@ -339,9 +287,59 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Định dạng số không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
+    }
+
+    private LoaiKhongGianDTO getFormData() {
+        String tenLoai = txtTenLoaiKG.getText().trim();
+        if (tenLoai.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập tên loại không gian.");
+        }
+        if (txtDonGia.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập đơn giá.");
+        }
+
+        java.math.BigDecimal donGia;
+        try {
+            donGia = com.wms.util.InputFormatUtil.getBigDecimalValue(txtDonGia);
+            if (donGia == null) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Đơn giá phải là số hợp lệ.");
+        }
+        if (donGia.signum() < 0) {
+            throw new IllegalArgumentException("Đơn giá không được âm.");
+        }
+
+        Integer sucChua = null;
+        if (!txtSucChua.getText().trim().isEmpty()) {
+            try {
+                Long value = com.wms.util.InputFormatUtil.getNumberValue(txtSucChua);
+                if (value == null) {
+                    throw new NumberFormatException();
+                }
+                if (value < 0) {
+                    throw new IllegalArgumentException("Sức chứa không được âm.");
+                }
+                if (value > Integer.MAX_VALUE) {
+                    throw new NumberFormatException();
+                }
+                sucChua = value.intValue();
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("Sức chứa phải là số nguyên hợp lệ.");
+            }
+        }
+
+        LoaiKhongGianDTO dto = new LoaiKhongGianDTO();
+        dto.setMaLoaiKG(txtMaLoaiKG.getText().trim());
+        dto.setTenLoaiKG(tenLoai);
+        dto.setSucChua(sucChua);
+        dto.setDonGiaTheoGio(donGia.doubleValue());
+        dto.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang hoạt động");
+        return dto;
     }
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
@@ -357,8 +355,10 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         if (row >= 0) {
             txtMaLoaiKG.setText(tblLoaiKhongGian.getValueAt(row, 0).toString());
             txtTenLoaiKG.setText(tblLoaiKhongGian.getValueAt(row, 1).toString());
-            txtSucChua.setText(tblLoaiKhongGian.getValueAt(row, 2).toString().replace("-", ""));
-            txtDonGia.setText(tblLoaiKhongGian.getValueAt(row, 3).toString().replace(",", "").replace("-", ""));
+            String sucChua = tblLoaiKhongGian.getValueAt(row, 2).toString();
+            String donGia = tblLoaiKhongGian.getValueAt(row, 3).toString();
+            txtSucChua.setText("-".equals(sucChua) ? "" : com.wms.util.InputFormatUtil.formatThousands(sucChua));
+            txtDonGia.setText("-".equals(donGia) ? "" : com.wms.util.InputFormatUtil.formatThousands(donGia));
             
             Object val = tblLoaiKhongGian.getValueAt(row, 4);
             cbxTrangThai.setSelectedItem(val != null ? val.toString() : "Đang hoạt động");

@@ -40,7 +40,8 @@ import java.util.List;
 public class TongQuanForm extends JPanel {
 
     private final TongQuanController controller = new TongQuanController();
-    private final DecimalFormat formatTien = new DecimalFormat("#,### VNĐ");
+    private final DecimalFormat formatTien = new DecimalFormat("#,### VNĐ",
+            java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
     private final Color mauHong = Color.decode("#EB5E8D");
     private final Color mauXanh = Color.decode("#5E8DEB");
     private final Color mauCam = Color.decode("#EB8D5E");
@@ -336,7 +337,7 @@ public class TongQuanForm extends JPanel {
                 BaoCaoCsvExporter.xuatCsv(file, duLieu);
                 JOptionPane.showMessageDialog(this, "Xuất báo cáo CSV thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xuất CSV: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                com.wms.util.MessageUtil.showError(this, "Lỗi khi xuất CSV.", e);
             }
         }
     }
@@ -366,7 +367,7 @@ public class TongQuanForm extends JPanel {
                 );
                 JOptionPane.showMessageDialog(this, "Xuất báo cáo PDF thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xuất báo cáo PDF: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                com.wms.util.MessageUtil.showError(this, "Lỗi khi xuất báo cáo PDF.", e);
             }
         }
     }

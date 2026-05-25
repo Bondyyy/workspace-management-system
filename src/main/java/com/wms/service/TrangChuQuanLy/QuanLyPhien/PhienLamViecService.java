@@ -240,7 +240,7 @@ public class PhienLamViecService {
         if (value == null) {
             return "0 VNĐ";
         }
-        return new DecimalFormat("#,### VNĐ").format(value);
+        return com.wms.util.InputFormatUtil.formatThousands(value) + " VNĐ";
     }
 
     private String tachMaDatCho(String noiDungQr) {

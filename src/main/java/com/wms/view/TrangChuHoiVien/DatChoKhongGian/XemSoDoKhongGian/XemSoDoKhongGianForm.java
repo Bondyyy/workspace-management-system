@@ -39,7 +39,8 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
     private List<KhongGianDTO> danhSachKGHienTai;
     private String maChiNhanhHienTai = "";
     private String tenChiNhanhHienTai = "";
-    private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
+    private final DecimalFormat df = new DecimalFormat("#,### VNĐ",
+            java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
     private final LoaiKhongGianDAO lkgDao = new LoaiKhongGianDAO();
 
     public XemSoDoKhongGianForm(String maChiNhanh, String tenChiNhanh) {

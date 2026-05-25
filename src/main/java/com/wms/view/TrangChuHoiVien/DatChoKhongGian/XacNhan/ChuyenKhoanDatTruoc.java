@@ -30,7 +30,8 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
     private double tongTienBanDau = 0;
     private double thanhTien = 0;
     private String maKG_Booking;
-    private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
+    private final DecimalFormat df = new DecimalFormat("#,### VNĐ",
+            java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
 
     public ChuyenKhoanDatTruoc() {
         initComponents();
@@ -448,7 +449,7 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi xử lý đặt chỗ: " + e.getMessage());
+            com.wms.util.MessageUtil.showError(this, "Lỗi xử lý đặt chỗ.", e);
         }
     }
 

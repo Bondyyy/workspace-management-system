@@ -21,10 +21,12 @@ public class KhongGianService {
     }
 
     public boolean themKhongGian(KhongGianDTO dto) {
+        validateKhongGian(dto, false);
         return kgDAO.them(dto);
     }
 
     public boolean capNhatKhongGian(KhongGianDTO dto) {
+        validateKhongGian(dto, true);
         return kgDAO.capNhat(dto);
     }
 
@@ -41,10 +43,12 @@ public class KhongGianService {
     }
 
     public boolean themLoai(LoaiKhongGianDTO dto) {
+        validateLoaiKhongGian(dto, false);
         return lkgDAO.them(dto);
     }
 
     public boolean capNhatLoai(LoaiKhongGianDTO dto) {
+        validateLoaiKhongGian(dto, true);
         return lkgDAO.capNhat(dto);
     }
 
@@ -88,5 +92,47 @@ public class KhongGianService {
 
     public String sinhMaLoaiKG() {
         return lkgDAO.taoMaMoi();
+    }
+
+    private void validateKhongGian(KhongGianDTO dto, boolean capNhat) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Vui lòng nhập thông tin không gian.");
+        }
+        if (capNhat && (dto.getMaKG() == null || dto.getMaKG().isBlank())) {
+            throw new IllegalArgumentException("Vui lòng chọn không gian.");
+        }
+        if (dto.getTenKG() == null || dto.getTenKG().isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập tên không gian.");
+        }
+        if (dto.getMaCN() == null || dto.getMaCN().isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn chi nhánh.");
+        }
+        if (dto.getMaLoaiKG() == null || dto.getMaLoaiKG().isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn loại không gian.");
+        }
+        if (dto.getChieuDai() <= 0 || dto.getChieuRong() <= 0) {
+            throw new IllegalArgumentException("Kích thước không gian phải lớn hơn 0.");
+        }
+    }
+
+    private void validateLoaiKhongGian(LoaiKhongGianDTO dto, boolean capNhat) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Vui lòng nhập thông tin loại không gian.");
+        }
+        if (capNhat && (dto.getMaLoaiKG() == null || dto.getMaLoaiKG().isBlank())) {
+            throw new IllegalArgumentException("Vui lòng chọn loại không gian.");
+        }
+        if (dto.getTenLoaiKG() == null || dto.getTenLoaiKG().isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập tên loại không gian.");
+        }
+        if (dto.getDonGiaTheoGio() == null) {
+            throw new IllegalArgumentException("Vui lòng nhập đơn giá.");
+        }
+        if (dto.getDonGiaTheoGio() < 0) {
+            throw new IllegalArgumentException("Đơn giá không được âm.");
+        }
+        if (dto.getSucChua() != null && dto.getSucChua() < 0) {
+            throw new IllegalArgumentException("Sức chứa không được âm.");
+        }
     }
 }

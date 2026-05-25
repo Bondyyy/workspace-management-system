@@ -93,8 +93,7 @@ public class ThanhToanHoaDonForm extends JPanel {
                             + (System.currentTimeMillis() - start) + " ms");
                 } catch (Exception ex) {
                     lblTrangThaiMaGG.setText("");
-                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this,
-                            "Lỗi tải hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(ThanhToanHoaDonForm.this, "Lỗi tải hóa đơn.", ex);
                 }
             }
         }.execute();
@@ -710,7 +709,7 @@ public class ThanhToanHoaDonForm extends JPanel {
                 dangXuLyThanhToan = false;
                 try {
                     com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO result = get();
-                    String message = result.getMessage() != null ? result.getMessage() : "";
+                    String message = com.wms.util.ErrorMessageUtil.toUserMessage(result.getMessage());
                     System.out.println("[ThanhToanHoaDonForm] thanh toan mat "
                             + (System.currentTimeMillis() - start) + " ms");
 
@@ -746,8 +745,7 @@ public class ThanhToanHoaDonForm extends JPanel {
                     if (btnXoaMaGG != null) btnXoaMaGG.setEnabled(true);
                     nutInHoaDon.setEnabled(false);
                     lblTrangThaiMaGG.setText("");
-                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this,
-                            "Lỗi thanh toán: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(ThanhToanHoaDonForm.this, "Lỗi thanh toán.", ex);
                 }
             }
         }.execute();
@@ -849,8 +847,7 @@ public class ThanhToanHoaDonForm extends JPanel {
                         Desktop.getDesktop().open(exported);
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this,
-                            "Lỗi xuất hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(ThanhToanHoaDonForm.this, "Lỗi xuất hóa đơn.", ex);
                 }
             }
         }.execute();

@@ -819,7 +819,7 @@ public class CongThongTinService {
         if (value == null) {
             return "0 VNĐ";
         }
-        return new DecimalFormat("#,### VNĐ").format(value);
+        return com.wms.util.InputFormatUtil.formatThousands(value) + " VNĐ";
     }
 
     public record KhungGioDatCho(LocalDate date, LocalTime startTime, LocalTime endTime) {

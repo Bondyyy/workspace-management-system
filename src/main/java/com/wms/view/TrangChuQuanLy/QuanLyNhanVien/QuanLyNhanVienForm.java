@@ -20,6 +20,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
 
     public QuanLyNhanVienForm() {
         initComponents();
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtLuong);
         loadComboBoxData();
         apDungPhanQuyen();
         loadData();
@@ -120,7 +121,9 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             tblNhanVien.putClientProperty("maND_" + key, r[13]);
             tblNhanVien.putClientProperty("gioiTinh_" + key, r[8]);
             tblNhanVien.putClientProperty("email_" + key, r[9]);
-            tblNhanVien.putClientProperty("luong_" + key, r[10] != null ? String.valueOf(r[10]) : "");
+            tblNhanVien.putClientProperty("luong_" + key,
+                    r[10] instanceof Number ? com.wms.util.InputFormatUtil.formatThousands((Number) r[10])
+                            : com.wms.util.InputFormatUtil.formatThousands(r[10] != null ? r[10].toString() : ""));
             tblNhanVien.putClientProperty("trangThai_" + key, r[7]);
             tblNhanVien.putClientProperty("ngaySinh_" + key, r[15]); // r[15] là NgaySinh
             tblNhanVien.putClientProperty("anhData_" + key, r[14]); // r[14] là AnhDaiDien (byte[])
@@ -519,7 +522,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
                 lblAnhDaiDien.setText("");
                 lblAnhDaiDien.putClientProperty("anhData", data);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi đọc file ảnh!");
+                com.wms.util.MessageUtil.showError(this, "Lỗi đọc file ảnh.", e);
             }
         }
     }
@@ -538,7 +541,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -561,10 +564,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
                 loadData();
             }
         } catch (Exception e) {
-            String msg = e.getMessage();
-            if (msg == null || msg.isEmpty())
-                msg = "Cập nhật thất bại (Lỗi không xác định)";
-            JOptionPane.showMessageDialog(this, "Lỗi: " + msg, "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -595,15 +595,21 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         nv.setCaLamViec((String) cbxCaLam.getSelectedItem());
         nv.setTrangThaiLamViec((String) cbxTrangThai.getSelectedItem());
         nv.setMaCN(getMaCNDangChon());
+        String luongStr = txtLuong.getText().trim();
+        if (luongStr.isEmpty() || luongStr.equalsIgnoreCase("Chưa phân")) {
+            throw new IllegalArgumentException("Vui lòng nhập tiền lương.");
+        }
         try {
-            String luongStr = txtLuong.getText().trim();
-            if (luongStr.isEmpty() || luongStr.equalsIgnoreCase("Chưa phân")) {
-                nv.setLuongCoBan(null);
-            } else {
-                nv.setLuongCoBan(Double.parseDouble(luongStr));
+            java.math.BigDecimal luong = com.wms.util.InputFormatUtil.getBigDecimalValue(txtLuong);
+            if (luong == null) {
+                throw new NumberFormatException();
             }
-        } catch (Exception e) {
-            nv.setLuongCoBan(null);
+            if (luong.signum() < 0) {
+                throw new IllegalArgumentException("Tiền lương không được âm.");
+            }
+            nv.setLuongCoBan(luong.doubleValue());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Tiền lương phải là số hợp lệ.");
         }
         return nv;
     }
@@ -658,7 +664,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         txtTenTaiKhoan.setText(objTenTK != null ? objTenTK.toString() : "");
 
         Object objLuong = tblNhanVien.getClientProperty("luong_" + key);
-        txtLuong.setText(objLuong != null ? objLuong.toString() : "");
+        txtLuong.setText(objLuong != null ? com.wms.util.InputFormatUtil.formatThousands(objLuong.toString()) : "");
 
         Object objGioiTinh = tblNhanVien.getClientProperty("gioiTinh_" + key);
         cbxGioiTinh.setSelectedItem(objGioiTinh);

@@ -60,6 +60,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
     private void initTimeCalculation() {
         txtThoiGianSuDung.setEditable(true);
         txtThoiGianSuDung.setBackground(Color.WHITE);
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtThoiGianSuDung);
         txtThoiGianSuDung.setText("1"); // Mặc định 1h
         
         // Cập nhật giờ kết thúc lần đầu
@@ -89,7 +90,11 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                 return;
             }
             
-            int hours = Integer.parseInt(suDungStr);
+            Long parsedHours = com.wms.util.InputFormatUtil.getNumberValue(txtThoiGianSuDung);
+            if (parsedHours == null || parsedHours > Integer.MAX_VALUE) {
+                throw new NumberFormatException();
+            }
+            int hours = parsedHours.intValue();
             if (hours <= 0) {
                 txtThoiGianKetThuc.setText("So gio > 0");
                 txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
@@ -244,7 +249,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         txtKhongGianChon.setText(kg.getTenKG());
         txtLoaiKhongGian.setText(kg.getTenLoaiKG() != null ? kg.getTenLoaiKG() : "Không xác định");
         txtMaKGian.setText(kg.getMaKG());
-        txtGiaTien.setText(kg.getDonGia() != null ? String.format("%,.0f", kg.getDonGia()) : "0");
+        txtGiaTien.setText(kg.getDonGia() != null ? com.wms.util.InputFormatUtil.formatThousands(kg.getDonGia()) : "0");
 
         // Cap nhat gio hoat dong cua chi nhanh tuong ung voi khong gian da chon
         String[] gioHoatDong = controller.layGioHoatDongTheoKhongGian(kg.getMaKG());
@@ -619,7 +624,11 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
         int soGio = 0;
         try {
-            soGio = Integer.parseInt(suDungStr);
+            Long parsedHours = com.wms.util.InputFormatUtil.getNumberValue(txtThoiGianSuDung);
+            if (parsedHours == null || parsedHours > Integer.MAX_VALUE) {
+                throw new NumberFormatException();
+            }
+            soGio = parsedHours.intValue();
             if (soGio <= 0) {
                 throw new NumberFormatException();
             }
@@ -630,8 +639,8 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
 
         double giaTien = 0;
         try {
-            String giaStr = txtGiaTien.getText().replace(",", "").replace(".", "").trim();
-            giaTien = Double.parseDouble(giaStr);
+            java.math.BigDecimal giaValue = com.wms.util.InputFormatUtil.getBigDecimalValue(txtGiaTien);
+            giaTien = giaValue != null ? giaValue.doubleValue() : 0;
         } catch (Exception e) {
             // Giữ giá 0 nếu ô giá chưa có dữ liệu hợp lệ.
         }
@@ -646,9 +655,9 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                 com.wms.util.MessageUtil.showError(this, "[DATABASE/SYSTEM ERROR]: Loi khi mo phien lam viec! Vui long kiem tra lai ket noi hoac du lieu.");
             }
         } catch (IllegalArgumentException e) {
-            com.wms.util.MessageUtil.showError(this, e.getMessage());
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         } catch (Exception e) {
-            com.wms.util.MessageUtil.showError(this, "[DATABASE/SYSTEM ERROR]: Loi khi mo phien: " + e.getMessage());
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }//GEN-LAST:event_btnMoPhienActionPerformed
 

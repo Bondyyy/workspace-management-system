@@ -273,7 +273,7 @@ public class BaoCaoLuongNhanVienForm extends JPanel {
                 BaoCaoCsvExporter.xuatCsv(file, taoDuLieuBaoCao());
                 JOptionPane.showMessageDialog(this, "Xuất báo cáo CSV thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xuất CSV: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                com.wms.util.MessageUtil.showError(this, "Lỗi khi xuất CSV.", e);
             }
         }
     }
@@ -299,7 +299,7 @@ public class BaoCaoLuongNhanVienForm extends JPanel {
                 );
                 JOptionPane.showMessageDialog(this, "Xuất báo cáo PDF thành công!\n" + file.getAbsolutePath(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xuất báo cáo PDF: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                com.wms.util.MessageUtil.showError(this, "Lỗi khi xuất báo cáo PDF.", e);
             }
         }
     }

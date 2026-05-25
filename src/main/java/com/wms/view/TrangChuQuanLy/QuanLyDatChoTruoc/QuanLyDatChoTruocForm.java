@@ -23,7 +23,8 @@ import javax.swing.table.DefaultTableModel;
 public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private final QuanLyDatChoTruocController controller = new QuanLyDatChoTruocController();
     private List<DatChoTruocDTO> currentList = new ArrayList<>();
-    private final DecimalFormat moneyFormat = new DecimalFormat("#,###");
+    private final DecimalFormat moneyFormat = new DecimalFormat("#,###",
+            java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
     private final DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     /**
@@ -483,7 +484,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             }
             JOptionPane.showMessageDialog(this, "Không thể cập nhật thông tin khách.", "Lỗi", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(ex), "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
         }
     }
 

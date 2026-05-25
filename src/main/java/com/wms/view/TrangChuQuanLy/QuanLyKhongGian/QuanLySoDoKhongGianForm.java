@@ -338,7 +338,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
             }
             String loiChongLan = kiemTraChongLan(maKG, x, y, w, h);
             if (loiChongLan != null) {
-                JOptionPane.showMessageDialog(this, loiChongLan, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loiChongLan), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -384,7 +384,7 @@ public class QuanLySoDoKhongGianForm extends javax.swing.JDialog {
                 JOptionPane.showMessageDialog(this, "Lưu thành công!");
                 taiDanhSach();
             } else {
-                JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

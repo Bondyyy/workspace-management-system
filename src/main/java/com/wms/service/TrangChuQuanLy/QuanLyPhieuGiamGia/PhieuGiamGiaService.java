@@ -12,13 +12,12 @@ public class PhieuGiamGiaService {
     }
 
     public boolean themMoi(PhieuGiamGiaDTO dto) {
-        if (!kiemTraHopLe(dto)) return false;
-        
+        kiemTraHopLe(dto);
         return dao.themMoi(dto);
     }
 
     public boolean capNhat(PhieuGiamGiaDTO dto) {
-        if (!kiemTraHopLe(dto)) return false;
+        kiemTraHopLe(dto);
         return dao.capNhat(dto);
     }
 
@@ -37,31 +36,28 @@ public class PhieuGiamGiaService {
         return dao.timKiem(keyword);
     }
 
-    private boolean kiemTraHopLe(PhieuGiamGiaDTO dto) {
+    private void kiemTraHopLe(PhieuGiamGiaDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Vui lòng nhập thông tin phiếu giảm giá.");
+        }
         if (dto.getMaChuSoPGG() == null || dto.getMaChuSoPGG().isBlank()) {
-            System.err.println("Mã nhập khuyến mãi không được để trống.");
-            return false;
+            throw new IllegalArgumentException("Vui lòng nhập mã số phiếu giảm giá.");
         }
         if (dto.getGiaTriGiamGia() <= 0) {
-            System.err.println("Giá trị giảm phải lớn hơn 0.");
-            return false;
+            throw new IllegalArgumentException("Giá trị giảm giá phải lớn hơn 0.");
         }
         if (dto.getSlToiDa() <= 0) {
-            System.err.println("Số lượng phát hành phải lớn hơn 0.");
-            return false;
+            throw new IllegalArgumentException("Số lượng phát hành phải lớn hơn 0.");
         }
         if (dto.getGiaTriApDungToiThieu() < dto.getGiaTriGiamGia()) {
-            System.err.println("Đơn tối thiểu không được nhỏ hơn giá trị giảm.");
-            return false;
+            throw new IllegalArgumentException("Đơn tối thiểu không được nhỏ hơn giá trị giảm.");
         }
         
         if (dto.getNgayBatDauApDung() != null && dto.getNgayKetThucApDung() != null) {
             if (dto.getNgayKetThucApDung().before(dto.getNgayBatDauApDung())) {
-                System.err.println("Ngày kết thúc phải sau ngày bắt đầu.");
-                return false;
+                throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
             }
         }
-        return true;
     }
 
     public String sinhMaMoi() {

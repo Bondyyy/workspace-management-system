@@ -24,6 +24,8 @@ public class NhanVienService {
 
     public boolean themNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen, String maVaiTro, String matKhau) throws Exception {
         validateNhanVien(nv, nd, hoTen);
+        if (maVaiTro == null || maVaiTro.isBlank()) throw new Exception("Vui lòng chọn vai trò!");
+        if (matKhau == null || matKhau.isBlank()) throw new Exception("Vui lòng nhập mật khẩu tài khoản!");
         return nhanVienDAO.themNhanVien(nv, nd, hoTen, maVaiTro, matKhau);
     }
 
@@ -39,9 +41,12 @@ public class NhanVienService {
     }
 
     private void validateNhanVien(NhanVienDTO nv, NguoiDungDTO nd, String hoTen) throws Exception {
-        if (hoTen == null || hoTen.isBlank()) throw new Exception("Họ tên không được để trống!");
-        if (nd.getSdt() == null || !nd.getSdt().matches("\\d{10}")) throw new Exception("Số điện thoại phải là 10 chữ số!");
-        if (nd.getEmail() == null || !nd.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) throw new Exception("Email không đúng định dạng!");
+        if (hoTen == null || hoTen.isBlank()) throw new Exception("Vui lòng nhập họ tên.");
+        if (nd.getSdt() == null || nd.getSdt().isBlank()) throw new Exception("Vui lòng nhập số điện thoại.");
+        if (!nd.getSdt().matches("\\d{10}")) throw new Exception("Số điện thoại không hợp lệ.");
+        if (nd.getEmail() == null || nd.getEmail().isBlank()) throw new Exception("Vui lòng nhập email.");
+        if (!nd.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) throw new Exception("Email không hợp lệ.");
+        if (nv.getLuongCoBan() == null) throw new Exception("Vui lòng nhập tiền lương.");
         if (nv.getLuongCoBan() != null && nv.getLuongCoBan() < 0) throw new Exception("Lương cơ bản không được âm!");
         if (nv.getMaCN() == null || nv.getMaCN().isBlank()) throw new Exception("Vui lòng chọn chi nhánh!");
     }

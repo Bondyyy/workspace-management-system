@@ -24,6 +24,7 @@ public class TienMatForm extends JDialog {
 
     private void setupLogic() {
         txtTongTien.setText(formatTien.format(tongTien));
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtSoTienKhachDua);
         txtSoTienKhachDua.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { tinhTienThua(); }
             @Override public void removeUpdate(DocumentEvent e) { tinhTienThua(); }
@@ -32,13 +33,13 @@ public class TienMatForm extends JDialog {
 
         double[] suggestions = calculateSuggestions(tongTien);
         btnGoiY1.setText(formatShort(suggestions[0]));
-        btnGoiY1.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[0])));
+        btnGoiY1.addActionListener(e -> txtSoTienKhachDua.setText(com.wms.util.InputFormatUtil.formatThousands(suggestions[0])));
         btnGoiY2.setText(formatShort(suggestions[1]));
-        btnGoiY2.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[1])));
+        btnGoiY2.addActionListener(e -> txtSoTienKhachDua.setText(com.wms.util.InputFormatUtil.formatThousands(suggestions[1])));
         btnGoiY3.setText(formatShort(suggestions[2]));
-        btnGoiY3.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[2])));
+        btnGoiY3.addActionListener(e -> txtSoTienKhachDua.setText(com.wms.util.InputFormatUtil.formatThousands(suggestions[2])));
         btnGoiY4.setText(formatShort(suggestions[3]));
-        btnGoiY4.addActionListener(e -> txtSoTienKhachDua.setText(String.format("%.0f", suggestions[3])));
+        btnGoiY4.addActionListener(e -> txtSoTienKhachDua.setText(com.wms.util.InputFormatUtil.formatThousands(suggestions[3])));
     }
 
     private double[] calculateSuggestions(double amount) {
@@ -65,13 +66,13 @@ public class TienMatForm extends JDialog {
 
     private void tinhTienThua() {
         try {
-            String text = txtSoTienKhachDua.getText().replaceAll("[^0-9]", "");
-            if (text.isEmpty()) {
+            java.math.BigDecimal value = com.wms.util.InputFormatUtil.getBigDecimalValue(txtSoTienKhachDua);
+            if (value == null) {
                 lblTienThua.setText("0 VNĐ");
                 btnXacNhan.setEnabled(false);
                 return;
             }
-            double khachDua = Double.parseDouble(text);
+            double khachDua = value.doubleValue();
             double thua = khachDua - tongTien;
             if (thua >= 0) {
                 lblTienThua.setText(formatTien.format(thua));

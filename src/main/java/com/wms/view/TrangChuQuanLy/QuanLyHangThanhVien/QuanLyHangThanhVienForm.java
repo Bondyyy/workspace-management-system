@@ -29,15 +29,7 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
         loadDataToTable();
         txtTenHang.setEditable(false);
         txtMaHang.setEditable(false);
-        
-        txtChiTieu.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { formatChiTieu(); }
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { formatChiTieu(); }
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { formatChiTieu(); }
-        });
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtChiTieu);
         
         hienThiHangMacDinh();
         com.wms.util.TienIchFormQuanLy.apDung(this);
@@ -67,7 +59,7 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
                         dto.getMaHangThanhVien(), 
                         dto.getTenHangThanhVien(), 
                         dto.getPhanTramTienGiam() + "%", 
-                        String.format("%,.0f", dto.getTongChiTieuToiThieu())
+                        com.wms.util.InputFormatUtil.formatThousands(dto.getTongChiTieuToiThieu())
                     });
                 }
             }
@@ -84,14 +76,20 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
         dto.setTenHangThanhVien(txtTenHang.getText().trim());
         dto.setPhanTramTienGiam(Double.valueOf(spnPhanTram.getValue().toString()));
         
-        String chiTieuStr = txtChiTieu.getText().trim().replace(",", "");
-        if (chiTieuStr.isEmpty()) {
-            throw new Exception("Chi tiêu tối thiểu không được để trống!");
+        if (txtChiTieu.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập tổng chi tiêu tối thiểu.");
         }
         try {
-            dto.setTongChiTieuToiThieu(Double.parseDouble(chiTieuStr));
+            java.math.BigDecimal tongChiTieu = com.wms.util.InputFormatUtil.getBigDecimalValue(txtChiTieu);
+            if (tongChiTieu == null) {
+                throw new NumberFormatException();
+            }
+            if (tongChiTieu.signum() < 0) {
+                throw new IllegalArgumentException("Tổng chi tiêu tối thiểu không được âm.");
+            }
+            dto.setTongChiTieuToiThieu(tongChiTieu.doubleValue());
         } catch (NumberFormatException e) {
-            throw new Exception("Chi tiêu tối thiểu phải là số hợp lệ!");
+            throw new IllegalArgumentException("Tổng chi tiêu tối thiểu phải là số hợp lệ.");
         }
         return dto;
     }
@@ -109,7 +107,7 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
             loadDataToTable();
             selectTier(currentMaHang);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -137,36 +135,12 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
                         txtMaHang.setText(selectedHang.getMaHangThanhVien());
                         txtTenHang.setText(selectedHang.getTenHangThanhVien());
                         spnPhanTram.setValue(selectedHang.getPhanTramTienGiam() != null ? selectedHang.getPhanTramTienGiam() : 0.0);
-                        txtChiTieu.setText(String.format("%,.0f", selectedHang.getTongChiTieuToiThieu()));
+                        txtChiTieu.setText(com.wms.util.InputFormatUtil.formatThousands(selectedHang.getTongChiTieuToiThieu()));
                     }
                     break;
                 }
             }
         }
-    }
-
-    private boolean isFormattingChiTieu = false;
-
-    private void formatChiTieu() {
-        if (isFormattingChiTieu) return;
-        SwingUtilities.invokeLater(() -> {
-            isFormattingChiTieu = true;
-            try {
-                String text = txtChiTieu.getText().replace(",", "").replace(".", "");
-                if (!text.isEmpty()) {
-                    long value = Long.parseLong(text);
-                    java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
-                    String formatted = df.format(value);
-                    if (!txtChiTieu.getText().equals(formatted)) {
-                        txtChiTieu.setText(formatted);
-                    }
-                }
-            } catch (NumberFormatException ex) {
-                // Ignore invalid input
-            } finally {
-                isFormattingChiTieu = false;
-            }
-        });
     }
 
     /**
@@ -369,7 +343,7 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
                 txtMaHang.setText(selectedHang.getMaHangThanhVien());
                 txtTenHang.setText(selectedHang.getTenHangThanhVien());
                 spnPhanTram.setValue(selectedHang.getPhanTramTienGiam() != null ? selectedHang.getPhanTramTienGiam() : 0.0);
-                txtChiTieu.setText(String.format("%,.0f", selectedHang.getTongChiTieuToiThieu()));
+                txtChiTieu.setText(com.wms.util.InputFormatUtil.formatThousands(selectedHang.getTongChiTieuToiThieu()));
             }
         }
     }

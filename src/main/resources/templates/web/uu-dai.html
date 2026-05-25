@@ -69,7 +69,7 @@
                 <div class="voucher-list">
                     <article th:each="voucher : ${vouchers}">
                         <strong th:text="${voucher.maChuSoPGG}">SPRING</strong>
-                        <span th:text="'Giảm ' + ${#numbers.formatDecimal(voucher.giaTriGiamGia, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">Giảm 0 VNĐ</span>
+                        <span th:text="'Giảm ' + ${#numbers.formatDecimal(voucher.giaTriGiamGia, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">Giảm 0 VNĐ</span>
                         <small th:text="${voucher.ngayKetThucApDung != null ? 'Hiệu lực đến ' + #temporals.format(voucher.ngayKetThucApDung, 'dd/MM/yyyy') : 'Đang có hiệu lực'}">Đang có hiệu lực</small>
                     </article>
                     <article th:if="${#lists.isEmpty(vouchers)}" class="voucher-empty">

@@ -69,6 +69,6 @@ public class QuanLyDatChoTruocService {
         if (value == null) {
             return "0 VNĐ";
         }
-        return new DecimalFormat("#,### VNĐ").format(value);
+        return com.wms.util.InputFormatUtil.formatThousands(value) + " VNĐ";
     }
 }

@@ -17,10 +17,10 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         initComponents();
         setupTable();
         txtMaPGG.setText("");
-        
-        // Thêm định dạng tiền tệ khi nhập
-        addCurrencyFormatting(txtGiaTriGiamGia);
-        addCurrencyFormatting(txtGiaTriApDungToiThieu);
+        sdf.setLenient(false);
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtGiaTriGiamGia);
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtGiaTriApDungToiThieu);
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtSLToiDa);
         
         cbxTrangThai.setEnabled(false);
         loadDataToTable();
@@ -44,22 +44,6 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         tblPhieuGiamGia.getColumnModel().getColumn(8).setCellRenderer(centerRenderer); // Trạng thái
     }
 
-    private void addCurrencyFormatting(javax.swing.JTextField textField) {
-        textField.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                String text = textField.getText().replace(",", "");
-                if (text.isEmpty()) return;
-                try {
-                    double value = Double.parseDouble(text);
-                    textField.setText(String.format("%,.0f", value));
-                } catch (NumberFormatException ex) {
-                    // Bỏ qua nếu không phải số
-                }
-            }
-        });
-    }
-
     private void loadDataToTable() {
         DefaultTableModel model = (DefaultTableModel) tblPhieuGiamGia.getModel();
         model.setRowCount(0);
@@ -68,8 +52,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
             model.addRow(new Object[]{
                 dto.getMaPGG(),
                 dto.getMaChuSoPGG(),
-                String.format("%,.0f", dto.getGiaTriGiamGia()),
-                String.format("%,.0f", dto.getGiaTriApDungToiThieu()),
+                com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriGiamGia()),
+                com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriApDungToiThieu()),
                 sdf.format(dto.getNgayBatDauApDung()),
                 sdf.format(dto.getNgayKetThucApDung()),
                 dto.getSlDaDung(),
@@ -94,22 +78,81 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
     private PhieuGiamGiaDTO getFormData() throws Exception {
         PhieuGiamGiaDTO dto = new PhieuGiamGiaDTO();
         dto.setMaPGG(txtMaPGG.getText().trim());
-        dto.setMaChuSoPGG(txtMaChuSoPGG.getText().trim());
-        
-        // Loại bỏ dấu phẩy trước khi parse số
-        String giaTriStr = txtGiaTriGiamGia.getText().replace(",", "").replace(".", "");
-        String apDungStr = txtGiaTriApDungToiThieu.getText().replace(",", "").replace(".", "");
-        
-        dto.setGiaTriGiamGia(Double.parseDouble(giaTriStr));
-        dto.setGiaTriApDungToiThieu(Double.parseDouble(apDungStr));
-        dto.setSlToiDa(Integer.parseInt(txtSLToiDa.getText().trim()));
-        dto.setNgayBatDauApDung(sdf.parse(txtNgayBatDauApDung.getText().trim()));
-        dto.setNgayKetThucApDung(sdf.parse(txtNgayKetThucApDung.getText().trim()));
+        String maChuSo = txtMaChuSoPGG.getText().trim();
+        if (maChuSo.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập mã số phiếu giảm giá.");
+        }
+        dto.setMaChuSoPGG(maChuSo);
+
+        java.math.BigDecimal giaTri = parseMoneyRequired(txtGiaTriGiamGia, "giá trị giảm giá", "Giá trị giảm giá");
+        if (giaTri.signum() <= 0) {
+            throw new IllegalArgumentException("Giá trị giảm giá phải lớn hơn 0.");
+        }
+        java.math.BigDecimal apDungToiThieu = parseMoneyRequired(txtGiaTriApDungToiThieu,
+                "giá trị áp dụng tối thiểu", "Giá trị áp dụng tối thiểu");
+        if (apDungToiThieu.signum() < 0) {
+            throw new IllegalArgumentException("Giá trị áp dụng tối thiểu không được âm.");
+        }
+
+        if (txtSLToiDa.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập số lượng.");
+        }
+        Long slToiDa;
+        try {
+            slToiDa = com.wms.util.InputFormatUtil.getNumberValue(txtSLToiDa);
+            if (slToiDa == null || slToiDa > Integer.MAX_VALUE) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Số lượng phải là số nguyên hợp lệ.");
+        }
+        if (slToiDa <= 0) {
+            throw new IllegalArgumentException("Số lượng phát hành phải lớn hơn 0.");
+        }
+
+        if (txtNgayBatDauApDung.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập ngày bắt đầu áp dụng.");
+        }
+        if (txtNgayKetThucApDung.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập ngày kết thúc áp dụng.");
+        }
+
+        try {
+            dto.setNgayBatDauApDung(sdf.parse(txtNgayBatDauApDung.getText().trim()));
+            dto.setNgayKetThucApDung(sdf.parse(txtNgayKetThucApDung.getText().trim()));
+        } catch (java.text.ParseException ex) {
+            throw new IllegalArgumentException("Ngày áp dụng phải đúng định dạng dd/MM/yyyy.");
+        }
+        if (dto.getNgayKetThucApDung().before(dto.getNgayBatDauApDung())) {
+            throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
+        }
+
+        dto.setGiaTriGiamGia(giaTri.doubleValue());
+        dto.setGiaTriApDungToiThieu(apDungToiThieu.doubleValue());
+        dto.setSlToiDa(slToiDa.intValue());
         
         NguoiDungDTO user = com.wms.controller.TrangChuGioiThieu.DangNhapController.getCurrentUser();
         dto.setMaNV(user != null ? user.getMaNV() : "NV_ADMIN"); 
         dto.setTrangThai(cbxTrangThai.getSelectedItem() != null ? cbxTrangThai.getSelectedItem().toString() : "Đang có hiệu lực");
         return dto;
+    }
+
+    private java.math.BigDecimal parseMoneyRequired(javax.swing.JTextField field, String fieldNameLower, String fieldNameTitle) {
+        if (field.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập " + fieldNameLower + ".");
+        }
+        try {
+            java.math.BigDecimal value = com.wms.util.InputFormatUtil.getBigDecimalValue(field);
+            if (value == null) {
+                throw new NumberFormatException();
+            }
+            if (value.signum() < 0) {
+                throw new IllegalArgumentException(fieldNameTitle + " không được âm.");
+            }
+            return value;
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException(fieldNameTitle + " phải là số hợp lệ.");
+        }
     }
 
     /**
@@ -349,7 +392,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại thông tin.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi nhập liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -363,7 +406,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -396,8 +439,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
             model.addRow(new Object[]{
                 dto.getMaPGG(),
                 dto.getMaChuSoPGG(),
-                String.format("%,.0f", dto.getGiaTriGiamGia()),
-                String.format("%,.0f", dto.getGiaTriApDungToiThieu()),
+                com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriGiamGia()),
+                com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriApDungToiThieu()),
                 sdf.format(dto.getNgayBatDauApDung()),
                 sdf.format(dto.getNgayKetThucApDung()),
                 dto.getSlDaDung(),
@@ -415,9 +458,9 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
             if (dto != null) {
                 txtMaPGG.setText(dto.getMaPGG());
                 txtMaChuSoPGG.setText(dto.getMaChuSoPGG());
-                txtGiaTriGiamGia.setText(String.format("%,.0f", dto.getGiaTriGiamGia()));
-                txtGiaTriApDungToiThieu.setText(String.format("%,.0f", dto.getGiaTriApDungToiThieu()));
-                txtSLToiDa.setText(String.valueOf(dto.getSlToiDa()));
+                txtGiaTriGiamGia.setText(com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriGiamGia()));
+                txtGiaTriApDungToiThieu.setText(com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriApDungToiThieu()));
+                txtSLToiDa.setText(com.wms.util.InputFormatUtil.formatThousands(dto.getSlToiDa()));
                 txtNgayBatDauApDung.setText(sdf.format(dto.getNgayBatDauApDung()));
                 txtNgayKetThucApDung.setText(sdf.format(dto.getNgayKetThucApDung()));
                 cbxTrangThai.setSelectedItem(dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");

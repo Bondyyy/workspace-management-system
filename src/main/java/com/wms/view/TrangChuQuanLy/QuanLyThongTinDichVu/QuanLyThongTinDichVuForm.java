@@ -20,40 +20,8 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         loadLoaiDV();
         loadData(null);
         txtMaDV.setText("");
-        
-        txtDonGia.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { formatDonGia(); }
-        });
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtDonGia);
         com.wms.util.TienIchFormQuanLy.apDung(this);
-    }
-
-    private boolean isFormattingDonGia = false;
-
-    private void formatDonGia() {
-        if (isFormattingDonGia) return;
-        SwingUtilities.invokeLater(() -> {
-            isFormattingDonGia = true;
-            try {
-                String text = txtDonGia.getText().replace(",", "").replace(".", "");
-                if (!text.isEmpty()) {
-                    long value = Long.parseLong(text);
-                    java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
-                    String formatted = df.format(value);
-                    if (!txtDonGia.getText().equals(formatted)) {
-                        txtDonGia.setText(formatted);
-                    }
-                }
-            } catch (NumberFormatException ex) {
-                // Ignore invalid input
-            } finally {
-                isFormattingDonGia = false;
-            }
-        });
     }
 
     private void loadLoaiDV() {
@@ -75,7 +43,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
                 dv.getMaDV(),
                 dv.getTenDV(),
                 getTenLoai(dv.getMaLoaiDV()),
-                String.format("%,.0f", dv.getDonGia()),
+                com.wms.util.InputFormatUtil.formatThousands(dv.getDonGia()),
                 dv.getTrangThaiDV()
             });
         }
@@ -309,10 +277,10 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
                 lamMoiForm();
                 loadData(null);
             } else {
-                JOptionPane.showMessageDialog(this, "Thêm thất bại!");
+                com.wms.util.MessageUtil.showError(this, "Thêm thất bại. Vui lòng kiểm tra lại thông tin.");
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -330,10 +298,10 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                 loadData(null);
             } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+                com.wms.util.MessageUtil.showError(this, "Cập nhật thất bại. Vui lòng kiểm tra lại thông tin.");
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 
@@ -364,17 +332,30 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
     }
 
     private DichVuDTO getFormData() throws Exception {
-        if (txtTenDV.getText().isEmpty() || txtDonGia.getText().isEmpty() || cbxLoaiDV.getSelectedIndex() <= 0) {
-            throw new Exception("Vui lòng nhập đầy đủ thông tin!");
+        if (txtTenDV.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập tên dịch vụ.");
+        }
+        if (cbxLoaiDV.getSelectedIndex() <= 0) {
+            throw new IllegalArgumentException("Vui lòng chọn loại dịch vụ.");
+        }
+        if (txtDonGia.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập đơn giá.");
         }
         DichVuDTO dv = new DichVuDTO();
         dv.setMaDV(txtMaDV.getText());
         dv.setTenDV(txtTenDV.getText().trim());
         dv.setMaLoaiDV(getMaLoaiDangChon());
         try {
-            dv.setDonGia(Double.parseDouble(txtDonGia.getText().replace(",", "").replace(".", "")));
+            java.math.BigDecimal donGia = com.wms.util.InputFormatUtil.getBigDecimalValue(txtDonGia);
+            if (donGia == null) {
+                throw new NumberFormatException();
+            }
+            if (donGia.signum() < 0) {
+                throw new IllegalArgumentException("Đơn giá không được âm.");
+            }
+            dv.setDonGia(donGia.doubleValue());
         } catch (NumberFormatException e) {
-            throw new Exception("Đơn giá không hợp lệ!");
+            throw new IllegalArgumentException("Đơn giá phải là số hợp lệ.");
         }
         dv.setTrangThaiDV((String) cbxTrangThai.getSelectedItem());
         Object pathObj = lblAnhDichVu.getClientProperty("path");
@@ -396,7 +377,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
         txtMaDV.setText(model.getValueAt(row, 0).toString());
         txtTenDV.setText(model.getValueAt(row, 1).toString());
         cbxLoaiDV.setSelectedItem(model.getValueAt(row, 2).toString());
-        txtDonGia.setText(model.getValueAt(row, 3).toString().replace(".", "").replace(",", ""));
+        txtDonGia.setText(com.wms.util.InputFormatUtil.formatThousands(model.getValueAt(row, 3).toString()));
         cbxTrangThai.setSelectedItem(model.getValueAt(row, 4).toString());
         
         // Hiển thị ảnh

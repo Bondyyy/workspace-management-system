@@ -45,7 +45,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
                     dto.getHoTen(),
                     dto.getSdt(),
                     dto.getEmail(),
-                    String.format("%,.0f", dto.getTongChiTieu()),
+                    com.wms.util.InputFormatUtil.formatThousands(dto.getTongChiTieu()),
                     dto.getHangThanhVien(),
                     dto.getTrangThai()
             });
@@ -362,7 +362,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             loadDataToTable();
             laMoiForm();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
     }
 
@@ -377,7 +377,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
             loadDataToTable();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
     }
 
@@ -395,7 +395,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
                 loadDataToTable();
                 laMoiForm();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
             }
         }
     }
@@ -420,7 +420,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             cbxHangTV.setSelectedItem(selectedHoiVien.getHangThanhVien());
             cbxGioiTinh.setSelectedItem(selectedHoiVien.getGioiTinh());
             cbxTrangThai.setSelectedItem(selectedHoiVien.getTrangThai());
-            txtTongChiTieu.setText(String.format("%,.0f", selectedHoiVien.getTongChiTieu()));
+            txtTongChiTieu.setText(com.wms.util.InputFormatUtil.formatThousands(selectedHoiVien.getTongChiTieu()));
             txtMaHV.setText(selectedHoiVien.getMaKH());
 
             if (selectedHoiVien.getAnhDaiDien() != null) {

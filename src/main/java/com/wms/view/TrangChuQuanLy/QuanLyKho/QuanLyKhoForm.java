@@ -24,6 +24,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     public QuanLyKhoForm() {
         initComponents();
         controller = new com.wms.controller.TrangChuQuanLy.QuanLyKho.QuanLyKhoController(this);
+        com.wms.util.InputFormatUtil.attachThousandsFormatter(txtGiaNhap);
         setupDynamicBehavior();
         loadDataNhanVienVaLoaiDV();
         controller.loadData("");
@@ -58,47 +59,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             }
         });
 
-        txtGiaNhap.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                formatGiaNhap();
-            }
-
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                formatGiaNhap();
-            }
-
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                formatGiaNhap();
-            }
-        });
-    }
-
-    private boolean isFormatting = false;
-    private static final java.text.DecimalFormat FORMAT_TIEN = new java.text.DecimalFormat("#,###");
-
-    private void formatGiaNhap() {
-        if (isFormatting)
-            return;
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            isFormatting = true;
-            try {
-                String text = txtGiaNhap.getText().replace(",", "").replace(".", "");
-                if (!text.isEmpty()) {
-                    long value = Long.parseLong(text);
-                    String formatted = FORMAT_TIEN.format(value);
-                    if (!txtGiaNhap.getText().equals(formatted)) {
-                        txtGiaNhap.setText(formatted);
-                    }
-                }
-            } catch (NumberFormatException ex) {
-                // Ignore
-            } finally {
-                isFormatting = false;
-            }
-        });
     }
 
     private void loadDataNhanVienVaLoaiDV() {
@@ -185,8 +145,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
                         "Thông báo", javax.swing.JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (java.io.IOException ex) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Lỗi khi mở hóa đơn: " + ex.getMessage(),
-                    "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, "Lỗi khi mở hóa đơn.", ex);
         }
     }
 
@@ -259,8 +218,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         }
         String tenDV = item.toString().trim();
         double donGia = controller.layDonGiaDichVu(tenDV);
-        java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
-        txtNiemYet.setText(donGia > 0 ? df.format(donGia) : "0");
+        txtNiemYet.setText(donGia > 0 ? com.wms.util.InputFormatUtil.formatThousands(donGia) : "0");
     }
 
     private void updateTheoLoaiDichVu() {
@@ -324,8 +282,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblKho.getModel();
         model.setRowCount(0);
         int stt = 1;
-        java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
-
         if (danhSach != null) {
             for (com.wms.model.TrangChuQuanLy.QuanLyThongTinDichVu.DichVuDTO dv : danhSach) {
                 // Logic hien thi So Luong: Chi Tien ich moi "Khong quan ly"
@@ -334,18 +290,19 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
                 if (isTienIch) {
                     hienThiSoLuong = "Không quản lý";
                 } else {
-                    hienThiSoLuong = (dv.getSoLuong() == null) ? "0" : String.valueOf(dv.getSoLuong());
+                    hienThiSoLuong = (dv.getSoLuong() == null) ? "0"
+                            : com.wms.util.InputFormatUtil.formatThousands(dv.getSoLuong());
                 }
 
                 String hienThiGiaNhap = (dv.getGiaNhap() == null || dv.getGiaNhap() <= 0) ? "0"
-                        : df.format(dv.getGiaNhap());
+                        : com.wms.util.InputFormatUtil.formatThousands(dv.getGiaNhap());
 
                 model.addRow(new Object[] {
                         stt++,
                         dv.getMaDV(),
                         dv.getTenDV(),
                         dv.getTenLoaiDV(),
-                        df.format(dv.getDonGia()),
+                        com.wms.util.InputFormatUtil.formatThousands(dv.getDonGia()),
                         hienThiGiaNhap,
                         hienThiSoLuong,
                         dv.getTrangThaiDV()
@@ -355,7 +312,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     }
 
     public void hienThiThongBaoLoi(String thongBao) {
-        javax.swing.JOptionPane.showMessageDialog(this, thongBao, "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+        com.wms.util.MessageUtil.showError(this, thongBao);
     }
 
     /**
@@ -683,26 +640,42 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             try {
                 fileData = java.nio.file.Files.readAllBytes(currentSelectedFile.toPath());
             } catch (java.io.IOException e) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Lỗi khi đọc file: " + e.getMessage(), "Lỗi",
-                        javax.swing.JOptionPane.ERROR_MESSAGE);
+                com.wms.util.MessageUtil.showError(this, "Lỗi khi đọc file chứng từ.", e);
                 return;
             }
         }
 
         double GiaNhap = 0;
+        if (txtGiaNhap.getText().trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng nhập giá nhập.", "Cảnh báo",
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         try {
-            String GiaNhapStr = txtGiaNhap.getText().trim().replace(",", "").replace(".", "");
-            if (!GiaNhapStr.isEmpty()) {
-                GiaNhap = Double.parseDouble(GiaNhapStr);
+            java.math.BigDecimal giaNhapValue = com.wms.util.InputFormatUtil.getBigDecimalValue(txtGiaNhap);
+            if (giaNhapValue == null) {
+                throw new NumberFormatException();
             }
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Giá nhập không hợp lệ!", "Cảnh báo",
+            if (giaNhapValue.signum() < 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Giá nhập không được âm.", "Cảnh báo",
+                        javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            GiaNhap = giaNhapValue.doubleValue();
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Giá nhập phải là số hợp lệ.", "Cảnh báo",
                     javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        boolean success = controller.nhapKho(currentMaDV, nhanVien, loaiDichVu, tenDichVu, soLuong, tenFile, GiaNhap,
-                fileData);
+        boolean success;
+        try {
+            success = controller.nhapKho(currentMaDV, nhanVien, loaiDichVu, tenDichVu, soLuong, tenFile, GiaNhap,
+                    fileData);
+        } catch (Exception e) {
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
+            return;
+        }
 
         if (success) {
             javax.swing.JOptionPane.showMessageDialog(this, "Nhập kho dịch vụ thành công!", "Thành công",

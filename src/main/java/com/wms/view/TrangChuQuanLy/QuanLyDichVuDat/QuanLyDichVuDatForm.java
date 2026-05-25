@@ -372,7 +372,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
                 hienThiDanhSachDichVu(maPhien);
                 btnHuyActionPerformed(null);
             } else {
-                JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -395,7 +395,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
             hienThiDanhSachDichVu(maPhien);
             btnHuyActionPerformed(null);
         } else {
-            JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -452,7 +452,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
             hienThiDanhSachDichVu(maPhien);
             btnHuyActionPerformed(null);
         } else {
-            JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

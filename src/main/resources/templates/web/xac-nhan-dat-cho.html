@@ -81,7 +81,7 @@
             <h3>Chi tiết thanh toán</h3>
             <div class="payment-line">
                 <span>Tổng tiền dịch vụ</span>
-                <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
+                <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</strong>
             </div>
             <form th:action="@{/portal/checkout}" method="get" class="voucher-row">
                 <input type="hidden" name="maKG" th:value="${space.maKG}">
@@ -105,11 +105,11 @@
             </p>
             <div class="payment-line muted">
                 <span>Khuyến mãi</span>
-                <strong th:text="'- ' + ${#numbers.formatDecimal(discount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">- 0 VNĐ</strong>
+                <strong th:text="'- ' + ${#numbers.formatDecimal(discount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">- 0 VNĐ</strong>
             </div>
             <div class="payment-total">
                 <span>Thành tiền</span>
-                <strong th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
+                <strong th:text="${#numbers.formatDecimal(totalAmount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</strong>
             </div>
             <p class="payment-note">Sau khi xác nhận, hệ thống giữ chỗ 10 phút và tạo nội dung chuyển khoản riêng cho phiếu đặt chỗ này.</p>
             <form th:action="@{/portal/bookings}" method="post">
@@ -123,5 +123,6 @@
         </aside>
     </section>
 </main>
+<script src="/js/input-format.js"></script>
 </body>
 </html>

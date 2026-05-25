@@ -66,7 +66,7 @@
                 </span>
                 <span>
                     <strong>Tổng cộng</strong>
-                    <em class="money" th:text="${#numbers.formatDecimal(payment.thanhTien, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</em>
+                    <em class="money" th:text="${#numbers.formatDecimal(payment.thanhTien, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</em>
                 </span>
             </div>
             <div class="payment-actions">
@@ -85,7 +85,7 @@
             <h3>Chuyển khoản</h3>
             <div class="payment-total compact-total">
                 <span>Thành tiền</span>
-                <strong th:text="${#numbers.formatDecimal(payment.thanhTien, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
+                <strong th:text="${#numbers.formatDecimal(payment.thanhTien, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</strong>
             </div>
             <div class="qr-payment">
                 <div class="qr-box">
@@ -108,7 +108,7 @@
                     </div>
                     <div>
                         <dt>Số tiền CK:</dt>
-                        <dd th:text="${#numbers.formatDecimal(payment.soTienChuyenKhoan, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</dd>
+                        <dd th:text="${#numbers.formatDecimal(payment.soTienChuyenKhoan, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</dd>
                     </div>
                     <div class="span-bank">
                         <dt>Nội dung CK:</dt>
@@ -119,5 +119,6 @@
         </aside>
     </section>
 </main>
+<script src="/js/input-format.js"></script>
 </body>
 </html>

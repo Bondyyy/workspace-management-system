@@ -199,7 +199,7 @@ public class DangNhapForm extends javax.swing.JPanel {
                 } catch (Exception ex) {
                     setDangNhapDangXuLy(false);
                     JOptionPane.showMessageDialog(DangNhapForm.this,
-                            "Lỗi đăng nhập: " + ex.getMessage(),
+                            com.wms.util.ErrorMessageUtil.toUserMessage(ex),
                             "Lỗi hệ thống",
                             JOptionPane.ERROR_MESSAGE);
                     return;

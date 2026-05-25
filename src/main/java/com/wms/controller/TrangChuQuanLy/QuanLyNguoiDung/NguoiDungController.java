@@ -49,7 +49,7 @@ public class NguoiDungController {
             currentList = service.getAllUsers();
             fillTable(currentList);
         } catch (SQLException e) {
-            showError("Lỗi tải dữ liệu: " + e.getMessage());
+            showError("Lỗi tải dữ liệu.", e);
         }
     }
 
@@ -58,7 +58,7 @@ public class NguoiDungController {
             currentList = service.searchUsers(keyword);
             fillTable(currentList);
         } catch (SQLException e) {
-            showError("Lỗi tìm kiếm: " + e.getMessage());
+            showError("Lỗi tìm kiếm.", e);
         }
     }
 
@@ -276,7 +276,7 @@ public class NguoiDungController {
 
                 selectedImageData = imageData;
             } catch (IOException e) {
-                showError("Lỗi đọc file ảnh: " + e.getMessage());
+                showError("Lỗi đọc file ảnh.", e);
             }
         }
     }

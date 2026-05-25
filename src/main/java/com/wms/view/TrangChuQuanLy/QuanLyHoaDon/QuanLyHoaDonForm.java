@@ -24,7 +24,8 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
     private final HoaDonController hoaDonController = new HoaDonController();
     private DefaultTableModel tableModel;
-    private final DecimalFormat df = new DecimalFormat("#,### VNĐ");
+    private final DecimalFormat df = new DecimalFormat("#,### VNĐ",
+            java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     private HoaDonDTO currentHD;
     private List<HoaDonDTO> dsHoaDon = Collections.emptyList(); // cache, tránh gọi DB 2 lần
@@ -95,9 +96,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                 } catch (Exception ex) {
                     dsHoaDon = Collections.emptyList();
                     tableModel.setRowCount(0);
-                    JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
-                            "Lỗi tải danh sách hóa đơn: " + ex.getMessage(),
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(QuanLyHoaDonForm.this, "Lỗi tải danh sách hóa đơn.", ex);
                 } finally {
                     setLoadingTable(false);
                 }
@@ -601,8 +600,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                             btnHuy.setEnabled(true);
                         }
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
-                                "Lỗi hủy hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        com.wms.util.MessageUtil.showError(QuanLyHoaDonForm.this, "Lỗi hủy hóa đơn.", ex);
                         btnHuy.setEnabled(true);
                     }
                 }
@@ -691,8 +689,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                             + (System.currentTimeMillis() - start) + " ms");
                     hienThiPreviewHoaDon(tt);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
-                            "Lỗi xem hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(QuanLyHoaDonForm.this, "Lỗi xem hóa đơn.", ex);
                 }
             }
         }.execute();
@@ -717,9 +714,11 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             sb.append(String.format("%-20s %3d %,10.0f\n", dv.getTenDichVu(), dv.getSoLuong(), dv.getDonGia()));
         }
         sb.append("--------------------------------\n");
-        sb.append("TỔNG CỘNG: ").append(String.format("%,.0f VNĐ", tt.getTongTien())).append("\n");
-        sb.append("ĐÃ TRẢ TRƯỚC: ").append(String.format("%,.0f VNĐ", tt.getSoTienDaTraTruoc())).append("\n");
-        sb.append("CÒN PHẢI THANH TOÁN: ").append(String.format("%,.0f VNĐ", Math.max(0, tt.getThanhTien()))).append("\n\n");
+        sb.append("TỔNG CỘNG: ").append(com.wms.util.InputFormatUtil.formatThousands(tt.getTongTien())).append(" VNĐ\n");
+        sb.append("ĐÃ TRẢ TRƯỚC: ").append(com.wms.util.InputFormatUtil.formatThousands(tt.getSoTienDaTraTruoc())).append(" VNĐ\n");
+        sb.append("CÒN PHẢI THANH TOÁN: ")
+                .append(com.wms.util.InputFormatUtil.formatThousands(Math.max(0, tt.getThanhTien())))
+                .append(" VNĐ\n\n");
         sb.append("      --- CẢM ƠN QUÝ KHÁCH ---");
 
         javax.swing.JTextArea textArea = new javax.swing.JTextArea(sb.toString());
@@ -794,8 +793,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                         Desktop.getDesktop().open(exported);
                     }
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
-                            "Lỗi xuất hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    com.wms.util.MessageUtil.showError(QuanLyHoaDonForm.this, "Lỗi xuất hóa đơn.", ex);
                 }
             }
         }.execute();

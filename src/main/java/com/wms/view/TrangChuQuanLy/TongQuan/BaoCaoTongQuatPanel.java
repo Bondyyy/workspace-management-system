@@ -292,7 +292,7 @@ public class BaoCaoTongQuatPanel extends JPanel {
                 } catch (Exception ex) {
                     lblTrangThai.setText("Không tải được báo cáo.");
                     JOptionPane.showMessageDialog(BaoCaoTongQuatPanel.this,
-                            "Không tải được báo cáo: " + ex.getMessage(),
+                            com.wms.util.ErrorMessageUtil.toUserMessage(ex),
                             "Lỗi", JOptionPane.ERROR_MESSAGE);
                 } finally {
                     setDangTai(false);
@@ -363,7 +363,7 @@ public class BaoCaoTongQuatPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Xuất báo cáo CSV thành công!\n" + file.getAbsolutePath(),
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xuất CSV: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                com.wms.util.MessageUtil.showError(this, "Lỗi khi xuất CSV.", ex);
             }
         }
     }
@@ -408,7 +408,7 @@ public class BaoCaoTongQuatPanel extends JPanel {
                 } catch (Exception ex) {
                     lblTrangThai.setText("Export PDF thất bại.");
                     JOptionPane.showMessageDialog(BaoCaoTongQuatPanel.this,
-                            "Lỗi khi xuất PDF: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            com.wms.util.ErrorMessageUtil.toUserMessage(ex), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 } finally {
                     setDangTai(false);
                 }

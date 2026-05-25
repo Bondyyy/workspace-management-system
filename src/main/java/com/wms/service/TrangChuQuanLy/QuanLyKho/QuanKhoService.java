@@ -18,6 +18,21 @@ public class QuanKhoService {
     }
 
     public boolean nhapKhoDichVu(String maDV, String tenNV, String tenLoaiDV, String tenDV, int soLuong, String tenFile, double giaNhap, byte[] fileData) {
+        if (tenNV == null || tenNV.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn nhân viên.");
+        }
+        if (tenLoaiDV == null || tenLoaiDV.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn loại dịch vụ.");
+        }
+        if (tenDV == null || tenDV.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn dịch vụ.");
+        }
+        if (soLuong <= 0) {
+            throw new IllegalArgumentException("Số lượng nhập phải lớn hơn 0.");
+        }
+        if (giaNhap < 0) {
+            throw new IllegalArgumentException("Giá nhập không được âm.");
+        }
         return quanLyKhoDao.nhapKhoDichVu(maDV, tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaNhap, fileData);
     }
 

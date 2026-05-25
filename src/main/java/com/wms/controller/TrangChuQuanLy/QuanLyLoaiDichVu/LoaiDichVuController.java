@@ -30,7 +30,7 @@ public class LoaiDichVuController {
             currentList = service.getAllLoaiDichVu();
             fillTable(currentList);
         } catch (SQLException e) {
-            showError("Lỗi tải dữ liệu: " + e.getMessage());
+            showError("Lỗi tải dữ liệu.", e);
         }
     }
 
@@ -39,7 +39,7 @@ public class LoaiDichVuController {
             currentList = service.searchLoaiDichVu(keyword);
             fillTable(currentList);
         } catch (SQLException e) {
-            showError("Lỗi tìm kiếm: " + e.getMessage());
+            showError("Lỗi tìm kiếm.", e);
         }
     }
 
@@ -82,7 +82,7 @@ public class LoaiDichVuController {
             loadData();
             clearForm();
         } catch (Exception e) {
-            showError(e.getMessage());
+            showError(e.getMessage(), e);
         }
     }
 
@@ -102,7 +102,7 @@ public class LoaiDichVuController {
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật loại dịch vụ thành công!");
             loadData();
         } catch (Exception e) {
-            showError(e.getMessage());
+            showError(e.getMessage(), e);
         }
     }
 
@@ -125,5 +125,9 @@ public class LoaiDichVuController {
 
     private void showError(String msg) {
         com.wms.util.MessageUtil.showError(view, msg);
+    }
+
+    private void showError(String msg, Throwable t) {
+        com.wms.util.MessageUtil.showError(view, msg, t);
     }
 }

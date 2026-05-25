@@ -1,5 +1,7 @@
 package com.wms.web.util;
 
+import com.wms.util.ErrorMessageUtil;
+
 public final class WebErrorMessages {
 
     private WebErrorMessages() {
@@ -10,22 +12,11 @@ public final class WebErrorMessages {
             return fallback;
         }
         String message = ex.getMessage().trim();
-        if (laThongBaoKyThuat(message)) {
+        if (ErrorMessageUtil.containsTechnicalDetails(message)) {
             System.err.println("[Web] " + fallback + " Loi ky thuat: " + message);
-            return fallback;
+            String mapped = ErrorMessageUtil.toUserMessage(ex);
+            return mapped == null || mapped.isBlank() ? fallback : mapped;
         }
-        return message;
-    }
-
-    private static boolean laThongBaoKyThuat(String message) {
-        String upper = message.toUpperCase();
-        return upper.contains("ORA-")
-                || upper.contains("SQL")
-                || upper.contains("JDBC")
-                || upper.contains("STACKTRACE")
-                || upper.contains("EXCEPTION")
-                || upper.contains("CONSTRAINT")
-                || upper.contains("NULLPOINTER")
-                || upper.contains("PL/SQL");
+        return ErrorMessageUtil.toUserMessage(message);
     }
 }

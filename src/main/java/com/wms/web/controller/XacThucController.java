@@ -52,7 +52,7 @@ public class XacThucController {
             session.setAttribute("user", user);
             return user.laNhanVien() ? "redirect:/staff/bookings" : "redirect:/portal";
         } catch (IllegalArgumentException ex) {
-            model.addAttribute("error", ex.getMessage());
+            model.addAttribute("error", WebErrorMessages.thanThien("Không thể đăng nhập. Vui lòng kiểm tra lại thông tin.", ex));
             return "web/dang-nhap";
         }
     }

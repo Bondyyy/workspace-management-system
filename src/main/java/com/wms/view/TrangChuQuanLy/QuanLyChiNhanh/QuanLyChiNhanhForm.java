@@ -97,7 +97,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
             loadTableData(controller.layDanhSach());
             clearForm();
         } else {
-            JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -113,7 +113,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
             loadTableData(controller.layDanhSach());
         } else {
-            JOptionPane.showMessageDialog(this, loi, "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

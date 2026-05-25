@@ -49,9 +49,7 @@ public class HoaDonPDFExporter {
                 Desktop.getDesktop().open(pdfFile);
 
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(parentComponent, "Lỗi khi xuất PDF: " + ex.getMessage(), "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
-                ex.printStackTrace();
+                MessageUtil.showError(parentComponent, ex);
             }
         }
     }
@@ -98,8 +96,8 @@ public class HoaDonPDFExporter {
                 table.addCell(new Phrase(removeAccents(dv.getTenDichVu()), normalFont));
                 String slStr = dv.getTenDichVu().startsWith("Thuê") ? String.format(Locale.US, "%.1f gio", (double) dv.getSoLuong()) : String.valueOf(dv.getSoLuong());
                 table.addCell(new Phrase(slStr, normalFont));
-                table.addCell(new Phrase(String.format("%,.0f", dv.getDonGia()), normalFont));
-                table.addCell(new Phrase(String.format("%,.0f", dv.getThanhTien()), normalFont));
+                table.addCell(new Phrase(InputFormatUtil.formatThousands(dv.getDonGia()), normalFont));
+                table.addCell(new Phrase(InputFormatUtil.formatThousands(dv.getThanhTien()), normalFont));
             }
         }
         document.add(table);

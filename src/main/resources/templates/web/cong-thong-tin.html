@@ -41,7 +41,7 @@
         <div class="metric-row">
             <article class="metric-card pink-line">
                 <span>Điểm tích lũy</span>
-                <strong th:text="${#numbers.formatDecimal(totalSpent, 0, 'COMMA', 0, 'POINT')}">0</strong>
+                <strong th:text="${#numbers.formatDecimal(totalSpent, 0, 'POINT', 0, 'COMMA')}">0</strong>
                 <small th:text="'Hạng hiện tại: ' + ${rankName}">Hạng hiện tại: Không có</small>
             </article>
             <article class="metric-card blue-line">
@@ -94,7 +94,7 @@
                     <h4 th:text="${featuredSpace.tenKG}">Phòng họp SPRING 01</h4>
                     <p th:text="${featuredSpace.tenCN}">Chi nhánh 1</p>
                     <p>Không gian yên tĩnh, phù hợp họp nhóm, học tập và làm việc cá nhân.</p>
-                    <strong th:text="${featuredSpace.donGiaTheoGio != null ? #numbers.formatDecimal(featuredSpace.donGiaTheoGio, 0, 'COMMA', 0, 'POINT') + ' VNĐ/giờ' : '0 VNĐ/giờ'}">0 VNĐ/giờ</strong>
+                    <strong th:text="${featuredSpace.donGiaTheoGio != null ? #numbers.formatDecimal(featuredSpace.donGiaTheoGio, 0, 'POINT', 0, 'COMMA') + ' VNĐ/giờ' : '0 VNĐ/giờ'}">0 VNĐ/giờ</strong>
                 </div>
                 <a th:href="@{/portal/branches}" class="button-primary full-width">Đặt ngay bây giờ</a>
             </aside>
