@@ -1,10 +1,3 @@
-SET SERVEROUTPUT ON;
-
-PROMPT ===== CREATE RENAMED NON-CANONICAL SERVICE LOOKUP PROCEDURE =====
-PROMPT Canonical SP_TraCuuDichVu remains Database/04_procedures/QuanLyDichVu/SP_TraCuuDichVu.sql.
-PROMPT This migration creates SP_TraCuuDichVuTheoLoai to avoid source-level deploy overwrite.
-PROMPT It does not DROP the old SP_TraCuuDichVu object; DBA confirmation is required before any cleanup.
-
 CREATE OR REPLACE PROCEDURE SP_TraCuuDichVuTheoLoai(
     p_MaLoaiDV IN VARCHAR2,
     p_TrangThaiDV IN VARCHAR2,
@@ -40,7 +33,3 @@ EXCEPTION
         RAISE;
 END SP_TraCuuDichVuTheoLoai;
 /
-
-PROMPT ===== NOTE =====
-PROMPT Existing Java caller uses SP_TraCuuDichVu with the canonical QuanLyDichVu output.
-PROMPT Search Java before wiring SP_TraCuuDichVuTheoLoai into any UI flow.
