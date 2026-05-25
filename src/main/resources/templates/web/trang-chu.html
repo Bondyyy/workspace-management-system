@@ -3,149 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WMS - Quản lý không gian làm việc & học tập</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="shortcut icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/css/webapp.css">
+    <title>WMS - Đặt chỗ không gian làm việc và học tập</title>
+    <link rel="icon" th:href="@{/favicon.ico}">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+    <script th:src="@{/js/landing-page.js}" defer></script>
 </head>
-<body class="wms-landing-page">
-<header class="landing-nav">
-    <a class="landing-brand" th:href="@{/}">
-        <img src="/icons/cherry-blossom-32x32.png" alt="" aria-hidden="true">
-        <span>WMS</span>
-    </a>
-    <nav>
-        <a th:href="@{/chi-nhanh}">Chọn chi nhánh</a>
-        <a th:href="@{/dangNhap}" th:if="${user == null}">Đăng nhập</a>
-        <a th:href="@{/register}" th:if="${user == null}">Đăng ký</a>
-        <a th:href="@{/portal}" th:if="${user != null and !user.laNhanVien()}">Portal</a>
-        <a th:href="@{/staff/bookings}" th:if="${user != null and user.laNhanVien()}">Nhân viên</a>
-    </nav>
+<body class="landing-page" id="top">
+<header class="landing-nav" data-landing-nav>
+    <div class="landing-container landing-nav-inner">
+        <a class="landing-brand" th:href="@{/}" aria-label="WMS trang chủ">
+            <img th:src="@{/icons/cherry-blossom-32x32.png}" alt="" aria-hidden="true">
+            <span>WMS</span>
+        </a>
+
+        <button class="landing-menu-toggle" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="landingMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <nav class="landing-menu" id="landingMenu" aria-label="Điều hướng landing page">
+            <a href="#top" data-section-link>Trang chủ</a>
+            <a th:href="@{/chi-nhanh}">Chi nhánh</a>
+            <a th:href="@{/so-do-khong-gian(branchId=${landingMapBranchId})}">Sơ đồ</a>
+            <a href="#tinh-nang" data-section-link>Tính năng</a>
+            <a href="#quy-trinh" data-section-link>Quy trình</a>
+            <a href="#nhom-phat-trien" data-section-link>Nhóm phát triển</a>
+        </nav>
+
+        <div class="landing-nav-actions">
+            <a class="landing-button landing-button-secondary" th:if="${user == null}" th:href="@{/dangNhap}">Đăng nhập</a>
+            <a class="landing-button landing-button-primary" th:if="${user == null}" th:href="@{/register}">Đăng ký</a>
+            <a class="landing-button landing-button-primary" th:if="${user != null and !user.laNhanVien()}" th:href="@{/portal}">Vào portal</a>
+            <a class="landing-button landing-button-primary" th:if="${user != null and user.laNhanVien()}" th:href="@{/staff/bookings}">Trang nhân viên</a>
+        </div>
+    </div>
 </header>
 
 <main>
     <section class="landing-hero">
-        <div class="landing-hero-copy">
-            <p class="landing-kicker">Workspace Management System</p>
-            <h1>WMS - Quản lý không gian làm việc & học tập.</h1>
-            <p>
-                Xem chi nhánh, chọn không gian trên sơ đồ, đặt chỗ online, thanh toán và nhận QR check-in
-                trên cùng dữ liệu Oracle với ứng dụng quản lý.
-            </p>
+        <div class="landing-container landing-hero-grid">
+            <div class="landing-hero-content landing-reveal">
+                <p class="landing-badge">Workspace Management System</p>
+                <h1>Đặt chỗ không gian làm việc &amp; học tập chỉ trong vài phút</h1>
+                <p class="landing-lead">
+                    Chọn chi nhánh, xem sơ đồ chỗ ngồi theo thời gian thực, đặt chỗ online, thanh toán và nhận QR
+                    check-in nhanh chóng.
+                </p>
+                <div class="landing-actions" aria-label="Hành động chính">
+                    <a class="landing-button landing-button-primary landing-button-large" th:href="@{/chi-nhanh}">Chọn chi nhánh ngay</a>
+                    <a class="landing-button landing-button-secondary landing-button-large" th:href="@{/so-do-khong-gian(branchId=${landingMapBranchId})}">
+                        Xem sơ đồ không gian
+                    </a>
+                </div>
+            </div>
+
+            <div class="landing-hero-visual landing-reveal" aria-label="Minh họa sơ đồ không gian WMS">
+                <div class="landing-map-card">
+                    <div class="landing-map-card-head">
+                        <div>
+                            <span>WMS Space Map</span>
+                            <strong>Hôm nay</strong>
+                        </div>
+                        <span class="landing-live-pill">Live</span>
+                    </div>
+                    <div class="landing-mini-map" aria-hidden="true">
+                        <span class="landing-map-seat status-empty">A1</span>
+                        <span class="landing-map-seat status-active">A2</span>
+                        <span class="landing-map-seat status-empty">A3</span>
+                        <span class="landing-map-seat status-booked">B1</span>
+                        <span class="landing-map-seat status-empty">B2</span>
+                        <span class="landing-map-seat status-maintenance">B3</span>
+                        <span class="landing-map-seat status-empty">C1</span>
+                        <span class="landing-map-seat status-active">C2</span>
+                        <span class="landing-map-seat status-empty">C3</span>
+                    </div>
+                    <div class="landing-map-legend">
+                        <span><i class="status-empty"></i>Trống</span>
+                        <span><i class="status-booked"></i>Đã đặt</span>
+                        <span><i class="status-active"></i>Đang dùng</span>
+                        <span><i class="status-maintenance"></i>Bảo trì</span>
+                    </div>
+                </div>
+
+                <div class="landing-floating-card landing-floating-card-qr">
+                    <span>QR check-in ready</span>
+                    <strong>2 phút</strong>
+                </div>
+                <div class="landing-floating-card landing-floating-card-branch">
+                    <span>Chi nhánh đang mở</span>
+                    <strong th:text="${landingMapBranchId != null ? landingMapBranchId : 'WMS'}">WMS</strong>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-stats" aria-label="Thống kê WMS">
+        <div class="landing-container landing-stats-grid">
+            <article class="landing-stat-card landing-reveal">
+                <strong>5+</strong>
+                <span>chi nhánh</span>
+            </article>
+            <article class="landing-stat-card landing-reveal">
+                <strong>150+</strong>
+                <span>không gian</span>
+            </article>
+            <article class="landing-stat-card landing-reveal">
+                <strong>Online</strong>
+                <span>đặt chỗ</span>
+            </article>
+            <article class="landing-stat-card landing-reveal">
+                <strong>QR</strong>
+                <span>check-in</span>
+            </article>
+        </div>
+    </section>
+
+    <section class="landing-section" id="tinh-nang">
+        <div class="landing-container">
+            <div class="landing-section-heading landing-reveal">
+                <p>Tính năng</p>
+                <h2>Mọi thao tác quan trọng nằm trong một luồng đặt chỗ gọn gàng</h2>
+            </div>
+            <div class="landing-card-grid">
+                <article class="landing-feature-card landing-reveal">
+                    <span class="landing-feature-icon" aria-hidden="true">01</span>
+                    <h3>Xem sơ đồ thời gian thực</h3>
+                    <p>Màu trạng thái giúp biết nhanh chỗ nào trống, đã đặt, đang dùng hoặc đang bảo trì.</p>
+                </article>
+                <article class="landing-feature-card landing-reveal">
+                    <span class="landing-feature-icon" aria-hidden="true">02</span>
+                    <h3>Đặt chỗ online</h3>
+                    <p>Chọn chi nhánh, khung giờ và không gian phù hợp trước khi xác nhận đặt chỗ.</p>
+                </article>
+                <article class="landing-feature-card landing-reveal">
+                    <span class="landing-feature-icon" aria-hidden="true">03</span>
+                    <h3>Thanh toán &amp; nhận QR</h3>
+                    <p>Thanh toán theo thông tin hệ thống cung cấp và nhận QR check-in sau khi xác nhận.</p>
+                </article>
+                <article class="landing-feature-card landing-reveal">
+                    <span class="landing-feature-icon" aria-hidden="true">04</span>
+                    <h3>Gọi dịch vụ trong phiên</h3>
+                    <p>Hội viên có thể theo dõi phiên làm việc và yêu cầu dịch vụ theo luồng portal hiện có.</p>
+                </article>
+                <article class="landing-feature-card landing-reveal">
+                    <span class="landing-feature-icon" aria-hidden="true">05</span>
+                    <h3>Ưu đãi thành viên</h3>
+                    <p>Áp dụng phiếu giảm giá và hạng thành viên từ dữ liệu đã có trong hệ thống WMS.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section landing-process-section" id="quy-trinh">
+        <div class="landing-container">
+            <div class="landing-section-heading landing-reveal">
+                <p>Quy trình</p>
+                <h2>Từ xem chỗ trống đến QR check-in trong bốn bước rõ ràng</h2>
+            </div>
+            <ol class="landing-process">
+                <li class="landing-reveal">
+                    <span>1</span>
+                    <h3>Chọn chi nhánh</h3>
+                    <p>Xem địa chỉ, giờ hoạt động và chọn địa điểm phù hợp.</p>
+                </li>
+                <li class="landing-reveal">
+                    <span>2</span>
+                    <h3>Chọn không gian trên sơ đồ</h3>
+                    <p>Kiểm tra trạng thái chỗ ngồi theo ngày và khung giờ mong muốn.</p>
+                </li>
+                <li class="landing-reveal">
+                    <span>3</span>
+                    <h3>Đăng nhập hoặc đăng ký</h3>
+                    <p>Guest xem được sơ đồ, nhưng đặt chỗ vẫn cần tài khoản hội viên.</p>
+                </li>
+                <li class="landing-reveal">
+                    <span>4</span>
+                    <h3>Thanh toán và nhận QR</h3>
+                    <p>Hoàn tất thanh toán để nhận QR check-in khi đến chi nhánh.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="landing-section landing-map-preview-section" id="so-do-preview">
+        <div class="landing-container landing-preview-grid">
+            <div class="landing-section-heading landing-reveal">
+                <p>Sơ đồ không gian</p>
+                <h2>Xem nhanh trạng thái chỗ ngồi trước khi đặt</h2>
+                <p class="landing-section-copy">
+                    Bạn có thể xem chi nhánh và sơ đồ ở chế độ guest. Khi bắt đầu đặt chỗ, hệ thống tiếp tục yêu cầu
+                    đăng nhập theo flow hiện có.
+                </p>
+                <a class="landing-button landing-button-primary landing-button-large" th:href="@{/so-do-khong-gian(branchId=${landingMapBranchId})}">
+                    Xem sơ đồ thật
+                </a>
+            </div>
+
+            <div class="landing-map-preview landing-reveal" aria-label="Preview sơ đồ không gian">
+                <div class="landing-preview-map-grid" aria-hidden="true">
+                    <span class="landing-preview-seat status-empty">D1</span>
+                    <span class="landing-preview-seat status-empty">D2</span>
+                    <span class="landing-preview-seat status-booked">D3</span>
+                    <span class="landing-preview-seat status-active">D4</span>
+                    <span class="landing-preview-seat status-empty">E1</span>
+                    <span class="landing-preview-seat status-maintenance">E2</span>
+                    <span class="landing-preview-seat status-empty">E3</span>
+                    <span class="landing-preview-seat status-empty">E4</span>
+                    <span class="landing-preview-seat status-active">F1</span>
+                    <span class="landing-preview-seat status-empty">F2</span>
+                    <span class="landing-preview-seat status-booked">F3</span>
+                    <span class="landing-preview-seat status-empty">F4</span>
+                </div>
+                <div class="landing-map-legend">
+                    <span><i class="status-empty"></i>Trống</span>
+                    <span><i class="status-booked"></i>Đã đặt</span>
+                    <span><i class="status-active"></i>Đang dùng</span>
+                    <span><i class="status-maintenance"></i>Bảo trì</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section landing-branch-section" id="chi-nhanh">
+        <div class="landing-container">
+            <div class="landing-section-heading landing-reveal">
+                <p>Chi nhánh</p>
+                <h2>Chọn nơi bạn muốn làm việc hôm nay</h2>
+            </div>
+            <div class="landing-card-grid landing-branch-grid" th:if="${hienThiChiNhanh != null and !hienThiChiNhanh.isEmpty()}">
+                <article class="landing-branch-card landing-reveal" th:each="branch : ${hienThiChiNhanh}">
+                    <span class="landing-branch-code" th:text="${branch.maCN}">CN001</span>
+                    <h3 th:text="${branch.tenCN}">Chi nhánh WMS</h3>
+                    <p th:text="${branch.diaChi}">Địa chỉ chi nhánh</p>
+                    <small th:text="${branch.thoiGianMoCua + ' - ' + branch.thoiGianDongCua}">07:00 - 22:00</small>
+                    <a class="landing-card-link" th:href="@{/so-do-khong-gian(branchId=${branch.maCN})}">Xem sơ đồ</a>
+                </article>
+            </div>
+            <div class="landing-empty-branch landing-reveal" th:if="${hienThiChiNhanh == null or hienThiChiNhanh.isEmpty()}">
+                <p>Danh sách chi nhánh hiện chưa sẵn sàng. Bạn có thể quay lại sau để xem sơ đồ.</p>
+            </div>
+            <a class="landing-button landing-button-secondary landing-section-action" th:href="@{/chi-nhanh}">Xem tất cả chi nhánh</a>
+        </div>
+    </section>
+
+    <section class="landing-section landing-member-section">
+        <div class="landing-container landing-member-grid">
+            <div class="landing-section-heading landing-reveal">
+                <p>Thành viên</p>
+                <h2>Tài khoản WMS giúp mỗi lần đặt chỗ nhanh hơn</h2>
+            </div>
+            <div class="landing-member-panel landing-reveal">
+                <ul>
+                    <li>Lưu lịch sử đặt chỗ</li>
+                    <li>Theo dõi phiên làm việc</li>
+                    <li>Nhận ưu đãi thành viên</li>
+                    <li>Cập nhật tài khoản và ảnh đại diện</li>
+                </ul>
+                <a class="landing-button landing-button-primary landing-button-large" th:href="@{/register}">Tạo tài khoản miễn phí</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section landing-team-section" id="nhom-phat-trien">
+        <div class="landing-container">
+            <div class="landing-section-heading landing-reveal">
+                <p>Nhóm phát triển</p>
+                <h2>WMS là dự án môn học về quản lý không gian làm việc</h2>
+                <p class="landing-section-copy">
+                    Nhóm xây dựng luồng web public, portal hội viên, nghiệp vụ đặt chỗ, thanh toán và QR check-in
+                    dựa trên kiến trúc hiện có của dự án.
+                </p>
+            </div>
+            <div class="landing-team-grid">
+                <article class="landing-team-card landing-reveal">
+                    <h3>Huỳnh Đức Dũng</h3>
+                    <p>Thành viên nhóm phát triển WMS</p>
+                </article>
+                <article class="landing-team-card landing-reveal">
+                    <h3>Lai Mộc Huy</h3>
+                    <p>Thành viên nhóm phát triển WMS</p>
+                </article>
+                <article class="landing-team-card landing-reveal">
+                    <h3>Sơn Nguyễn Kỳ Duyên</h3>
+                    <p>Thành viên nhóm phát triển WMS</p>
+                </article>
+                <article class="landing-team-card landing-reveal">
+                    <h3>Nguyễn Thành Đức</h3>
+                    <p>Thành viên nhóm phát triển WMS</p>
+                </article>
+            </div>
+            <div class="landing-role-strip landing-reveal" aria-label="Phạm vi đóng góp">
+                <span>Backend / Database</span>
+                <span>Web Portal</span>
+                <span>Desktop App</span>
+                <span>Testing / Report</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-final-cta">
+        <div class="landing-container landing-final-cta-inner landing-reveal">
+            <h2>Bạn muốn xem không gian còn trống hôm nay?</h2>
             <div class="landing-actions">
-                <a class="pink-button large" th:href="@{/chi-nhanh}">Chọn chi nhánh</a>
-                <a class="glass-button large" th:href="@{/dangNhap}">Đăng nhập để đặt chỗ</a>
-                <a class="glass-button large" th:href="@{/register}">Đăng ký</a>
+                <a class="landing-button landing-button-primary landing-button-large" th:href="@{/chi-nhanh}">Chọn chi nhánh</a>
+                <a class="landing-button landing-button-secondary landing-button-large" th:href="@{/dangNhap}">Đăng nhập để đặt chỗ</a>
             </div>
-        </div>
-        <div class="landing-hero-panel">
-            <div class="live-map-preview">
-                <span class="preview-desk empty">Trống</span>
-                <span class="preview-desk booked">Đã đặt</span>
-                <span class="preview-desk active">Đang dùng</span>
-                <span class="preview-desk maintenance">Bảo trì</span>
-                <strong>WMS Space Map</strong>
-            </div>
-            <p>Guest có thể xem sơ đồ trước khi đăng nhập; đặt chỗ và thanh toán vẫn yêu cầu tài khoản hội viên.</p>
-        </div>
-    </section>
-
-    <section class="landing-section">
-        <div class="landing-section-title">
-            <p>Tính năng nổi bật</p>
-            <h2>Một luồng đặt chỗ gọn từ chọn chỗ đến nhận QR</h2>
-        </div>
-        <div class="landing-feature-grid">
-            <article>
-                <strong>Xem sơ đồ thời gian thực</strong>
-                <p>Màu trạng thái giúp nhận biết không gian trống, đã đặt, đang dùng hoặc bảo trì.</p>
-            </article>
-            <article>
-                <strong>Đặt chỗ online</strong>
-                <p>Chọn chi nhánh, ngày giờ và không gian phù hợp trước khi xác nhận thanh toán.</p>
-            </article>
-            <article>
-                <strong>Thanh toán và nhận QR</strong>
-                <p>Hệ thống tạo QR nhận chỗ sau khi đặt chỗ được xác nhận thanh toán.</p>
-            </article>
-            <article>
-                <strong>Lịch sử đặt chỗ</strong>
-                <p>Hội viên theo dõi các yêu cầu đặt chỗ, phiên làm việc và QR trong portal.</p>
-            </article>
-            <article>
-                <strong>Ưu đãi thành viên</strong>
-                <p>Phiếu giảm giá và hạng thành viên được áp dụng theo dữ liệu hiện có.</p>
-            </article>
-        </div>
-    </section>
-
-    <section class="landing-section landing-process">
-        <div class="landing-section-title">
-            <p>Quy trình</p>
-            <h2>Chọn chi nhánh, chọn chỗ, đăng nhập, thanh toán, nhận QR</h2>
-        </div>
-        <ol>
-            <li><span>1</span><strong>Chọn chi nhánh</strong><p>Xem địa chỉ, hotline và giờ hoạt động.</p></li>
-            <li><span>2</span><strong>Chọn không gian</strong><p>Kiểm tra sơ đồ theo khung giờ mong muốn.</p></li>
-            <li><span>3</span><strong>Đăng nhập/đăng ký</strong><p>Chỉ tài khoản hội viên mới được tạo đặt chỗ.</p></li>
-            <li><span>4</span><strong>Thanh toán</strong><p>Chuyển khoản theo nội dung hệ thống cung cấp.</p></li>
-            <li><span>5</span><strong>Nhận QR/check-in</strong><p>Dùng QR để nhân viên mở phiên khi đến nơi.</p></li>
-        </ol>
-    </section>
-
-    <section class="landing-section">
-        <div class="landing-section-title">
-            <p>Chi nhánh đang hoạt động</p>
-            <h2>Chọn nơi bạn đang có mặt</h2>
-        </div>
-        <div class="landing-branch-grid">
-            <article th:each="branch : ${hienThiChiNhanh}">
-                <span th:text="${branch.maCN}">CN001</span>
-                <strong th:text="${branch.tenCN}">Chi nhánh</strong>
-                <p th:text="${branch.diaChi}">Địa chỉ</p>
-                <small th:text="${branch.thoiGianMoCua + ' - ' + branch.thoiGianDongCua}">07:00 - 22:00</small>
-                <a th:href="@{/so-do-khong-gian(branchId=${branch.maCN})}">Xem sơ đồ</a>
-            </article>
-        </div>
-        <a class="button-secondary landing-more" th:href="@{/chi-nhanh}">Xem tất cả chi nhánh</a>
-    </section>
-
-    <section class="landing-section team-strip landing-team">
-        <div class="team-heading">
-            <p>Thông tin nhóm</p>
-            <h2>Nhóm phát triển WMS</h2>
-        </div>
-        <div class="team-grid">
-            <article>
-                <img th:src="@{/images/ThanhVienNhom/Huy2.png}" alt="Lai Mộc Huy">
-                <strong>Lai Mộc Huy</strong>
-                <span>Nhóm trưởng</span>
-            </article>
-            <article>
-                <img th:src="@{/images/ThanhVienNhom/Dung2.png}" alt="Huỳnh Đức Dũng">
-                <strong>Huỳnh Đức Dũng</strong>
-                <span>Nhóm phó</span>
-            </article>
-            <article>
-                <img th:src="@{/images/ThanhVienNhom/Duyen2.png}" alt="Sơn Nguyễn Kỳ Duyên">
-                <strong>Sơn Nguyễn Kỳ Duyên</strong>
-                <span>Thư ký</span>
-            </article>
-            <article>
-                <img th:src="@{/images/ThanhVienNhom/Duc.png}" alt="Nguyễn Thành Đức">
-                <strong>Nguyễn Thành Đức</strong>
-                <span>Thành viên</span>
-            </article>
         </div>
     </section>
 </main>
 
 <footer class="landing-footer">
-    <strong>WMS Demo</strong>
-    <span>Hotline: 1900 1000</span>
-    <span>Email: wms.demo@example.com</span>
+    <div class="landing-container landing-footer-grid">
+        <div class="landing-footer-brand">
+            <img th:src="@{/icons/cherry-blossom-32x32.png}" alt="" aria-hidden="true">
+            <strong>WMS</strong>
+            <span>Workspace Management System</span>
+        </div>
+        <nav aria-label="Liên kết nhanh">
+            <a th:href="@{/chi-nhanh}">Chi nhánh</a>
+            <a th:href="@{/so-do-khong-gian(branchId=${landingMapBranchId})}">Sơ đồ</a>
+            <a th:href="@{/dangNhap}">Đăng nhập</a>
+            <a th:href="@{/register}">Đăng ký</a>
+        </nav>
+        <div class="landing-footer-contact">
+            <span>Email: wms.demo@example.com</span>
+            <span>Hotline: 1900 1000</span>
+            <span>© 2026 WMS Demo</span>
+        </div>
+    </div>
 </footer>
 </body>
 </html>

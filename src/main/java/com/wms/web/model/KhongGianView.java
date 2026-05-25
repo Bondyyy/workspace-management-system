@@ -153,8 +153,16 @@ public class KhongGianView {
         return coTheDat();
     }
 
+    public boolean isConTrong() {
+        return conTrong();
+    }
+
     public boolean coTheDat() {
         return available && "trong".equals(chuanHoaTrangThai(trangThaiKG));
+    }
+
+    public boolean isCoTheDat() {
+        return coTheDat();
     }
 
     public String getStatusClass() {

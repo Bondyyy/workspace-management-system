@@ -272,10 +272,10 @@ public class CongThongTinWebRepository {
                 WHERE kg.MaCN = ?
                 ORDER BY
                     CASE
-                        WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
-                        THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                        WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
+                        THEN TO_NUMBER(REGEXP_SUBSTR(kg.MaCN, '[0-9]+$'))
                     END NULLS LAST,
-                    cn.MaCN,
+                    kg.MaCN,
                     kg.TenKG
                 """;
         Object[] params = { branchId };
@@ -283,10 +283,10 @@ public class CongThongTinWebRepository {
             sql = baseSql + """
                     ORDER BY
                         CASE
-                            WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
-                            THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                            WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
+                            THEN TO_NUMBER(REGEXP_SUBSTR(kg.MaCN, '[0-9]+$'))
                         END NULLS LAST,
-                        cn.MaCN,
+                        kg.MaCN,
                         kg.TenKG
                     """;
             params = new Object[0];
