@@ -42,7 +42,7 @@ public class NhanVienService {
         if (hoTen == null || hoTen.isBlank()) throw new Exception("Họ tên không được để trống!");
         if (nd.getSdt() == null || !nd.getSdt().matches("\\d{10}")) throw new Exception("Số điện thoại phải là 10 chữ số!");
         if (nd.getEmail() == null || !nd.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) throw new Exception("Email không đúng định dạng!");
-        if (nv.getLuongCoBan() < 0) throw new Exception("Lương cơ bản không được âm!");
+        if (nv.getLuongCoBan() != null && nv.getLuongCoBan() < 0) throw new Exception("Lương cơ bản không được âm!");
         if (nv.getMaCN() == null || nv.getMaCN().isBlank()) throw new Exception("Vui lòng chọn chi nhánh!");
     }
 

@@ -155,6 +155,7 @@ public class NguoiDungController {
 
             service.addUser(user);
             com.wms.util.MessageUtil.showInfo(view, "Thêm người dùng mới thành công!");
+            invalidateNhanVienCache();
             loadData();
             clearForm();
         } catch (Exception e) {
@@ -177,6 +178,7 @@ public class NguoiDungController {
 
             service.updateUser(user);
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật thông tin người dùng thành công!");
+            invalidateNhanVienCache();
             loadData();
         } catch (Exception e) {
             showError(e.getMessage(), e);
@@ -285,5 +287,12 @@ public class NguoiDungController {
 
     private void showError(String msg, Throwable t) {
         com.wms.util.MessageUtil.showError(view, msg, t);
+    }
+
+    private void invalidateNhanVienCache() {
+        java.awt.Window window = SwingUtilities.getWindowAncestor(view);
+        if (window instanceof com.wms.view.TrangChuQuanLy.TrangChuQuanLyForm mainForm) {
+            mainForm.invalidatePanelCache("nhanVien");
+        }
     }
 }

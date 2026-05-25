@@ -746,6 +746,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         int version = ++panelLoadVersion;
         javax.swing.JPanel cachedPanel = panelCache.get(key);
         if (cachedPanel != null) {
+            refreshPanelIfSupported(cachedPanel);
             showPanel(cachedPanel);
             return;
         }
@@ -776,6 +777,19 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
                 }
             }
         }.execute();
+    }
+
+    public void invalidatePanelCache(String key) {
+        if (key == null || key.isBlank()) {
+            return;
+        }
+        panelCache.remove(key);
+    }
+
+    private void refreshPanelIfSupported(javax.swing.JPanel panel) {
+        if (panel instanceof com.wms.view.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienForm nhanVienForm) {
+            nhanVienForm.refreshData();
+        }
     }
 
     private javax.swing.JPanel createLoadingPanel() {

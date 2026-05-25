@@ -196,6 +196,8 @@ public class NguoiDungDAO {
                 }
 
                 dongBoHoSoNhanVienTheoVaiTro(maND, conn);
+                System.out.println("[NguoiDungDAO] Tao nguoi dung MaND=" + maND
+                        + ", vaiTro=" + selectedRole + " va dong bo ho so nhan vien neu can.");
                 conn.commit();
             } catch (SQLException e) {
                 conn.rollback();
@@ -323,6 +325,8 @@ public class NguoiDungDAO {
                 }
 
                 dongBoHoSoNhanVienTheoVaiTro(user.getMaND(), conn);
+                System.out.println("[NguoiDungDAO] Cap nhat nguoi dung MaND=" + user.getMaND()
+                        + ", vaiTro=" + selectedRole + " va dong bo ho so nhan vien.");
                 conn.commit();
             } catch (SQLException e) {
                 conn.rollback();
@@ -385,31 +389,22 @@ public class NguoiDungDAO {
     }
 
     private void dongBoHoSoNhanVienTheoVaiTro(String maND, Connection conn) throws SQLException {
-        String sqlRoles = "SELECT vt.TenVaiTro " +
+        String sqlRoles = "SELECT vt.MaVaiTro, vt.TenVaiTro " +
                           "FROM CHITIETVAITRO ctv " +
                           "JOIN VAITRO vt ON ctv.MaVaiTro = vt.MaVaiTro " +
                           "WHERE ctv.MaND = ?";
-        boolean isCustomerOnly = true;
-        boolean isAdmin = false;
-        boolean isStaff = false;
-        String staffRoleName = null;
+        boolean coVaiTroNoiBo = false;
+        String loaiNhanVien = null;
 
         try (PreparedStatement ps = conn.prepareStatement(sqlRoles)) {
             ps.setString(1, maND);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    String tenVaiTro = rs.getString("TenVaiTro").toLowerCase();
-                    if (tenVaiTro.contains("quản trị viên hệ thống")) {
-                        isAdmin = true;
-                        isCustomerOnly = false;
-                    } else if (tenVaiTro.contains("hội viên")) {
-                        // isCustomerOnly remains true if no other roles
-                    } else {
-                        isStaff = true;
-                        isCustomerOnly = false;
-                        if (staffRoleName == null || tenVaiTro.contains("quản lý")) {
-                            staffRoleName = rs.getString("TenVaiTro");
-                        }
+                    String maVaiTro = rs.getString("MaVaiTro");
+                    String tenVaiTro = rs.getString("TenVaiTro");
+                    if (!laVaiTroHoiVien(maVaiTro, tenVaiTro)) {
+                        coVaiTroNoiBo = true;
+                        loaiNhanVien = chonLoaiNhanVienUuTien(loaiNhanVien, mapLoaiNhanVien(maVaiTro, tenVaiTro));
                     }
                 }
             }
@@ -426,18 +421,18 @@ public class NguoiDungDAO {
             }
         }
 
-        if (isCustomerOnly && !isAdmin && !isStaff) {
+        if (!coVaiTroNoiBo) {
             if (maNV != null) {
                 String sqlUpdate = "UPDATE NHANVIEN SET TrangThaiLamViec = 'Ngừng làm việc' WHERE MaNV = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
                     ps.setString(1, maNV);
                     ps.executeUpdate();
                 }
+                System.out.println("[NguoiDungDAO] Dong bo nhan vien MaND=" + maND
+                        + ": chuyen TrangThaiLamViec=Ngung lam viec.");
             }
-        } else if (isAdmin) {
-            // Keep existing NHANVIEN, do nothing
-        } else if (isStaff) {
-            String loaiNV = (staffRoleName != null && staffRoleName.toLowerCase().contains("quản lý")) ? "Quản lý" : "Nhân viên";
+        } else {
+            String loaiNV = loaiNhanVien == null ? "Nhân viên" : loaiNhanVien;
             if (maNV == null) {
                 String sqlInsert = "INSERT INTO NHANVIEN (LoaiNV, NgayVaoLam, TrangThaiLamViec, MaND) VALUES (?, CURRENT_DATE, 'Đang làm việc', ?)";
                 try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
@@ -445,6 +440,8 @@ public class NguoiDungDAO {
                     ps.setString(2, maND);
                     ps.executeUpdate();
                 }
+                System.out.println("[NguoiDungDAO] Dong bo nhan vien MaND=" + maND
+                        + ": tao moi NHANVIEN LoaiNV=" + loaiNV + ".");
             } else {
                 String sqlUpdate = "UPDATE NHANVIEN SET LoaiNV = ?, TrangThaiLamViec = 'Đang làm việc' WHERE MaNV = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
@@ -452,7 +449,39 @@ public class NguoiDungDAO {
                     ps.setString(2, maNV);
                     ps.executeUpdate();
                 }
+                System.out.println("[NguoiDungDAO] Dong bo nhan vien MaND=" + maND
+                        + ": kich hoat lai MaNV=" + maNV + ", LoaiNV=" + loaiNV + ".");
             }
         }
+    }
+
+    private boolean laVaiTroHoiVien(String maVaiTro, String tenVaiTro) {
+        if (maVaiTro != null && maVaiTro.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_CODE)) {
+            return true;
+        }
+        return tenVaiTro != null && tenVaiTro.toLowerCase().contains("hội viên");
+    }
+
+    private String mapLoaiNhanVien(String maVaiTro, String tenVaiTro) {
+        String roleName = tenVaiTro == null ? "" : tenVaiTro.toLowerCase();
+        if (maVaiTro != null && maVaiTro.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_ADMIN_CODE)
+                || roleName.contains("quản trị")) {
+            return "Quản trị viên Hệ thống";
+        }
+        if (maVaiTro != null && maVaiTro.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_MANAGER_CODE)
+                || roleName.contains("quản lý")) {
+            return "Quản lý";
+        }
+        return "Nhân viên";
+    }
+
+    private String chonLoaiNhanVienUuTien(String current, String candidate) {
+        if ("Quản trị viên Hệ thống".equals(current) || "Quản trị viên Hệ thống".equals(candidate)) {
+            return "Quản trị viên Hệ thống";
+        }
+        if ("Quản lý".equals(current) || "Quản lý".equals(candidate)) {
+            return "Quản lý";
+        }
+        return candidate == null ? current : candidate;
     }
 }

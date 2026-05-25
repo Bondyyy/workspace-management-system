@@ -88,6 +88,12 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         hienThiLenBang(ds);
     }
 
+    public void refreshData() {
+        loadComboBoxData();
+        apDungPhanQuyen();
+        loadData();
+    }
+
     private void hienThiLenBang(List<Object[]> ds) {
         DefaultTableModel model = (DefaultTableModel) tblNhanVien.getModel();
         model.setRowCount(0);
@@ -582,7 +588,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             nv.setLoaiNV("Quản lý");
         } else if (tenVT != null
                 && (tenVT.toLowerCase().contains("admin") || tenVT.toLowerCase().contains("quản trị"))) {
-            nv.setLoaiNV("Quản trị Viên hệ thống");
+            nv.setLoaiNV("Quản trị viên Hệ thống");
         } else {
             nv.setLoaiNV("Nhân viên");
         }
