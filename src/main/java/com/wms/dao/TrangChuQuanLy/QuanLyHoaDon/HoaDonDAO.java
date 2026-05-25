@@ -17,6 +17,7 @@ public class HoaDonDAO {
     private static final long MILLIS_IN_HOUR = 3600000;
 
     public List<HoaDonDTO> layDanhSachHoaDon(String searchText, String statusFilter) {
+        long start = System.currentTimeMillis();
         List<HoaDonDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc, "
@@ -99,16 +100,32 @@ public class HoaDonDAO {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            logElapsed("load bang hoa don", start);
         }
         return list;
     }
 
     public boolean taoHoaDonMoi(HoaDonDTO hd) {
+        long start = System.currentTimeMillis();
         String sql = "INSERT INTO HOADON (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, TrangThaiThanhToan, MaPhien) "
                 + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
+        String sqlExists = "SELECT COUNT(*) FROM HOADON WHERE MaPhien = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            if (hd.getMaPhien() != null && !hd.getMaPhien().trim().isEmpty()) {
+                try (PreparedStatement psExists = conn.prepareStatement(sqlExists)) {
+                    psExists.setString(1, hd.getMaPhien().trim());
+                    try (ResultSet rs = psExists.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            System.out.println("[HoaDonDAO] Bo qua tao hoa don moi vi MaPhien da co hoa don: " + hd.getMaPhien());
+                            return false;
+                        }
+                    }
+                }
+            }
+
             pstmt.setString(1, hd.getMaHoaDon());
             pstmt.setString(2, hd.getSoHD());
             pstmt.setDouble(3, hd.getTongTien());
@@ -117,9 +134,14 @@ public class HoaDonDAO {
             pstmt.setString(6, hd.getMaPhien());
 
             return pstmt.executeUpdate() > 0;
+        } catch (SQLIntegrityConstraintViolationException e) {
+            System.err.println("[HoaDonDAO] Khong tao hoa don trung MaPhien: " + e.getMessage());
+            return false;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        } finally {
+            logElapsed("tao hoa don moi", start);
         }
     }
 
@@ -189,6 +211,7 @@ public class HoaDonDAO {
     }
 
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
+        long start = System.currentTimeMillis();
         ThongTinHoaDonDTO thongTin = null;
         String sqlChung = "SELECT h.MaHoaDon, h.NgayLapHoaDon, h.PhuongThucThanhToan, " +
             "NVL(h.TongTien, FN_TinhTongTien(p.MaPhien)) AS TongTien, " +
@@ -314,6 +337,8 @@ public class HoaDonDAO {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            logElapsed("load chi tiet hoa don", start);
         }
         return thongTin;
     }
@@ -407,6 +432,7 @@ public class HoaDonDAO {
     }
 
     public KetQuaThanhToanDTO thanhToanVoiPhieuGiamGiaMoi(String maPhien, String maNV, String maPGG, String phuongThucThanhToan) {
+        long start = System.currentTimeMillis();
         String sql = "{call SP_ThanhToanVoiPhieuGiamGia(?, ?, ?, ?, ?)}";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              CallableStatement cstmt = conn.prepareCall(sql)) {
@@ -423,15 +449,18 @@ public class HoaDonDAO {
             
             cstmt.execute();
             String message = cstmt.getString(5);
+            System.out.println("[HoaDonDAO] SP_ThanhToanVoiPhieuGiamGia: " + message);
             
-            if (message != null && message.toLowerCase(Locale.ROOT).contains("lỗi")) {
-                return new KetQuaThanhToanDTO(false, message);
+            if (!laThongBaoThanhCong(message) || laThongBaoLoi(message)) {
+                return new KetQuaThanhToanDTO(false, message != null ? message : "Lỗi khi cập nhật thanh toán");
             }
             
             return new KetQuaThanhToanDTO(true, message != null ? message : "Thanh toán thành công");
         } catch (Exception e) {
             e.printStackTrace();
             return new KetQuaThanhToanDTO(false, "Lỗi khi cập nhật thanh toán: " + e.getMessage());
+        } finally {
+            logElapsed("thanh toan SP", start);
         }
     }
 
@@ -443,5 +472,21 @@ public class HoaDonDAO {
         } else {
             return new KetQuaThanhToanDTO(false, "Lỗi khi cập nhật thanh toán");
         }
+    }
+
+    private boolean laThongBaoLoi(String message) {
+        if (message == null) {
+            return false;
+        }
+        String normalized = Normalizer.normalize(message, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT);
+        return normalized.contains("loi")
+                || normalized.contains("du lieu loi")
+                || normalized.contains("khong tim thay");
+    }
+
+    private void logElapsed(String action, long start) {
+        System.out.println("[HoaDonDAO] " + action + " mat " + (System.currentTimeMillis() - start) + " ms");
     }
 }

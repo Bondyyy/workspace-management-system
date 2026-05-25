@@ -19,21 +19,23 @@ public class MainApp {
 
         SwingUtilities.invokeLater(() -> {
             logger.info("Đang khởi động hệ thống WMS...");
-            
-            new Thread(() -> {
-                try {
-                    SuperAdminCreator.initialize();
-                    
-                    SwingUtilities.invokeLater(() -> {
-                        TrangGioiThieuForm introForm = new TrangGioiThieuForm();
-                        introForm.setVisible(true);
-                        logger.info("Khởi động hệ thống thành công!");
-                    });
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Lỗi nghiêm trọng khi khởi động hệ thống", e);
-                }
-            }).start();
+            TrangGioiThieuForm introForm = new TrangGioiThieuForm();
+            introForm.setVisible(true);
+            logger.info("Giao diện khởi động đã sẵn sàng.");
         });
+
+        Thread initThread = new Thread(() -> {
+            long start = System.currentTimeMillis();
+            try {
+                SuperAdminCreator.initialize();
+                DatabaseConnection.getInstance();
+                logger.info("Khởi tạo nền hoàn tất trong " + (System.currentTimeMillis() - start) + " ms");
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Lỗi nghiêm trọng khi khởi tạo nền hệ thống", e);
+            }
+        }, "WMS-Startup-Init");
+        initThread.setDaemon(true);
+        initThread.start();
     }
 
     private static void setupLookAndFeel() {

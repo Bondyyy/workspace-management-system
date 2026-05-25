@@ -15,10 +15,12 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class BaoCaoJasperExporter {
 
     public static final String TEMPLATE_PATH = "/reports/bao_cao_wms.jrxml";
+    private static final Map<String, JasperReport> REPORT_CACHE = new ConcurrentHashMap<>();
 
     private BaoCaoJasperExporter() {
     }
@@ -42,11 +44,23 @@ public final class BaoCaoJasperExporter {
     }
 
     static JasperReport compileTemplate() throws IOException, JRException {
-        try (InputStream input = BaoCaoJasperExporter.class.getResourceAsStream(TEMPLATE_PATH)) {
-            if (input == null) {
-                throw new IOException("Không tìm thấy template JasperReports: " + TEMPLATE_PATH);
+        JasperReport cached = REPORT_CACHE.get(TEMPLATE_PATH);
+        if (cached != null) {
+            return cached;
+        }
+        synchronized (REPORT_CACHE) {
+            cached = REPORT_CACHE.get(TEMPLATE_PATH);
+            if (cached != null) {
+                return cached;
             }
-            return JasperCompileManager.compileReport(input);
+            try (InputStream input = BaoCaoJasperExporter.class.getResourceAsStream(TEMPLATE_PATH)) {
+                if (input == null) {
+                    throw new IOException("Không tìm thấy template JasperReports: " + TEMPLATE_PATH);
+                }
+                JasperReport report = JasperCompileManager.compileReport(input);
+                REPORT_CACHE.put(TEMPLATE_PATH, report);
+                return report;
+            }
         }
     }
 

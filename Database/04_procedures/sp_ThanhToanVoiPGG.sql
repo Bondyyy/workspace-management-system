@@ -29,6 +29,7 @@ CREATE OR REPLACE PROCEDURE SP_ThanhToanVoiPhieuGiamGia(
     v_SoGioThucTe NUMBER;
     v_SoGioQua NUMBER;
     v_CountDV NUMBER;
+    v_SoHoaDon NUMBER;
 BEGIN
     IF p_MaPhien IS NULL OR LENGTH(TRIM(p_MaPhien)) = 0 THEN
         p_outMessage := 'Lỗi: Thiếu mã phiên cần thanh toán.';
@@ -45,6 +46,21 @@ BEGIN
     FROM PHIENLAMVIEC
     WHERE MaPhien = TRIM(p_MaPhien)
     FOR UPDATE NOWAIT;
+
+    SELECT COUNT(*)
+    INTO v_SoHoaDon
+    FROM HOADON
+    WHERE MaPhien = TRIM(p_MaPhien);
+
+    IF v_SoHoaDon = 0 THEN
+        ROLLBACK;
+        p_outMessage := 'Không tìm thấy hóa đơn của phiên [' || TRIM(p_MaPhien) || '].';
+        RETURN;
+    ELSIF v_SoHoaDon > 1 THEN
+        ROLLBACK;
+        p_outMessage := 'Dữ liệu lỗi: phiên [' || TRIM(p_MaPhien) || '] có nhiều hóa đơn, cần cleanup.';
+        RETURN;
+    END IF;
 
     SELECT MaHoaDon, TrangThaiThanhToan, NVL(DaTraTruoc, 0)
     INTO v_MaHoaDon, v_TrangThaiThanhToan, v_DaTraTruoc
@@ -209,6 +225,9 @@ EXCEPTION
     WHEN ex_resource_busy THEN
         ROLLBACK;
         p_outMessage := 'Dữ liệu thanh toán đang được nhân viên khác xử lý. Vui lòng thử lại sau.';
+    WHEN TOO_MANY_ROWS THEN
+        ROLLBACK;
+        p_outMessage := 'Dữ liệu lỗi: phiên [' || p_MaPhien || '] có nhiều hóa đơn, cần cleanup.';
     WHEN OTHERS THEN
         ROLLBACK;
         p_outMessage := 'Lỗi thanh toán: ' || SQLERRM;

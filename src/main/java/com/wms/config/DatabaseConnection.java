@@ -10,6 +10,7 @@ import java.util.Properties;
 public class DatabaseConnection {
     private static DatabaseConnection instance;
     private HikariDataSource dataSource;
+    private static final int MIN_IDLE_CONNECTIONS = 2;
 
     private DatabaseConnection() {
         initConnectionPool();
@@ -36,14 +37,14 @@ public class DatabaseConnection {
             // Driver Oracle thin
             config.setDriverClassName("oracle.jdbc.OracleDriver");
 
-            // Cau hinh toi uu cho Pool ket noi (nhe, muot cho Desktop App)
-            config.setMaximumPoolSize(3);        // So ket noi toi da duy tri
-            config.setMinimumIdle(0);            // So ket noi toi thieu luon san sang
-            config.setIdleTimeout(120000);       // Dong ket noi thua sau 2 phut
-            config.setMaxLifetime(300000);      // Reset ket noi vat ly sau 5 phut
-            config.setKeepaliveTime(120000);     // Thoi gian keepalive
-            config.setConnectionTimeout(10000);  // Thoi gian cho ket noi toi da 10s
-            config.setValidationTimeout(5000);   // Validate timeout 5s
+            // Cau hinh pool gon cho desktop app, tranh login dau tien bi mo ket noi lanh.
+            config.setMaximumPoolSize(6);
+            config.setMinimumIdle(MIN_IDLE_CONNECTIONS);
+            config.setIdleTimeout(300000);
+            config.setMaxLifetime(1800000);
+            config.setKeepaliveTime(120000);
+            config.setConnectionTimeout(5000);
+            config.setValidationTimeout(2000);
             config.setLeakDetectionThreshold(30000); // Bat leak detection 30s
             config.setPoolName("WMS-HikariPool");
 
@@ -53,6 +54,7 @@ public class DatabaseConnection {
 
             this.dataSource = new HikariDataSource(config);
             System.out.println("[DB] Khoi tao Pool ket noi HikariCP thanh cong!");
+            preWarmPoolAsync();
         } catch (Exception e) {
             System.err.println("[DB] Loi khoi tao Pool ket noi HikariCP: " + e.getMessage());
             e.printStackTrace();
@@ -67,6 +69,7 @@ public class DatabaseConnection {
     }
 
     public Connection getConnection() {
+        long start = System.currentTimeMillis();
         try {
             if (dataSource == null || dataSource.isClosed()) {
                 initConnectionPool();
@@ -74,6 +77,10 @@ public class DatabaseConnection {
             Connection conn = dataSource.getConnection();
             if (conn == null) {
                 throw new SQLException("DataSource returned a null connection.");
+            }
+            long elapsed = System.currentTimeMillis() - start;
+            if (elapsed > 300) {
+                System.out.println("[DB] Lay connection mat " + elapsed + " ms");
             }
             return conn;
         } catch (SQLException e) {
@@ -87,5 +94,22 @@ public class DatabaseConnection {
             dataSource.close();
             System.out.println("[DB] Da dong Pool ket noi.");
         }
+    }
+
+    private void preWarmPoolAsync() {
+        Thread worker = new Thread(() -> {
+            long start = System.currentTimeMillis();
+            for (int i = 0; i < MIN_IDLE_CONNECTIONS; i++) {
+                try (Connection ignored = dataSource.getConnection()) {
+                    // Lay va tra connection de Hikari tao san idle connection.
+                } catch (SQLException ex) {
+                    System.err.println("[DB] Pre-warm connection that bai: " + ex.getMessage());
+                    return;
+                }
+            }
+            System.out.println("[DB] Pre-warm pool hoan tat trong " + (System.currentTimeMillis() - start) + " ms");
+        }, "WMS-DB-Prewarm");
+        worker.setDaemon(true);
+        worker.start();
     }
 }

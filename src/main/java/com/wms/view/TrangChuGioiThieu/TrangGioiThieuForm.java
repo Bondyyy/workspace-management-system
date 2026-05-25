@@ -402,9 +402,19 @@ public class TrangGioiThieuForm extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            com.wms.util.SuperAdminCreator.initialize(); // Tự động kiểm tra quyền & admin khi mở app
             new TrangGioiThieuForm().setVisible(true);
         });
+        Thread initThread = new Thread(() -> {
+            long start = System.currentTimeMillis();
+            try {
+                com.wms.util.SuperAdminCreator.initialize(); // Tự động kiểm tra quyền & admin khi mở app
+                logger.info("Khởi tạo dữ liệu nền hoàn tất trong " + (System.currentTimeMillis() - start) + " ms");
+            } catch (Exception ex) {
+                logger.log(java.util.logging.Level.SEVERE, "Lỗi khởi tạo dữ liệu nền", ex);
+            }
+        }, "WMS-Intro-Init");
+        initThread.setDaemon(true);
+        initThread.start();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -16,6 +16,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.io.File;
 
 public class ThanhToanHoaDonForm extends JPanel {
 
@@ -48,6 +49,7 @@ public class ThanhToanHoaDonForm extends JPanel {
     private double tongTienGoc = 0, tienGiamGia = 0, thanhTien = 0;
     private boolean daDongTienMat = false, daDongChuyenKhoan = false;
     private boolean dangXuLyThanhToan = false;
+    private boolean dangExportHoaDon = false;
     private boolean daThanhToanThanhCong = false;
 
     private final ThanhToanController thanhToanController = new ThanhToanController();
@@ -67,13 +69,35 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void loadDuLieuHoaDon(String maHoaDon) {
-        ThongTinHoaDonDTO hoaDon = thanhToanController.loadDuLieuHoaDon(maHoaDon);
-        if (hoaDon != null) {
-            hienThiHoaDon(hoaDon);
-        } else {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn: " + maHoaDon, "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+        lblTrangThaiMaGG.setText("Đang tải hóa đơn...");
+        lblTrangThaiMaGG.setForeground(mauXamNhat);
+        long start = System.currentTimeMillis();
+        new SwingWorker<ThongTinHoaDonDTO, Void>() {
+            @Override
+            protected ThongTinHoaDonDTO doInBackground() {
+                return thanhToanController.loadDuLieuHoaDon(maHoaDon);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ThongTinHoaDonDTO hoaDon = get();
+                    if (hoaDon != null) {
+                        hienThiHoaDon(hoaDon);
+                        lblTrangThaiMaGG.setText("");
+                    } else {
+                        JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, "Không tìm thấy hóa đơn: " + maHoaDon, "Lỗi",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                    System.out.println("[ThanhToanHoaDonForm] load hoa don mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+                } catch (Exception ex) {
+                    lblTrangThaiMaGG.setText("");
+                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this,
+                            "Lỗi tải hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     public String getMaHoaDonHienTai() {
@@ -666,34 +690,67 @@ public class ThanhToanHoaDonForm extends JPanel {
         containerTienMat.setEnabled(false);
         containerChuyenKhoan.setEnabled(false);
         if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(false);
+        if (btnXoaMaGG != null) btnXoaMaGG.setEnabled(false);
+        if (nutInHoaDon != null) nutInHoaDon.setEnabled(false);
+        lblTrangThaiMaGG.setText("Đang xử lý thanh toán...");
+        lblTrangThaiMaGG.setForeground(mauXamNhat);
 
         String maPGG = maGiamGiaDangAp != null ? maGiamGiaDangAp.getMaPGG() : null;
-        com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO result = thanhToanController.thucHienThanhToanMoi(hoaDonHienTai.getMaHoaDon(), phuongThuc, maPGG, thanhTien);
+        String maHoaDon = hoaDonHienTai.getMaHoaDon();
+        long start = System.currentTimeMillis();
 
-        dangXuLyThanhToan = false;
-
-        if (result.isSuccess()) {
-            daThanhToanThanhCong = true;
-            if ("Tiền mặt".equals(phuongThuc)) daDongTienMat = true;
-            if ("Chuyển khoản".equals(phuongThuc)) daDongChuyenKhoan = true;
-            
-            capNhatTrangThaiThanhToan();
-            loadDuLieuHoaDon(hoaDonHienTai.getMaHoaDon());
-            
-            JOptionPane.showMessageDialog(this, result.getMessage(), "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            if (result.getMessage().contains("đã được thanh toán trước qua đặt chỗ") || result.getMessage().contains("đã thanh toán trước đó")) {
-                daThanhToanThanhCong = true;
-                capNhatTrangThaiThanhToan();
-                loadDuLieuHoaDon(hoaDonHienTai.getMaHoaDon());
-                JOptionPane.showMessageDialog(this, result.getMessage(), "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                containerTienMat.setEnabled(true);
-                containerChuyenKhoan.setEnabled(true);
-                if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(true);
-                JOptionPane.showMessageDialog(this, result.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        new SwingWorker<com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO, Void>() {
+            @Override
+            protected com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO doInBackground() {
+                return thanhToanController.thucHienThanhToanMoi(maHoaDon, phuongThuc, maPGG, thanhTien);
             }
-        }
+
+            @Override
+            protected void done() {
+                dangXuLyThanhToan = false;
+                try {
+                    com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO result = get();
+                    String message = result.getMessage() != null ? result.getMessage() : "";
+                    System.out.println("[ThanhToanHoaDonForm] thanh toan mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+
+                    if (result.isSuccess()) {
+                        daThanhToanThanhCong = true;
+                        if ("Tiền mặt".equals(phuongThuc)) daDongTienMat = true;
+                        if ("Chuyển khoản".equals(phuongThuc)) daDongChuyenKhoan = true;
+
+                        lblTrangThaiMaGG.setText("");
+                        capNhatTrangThaiThanhToan();
+                        loadDuLieuHoaDon(maHoaDon);
+
+                        JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    } else if (message.contains("đã được thanh toán trước qua đặt chỗ") || message.contains("đã thanh toán trước đó")) {
+                        daThanhToanThanhCong = true;
+                        lblTrangThaiMaGG.setText("");
+                        capNhatTrangThaiThanhToan();
+                        loadDuLieuHoaDon(maHoaDon);
+                        JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        containerTienMat.setEnabled(true);
+                        containerChuyenKhoan.setEnabled(true);
+                        if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(true);
+                        if (btnXoaMaGG != null) btnXoaMaGG.setEnabled(true);
+                        nutInHoaDon.setEnabled(false);
+                        lblTrangThaiMaGG.setText("");
+                        JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception ex) {
+                    containerTienMat.setEnabled(true);
+                    containerChuyenKhoan.setEnabled(true);
+                    if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(true);
+                    if (btnXoaMaGG != null) btnXoaMaGG.setEnabled(true);
+                    nutInHoaDon.setEnabled(false);
+                    lblTrangThaiMaGG.setText("");
+                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this,
+                            "Lỗi thanh toán: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     private void capNhatTrangThaiThanhToan() {
@@ -734,26 +791,76 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void inHoaDon() {
-        if (hoaDonHienTai == null) return;
+        if (hoaDonHienTai == null || dangExportHoaDon) return;
         Object[] options = {"Bill 80mm", "A4 PDF", "Hủy"};
         int choice = JOptionPane.showOptionDialog(this, "Chọn khổ giấy in hóa đơn:", "Xuất hóa đơn",
                 JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-                
-        if (choice == 0) {
-            try {
-                com.wms.util.HoaDonJasperExporter.xuatHoaDon80mm(this, hoaDonHienTai, tienGiamGia);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi xuất Jasper 80mm, tự động dùng iText...\n" + e.getMessage(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, tienGiamGia);
-            }
-        } else if (choice == 1) {
-            try {
-                com.wms.util.HoaDonJasperExporter.xuatHoaDonA4(this, hoaDonHienTai, tienGiamGia);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi xuất Jasper A4, tự động dùng iText...\n" + e.getMessage(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, tienGiamGia);
-            }
+        if (choice != 0 && choice != 1) {
+            return;
         }
+
+        JFileChooser fileChooser = new JFileChooser();
+        String typeName = choice == 0 ? "80mm" : "A4";
+        fileChooser.setDialogTitle("Chọn vị trí lưu file PDF (" + typeName + ")");
+        fileChooser.setSelectedFile(new File("HoaDon_" + hoaDonHienTai.getMaHoaDon() + "_" + typeName + ".pdf"));
+        if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = ensurePdfExtension(fileChooser.getSelectedFile());
+        xuatHoaDonAsync(file, choice);
+    }
+
+    private void xuatHoaDonAsync(File file, int choice) {
+        dangExportHoaDon = true;
+        nutInHoaDon.setEnabled(false);
+        lblTrangThaiMaGG.setText("Đang xuất hóa đơn...");
+        lblTrangThaiMaGG.setForeground(mauXamNhat);
+        long start = System.currentTimeMillis();
+
+        new SwingWorker<File, Void>() {
+            @Override
+            protected File doInBackground() throws Exception {
+                try {
+                    if (choice == 0) {
+                        com.wms.util.HoaDonJasperExporter.xuatHoaDon80mmToFile(file, hoaDonHienTai, tienGiamGia);
+                    } else {
+                        com.wms.util.HoaDonJasperExporter.xuatHoaDonA4ToFile(file, hoaDonHienTai, tienGiamGia);
+                    }
+                } catch (Exception jasperEx) {
+                    System.err.println("[ThanhToanHoaDonForm] Jasper export loi, fallback iText: " + jasperEx.getMessage());
+                    com.wms.util.HoaDonPDFExporter.xuatHoaDonPDFToFile(file, hoaDonHienTai, tienGiamGia);
+                }
+                return file;
+            }
+
+            @Override
+            protected void done() {
+                dangExportHoaDon = false;
+                nutInHoaDon.setEnabled(daThanhToanThanhCong);
+                lblTrangThaiMaGG.setText("");
+                try {
+                    File exported = get();
+                    System.out.println("[ThanhToanHoaDonForm] export hoa don mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this,
+                            "Xuất hóa đơn thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    if (Desktop.isDesktopSupported()) {
+                        Desktop.getDesktop().open(exported);
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this,
+                            "Lỗi xuất hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private File ensurePdfExtension(File file) {
+        if (file.getAbsolutePath().toLowerCase().endsWith(".pdf")) {
+            return file;
+        }
+        return new File(file.getAbsolutePath() + ".pdf");
     }
 
     private void initializeLabels() {

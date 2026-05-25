@@ -12,6 +12,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     private java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO> currentList;
     private final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy");
     private javax.swing.Timer realTimeTimer;
+    private javax.swing.SwingWorker<java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO>, Void> loadPhienWorker;
     private static final String LABEL_CHUA_KET_THUC = "Ch\u01b0a k\u1ebft th\u00fac";
     private static final String LABEL_DANG_HOAT_DONG = "\u0110ang ho\u1ea1t \u0111\u1ed9ng";
     private static final String LABEL_DA_KET_THUC = "\u0110\u00e3 k\u1ebft th\u00fac";
@@ -133,7 +134,48 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     }
 
     private void loadData(String keyword) {
-        controller.loadDanhSachPhien(keyword, getMaCNDangChon());
+        if (loadPhienWorker != null && !loadPhienWorker.isDone()) {
+            loadPhienWorker.cancel(true);
+        }
+        String maCN = getMaCNDangChon();
+        long start = System.currentTimeMillis();
+        setDangTaiDanhSach(true);
+        loadPhienWorker = new javax.swing.SwingWorker<>() {
+            @Override
+            protected java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO> doInBackground() {
+                return controller.layDanhSachPhien(keyword, maCN);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    if (isCancelled()) {
+                        return;
+                    }
+                    hienThiDanhSachPhien(get());
+                    System.out.println("[QuanLyPhienForm] load danh sach phien mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+                } catch (Exception ex) {
+                    javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                            "Lỗi tải danh sách phiên: " + ex.getMessage(),
+                            "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    setDangTaiDanhSach(false);
+                }
+            }
+        };
+        loadPhienWorker.execute();
+    }
+
+    private void setDangTaiDanhSach(boolean dangTai) {
+        btnTimKiem.setEnabled(!dangTai);
+        txtTimKiem.setEnabled(!dangTai);
+        tblPhienLamViec.setEnabled(!dangTai);
+        if (dangTai) {
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblPhienLamViec.getModel();
+            model.setRowCount(0);
+            model.addRow(new Object[]{"Đang tải...", "", "", "", "", "", "", ""});
+        }
     }
 
     public void hienThiDanhSachPhien(
@@ -650,13 +692,32 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         int xacNhan = javax.swing.JOptionPane.showConfirmDialog(this, "Xác nhận kết thúc phiên " + maPhien + "?",
                 "Xác nhận", javax.swing.JOptionPane.YES_NO_OPTION);
         if (xacNhan == javax.swing.JOptionPane.YES_OPTION) {
-            if (controller.ketThucPhien(maPhien)) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Đã kết thúc phiên thành công!");
-                loadData("");
-                btnHuyActionPerformed();
-            } else {
-                javax.swing.JOptionPane.showMessageDialog(this, "Lỗi khi kết thúc phiên!");
-            }
+            btnKetThucPhien.setEnabled(false);
+            new javax.swing.SwingWorker<Boolean, Void>() {
+                @Override
+                protected Boolean doInBackground() {
+                    return controller.ketThucPhien(maPhien);
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        if (get()) {
+                            javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Đã kết thúc phiên thành công!");
+                            loadData("");
+                            btnHuyActionPerformed();
+                        } else {
+                            javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên!");
+                            btnKetThucPhien.setEnabled(true);
+                        }
+                    } catch (Exception ex) {
+                        javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                                "Lỗi khi kết thúc phiên: " + ex.getMessage(),
+                                "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+                        btnKetThucPhien.setEnabled(true);
+                    }
+                }
+            }.execute();
         }
     }
 
@@ -754,8 +815,32 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                 }
             }
 
-            controller.loadChiTietDichVu(maPhien);
+            loadChiTietDichVuAsync(maPhien);
         }
+    }
+
+    private void loadChiTietDichVuAsync(String maPhien) {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblDichVu.getModel();
+        model.setRowCount(0);
+        model.addRow(new Object[]{"Đang tải...", "", "", ""});
+        new javax.swing.SwingWorker<java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO>, Void>() {
+            @Override
+            protected java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO> doInBackground() {
+                return controller.layDichVuCuaPhien(maPhien);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    hienThiDichVuTrongPhien(get());
+                } catch (Exception ex) {
+                    javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                            "Lỗi tải dịch vụ trong phiên: " + ex.getMessage(),
+                            "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+                    model.setRowCount(0);
+                }
+            }
+        }.execute();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

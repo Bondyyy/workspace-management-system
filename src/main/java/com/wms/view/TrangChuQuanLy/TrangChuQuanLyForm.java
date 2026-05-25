@@ -16,6 +16,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger
             .getLogger(TrangChuQuanLyForm.class.getName());
     private javax.swing.JButton activeButton;
+    private final java.util.Map<String, javax.swing.JPanel> panelCache = new java.util.HashMap<>();
+    private int panelLoadVersion = 0;
     private javax.swing.JButton btnMenuDatChoTruoc;
     private javax.swing.JPanel pnGroupTongQuan;
     private javax.swing.JPanel pnGroupVanHanh;
@@ -117,7 +119,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         }
 
         // Gọi form Tổng quan lên đầu tiên
-        showPanel(new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanTabbedForm());
+        showPanelAsync("tongQuan", () -> new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanTabbedForm());
         setActiveMenu(btnMenuTongQuan);
     }
 
@@ -132,7 +134,8 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         btnMenuDatChoTruoc.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnMenuDatChoTruoc.setMaximumSize(new java.awt.Dimension(32767, 45));
         btnMenuDatChoTruoc.addActionListener(evt -> {
-            showPanel(new com.wms.view.TrangChuQuanLy.QuanLyDatChoTruoc.QuanLyDatChoTruocForm());
+            showPanelAsync("datChoTruoc",
+                    () -> new com.wms.view.TrangChuQuanLy.QuanLyDatChoTruoc.QuanLyDatChoTruocForm());
             setActiveMenu(btnMenuDatChoTruoc);
         });
         pnMenuContainer.add(btnMenuDatChoTruoc, 7);
@@ -739,80 +742,136 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         pnContent.repaint();
     }
 
+    private void showPanelAsync(String key, java.util.function.Supplier<javax.swing.JPanel> panelFactory) {
+        int version = ++panelLoadVersion;
+        javax.swing.JPanel cachedPanel = panelCache.get(key);
+        if (cachedPanel != null) {
+            showPanel(cachedPanel);
+            return;
+        }
+
+        showPanel(createLoadingPanel());
+        long start = System.currentTimeMillis();
+
+        new javax.swing.SwingWorker<javax.swing.JPanel, Void>() {
+            @Override
+            protected javax.swing.JPanel doInBackground() {
+                return panelFactory.get();
+            }
+
+            @Override
+            protected void done() {
+                if (version != panelLoadVersion) {
+                    return;
+                }
+                try {
+                    javax.swing.JPanel panel = get();
+                    panelCache.put(key, panel);
+                    showPanel(panel);
+                    System.out.println("[TrangChuQuanLyForm] load form " + key + " mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+                } catch (Exception ex) {
+                    logger.log(java.util.logging.Level.SEVERE, "Không thể tải form: " + key, ex);
+                    showPanel(createErrorPanel("Không thể tải màn hình. Vui lòng thử lại."));
+                }
+            }
+        }.execute();
+    }
+
+    private javax.swing.JPanel createLoadingPanel() {
+        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        panel.setBackground(new java.awt.Color(254, 248, 250));
+        javax.swing.JLabel label = new javax.swing.JLabel("Đang tải dữ liệu...");
+        label.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        label.setForeground(MENU_ACTIVE_TEXT);
+        panel.add(label);
+        return panel;
+    }
+
+    private javax.swing.JPanel createErrorPanel(String message) {
+        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        panel.setBackground(new java.awt.Color(254, 248, 250));
+        javax.swing.JLabel label = new javax.swing.JLabel(message);
+        label.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        label.setForeground(new java.awt.Color(180, 45, 70));
+        panel.add(label);
+        return panel;
+    }
+
     private void btnMenuTongQuanActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanTabbedForm());
+        showPanelAsync("tongQuan", () -> new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanTabbedForm());
         setActiveMenu(btnMenuTongQuan);
     }
 
     private void btnMenuChiNhanhActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyChiNhanh.QuanLyChiNhanhForm());
+        showPanelAsync("chiNhanh", () -> new com.wms.view.TrangChuQuanLy.QuanLyChiNhanh.QuanLyChiNhanhForm());
         setActiveMenu(btnMenuChiNhanh);
     }
 
     private void btnMenuKhongGianActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyKhongGian.QuanLyKhongGianForm());
+        showPanelAsync("khongGian", () -> new com.wms.view.TrangChuQuanLy.QuanLyKhongGian.QuanLyKhongGianForm());
         setActiveMenu(btnMenuKhongGian);
     }
 
     private void btnMenuDichVuActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyThongTinDichVu.QuanLyThongTinDichVuForm());
+        showPanelAsync("dichVu", () -> new com.wms.view.TrangChuQuanLy.QuanLyThongTinDichVu.QuanLyThongTinDichVuForm());
         setActiveMenu(btnMenuDichVu);
     }
 
     private void btnMenuKhoActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyKho.QuanLyKhoForm());
+        showPanelAsync("kho", () -> new com.wms.view.TrangChuQuanLy.QuanLyKho.QuanLyKhoForm());
         setActiveMenu(btnMenuKho);
     }
 
     private void btnMenuPhienActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyPhien.QuanLyPhienForm());
+        showPanelAsync("phien", () -> new com.wms.view.TrangChuQuanLy.QuanLyPhien.QuanLyPhienForm());
         setActiveMenu(btnMenuPhien);
     }
 
     private void btnMenuDichVuDatActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyDichVuDat.QuanLyDichVuDatForm());
+        showPanelAsync("dichVuDat", () -> new com.wms.view.TrangChuQuanLy.QuanLyDichVuDat.QuanLyDichVuDatForm());
         setActiveMenu(btnMenuDichVuDat);
     }
 
     private void btnMenuHoaDonActionPerformed(java.awt.event.ActionEvent evt) {
         // Form hóa đơn từ file QuanLyHoaDonForm.java của bạn
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyHoaDon.QuanLyHoaDonForm());
+        showPanelAsync("hoaDon", () -> new com.wms.view.TrangChuQuanLy.QuanLyHoaDon.QuanLyHoaDonForm());
         setActiveMenu(btnMenuHoaDon);
     }
 
     private void btnMenuGiamGiaActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyPhieuGiamGia.QuanLyPhieuGiamGiaForm());
+        showPanelAsync("giamGia", () -> new com.wms.view.TrangChuQuanLy.QuanLyPhieuGiamGia.QuanLyPhieuGiamGiaForm());
         setActiveMenu(btnMenuGiamGia);
     }
 
     private void btnMenuHoiVienActionPerformed(java.awt.event.ActionEvent evt) {
         // Form Hội viên từ file QuanLyHoiVienForm.java của bạn
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyHoiVien.QuanLyHoiVienForm());
+        showPanelAsync("hoiVien", () -> new com.wms.view.TrangChuQuanLy.QuanLyHoiVien.QuanLyHoiVienForm());
         setActiveMenu(btnMenuHoiVien);
     }
 
     private void btnMenuHangThanhVienActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyHangThanhVien.QuanLyHangThanhVienForm());
+        showPanelAsync("hangThanhVien", () -> new com.wms.view.TrangChuQuanLy.QuanLyHangThanhVien.QuanLyHangThanhVienForm());
         setActiveMenu(btnMenuHangThanhVien);
     }
 
     private void btnMenuNhanVienActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienForm());
+        showPanelAsync("nhanVien", () -> new com.wms.view.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienForm());
         setActiveMenu(btnMenuNhanVien);
     }
 
     private void btnMenuLoaiDichVuActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyLoaiDichVu.QuanLyLoaiDichVuForm());
+        showPanelAsync("loaiDichVu", () -> new com.wms.view.TrangChuQuanLy.QuanLyLoaiDichVu.QuanLyLoaiDichVuForm());
         setActiveMenu(btnMenuLoaiDichVu);
     }
 
     private void btnMenuNguoiDungActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyNguoiDung.QuanLyNguoiDungForm());
+        showPanelAsync("nguoiDung", () -> new com.wms.view.TrangChuQuanLy.QuanLyNguoiDung.QuanLyNguoiDungForm());
         setActiveMenu(btnMenuNguoiDung);
     }
 
     private void btnMenuVaiTroActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.QuanLyVaiTro.QuanLyVaiTroForm());
+        showPanelAsync("vaiTro", () -> new com.wms.view.TrangChuQuanLy.QuanLyVaiTro.QuanLyVaiTroForm());
         setActiveMenu(btnMenuVaiTro);
     }
 

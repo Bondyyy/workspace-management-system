@@ -4,7 +4,9 @@ import com.wms.controller.TrangChuQuanLy.QuanLyHoaDon.HoaDonController;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 import com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.ThanhToanHoaDonForm;
 
+import java.awt.Desktop;
 import java.awt.Window;
+import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -27,6 +29,8 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     private HoaDonDTO currentHD;
     private List<HoaDonDTO> dsHoaDon = Collections.emptyList(); // cache, tránh gọi DB 2 lần
     private javax.swing.Timer realTimeTimer;
+    private javax.swing.SwingWorker<List<HoaDonDTO>, Void> loadHoaDonWorker;
+    private boolean dangExportHoaDon = false;
 
     public QuanLyHoaDonForm() {
         initComponents();
@@ -56,8 +60,53 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     }
 
     private void loadDataToTable() {
-        dsHoaDon = hoaDonController.layDanhSachHoaDon(
-                txtTimKiem.getText(), cbxLocTrangThai.getSelectedItem().toString());
+        loadDataAsync(null);
+    }
+
+    private void loadDataAsync(String maHoaDonCanChon) {
+        if (loadHoaDonWorker != null && !loadHoaDonWorker.isDone()) {
+            loadHoaDonWorker.cancel(true);
+        }
+
+        String keyword = txtTimKiem.getText();
+        String status = cbxLocTrangThai.getSelectedItem().toString();
+        setLoadingTable(true);
+        long start = System.currentTimeMillis();
+
+        loadHoaDonWorker = new javax.swing.SwingWorker<>() {
+            @Override
+            protected List<HoaDonDTO> doInBackground() {
+                return hoaDonController.layDanhSachHoaDon(keyword, status);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    if (isCancelled()) {
+                        return;
+                    }
+                    dsHoaDon = get();
+                    renderHoaDonTable();
+                    if (maHoaDonCanChon != null) {
+                        chonHoaDonSauKhiTai(maHoaDonCanChon);
+                    }
+                    System.out.println("[QuanLyHoaDonForm] load bang hoa don mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+                } catch (Exception ex) {
+                    dsHoaDon = Collections.emptyList();
+                    tableModel.setRowCount(0);
+                    JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
+                            "Lỗi tải danh sách hóa đơn: " + ex.getMessage(),
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    setLoadingTable(false);
+                }
+            }
+        };
+        loadHoaDonWorker.execute();
+    }
+
+    private void renderHoaDonTable() {
         tableModel.setRowCount(0);
         for (HoaDonDTO hd : dsHoaDon) {
             tableModel.addRow(new Object[] {
@@ -68,6 +117,29 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                     hd.getTrangThaiThanhToan(),
                     hd.isDaTraTruoc() ? "Đặt trước (Đã trả trước)" : (hd.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp")
             });
+        }
+    }
+
+    private void chonHoaDonSauKhiTai(String maHD) {
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            if (maHD.equals(tableModel.getValueAt(i, 0))) {
+                tblHoaDon.setRowSelectionInterval(i, i);
+                showChiTietHoaDon(maHD);
+                return;
+            }
+        }
+        resetForm();
+    }
+
+    private void setLoadingTable(boolean loading) {
+        btnTimKiem.setEnabled(!loading);
+        btnLamMoi.setEnabled(!loading);
+        cbxLocTrangThai.setEnabled(!loading);
+        txtTimKiem.setEnabled(!loading);
+        tblHoaDon.setEnabled(!loading);
+        if (loading) {
+            tableModel.setRowCount(0);
+            tableModel.addRow(new Object[]{"Đang tải...", "", "", "", "", ""});
         }
     }
 
@@ -510,13 +582,31 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         int xacNhan = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn hủy hóa đơn này?", "Xác nhận hủy",
                 JOptionPane.YES_NO_OPTION);
         if (xacNhan == JOptionPane.YES_OPTION) {
-            if (hoaDonController.huyHoaDon(maHD)) {
-                JOptionPane.showMessageDialog(this, "Đã hủy hóa đơn thành công!");
-                loadDataToTable();
-                resetForm();
-            } else {
-                JOptionPane.showMessageDialog(this, "Hủy hóa đơn thất bại!");
-            }
+            btnHuy.setEnabled(false);
+            new javax.swing.SwingWorker<Boolean, Void>() {
+                @Override
+                protected Boolean doInBackground() {
+                    return hoaDonController.huyHoaDon(maHD);
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        if (get()) {
+                            JOptionPane.showMessageDialog(QuanLyHoaDonForm.this, "Đã hủy hóa đơn thành công!");
+                            loadDataToTable();
+                            resetForm();
+                        } else {
+                            JOptionPane.showMessageDialog(QuanLyHoaDonForm.this, "Hủy hóa đơn thất bại!");
+                            btnHuy.setEnabled(true);
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
+                                "Lỗi hủy hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        btnHuy.setEnabled(true);
+                    }
+                }
+            }.execute();
         }
     }
 
@@ -556,8 +646,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         dialog.setVisible(true);
 
         // Sau khi đóng dialog, load lại bảng để cập nhật trạng thái
-        loadDataToTable();
-        showChiTietHoaDon(maHD);
+        loadDataAsync(maHD);
     }
 
     private void btnXoaActionPerformed(java.awt.event.ActionEvent evt) {
@@ -585,7 +674,31 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             return;
         }
 
-        com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO tt = hoaDonController.layChiTietHoaDon(maHD);
+        btnXemHoaDon.setEnabled(false);
+        long start = System.currentTimeMillis();
+        new javax.swing.SwingWorker<com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO, Void>() {
+            @Override
+            protected com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO doInBackground() {
+                return hoaDonController.layChiTietHoaDon(maHD);
+            }
+
+            @Override
+            protected void done() {
+                btnXemHoaDon.setEnabled(true);
+                try {
+                    com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO tt = get();
+                    System.out.println("[QuanLyHoaDonForm] load preview hoa don mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+                    hienThiPreviewHoaDon(tt);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
+                            "Lỗi xem hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private void hienThiPreviewHoaDon(com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO tt) {
         if (tt == null) {
             JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin chi tiết!");
             return;
@@ -625,26 +738,74 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     }
 
     private void xuatPDFHoaDon(com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO hoaDonHienTai) {
-        if (hoaDonHienTai == null) return;
+        if (hoaDonHienTai == null || dangExportHoaDon) return;
         Object[] options = {"Bill 80mm", "A4 PDF", "Hủy"};
         int choice = JOptionPane.showOptionDialog(this, "Chọn khổ giấy in hóa đơn:", "Xuất hóa đơn",
                 JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-                
-        if (choice == 0) {
-            try {
-                com.wms.util.HoaDonJasperExporter.xuatHoaDon80mm(this, hoaDonHienTai, 0);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi xuất Jasper 80mm, tự động dùng iText...\n" + e.getMessage(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, 0);
-            }
-        } else if (choice == 1) {
-            try {
-                com.wms.util.HoaDonJasperExporter.xuatHoaDonA4(this, hoaDonHienTai, 0);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi xuất Jasper A4, tự động dùng iText...\n" + e.getMessage(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, 0);
-            }
+        if (choice != 0 && choice != 1) {
+            return;
         }
+
+        String typeName = choice == 0 ? "80mm" : "A4";
+        javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+        fileChooser.setDialogTitle("Chọn vị trí lưu file PDF (" + typeName + ")");
+        fileChooser.setSelectedFile(new File("HoaDon_" + hoaDonHienTai.getMaHoaDon() + "_" + typeName + ".pdf"));
+        if (fileChooser.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        xuatHoaDonAsync(ensurePdfExtension(fileChooser.getSelectedFile()), hoaDonHienTai, choice);
+    }
+
+    private void xuatHoaDonAsync(File file,
+            com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO hoaDonHienTai,
+            int choice) {
+        dangExportHoaDon = true;
+        btnXemHoaDon.setEnabled(false);
+        long start = System.currentTimeMillis();
+
+        new javax.swing.SwingWorker<File, Void>() {
+            @Override
+            protected File doInBackground() throws Exception {
+                try {
+                    if (choice == 0) {
+                        com.wms.util.HoaDonJasperExporter.xuatHoaDon80mmToFile(file, hoaDonHienTai, 0);
+                    } else {
+                        com.wms.util.HoaDonJasperExporter.xuatHoaDonA4ToFile(file, hoaDonHienTai, 0);
+                    }
+                } catch (Exception jasperEx) {
+                    System.err.println("[QuanLyHoaDonForm] Jasper export loi, fallback iText: " + jasperEx.getMessage());
+                    com.wms.util.HoaDonPDFExporter.xuatHoaDonPDFToFile(file, hoaDonHienTai, 0);
+                }
+                return file;
+            }
+
+            @Override
+            protected void done() {
+                dangExportHoaDon = false;
+                btnXemHoaDon.setEnabled(true);
+                try {
+                    File exported = get();
+                    System.out.println("[QuanLyHoaDonForm] export hoa don mat "
+                            + (System.currentTimeMillis() - start) + " ms");
+                    JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
+                            "Xuất hóa đơn thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    if (Desktop.isDesktopSupported()) {
+                        Desktop.getDesktop().open(exported);
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(QuanLyHoaDonForm.this,
+                            "Lỗi xuất hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private File ensurePdfExtension(File file) {
+        if (file.getAbsolutePath().toLowerCase().endsWith(".pdf")) {
+            return file;
+        }
+        return new File(file.getAbsolutePath() + ".pdf");
     }
 
     private void resetForm() {

@@ -18,16 +18,24 @@ public class QuanLyPhienController {
     }
 
     public void loadDanhSachPhien(String keyword, String maCN) {
+        view.hienThiDanhSachPhien(layDanhSachPhien(keyword, maCN));
+    }
+
+    public List<PhienLamViecFullDTO> layDanhSachPhien(String keyword, String maCN) {
         try {
             service.tuDongKetThucPhienQuaHanDatCho();
         } catch (Exception e) {
             System.err.println("[Swing App] Loi khi tu dong quet va ket thuc phien: " + e.getMessage());
         }
-        view.hienThiDanhSachPhien(service.layDanhSachPhien(keyword, maCN));
+        return service.layDanhSachPhien(keyword, maCN);
     }
 
     public void loadChiTietDichVu(String maPhien) {
-        view.hienThiDichVuTrongPhien(service.layDichVuCuaPhien(maPhien));
+        view.hienThiDichVuTrongPhien(layDichVuCuaPhien(maPhien));
+    }
+
+    public java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.DichVuTrongPhienDTO> layDichVuCuaPhien(String maPhien) {
+        return service.layDichVuCuaPhien(maPhien);
     }
 
     public boolean ketThucPhien(String maPhien) {

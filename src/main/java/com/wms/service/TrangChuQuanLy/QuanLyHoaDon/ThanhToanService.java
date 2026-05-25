@@ -47,18 +47,24 @@ public class ThanhToanService {
     }
 
     public KetQuaThanhToanDTO thucHienThanhToanMoi(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
+        long start = System.currentTimeMillis();
         String maNV = layMaNhanVienDangNhap();
         ThongTinHoaDonDTO thongTin = hoaDonDAO.layThongTinChiTietHoaDon(maHoaDon);
 
-        if (thongTin != null && daTraTruocKhongConPhaiThu(thongTin)) {
-            return new KetQuaThanhToanDTO(false, THONG_BAO_DA_TRA_TRUOC);
-        }
+        try {
+            if (thongTin != null && daTraTruocKhongConPhaiThu(thongTin)) {
+                return new KetQuaThanhToanDTO(false, THONG_BAO_DA_TRA_TRUOC);
+            }
 
-        if (thongTin != null && thongTin.getMaPhien() != null) {
-            return hoaDonDAO.thanhToanVoiPhieuGiamGiaMoi(thongTin.getMaPhien(), maNV, maPGG, phuongThuc);
-        }
+            if (thongTin != null && thongTin.getMaPhien() != null) {
+                return hoaDonDAO.thanhToanVoiPhieuGiamGiaMoi(thongTin.getMaPhien(), maNV, maPGG, phuongThuc);
+            }
 
-        return hoaDonDAO.thanhToanTrucTiepMoi(maHoaDon, phuongThuc, maNV, maPGG, thanhTien);
+            return hoaDonDAO.thanhToanTrucTiepMoi(maHoaDon, phuongThuc, maNV, maPGG, thanhTien);
+        } finally {
+            System.out.println("[ThanhToanService] thanh toan hoa don " + maHoaDon + " mat "
+                    + (System.currentTimeMillis() - start) + " ms");
+        }
     }
 
     private boolean daTraTruocKhongConPhaiThu(ThongTinHoaDonDTO thongTin) {

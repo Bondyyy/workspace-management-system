@@ -24,7 +24,13 @@ CREATE OR REPLACE PROCEDURE SP_KetThucPhien(
     v_SoGioQua NUMBER;
     v_CountDV NUMBER;
     v_MaDatCho VARCHAR2(50);
+    v_SoHoaDon NUMBER;
 BEGIN
+    IF p_MaPhien IS NULL OR LENGTH(TRIM(p_MaPhien)) = 0 THEN
+        p_outMessage := 'Lỗi: Thiếu mã phiên cần kết thúc.';
+        RETURN;
+    END IF;
+
     SELECT TrangThaiPhien, MaKG, MaDatCho, ThoiGianBatDau
     INTO v_TrangThaiPhien, v_MaKG, v_MaDatCho, v_ThoiGianBatDau
     FROM PHIENLAMVIEC
@@ -32,8 +38,24 @@ BEGIN
     FOR UPDATE NOWAIT;
 
     IF v_TrangThaiPhien <> 'Đang hoạt động' THEN
+        ROLLBACK;
         p_outMessage := 'Phiên làm việc [' || p_MaPhien || '] không ở trạng thái đang hoạt động. Trạng thái hiện tại: '
             || v_TrangThaiPhien;
+        RETURN;
+    END IF;
+
+    SELECT COUNT(*)
+    INTO v_SoHoaDon
+    FROM HOADON
+    WHERE MaPhien = TRIM(p_MaPhien);
+
+    IF v_SoHoaDon = 0 THEN
+        ROLLBACK;
+        p_outMessage := 'Không tìm thấy hóa đơn của phiên [' || TRIM(p_MaPhien) || '].';
+        RETURN;
+    ELSIF v_SoHoaDon > 1 THEN
+        ROLLBACK;
+        p_outMessage := 'Dữ liệu lỗi: phiên [' || TRIM(p_MaPhien) || '] có nhiều hóa đơn, cần cleanup.';
         RETURN;
     END IF;
 
@@ -148,6 +170,9 @@ EXCEPTION
     WHEN ex_resource_busy THEN
         ROLLBACK;
         p_outMessage := 'Phiên hoặc hóa đơn đang được nhân viên khác xử lý. Vui lòng thử lại sau.';
+    WHEN TOO_MANY_ROWS THEN
+        ROLLBACK;
+        p_outMessage := 'Dữ liệu lỗi: phiên [' || p_MaPhien || '] có nhiều hóa đơn, cần cleanup.';
     WHEN OTHERS THEN
         ROLLBACK;
         p_outMessage := 'Lỗi kết thúc phiên: ' || SQLERRM;

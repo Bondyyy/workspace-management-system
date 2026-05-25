@@ -181,60 +181,102 @@ public class DangNhapForm extends javax.swing.JPanel {
             return;
         }
 
-        DangNhapController controller = new DangNhapController();
-        NguoiDungService.ketQuaDangNhap result = controller.dangNhap(username, password);
+        setDangNhapDangXuLy(true);
+        long start = System.currentTimeMillis();
 
+        new javax.swing.SwingWorker<NguoiDungService.ketQuaDangNhap, Void>() {
+            @Override
+            protected NguoiDungService.ketQuaDangNhap doInBackground() {
+                DangNhapController controller = new DangNhapController();
+                return controller.dangNhap(username, password);
+            }
+
+            @Override
+            protected void done() {
+                NguoiDungService.ketQuaDangNhap result;
+                try {
+                    result = get();
+                } catch (Exception ex) {
+                    setDangNhapDangXuLy(false);
+                    JOptionPane.showMessageDialog(DangNhapForm.this,
+                            "Lỗi đăng nhập: " + ex.getMessage(),
+                            "Lỗi hệ thống",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                System.out.println("[Login] xu ly dang nhap mat " + (System.currentTimeMillis() - start) + " ms");
+                xuLyKetQuaDangNhap(result);
+            }
+        }.execute();
+    }
+
+    private void xuLyKetQuaDangNhap(NguoiDungService.ketQuaDangNhap result) {
         switch (result) {
             case THANH_CONG:
-                System.out.println("Đăng nhập thành công!");
                 NguoiDungDTO user = DangNhapController.getCurrentUser();
+                if (user == null) {
+                    setDangNhapDangXuLy(false);
+                    JOptionPane.showMessageDialog(this, "Không đọc được thông tin người dùng sau đăng nhập.",
+                            "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                boolean laNhanVien = laNhanVien(user);
+
+                if (laNhanVien) {
+                    new com.wms.view.TrangChuQuanLy.TrangChuQuanLyForm().setVisible(true);
+                } else {
+                    new com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm().setVisible(true);
+                }
 
                 java.awt.Window currentWin = javax.swing.SwingUtilities.getWindowAncestor(this);
                 if (currentWin != null) {
                     currentWin.dispose();
                 }
-
-                // Nếu user có bất kỳ vai trò nào khác Hội viên HOẶC có bản ghi trong bảng NHANVIEN
-                System.out.println("[DEBUG] dangNhap User: " + user.getTenTaiKhoan());
-                System.out.println("[DEBUG] User MaNV: " + user.getMaNV());
-                System.out.println("[DEBUG] User Roles: " + user.getVaiTro());
-                
-                boolean laNhanVien = (user.getMaNV() != null && !user.getMaNV().trim().isEmpty());
-                if (!laNhanVien && user.getVaiTro() != null) {
-                    for (String vt : user.getVaiTro()) {
-                        if (vt != null && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_NAME)
-                                && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_CODE)) {
-                            laNhanVien = true;
-                            break;
-                        }
-                    }
-                }
-                System.out.println("[DEBUG] laNhanVien: " + laNhanVien);
-
-                if (laNhanVien) {
-                    // Nhân viên có bất kỳ vai trò quản lý → vào trang quản lý
-                    new com.wms.view.TrangChuQuanLy.TrangChuQuanLyForm().setVisible(true);
-                } else {
-                    // Hội viên hoặc chưa có vai trò → trang Hội viên
-                    new com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm().setVisible(true);
-                }
                 break;
             case SAI_MAT_KHAU:
+                setDangNhapDangXuLy(false);
                 JOptionPane.showMessageDialog(this, "Sai mật khẩu!", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
                 break;
             case KHONG_THAY_TAI_KHOAN:
+                setDangNhapDangXuLy(false);
                 JOptionPane.showMessageDialog(this, "Tài khoản không tồn tại!", "Lỗi đăng nhập",
                         JOptionPane.ERROR_MESSAGE);
                 break;
             case TAI_KHOAN_KHONG_HOAT_DONG:
+                setDangNhapDangXuLy(false);
                 JOptionPane.showMessageDialog(this, "Tài khoản đang bị khóa!", "Lỗi đăng nhập",
                         JOptionPane.WARNING_MESSAGE);
                 break;
             case LOI_CSDL:
+                setDangNhapDangXuLy(false);
                 JOptionPane.showMessageDialog(this, "Lỗi kết nối Cơ sở dữ liệu!", "Lỗi hệ thống",
                         JOptionPane.ERROR_MESSAGE);
                 break;
         }
+    }
+
+    private boolean laNhanVien(NguoiDungDTO user) {
+        boolean laNhanVien = (user.getMaNV() != null && !user.getMaNV().trim().isEmpty());
+        if (!laNhanVien && user.getVaiTro() != null) {
+            for (String vt : user.getVaiTro()) {
+                if (vt != null && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_NAME)
+                        && !vt.equalsIgnoreCase(com.wms.config.AppConstants.ROLE_CUSTOMER_CODE)) {
+                    return true;
+                }
+            }
+        }
+        return laNhanVien;
+    }
+
+    private void setDangNhapDangXuLy(boolean dangXuLy) {
+        btnLogin.setEnabled(!dangXuLy);
+        btnRegister.setEnabled(!dangXuLy);
+        txtUsername.setEnabled(!dangXuLy);
+        txtPassword.setEnabled(!dangXuLy);
+        btnShowConfirmPass.setEnabled(!dangXuLy);
+        btnLogin.setText(dangXuLy ? "Đang đăng nhập..." : "Đăng nhập");
     }
 
     private void lblForgotPasswordMouseClicked(java.awt.event.MouseEvent evt) {
