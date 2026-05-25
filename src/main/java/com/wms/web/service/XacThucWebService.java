@@ -7,6 +7,10 @@ import com.wms.web.form.DangKyWebForm;
 import com.wms.web.model.DangKyChoXacThuc;
 import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.repository.CongThongTinWebRepository;
+import com.wms.web.util.WebErrorMessages;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +20,8 @@ import java.time.LocalDateTime;
 @Service
 public class XacThucWebService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(XacThucWebService.class);
+
     private final CongThongTinWebRepository khoDuLieu;
 
     public XacThucWebService(CongThongTinWebRepository khoDuLieu) {
@@ -23,25 +29,44 @@ public class XacThucWebService {
     }
 
     public NguoiDungPhien dangNhap(DangNhapWebForm form) {
-        CongThongTinWebRepository.BanGhiXacThuc record = khoDuLieu.timThongTinXacThuc(form.getTenTaiKhoan().trim());
-        if (record == null) {
-            throw new IllegalArgumentException("Không tìm thấy tài khoản.");
-        }
-        if (!isActive(record.trangThaiND())) {
-            throw new IllegalArgumentException("Tài khoản hiện không hoạt động.");
-        }
-        if (!PasswordUtil.verify(form.getMatKhau(), record.matKhauMaHoa())) {
-            throw new IllegalArgumentException("Mật khẩu không đúng.");
+        String tenTaiKhoan = form == null || form.getTenTaiKhoan() == null ? "" : form.getTenTaiKhoan().trim();
+        String matKhau = form == null ? null : form.getMatKhau();
+        if (tenTaiKhoan.isBlank() || matKhau == null || matKhau.isBlank()) {
+            logLoginFailure("LOGIN_FAILED_BAD_CREDENTIALS");
+            throw new IllegalArgumentException(WebErrorMessages.LOGIN_FAILED_MESSAGE);
         }
 
-        khoDuLieu.capNhatLanDangNhapCuoi(record.maND());
-        return new NguoiDungPhien(
-                record.maND(),
-                record.maKH(),
-                record.hoTen(),
-                record.tenTaiKhoan(),
-                record.laNhanVien()
-        );
+        try {
+            CongThongTinWebRepository.BanGhiXacThuc record = khoDuLieu.timThongTinXacThuc(tenTaiKhoan);
+            if (record == null) {
+                logLoginFailure("LOGIN_FAILED_USER_NOT_FOUND");
+                throw new IllegalArgumentException(WebErrorMessages.LOGIN_FAILED_MESSAGE);
+            }
+            if (!isActive(record.trangThaiND())) {
+                logLoginFailure("LOGIN_FAILED_INACTIVE");
+                throw new IllegalArgumentException(WebErrorMessages.LOGIN_INACTIVE_MESSAGE);
+            }
+            if (!PasswordUtil.verify(matKhau, record.matKhauMaHoa())) {
+                logLoginFailure("LOGIN_FAILED_BAD_PASSWORD");
+                throw new IllegalArgumentException(WebErrorMessages.LOGIN_FAILED_MESSAGE);
+            }
+
+            khoDuLieu.capNhatLanDangNhapCuoi(record.maND());
+            return new NguoiDungPhien(
+                    record.maND(),
+                    record.maKH(),
+                    record.hoTen(),
+                    record.tenTaiKhoan(),
+                    record.laNhanVien()
+            );
+        } catch (DataAccessException ex) {
+            LOGGER.error("LOGIN_FAILED_SYSTEM_ERROR: {}", ex.getClass().getSimpleName());
+            throw new IllegalStateException(WebErrorMessages.LOGIN_SYSTEM_ERROR_MESSAGE, ex);
+        }
+    }
+
+    private void logLoginFailure(String reason) {
+        LOGGER.warn(reason);
     }
 
     public DangKyChoXacThuc yeuCauOtpDangKy(DangKyWebForm form) {

@@ -145,13 +145,29 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
     }
 
     private void loadDataTuDatabase(String maChiNhanh) {
-        try {
-            com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.KhongGianDAO kgDao = new com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.KhongGianDAO();
-            danhSachKGHienTai = kgDao.layTheoChiNhanh(maChiNhanh);
-            panelSoDo.veSoDo(danhSachKGHienTai, null);
-        } catch (Exception e) {
-            System.err.println("[XemSoDoKhongGianForm] Lỗi tải sơ đồ từ DB: " + e.getMessage());
-        }
+        danhSachKGHienTai = new ArrayList<>();
+        panelSoDo.veSoDo(danhSachKGHienTai, null);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+        new SwingWorker<List<KhongGianDTO>, Void>() {
+            @Override
+            protected List<KhongGianDTO> doInBackground() {
+                KhongGianDAO kgDao = new KhongGianDAO();
+                return kgDao.layTheoChiNhanh(maChiNhanh);
+            }
+
+            @Override
+            protected void done() {
+                setCursor(Cursor.getDefaultCursor());
+                try {
+                    List<KhongGianDTO> ketQua = get();
+                    danhSachKGHienTai = ketQua != null ? ketQua : new ArrayList<>();
+                    panelSoDo.veSoDo(danhSachKGHienTai, null);
+                } catch (Exception e) {
+                    System.err.println("[XemSoDoKhongGianForm] Lỗi tải sơ đồ từ DB: " + e.getMessage());
+                }
+            }
+        }.execute();
     }
 
     private String mapTrangThai(String raw) {

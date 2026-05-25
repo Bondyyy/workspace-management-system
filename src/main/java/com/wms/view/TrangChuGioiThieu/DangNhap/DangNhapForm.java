@@ -16,6 +16,9 @@ import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
  * @author Thinkapd T14s
  */
 public class DangNhapForm extends javax.swing.JPanel {
+    private static final String LOGIN_FAILED_MESSAGE = "Tên đăng nhập hoặc mật khẩu không đúng.";
+    private static final String DATABASE_LOGIN_ERROR_MESSAGE =
+            "Không thể kết nối cơ sở dữ liệu. Vui lòng thử lại sau.";
 
     /**
      * Creates new form DangNhapForm
@@ -237,21 +240,20 @@ public class DangNhapForm extends javax.swing.JPanel {
                 break;
             case SAI_MAT_KHAU:
                 setDangNhapDangXuLy(false);
-                JOptionPane.showMessageDialog(this, "Sai mật khẩu!", "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, LOGIN_FAILED_MESSAGE, "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
                 break;
             case KHONG_THAY_TAI_KHOAN:
                 setDangNhapDangXuLy(false);
-                JOptionPane.showMessageDialog(this, "Tài khoản không tồn tại!", "Lỗi đăng nhập",
-                        JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, LOGIN_FAILED_MESSAGE, "Lỗi đăng nhập", JOptionPane.ERROR_MESSAGE);
                 break;
             case TAI_KHOAN_KHONG_HOAT_DONG:
                 setDangNhapDangXuLy(false);
-                JOptionPane.showMessageDialog(this, "Tài khoản đang bị khóa!", "Lỗi đăng nhập",
+                JOptionPane.showMessageDialog(this, "Tài khoản đang bị khóa.", "Lỗi đăng nhập",
                         JOptionPane.WARNING_MESSAGE);
                 break;
             case LOI_CSDL:
                 setDangNhapDangXuLy(false);
-                JOptionPane.showMessageDialog(this, "Lỗi kết nối Cơ sở dữ liệu!", "Lỗi hệ thống",
+                JOptionPane.showMessageDialog(this, DATABASE_LOGIN_ERROR_MESSAGE, "Lỗi hệ thống",
                         JOptionPane.ERROR_MESSAGE);
                 break;
         }

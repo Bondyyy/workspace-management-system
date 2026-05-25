@@ -14,7 +14,7 @@ BEGIN
             dv.TenDV,
             dv.DonGia,
             ctdv.SoLuong,
-            (dv.DonGia * ctddv.SoLuong) AS ThanhTien,
+            (dv.DonGia * ctdv.SoLuong) AS ThanhTien,
             ctdv.GhiChu,
             plv.TrangThaiPhien,
             plv.ThoiGianBatDau,

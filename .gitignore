@@ -30,7 +30,9 @@ src/main/resources/config.properties
 .gemini/
 
 ./scratch/
-docs/
+docs/*
+!docs/procedure-deprecation-plan.md
+!docs/procedure-adoption-plan.md
 
 _archive
 _maintenancebackup/

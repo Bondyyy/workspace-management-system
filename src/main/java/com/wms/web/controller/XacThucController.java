@@ -51,8 +51,8 @@ public class XacThucController {
             NguoiDungPhien user = xacThucWebService.dangNhap(DangNhapWebForm);
             session.setAttribute("user", user);
             return user.laNhanVien() ? "redirect:/staff/bookings" : "redirect:/portal";
-        } catch (IllegalArgumentException ex) {
-            model.addAttribute("error", WebErrorMessages.thanThien("Không thể đăng nhập. Vui lòng kiểm tra lại thông tin.", ex));
+        } catch (RuntimeException ex) {
+            model.addAttribute("error", WebErrorMessages.dangNhap(ex));
             return "web/dang-nhap";
         }
     }

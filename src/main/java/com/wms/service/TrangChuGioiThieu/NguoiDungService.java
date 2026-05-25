@@ -43,14 +43,17 @@ public class NguoiDungService {
             NguoiDungDTO user = nguoiDungDAO.timTheoTenTaiKhoan(tenTaiKhoan);
 
             if (user == null) {
+                logLoginFailure("LOGIN_FAILED_USER_NOT_FOUND");
                 return new AuthResponse(ketQuaDangNhap.KHONG_THAY_TAI_KHOAN, null);
             }
 
             if (!isActive(user.getTrangThaiND())) {
+                logLoginFailure("LOGIN_FAILED_INACTIVE");
                 return new AuthResponse(ketQuaDangNhap.TAI_KHOAN_KHONG_HOAT_DONG, null);
             }
 
             if (!PasswordUtil.verify(matKhau, user.getMatKhauMaHoa())) {
+                logLoginFailure("LOGIN_FAILED_BAD_PASSWORD");
                 return new AuthResponse(ketQuaDangNhap.SAI_MAT_KHAU, null);
             }
 
@@ -60,6 +63,10 @@ public class NguoiDungService {
             System.err.println("[Service] Lỗi SQL khi đăng nhập: " + e.getMessage());
             return new AuthResponse(ketQuaDangNhap.LOI_CSDL, null);
         }
+    }
+
+    private void logLoginFailure(String reason) {
+        System.err.println("[Login] " + reason);
     }
 
     public enum ketQuaDangKy {
