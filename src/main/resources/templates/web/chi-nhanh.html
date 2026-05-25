@@ -4,36 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chọn chi nhánh - Spring MNGT</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="/css/webapp.css">
 </head>
 <body class="member-page">
 <aside class="member-sidebar">
-    <a class="member-brand" th:href="@{/portal}">
-        <strong>SPRING MNGT</strong>
-        <span>MEMBER PORTAL</span>
+    <a class="member-brand" th:href="${guestMode == true} ? '/' : '/portal'">
+        <strong>WMS</strong>
+        <span th:text="${guestMode == true} ? 'PUBLIC VIEW' : 'MEMBER PORTAL'">MEMBER PORTAL</span>
     </a>
-    <nav class="member-nav">
+    <nav class="member-nav" th:if="${guestMode != true}">
         <a th:href="@{/portal}">Trang chủ</a>
         <a th:href="@{/portal/branches}" class="active">Đặt chỗ không gian</a>
         <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}">Thông tin tài khoản</a>
     </nav>
-    <form th:action="@{/dangXuat}" method="post" class="member-dangXuat">
+    <nav class="member-nav" th:if="${guestMode == true}">
+        <a th:href="@{/}">Trang chủ</a>
+        <a th:href="@{/chi-nhanh}" class="active">Chọn chi nhánh</a>
+        <a th:href="@{/dangNhap}">Đăng nhập</a>
+        <a th:href="@{/register}">Đăng ký</a>
+    </nav>
+    <form th:if="${guestMode != true}" th:action="@{/dangXuat}" method="post" class="member-dangXuat">
         <button type="submit">← Đăng xuất</button>
     </form>
 </aside>
 
 <main class="member-main">
     <header class="member-topbar">
-        <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+        <h1 th:if="${guestMode != true}">Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
+        <h1 th:if="${guestMode == true}">Chọn chi nhánh bạn đang có mặt</h1>
+        <strong th:if="${guestMode != true}" th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+        <a th:if="${guestMode == true}" class="button-secondary" th:href="@{/dangNhap}">Đăng nhập để đặt chỗ</a>
     </header>
 
     <section class="member-content">
         <div th:replace="~{web/fragments/alerts :: messages}"></div>
         <div class="section-title">
-            <p>Hệ thống Chi nhánh Spring</p>
+            <p>Hệ thống chi nhánh WMS</p>
             <h2>Chọn chi nhánh để xem sơ đồ</h2>
         </div>
 
@@ -50,7 +62,13 @@
                 </div>
                 <div class="branch-actions">
                     <span class="status-pill">Hoạt động</span>
-                    <a th:href="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}"
+                    <span class="overnight-pill" th:if="${branch.moQuaDem}">Mở qua đêm</span>
+                    <span class="overnight-pill" th:if="${branch.moHaiMuoiBonGio}">Mở 24h</span>
+                    <a th:if="${guestMode == true}"
+                       th:href="@{/so-do-khong-gian(branchId=${branch.maCN})}"
+                       class="button-primary branch-map-link">Xem sơ đồ</a>
+                    <a th:if="${guestMode != true}"
+                       th:href="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}"
                        class="button-primary branch-map-link"
                        th:data-requires-contact="${missingContactInfo}">Xem sơ đồ</a>
                 </div>

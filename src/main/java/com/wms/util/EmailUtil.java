@@ -1,7 +1,6 @@
 package com.wms.util;
 
 import jakarta.mail.Authenticator;
-import jakarta.mail.BodyPart;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
@@ -12,10 +11,14 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.internet.MimeUtility;
 import jakarta.mail.util.ByteArrayDataSource;
 import jakarta.activation.DataHandler;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
@@ -27,10 +30,10 @@ public class EmailUtil {
         try (InputStream input = EmailUtil.class.getClassLoader().getResourceAsStream("config.properties")) {
             Properties prop = new Properties();
             if (input != null) {
-                prop.load(input);
+                prop.load(new InputStreamReader(input, StandardCharsets.UTF_8));
                 SENDER_EMAIL = prop.getProperty("mail.sender.email");
                 SENDER_APP_PASSWORD = prop.getProperty("mail.sender.password");
-                System.out.println("[EmailUtil] Đã nạp cấu hình: " + SENDER_EMAIL);
+                System.out.println("[EmailUtil] Đã nạp cấu hình email: " + maskEmail(SENDER_EMAIL));
             } else {
                 System.err.println("[EmailUtil] Không tìm thấy file config.properties trong resources!");
             }
@@ -44,7 +47,7 @@ public class EmailUtil {
     }
 
     public static boolean sendOTP(String toEmail, String otp) {
-        System.out.println("[EmailUtil] Đang gửi OTP tới: " + toEmail);
+        System.out.println("[EmailUtil] Đang gửi OTP tới: " + maskEmail(toEmail));
         if (SENDER_EMAIL == null || SENDER_EMAIL.isBlank()
                 || SENDER_APP_PASSWORD == null || SENDER_APP_PASSWORD.isBlank()) {
             System.err.println("[EmailUtil] Lỗi: email gửi hoặc app password chưa được cấu hình!");
@@ -53,16 +56,25 @@ public class EmailUtil {
 
         Session session = createSmtpSession();
         try {
-            Message message = new MimeMessage(session);
+            MimeMessage message = new MimeMessage(session);
             message.setFrom(new InternetAddress(SENDER_EMAIL));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            message.setSubject("Mã OTP đăng ký hệ thống WMS");
+            setUtf8Subject(message, "Mã OTP đăng ký hệ thống WMS");
+            message.setSentDate(new Date());
 
-            String content = "<h3>WMS xin chào</h3><p>Mã OTP của bạn là: <b>" + otp + "</b></p>";
-            message.setContent(content, "text/html; charset=utf-8");
+            String content = """
+                    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f1722;">
+                        <h2 style="color:#eb5e8d;">WMS xin chào,</h2>
+                        <p>Mã OTP của bạn là:</p>
+                        <p style="font-size:28px;font-weight:800;letter-spacing:4px;color:#231e30;">%s</p>
+                        <p>Mã có hiệu lực trong 5 phút.</p>
+                        <p>Vui lòng không chia sẻ mã này cho người khác.</p>
+                    </div>
+                    """.formatted(html(otp));
+            setHtmlUtf8Content(message, content);
 
             Transport.send(message);
-            System.out.println("[EmailUtil] Gửi email thành công!");
+            System.out.println("[EmailUtil] Đã gửi OTP tới email đã mask: " + maskEmail(toEmail));
             return true;
         } catch (MessagingException e) {
             System.err.println("[EmailUtil] Lỗi gửi mail: " + e.getMessage());
@@ -108,17 +120,18 @@ public class EmailUtil {
 
         Session session = createSmtpSession();
         try {
-            Message message = new MimeMessage(session);
+            MimeMessage message = new MimeMessage(session);
             message.setFrom(new InternetAddress(SENDER_EMAIL));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
             String code = safe(maPhien).isBlank() ? safe(maDatCho) : safe(maPhien);
-            message.setSubject("Xác nhận thanh toán đặt chỗ " + code + " - Spring MNGT");
+            setUtf8Subject(message, "Xác nhận thanh toán đặt chỗ " + code + " - WMS");
+            message.setSentDate(new Date());
 
             Multipart multipart = new MimeMultipart("related");
 
-            BodyPart htmlPart = new MimeBodyPart();
-            htmlPart.setContent(taoNoiDungEmailXacNhan(hoTen, maPhien, maDatCho, tenKhongGian, tenChiNhanh, thoiGian, thanhTien, maQR),
-                    "text/html; charset=utf-8");
+            MimeBodyPart htmlPart = new MimeBodyPart();
+            setHtmlUtf8Content(htmlPart,
+                    taoNoiDungEmailXacNhan(hoTen, maPhien, maDatCho, tenKhongGian, tenChiNhanh, thoiGian, thanhTien, maQR));
             multipart.addBodyPart(htmlPart);
 
             if (anhQRPng != null && anhQRPng.length > 0) {
@@ -132,7 +145,7 @@ public class EmailUtil {
 
             message.setContent(multipart);
             Transport.send(message);
-            System.out.println("[EmailUtil] Đã gửi email xác nhận đặt chỗ tới: " + toEmail);
+            System.out.println("[EmailUtil] Đã gửi email xác nhận đặt chỗ tới: " + maskEmail(toEmail));
             return true;
         } catch (MessagingException e) {
             System.err.println("[EmailUtil] Lỗi gửi email xác nhận đặt chỗ: " + e.getMessage());
@@ -161,10 +174,11 @@ public class EmailUtil {
 
         Session session = createSmtpSession();
         try {
-            Message message = new MimeMessage(session);
+            MimeMessage message = new MimeMessage(session);
             message.setFrom(new InternetAddress(SENDER_EMAIL));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            message.setSubject("Thanh toán đặt chỗ chưa thành công " + safe(maDatCho) + " - Spring MNGT");
+            setUtf8Subject(message, "Thanh toán đặt chỗ chưa thành công " + safe(maDatCho) + " - WMS");
+            message.setSentDate(new Date());
             String content = """
                     <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f1722;">
                         <h2 style="color:#eb5e8d;">Spring MNGT chưa xác nhận được thanh toán</h2>
@@ -189,9 +203,9 @@ public class EmailUtil {
                     html(safe(thanhTien, "0 VNĐ")),
                     html(safe(lyDo, "Không nhận được thanh toán trong thời gian giữ chỗ."))
             );
-            message.setContent(content, "text/html; charset=utf-8");
+            setHtmlUtf8Content(message, content);
             Transport.send(message);
-            System.out.println("[EmailUtil] Đã gửi email thanh toán thất bại tới: " + toEmail);
+            System.out.println("[EmailUtil] Đã gửi email thanh toán thất bại tới: " + maskEmail(toEmail));
             return true;
         } catch (MessagingException e) {
             System.err.println("[EmailUtil] Lỗi gửi email thanh toán thất bại: " + e.getMessage());
@@ -257,6 +271,37 @@ public class EmailUtil {
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;");
+    }
+
+    private static void setUtf8Subject(MimeMessage message, String subject) throws MessagingException {
+        try {
+            message.setSubject(MimeUtility.encodeText(subject, StandardCharsets.UTF_8.name(), "B"));
+        } catch (java.io.UnsupportedEncodingException ex) {
+            throw new MessagingException("Cannot encode email subject.", ex);
+        }
+    }
+
+    private static void setHtmlUtf8Content(MimeMessage message, String html) throws MessagingException {
+        message.setHeader("Content-Type", "text/html; charset=UTF-8");
+        message.setContent(html, "text/html; charset=UTF-8");
+    }
+
+    private static void setHtmlUtf8Content(MimeBodyPart bodyPart, String html) throws MessagingException {
+        bodyPart.setHeader("Content-Type", "text/html; charset=UTF-8");
+        bodyPart.setText(html, StandardCharsets.UTF_8.name(), "html");
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "";
+        }
+        String trimmed = email.trim();
+        int at = trimmed.indexOf('@');
+        if (at <= 1) {
+            return "***" + (at >= 0 ? trimmed.substring(at) : "");
+        }
+        String prefix = trimmed.substring(0, Math.min(3, at));
+        return prefix + "***" + trimmed.substring(at);
     }
 
     private static Session createSmtpSession() {

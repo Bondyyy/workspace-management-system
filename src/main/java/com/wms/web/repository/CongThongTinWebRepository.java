@@ -130,6 +130,7 @@ public class CongThongTinWebRepository {
         }
         String sql = """
                 SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.Email, n.SDT, n.NgaySinh, n.GioiTinh,
+                       CASE WHEN n.AnhDaiDien IS NULL THEN 0 ELSE 1 END AS CoAnhDaiDien,
                        NVL(htv.TenHangThanhVien, 'Không có') AS TenHangThanhVien
                 FROM NGUOIDUNG n
                 LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND
@@ -147,7 +148,8 @@ public class CongThongTinWebRepository {
                         rs.getString("SDT"),
                         birthDate == null ? null : birthDate.toLocalDate(),
                         rs.getString("GioiTinh"),
-                        rs.getString("TenHangThanhVien")
+                        rs.getString("TenHangThanhVien"),
+                        rs.getInt("CoAnhDaiDien") == 1
                 );
             }, maND);
         } catch (EmptyResultDataAccessException ex) {
@@ -177,10 +179,67 @@ public class CongThongTinWebRepository {
         );
     }
 
+    public void capNhatAnhDaiDien(String maND, byte[] bytes) {
+        mauJdbc.update(
+                """
+                UPDATE NGUOIDUNG
+                SET AnhDaiDien = ?,
+                    CapNhatLanCuoi = CURRENT_TIMESTAMP
+                WHERE MaND = ?
+                """,
+                bytes,
+                maND
+        );
+    }
+
+    public byte[] layAnhDaiDien(String maND) {
+        if (maND == null || maND.isBlank()) {
+            return null;
+        }
+        try {
+            return mauJdbc.queryForObject(
+                    "SELECT AnhDaiDien FROM NGUOIDUNG WHERE MaND = ?",
+                    byte[].class,
+                    maND
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public String layMatKhauMaHoaTheoMaND(String maND) {
+        if (maND == null || maND.isBlank()) {
+            return null;
+        }
+        try {
+            return mauJdbc.queryForObject(
+                    "SELECT MatKhauMaHoa FROM NGUOIDUNG WHERE MaND = ?",
+                    String.class,
+                    maND
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
+    public void capNhatMatKhau(String maND, String matKhauMaHoaMoi) {
+        mauJdbc.update(
+                """
+                UPDATE NGUOIDUNG
+                SET MatKhauMaHoa = ?,
+                    CapNhatLanCuoi = CURRENT_TIMESTAMP
+                WHERE MaND = ?
+                """,
+                matKhauMaHoaMoi,
+                maND
+        );
+    }
+
     public List<ChiNhanhView> timChiNhanhHoatDong() {
         String sql = """
                 SELECT MaCN, TenCN, DiaChi, ThoiGianMoCua, ThoiGianDongCua, DuongDayNong
                 FROM CHINHANH
+                WHERE TrangThai = ?
                 ORDER BY
                     CASE
                         WHEN REGEXP_LIKE(MaCN, '^CN[0-9]+$')
@@ -192,10 +251,10 @@ public class CongThongTinWebRepository {
                 rs.getString("MaCN"),
                 rs.getString("TenCN"),
                 rs.getString("DiaChi"),
-                rs.getString("ThoiGianMoCua"),
-                rs.getString("ThoiGianDongCua"),
-                rs.getString("DuongDayNong")
-        ));
+                    rs.getString("ThoiGianMoCua"),
+                    rs.getString("ThoiGianDongCua"),
+                    rs.getString("DuongDayNong")
+        ), giaTriDb("CHK_CN_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"));
     }
 
     public List<KhongGianView> timKhongGian(String branchId) {

@@ -3,73 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spring Workspace</title>
+    <title>WMS - Quản lý không gian làm việc & học tập</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="/css/webapp.css">
 </head>
-<body class="spring-cover-page">
-<main class="spring-cover">
-    <section class="cover-left">
-        <nav class="cover-nav">
-            <a class="cover-brand" th:href="@{/}">SPRING WORKSPACE</a>
-            <div class="cover-actions">
-                <a class="glass-button" th:if="${user == null}" th:href="@{/dangNhap}">Đăng nhập</a>
-                <a class="pink-button" th:if="${user == null}" th:href="@{/register}">Tạo tài khoản</a>
-                <a class="glass-button" th:if="${user != null and user.staff}" th:href="@{/staff/bookings}">Bảng nhân viên</a>
-                <a class="pink-button" th:if="${user != null and !user.staff}" th:href="@{/portal}">Vào portal</a>
-            </div>
-        </nav>
+<body class="wms-landing-page">
+<header class="landing-nav">
+    <a class="landing-brand" th:href="@{/}">
+        <img src="/icons/cherry-blossom-32x32.png" alt="" aria-hidden="true">
+        <span>WMS</span>
+    </a>
+    <nav>
+        <a th:href="@{/chi-nhanh}">Chọn chi nhánh</a>
+        <a th:href="@{/dangNhap}" th:if="${user == null}">Đăng nhập</a>
+        <a th:href="@{/register}" th:if="${user == null}">Đăng ký</a>
+        <a th:href="@{/portal}" th:if="${user != null and !user.laNhanVien()}">Portal</a>
+        <a th:href="@{/staff/bookings}" th:if="${user != null and user.laNhanVien()}">Nhân viên</a>
+    </nav>
+</header>
 
-        <div class="cover-copy">
-            <p class="cover-kicker">Đặt chỗ không gian làm việc qua web</p>
-            <h1>Spring xin chào</h1>
+<main>
+    <section class="landing-hero">
+        <div class="landing-hero-copy">
+            <p class="landing-kicker">Workspace Management System</p>
+            <h1>WMS - Quản lý không gian làm việc & học tập.</h1>
             <p>
-                Hội viên đăng nhập trên trình duyệt, chọn chi nhánh, chọn chỗ trên sơ đồ và gửi yêu cầu.
-                Nhân viên tiếp nhận trong hệ thống quản lý hiện có.
+                Xem chi nhánh, chọn không gian trên sơ đồ, đặt chỗ online, thanh toán và nhận QR check-in
+                trên cùng dữ liệu Oracle với ứng dụng quản lý.
             </p>
-            <div class="cover-cta">
-                <a class="pink-button large" th:if="${user == null}" th:href="@{/dangNhap}">Bắt đầu đặt chỗ</a>
-                <a class="pink-button large" th:if="${user != null and !user.staff}" th:href="@{/portal/branches}">Đặt chỗ ngay</a>
-                <a class="glass-button large" th:href="@{/register}">Tạo hội viên mới</a>
+            <div class="landing-actions">
+                <a class="pink-button large" th:href="@{/chi-nhanh}">Chọn chi nhánh</a>
+                <a class="glass-button large" th:href="@{/dangNhap}">Đăng nhập để đặt chỗ</a>
+                <a class="glass-button large" th:href="@{/register}">Đăng ký</a>
             </div>
+        </div>
+        <div class="landing-hero-panel">
+            <div class="live-map-preview">
+                <span class="preview-desk empty">Trống</span>
+                <span class="preview-desk booked">Đã đặt</span>
+                <span class="preview-desk active">Đang dùng</span>
+                <span class="preview-desk maintenance">Bảo trì</span>
+                <strong>WMS Space Map</strong>
+            </div>
+            <p>Guest có thể xem sơ đồ trước khi đăng nhập; đặt chỗ và thanh toán vẫn yêu cầu tài khoản hội viên.</p>
         </div>
     </section>
 
-    <section class="cover-right">
-        <div class="cover-title-card">
-            <span>Spring Workspace Cafe</span>
-            <h2>Không gian học tập, làm việc và gặp gỡ</h2>
-            <p>Giao diện web dùng chung dữ liệu Oracle với app, đủ gọn cho đồ án nhưng vẫn có trải nghiệm giống sản phẩm thật.</p>
+    <section class="landing-section">
+        <div class="landing-section-title">
+            <p>Tính năng nổi bật</p>
+            <h2>Một luồng đặt chỗ gọn từ chọn chỗ đến nhận QR</h2>
+        </div>
+        <div class="landing-feature-grid">
+            <article>
+                <strong>Xem sơ đồ thời gian thực</strong>
+                <p>Màu trạng thái giúp nhận biết không gian trống, đã đặt, đang dùng hoặc bảo trì.</p>
+            </article>
+            <article>
+                <strong>Đặt chỗ online</strong>
+                <p>Chọn chi nhánh, ngày giờ và không gian phù hợp trước khi xác nhận thanh toán.</p>
+            </article>
+            <article>
+                <strong>Thanh toán và nhận QR</strong>
+                <p>Hệ thống tạo QR nhận chỗ sau khi đặt chỗ được xác nhận thanh toán.</p>
+            </article>
+            <article>
+                <strong>Lịch sử đặt chỗ</strong>
+                <p>Hội viên theo dõi các yêu cầu đặt chỗ, phiên làm việc và QR trong portal.</p>
+            </article>
+            <article>
+                <strong>Ưu đãi thành viên</strong>
+                <p>Phiếu giảm giá và hạng thành viên được áp dụng theo dữ liệu hiện có.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="landing-section landing-process">
+        <div class="landing-section-title">
+            <p>Quy trình</p>
+            <h2>Chọn chi nhánh, chọn chỗ, đăng nhập, thanh toán, nhận QR</h2>
+        </div>
+        <ol>
+            <li><span>1</span><strong>Chọn chi nhánh</strong><p>Xem địa chỉ, hotline và giờ hoạt động.</p></li>
+            <li><span>2</span><strong>Chọn không gian</strong><p>Kiểm tra sơ đồ theo khung giờ mong muốn.</p></li>
+            <li><span>3</span><strong>Đăng nhập/đăng ký</strong><p>Chỉ tài khoản hội viên mới được tạo đặt chỗ.</p></li>
+            <li><span>4</span><strong>Thanh toán</strong><p>Chuyển khoản theo nội dung hệ thống cung cấp.</p></li>
+            <li><span>5</span><strong>Nhận QR/check-in</strong><p>Dùng QR để nhân viên mở phiên khi đến nơi.</p></li>
+        </ol>
+    </section>
+
+    <section class="landing-section">
+        <div class="landing-section-title">
+            <p>Chi nhánh đang hoạt động</p>
+            <h2>Chọn nơi bạn đang có mặt</h2>
+        </div>
+        <div class="landing-branch-grid">
+            <article th:each="branch : ${hienThiChiNhanh}">
+                <span th:text="${branch.maCN}">CN001</span>
+                <strong th:text="${branch.tenCN}">Chi nhánh</strong>
+                <p th:text="${branch.diaChi}">Địa chỉ</p>
+                <small th:text="${branch.thoiGianMoCua + ' - ' + branch.thoiGianDongCua}">07:00 - 22:00</small>
+                <a th:href="@{/so-do-khong-gian(branchId=${branch.maCN})}">Xem sơ đồ</a>
+            </article>
+        </div>
+        <a class="button-secondary landing-more" th:href="@{/chi-nhanh}">Xem tất cả chi nhánh</a>
+    </section>
+
+    <section class="landing-section team-strip landing-team">
+        <div class="team-heading">
+            <p>Thông tin nhóm</p>
+            <h2>Nhóm phát triển WMS</h2>
+        </div>
+        <div class="team-grid">
+            <article>
+                <img th:src="@{/images/ThanhVienNhom/Huy2.png}" alt="Lai Mộc Huy">
+                <strong>Lai Mộc Huy</strong>
+                <span>Nhóm trưởng</span>
+            </article>
+            <article>
+                <img th:src="@{/images/ThanhVienNhom/Dung2.png}" alt="Huỳnh Đức Dũng">
+                <strong>Huỳnh Đức Dũng</strong>
+                <span>Nhóm phó</span>
+            </article>
+            <article>
+                <img th:src="@{/images/ThanhVienNhom/Duyen2.png}" alt="Sơn Nguyễn Kỳ Duyên">
+                <strong>Sơn Nguyễn Kỳ Duyên</strong>
+                <span>Thư ký</span>
+            </article>
+            <article>
+                <img th:src="@{/images/ThanhVienNhom/Duc.png}" alt="Nguyễn Thành Đức">
+                <strong>Nguyễn Thành Đức</strong>
+                <span>Thành viên</span>
+            </article>
         </div>
     </section>
 </main>
 
-<section class="team-strip">
-    <div class="team-heading">
-        <p>Về chúng tôi</p>
-        <h2>Đội hình Spring</h2>
-    </div>
-    <div class="team-grid">
-        <article>
-            <img th:src="@{/images/ThanhVienNhom/Huy2.png}" alt="Lai Mộc Huy">
-            <strong>Lai Mộc Huy</strong>
-            <span>Nhóm trưởng</span>
-        </article>
-        <article>
-            <img th:src="@{/images/ThanhVienNhom/Dung2.png}" alt="Huỳnh Đức Dũng">
-            <strong>Huỳnh Đức Dũng</strong>
-            <span>Nhóm phó</span>
-        </article>
-        <article>
-            <img th:src="@{/images/ThanhVienNhom/Duyen2.png}" alt="Sơn Nguyễn Kỳ Duyên">
-            <strong>Sơn Nguyễn Kỳ Duyên</strong>
-            <span>Thư ký</span>
-        </article>
-        <article>
-            <img th:src="@{/images/ThanhVienNhom/Duc.png}" alt="Nguyễn Thành Đức">
-            <strong>Nguyễn Thành Đức</strong>
-            <span>Thành viên</span>
-        </article>
-    </div>
-</section>
+<footer class="landing-footer">
+    <strong>WMS Demo</strong>
+    <span>Hotline: 1900 1000</span>
+    <span>Email: wms.demo@example.com</span>
+</footer>
 </body>
 </html>

@@ -34,4 +34,8 @@ public class NguoiDungPhien {
     public boolean laNhanVien() {
         return staff;
     }
+
+    public boolean isStaff() {
+        return staff;
+    }
 }

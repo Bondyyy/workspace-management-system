@@ -1,6 +1,7 @@
 package com.wms.web.form;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 
@@ -13,6 +14,7 @@ public class ThongTinTaiKhoanForm {
     private LocalDate ngaySinh;
 
     private String gioiTinh;
+    private MultipartFile anhDaiDien;
 
     public String getHoTen() {
         return hoTen;
@@ -52,5 +54,13 @@ public class ThongTinTaiKhoanForm {
 
     public void setGioiTinh(String gioiTinh) {
         this.gioiTinh = gioiTinh;
+    }
+
+    public MultipartFile getAnhDaiDien() {
+        return anhDaiDien;
+    }
+
+    public void setAnhDaiDien(MultipartFile anhDaiDien) {
+        this.anhDaiDien = anhDaiDien;
     }
 }

@@ -65,6 +65,11 @@ public class XacThucController {
         return "web/dang-ky";
     }
 
+    @GetMapping("/dangKy")
+    public String hienThiDangKyAlias() {
+        return "redirect:/register";
+    }
+
     @PostMapping("/register")
     public String dangKy(@Valid @ModelAttribute("DangKyWebForm") DangKyWebForm DangKyWebForm,
                            BindingResult bindingResult,

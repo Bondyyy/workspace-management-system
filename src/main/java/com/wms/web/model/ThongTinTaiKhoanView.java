@@ -11,10 +11,17 @@ public class ThongTinTaiKhoanView {
     private final LocalDate ngaySinh;
     private final String gioiTinh;
     private final String hangThanhVien;
+    private final boolean coAnhDaiDien;
 
     public ThongTinTaiKhoanView(String maND, String hoTen, String tenTaiKhoan, String email,
                               String soDienThoai, LocalDate ngaySinh, String gioiTinh,
                               String hangThanhVien) {
+        this(maND, hoTen, tenTaiKhoan, email, soDienThoai, ngaySinh, gioiTinh, hangThanhVien, false);
+    }
+
+    public ThongTinTaiKhoanView(String maND, String hoTen, String tenTaiKhoan, String email,
+                              String soDienThoai, LocalDate ngaySinh, String gioiTinh,
+                              String hangThanhVien, boolean coAnhDaiDien) {
         this.maND = maND;
         this.hoTen = hoTen;
         this.tenTaiKhoan = tenTaiKhoan;
@@ -23,6 +30,7 @@ public class ThongTinTaiKhoanView {
         this.ngaySinh = ngaySinh;
         this.gioiTinh = gioiTinh;
         this.hangThanhVien = hangThanhVien;
+        this.coAnhDaiDien = coAnhDaiDien;
     }
 
     public String getMaND() {
@@ -55,6 +63,10 @@ public class ThongTinTaiKhoanView {
 
     public String getHangThanhVien() {
         return hangThanhVien;
+    }
+
+    public boolean isCoAnhDaiDien() {
+        return coAnhDaiDien;
     }
 
     public boolean coThongTinLienHeDayDu() {

@@ -4,30 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sơ đồ không gian - Spring MNGT</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="/css/webapp.css">
 </head>
 <body class="member-page">
 <aside class="member-sidebar">
-    <a class="member-brand" th:href="@{/portal}">
-        <strong>SPRING MNGT</strong>
-        <span>MEMBER PORTAL</span>
+    <a class="member-brand" th:href="${guestMode == true} ? '/' : '/portal'">
+        <strong>WMS</strong>
+        <span th:text="${guestMode == true} ? 'PUBLIC VIEW' : 'MEMBER PORTAL'">MEMBER PORTAL</span>
     </a>
-    <nav class="member-nav">
+    <nav class="member-nav" th:if="${guestMode != true}">
         <a th:href="@{/portal}">Trang chủ</a>
         <a th:href="@{/portal/branches}" class="active">Đặt chỗ không gian</a>
         <a th:href="@{/portal/history}">Lịch sử đặt chỗ</a>
         <a th:href="@{/portal/benefits}">Ưu đãi của tôi</a>
         <a th:href="@{/portal/account}">Thông tin tài khoản</a>
     </nav>
-    <form th:action="@{/dangXuat}" method="post" class="member-dangXuat">
+    <nav class="member-nav" th:if="${guestMode == true}">
+        <a th:href="@{/}">Trang chủ</a>
+        <a th:href="@{/chi-nhanh}">Chọn chi nhánh</a>
+        <a th:href="@{/so-do-khong-gian(branchId=${branch.maCN})}" class="active">Sơ đồ</a>
+        <a th:href="@{/dangNhap}">Đăng nhập</a>
+    </nav>
+    <form th:if="${guestMode != true}" th:action="@{/dangXuat}" method="post" class="member-dangXuat">
         <button type="submit">← Đăng xuất</button>
     </form>
 </aside>
 
 <main class="member-main">
     <header class="member-topbar">
-        <h1>Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <strong th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+        <h1 th:if="${guestMode != true}">Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
+        <h1 th:if="${guestMode == true}">Bạn đang xem sơ đồ khách</h1>
+        <strong th:if="${guestMode != true}" th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
+        <a th:if="${guestMode == true}" class="button-secondary" th:href="@{/dangNhap}">Đăng nhập để đặt chỗ</a>
     </header>
 
     <section class="map-title">
@@ -80,7 +92,8 @@
             <div th:replace="~{web/fragments/alerts :: messages}"></div>
             <p id="thongBaoDatCho" class="form-hint warning" style="display:none;"></p>
 
-            <form th:action="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}" method="get" id="timeFilterForm" class="form-grid">
+            <form th:action="${guestMode == true} ? '/so-do-khong-gian' : '/portal/branches/' + ${branch.maCN} + '/spaces'" method="get" id="timeFilterForm" class="form-grid">
+                <input th:if="${guestMode == true}" type="hidden" name="branchId" th:value="${branch.maCN}">
                 <input type="hidden" name="canhBao" id="canhBaoThoiGian">
                 <label>
                     Chi nhánh
@@ -95,22 +108,18 @@
                         Từ giờ
                         <input type="time" name="start" id="startHour"
                                th:value="${selectedStart}"
-                               th:min="${branch.thoiGianMoCua}"
-                               th:max="${branch.thoiGianDongCua}"
                                step="60" required>
                     </label>
                     <label>
                         Đến giờ
                         <input type="time" name="end" id="endHour"
                                th:value="${selectedEnd}"
-                               th:min="${branch.thoiGianMoCua}"
-                               th:max="${branch.thoiGianDongCua}"
                                step="60" required>
                     </label>
                 </div>
             </form>
 
-            <form th:action="@{/portal/checkout}" method="get" id="mapBookingForm" class="form-grid">
+            <form th:action="${guestMode == true} ? '/dangNhap' : '/portal/checkout'" method="get" id="mapBookingForm" class="form-grid">
                 <input type="hidden" name="maKG" id="maKG">
                 <input type="hidden" name="arrivalTime" id="arrivalTime">
                 <input type="hidden" name="durationHours" id="durationHours" th:value="${selectedDuration}">
@@ -127,8 +136,9 @@
                     <span>Dự kiến</span>
                     <strong id="estimateTotal">0 VNĐ</strong>
                 </div>
-                <button type="submit" class="button-primary full-width" id="continueButton" disabled>Thanh toán</button>
-                <a th:href="@{/portal/branches}" class="button-secondary full-width">Đổi chi nhánh</a>
+                <button type="submit" class="button-primary full-width" id="continueButton" disabled
+                        th:text="${guestMode == true} ? 'Đăng nhập để đặt chỗ' : 'Thanh toán'">Thanh toán</button>
+                <a th:href="${guestMode == true} ? '/chi-nhanh' : '/portal/branches'" class="button-secondary full-width">Đổi chi nhánh</a>
             </form>
         </aside>
     </section>
@@ -149,6 +159,7 @@
     const thongBaoDatCho = document.getElementById("thongBaoDatCho");
     const totalLabel = document.getElementById("estimateTotal");
     const continueButton = document.getElementById("continueButton");
+    const isGuest = [[${guestMode == true}]];
     let selectedPrice = 0;
 
     function minutes(value) {
@@ -164,7 +175,11 @@
     function syncHiddenTime() {
         const startMinutes = minutes(startInput.value);
         const endMinutes = minutes(endInput.value);
-        const duration = Math.max(0, Math.round((endMinutes - startMinutes) / 60));
+        let delta = endMinutes - startMinutes;
+        if (delta <= 0) {
+            delta += 24 * 60;
+        }
+        const duration = Math.max(0, Math.round(delta / 60));
         durationInput.value = duration;
         arrivalInput.value = dateInput.value + "T" + startInput.value;
         totalLabel.textContent = formatMoney(selectedPrice * duration);
@@ -206,14 +221,28 @@
         const endMin = minutes(endInput.value);
         const openMin = minutes(moCua);
         const closeMin = minutes(dongCua);
+        const quaDem = openMin > closeMin;
+        const haiMuoiBonGio = openMin === closeMin;
 
-        if (startMin < openMin || startMin >= closeMin) {
+        const startTrongGio = haiMuoiBonGio
+            || (!quaDem && startMin >= openMin && startMin < closeMin)
+            || (quaDem && (startMin >= openMin || startMin < closeMin));
+        let normalizedEndMin = endMin;
+        if (quaDem && endMin <= startMin) {
+            normalizedEndMin += 24 * 60;
+        }
+        const normalizedCloseMin = haiMuoiBonGio
+            ? openMin + 24 * 60
+            : (quaDem ? closeMin + 24 * 60 : closeMin);
+        const normalizedStartMin = quaDem && startMin < closeMin ? startMin + 24 * 60 : startMin;
+
+        if (!startTrongGio) {
             return "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + moCua + " - " + dongCua + ".";
         }
-        if (endMin > closeMin) {
+        if (!haiMuoiBonGio && normalizedEndMin > normalizedCloseMin) {
             return "Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.";
         }
-        if (endMin <= startMin) {
+        if (normalizedEndMin <= normalizedStartMin) {
             return "Giờ kết thúc phải sau giờ bắt đầu.";
         }
 
@@ -265,6 +294,10 @@
         if (!maKGInput.value) {
             event.preventDefault();
             hienThongBaoCanChonLaiKhongGian();
+            return;
+        }
+        if (isGuest) {
+            return;
         }
     });
     syncHiddenTime();

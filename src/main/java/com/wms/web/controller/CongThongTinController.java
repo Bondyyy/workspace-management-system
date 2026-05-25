@@ -11,6 +11,7 @@ import com.wms.web.model.KhongGianView;
 import com.wms.web.model.PhieuGiamGiaView;
 import com.wms.web.service.CongThongTinService;
 import com.wms.web.util.WebErrorMessages;
+import com.wms.util.BusinessHoursUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -88,6 +89,58 @@ public class CongThongTinController {
         return "web/chi-nhanh";
     }
 
+    @GetMapping("/chi-nhanh")
+    public String hienThiChiNhanhCongKhai(HttpSession session, Model model) {
+        NguoiDungPhien user = (NguoiDungPhien) session.getAttribute("user");
+        model.addAttribute("user", user);
+        model.addAttribute("rankName", user == null || user.laNhanVien() ? "" : congThongTinService.layTenHangThanhVien(user));
+        model.addAttribute("activePage", "booking");
+        model.addAttribute("hienThiChiNhanh", congThongTinService.layChiNhanh());
+        model.addAttribute("missingContactInfo", false);
+        model.addAttribute("guestMode", user == null);
+        return "web/chi-nhanh";
+    }
+
+    @GetMapping("/chi-nhanh/{branchId}")
+    public String chuyenDenSoDoCongKhai(@PathVariable("branchId") String branchId) {
+        return "redirect:/so-do-khong-gian?branchId=" + branchId;
+    }
+
+    @GetMapping("/so-do-khong-gian")
+    public String hienThiSoDoCongKhai(@RequestParam(name = "branchId", required = false) String branchId,
+                                      @RequestParam(name = "date", required = false) String bookingDateText,
+                                      @RequestParam(name = "start", required = false) String startTimeText,
+                                      @RequestParam(name = "end", required = false) String endTimeText,
+                                      HttpSession session,
+                                      Model model,
+                                      RedirectAttributes redirectAttributes) {
+        if (branchId == null || branchId.isBlank()) {
+            return "redirect:/chi-nhanh";
+        }
+        ChiNhanhView branch = congThongTinService.layMotChiNhanh(branchId).orElse(null);
+        if (branch == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy chi nhánh cần xem sơ đồ.");
+            return "redirect:/chi-nhanh";
+        }
+        LocalDate bookingDate = null;
+        LocalTime startTime = null;
+        LocalTime endTime = null;
+        String loiNgayGio = null;
+        try {
+            bookingDate = parseWebDate(bookingDateText, "Ngày đặt chỗ");
+            startTime = parseWebTime(startTimeText, "Từ giờ");
+            endTime = parseWebTime(endTimeText, "Đến giờ");
+        } catch (IllegalArgumentException ex) {
+            loiNgayGio = ex.getMessage();
+        }
+        NguoiDungPhien user = (NguoiDungPhien) session.getAttribute("user");
+        ThongTinTaiKhoanView profile = user == null || user.laNhanVien()
+                ? null
+                : congThongTinService.layThongTinTaiKhoan(user);
+        return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, endTime,
+                loiNgayGio, null, model);
+    }
+
     @GetMapping("/portal/branches/{branchId}/spaces")
     public String hienThiKhongGianTheoChiNhanh(@PathVariable("branchId") String branchId,
                                @RequestParam(name = "date", required = false) String bookingDateText,
@@ -136,7 +189,7 @@ public class CongThongTinController {
             normalized = normalized.substring(0, 5);
         }
         try {
-            return LocalTime.parse(normalized);
+            return BusinessHoursUtil.parseBranchTime(normalized, fallback);
         } catch (RuntimeException ex) {
             return fallback;
         }
@@ -156,46 +209,29 @@ public class CongThongTinController {
         LocalTime openTime = docGioChiNhanh(branch.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(branch.getThoiGianDongCua(), LocalTime.of(22, 0));
 
-        String openStr = String.format("%02d:%02d", openTime.getHour(), openTime.getMinute());
-        String closeStr = String.format("%02d:%02d", closeTime.getHour(), closeTime.getMinute());
-
-        if (startTime != null && (startTime.isBefore(openTime) || !startTime.isBefore(closeTime))) {
-            thongBaoLoi = "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
-        } else if (endTime != null && (endTime.isAfter(closeTime) || (endTime.equals(LocalTime.MIDNIGHT) && !closeTime.equals(LocalTime.MIDNIGHT)))) {
-            thongBaoLoi = "Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.";
-        }
-
         LocalDate selectedDate = bookingDate == null ? defaultWindow.date() : bookingDate;
         LocalTime selectedStart = startTime == null ? defaultWindow.startTime() : startTime;
         LocalTime selectedEnd = endTime == null ? defaultWindow.endTime() : endTime;
 
-        if (selectedStart.isBefore(openTime) || !selectedStart.isBefore(closeTime)) {
-            selectedStart = defaultWindow.startTime();
-        }
-        if (selectedEnd.isAfter(closeTime) || selectedEnd.isBefore(selectedStart.plusHours(1))) {
-            selectedEnd = selectedStart.plusHours(1).isAfter(closeTime) ? closeTime : selectedStart.plusHours(1);
-        }
-
-        if (!selectedEnd.isAfter(selectedStart)) {
-            thongBaoLoi = "Giờ kết thúc phải sau giờ bắt đầu.";
-            selectedEnd = selectedStart.plusHours(1);
-        }
-        
         LocalDateTime selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
-        LocalDateTime selectedEndDateTime = LocalDateTime.of(selectedDate, selectedEnd);
+        LocalDateTime selectedEndDateTime = BusinessHoursUtil.resolveEnd(selectedDate, selectedStart, selectedEnd);
+
+        String openStr = BusinessHoursUtil.format(openTime);
+        String closeStr = BusinessHoursUtil.format(closeTime);
+        if (!BusinessHoursUtil.fitsInBranchHours(selectedStartDateTime, selectedEndDateTime, openTime, closeTime)) {
+            thongBaoLoi = "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
+            selectedStart = defaultWindow.startTime();
+            selectedEnd = defaultWindow.endTime();
+            selectedDate = defaultWindow.date();
+            selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
+            selectedEndDateTime = BusinessHoursUtil.resolveEnd(selectedDate, selectedStart, selectedEnd);
+        }
         if (thongBaoLoi == null && !congThongTinService.laThoiGianDatChoTrongTuongLai(selectedStartDateTime)) {
             thongBaoLoi = "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
         }
 
-        java.util.ArrayList<String> layLuaChonGioBatDau = new java.util.ArrayList<>();
-        for (LocalTime time = openTime; time.isBefore(closeTime); time = time.plusHours(1)) {
-            layLuaChonGioBatDau.add(String.format("%02d:00", time.getHour()));
-        }
-
-        java.util.ArrayList<String> layLuaChonGioKetThuc = new java.util.ArrayList<>();
-        for (LocalTime time = openTime.plusHours(1); !time.isAfter(closeTime); time = time.plusHours(1)) {
-            layLuaChonGioKetThuc.add(String.format("%02d:00", time.getHour()));
-        }
+        List<String> layLuaChonGioBatDau = BusinessHoursUtil.hourlyOptions(openTime, closeTime, false);
+        List<String> layLuaChonGioKetThuc = BusinessHoursUtil.hourlyOptions(openTime, closeTime, true);
 
         List<KhongGianView> spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
         int maxSpaceColumn = spaces.stream()
@@ -211,8 +247,9 @@ public class CongThongTinController {
 
         model.addAttribute("user", user);
         model.addAttribute("profile", profile);
-        model.addAttribute("rankName", congThongTinService.layTenHangThanhVien(user));
+        model.addAttribute("rankName", user == null || user.laNhanVien() ? "" : congThongTinService.layTenHangThanhVien(user));
         model.addAttribute("activePage", "booking");
+        model.addAttribute("guestMode", user == null);
         model.addAttribute("branch", branch);
         model.addAttribute("spaces", spaces);
         model.addAttribute("layLuaChonGioBatDau", layLuaChonGioBatDau);
@@ -220,7 +257,9 @@ public class CongThongTinController {
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("selectedStart", selectedStart);
         model.addAttribute("selectedEnd", selectedEnd);
-        model.addAttribute("selectedDuration", Math.max(1, java.time.Duration.between(selectedStart, selectedEnd).toHours()));
+        model.addAttribute("selectedDuration", Math.max(1, java.time.Duration.between(selectedStartDateTime, selectedEndDateTime).toHours()));
+        model.addAttribute("overnightBranch", BusinessHoursUtil.isOvernight(openTime, closeTime));
+        model.addAttribute("twentyFourHoursBranch", BusinessHoursUtil.isTwentyFourHours(openTime, closeTime));
         model.addAttribute("mapColumns", mapColumns);
         model.addAttribute("mapRows", mapRows);
         model.addAttribute("error", thongBaoLoi);
@@ -467,6 +506,20 @@ public class CongThongTinController {
         return ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/portal/account/avatar")
+    public ResponseEntity<byte[]> layAnhDaiDien(HttpSession session) {
+        NguoiDungPhien user = layHoiVienHienTai(session);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return congThongTinService.layAnhDaiDien(user)
+                .map(bytes -> ResponseEntity.ok()
+                        .contentType(xacDinhLoaiAnh(bytes))
+                        .cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePrivate())
+                        .body(bytes))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/portal/account")
     public String hienThiTaiKhoan(HttpSession session, Model model) {
         String accessRedirect = redirectNeuKhongPhaiHoiVien(session);
@@ -522,6 +575,29 @@ public class CongThongTinController {
         } catch (RuntimeException ex) {
             System.err.println("[Web] Cap nhat tai khoan loi: " + ex.getMessage());
             redirectAttributes.addFlashAttribute("error", "Không thể cập nhật thông tin. Email hoặc số điện thoại có thể đã được sử dụng.");
+        }
+        return "redirect:/portal/account";
+    }
+
+    @PostMapping("/portal/account/change-password")
+    public String doiMatKhau(@RequestParam("currentPassword") String currentPassword,
+                             @RequestParam("newPassword") String newPassword,
+                             @RequestParam("confirmNewPassword") String confirmNewPassword,
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+        NguoiDungPhien user = layHoiVienHienTai(session);
+        if (user == null) {
+            return "redirect:/dangNhap";
+        }
+        try {
+            congThongTinService.doiMatKhau(user, currentPassword, newPassword, confirmNewPassword);
+            redirectAttributes.addFlashAttribute("successPassword", "Đổi mật khẩu thành công.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorPassword", WebErrorMessages.thanThien(
+                    "Không thể đổi mật khẩu. Vui lòng kiểm tra lại thông tin.", ex));
+        } catch (RuntimeException ex) {
+            System.err.println("[Web] Doi mat khau loi: " + ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorPassword", "Không thể đổi mật khẩu lúc này. Vui lòng thử lại sau.");
         }
         return "redirect:/portal/account";
     }
@@ -628,5 +704,21 @@ public class CongThongTinController {
             return "Vui lòng chọn khung giờ hợp lệ.";
         }
         return "Vui lòng kiểm tra lại thông tin đặt chỗ.";
+    }
+
+    private MediaType xacDinhLoaiAnh(byte[] bytes) {
+        if (bytes != null && bytes.length >= 12) {
+            if ((bytes[0] & 0xff) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4e && bytes[3] == 0x47) {
+                return MediaType.IMAGE_PNG;
+            }
+            if ((bytes[0] & 0xff) == 0xff && (bytes[1] & 0xff) == 0xd8) {
+                return MediaType.IMAGE_JPEG;
+            }
+            if (bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+                    && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') {
+                return MediaType.parseMediaType("image/webp");
+            }
+        }
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 }

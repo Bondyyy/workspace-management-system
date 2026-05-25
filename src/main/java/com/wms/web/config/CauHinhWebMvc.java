@@ -25,6 +25,12 @@ public class CauHinhWebMvc implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/css/**")
                 .addResourceLocations("classpath:/static/css/");
+        registry.addResourceHandler("/js/**")
+                .addResourceLocations("classpath:/static/js/");
+        registry.addResourceHandler("/icons/**")
+                .addResourceLocations("classpath:/static/icons/");
+        registry.addResourceHandler("/favicon.ico", "/favicon-16x16.png", "/favicon-32x32.png", "/apple-touch-icon.png")
+                .addResourceLocations("classpath:/static/");
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("classpath:/images/");
     }

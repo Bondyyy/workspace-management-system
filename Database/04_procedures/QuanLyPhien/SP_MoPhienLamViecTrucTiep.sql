@@ -48,10 +48,16 @@ BEGIN
     IF v_GioMoCua = '24:00' THEN
         v_GioMoCua := '00:00';
     END IF;
+    IF LENGTH(v_GioMoCua) > 5 THEN
+        v_GioMoCua := SUBSTR(v_GioMoCua, 1, 5);
+    END IF;
     
     v_GioDongCua := TRIM(v_GioDongCua);
     IF v_GioDongCua = '24:00' THEN
         v_GioDongCua := '00:00';
+    END IF;
+    IF LENGTH(v_GioDongCua) > 5 THEN
+        v_GioDongCua := SUBSTR(v_GioDongCua, 1, 5);
     END IF;
 
     v_ThoiDiemMoCua := TO_TIMESTAMP(TO_CHAR(v_RefTime, 'YYYY-MM-DD') || ' ' || v_GioMoCua, 'YYYY-MM-DD HH24:MI');

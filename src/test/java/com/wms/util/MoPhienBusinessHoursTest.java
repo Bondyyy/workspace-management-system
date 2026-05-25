@@ -72,7 +72,7 @@ public class MoPhienBusinessHoursTest {
         // 2. Tạo Chi nhánh kiểm thử mặc định: mở 08:00, đóng 21:00
         jdbcTemplate.update(
             "INSERT INTO CHINHANH (MaCN, TenCN, DiaChi, ThoiGianMoCua, ThoiGianDongCua, DuongDayNong, TrangThai) " +
-            "VALUES (?, 'Chi nhanh Kiem thu Gio Hoat Dong', 'Test Address', '08:00', '21:00', '19001000', 'Hoạt động')",
+            "VALUES (?, 'Chi nhanh Kiem thu Gio Hoat Dong', 'Test Address', '08:00', '21:00', '19001000', 'Đang hoạt động')",
             testBranchId
         );
 
@@ -80,12 +80,12 @@ public class MoPhienBusinessHoursTest {
         // Lấy loại không gian đầu tiên có sẵn trong DB để liên kết
         String maLoaiKG = null;
         try {
-            maLoaiKG = jdbcTemplate.queryForObject("SELECT MaLoaiKG FROM (SELECT MaLoaiKG FROM LOAIKHONGGIAN ORDER BY MaLoaiKG) WHERE ROWNUM = 1", String.class);
+            maLoaiKG = jdbcTemplate.queryForObject("SELECT MaLoaiKG FROM LOAIKHONGGIAN ORDER BY MaLoaiKG FETCH FIRST 1 ROW ONLY", String.class);
         } catch (Exception e) {
             // Nếu chưa có loại không gian, tạo mới một loại
             maLoaiKG = "LKG001";
             jdbcTemplate.update(
-                "INSERT INTO LOAIKHONGGIAN (MaLoaiKG, TenLoaiKG, DonGiaTheoGio) VALUES (?, 'Test Type', 50000)",
+                "INSERT INTO LOAIKHONGGIAN (MaLoaiKG, TenLoaiKG, SucChua, DonGiaTheoGio, TrangThai) VALUES (?, 'Test Type', 4, 50000, 'Đang hoạt động')",
                 maLoaiKG
             );
         }
@@ -239,6 +239,50 @@ public class MoPhienBusinessHoursTest {
         assertTrue(result.contains("Loi: Chi nhanh chua den gio mo cua"), 
                 "Phải báo lỗi chi nhánh chưa đến giờ mở cửa.");
         assertTrue(result.contains("08:00"), "Thông báo phải hiển thị đúng giờ mở cửa chi nhánh.");
+    }
+
+    @Test
+    public void testCase7_OvernightChoPhepMoPhienLuc23h() {
+        jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '22:00', ThoiGianDongCua = '06:00' WHERE MaCN = ?",
+                testBranchId);
+
+        ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        ZonedDateTime batDau = nowHcm.withHour(23).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime ketThuc = batDau.plusHours(2);
+
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_07", null);
+        System.out.println("[Result] " + result);
+        assertTrue(result.contains("thanh cong"), "Mở phiên 23:00 -> 01:00 phải hợp lệ cho chi nhánh 22:00 -> 06:00.");
+    }
+
+    @Test
+    public void testCase8_OvernightChoPhepMoPhienLuc01h() {
+        jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '22:00', ThoiGianDongCua = '06:00' WHERE MaCN = ?",
+                testBranchId);
+
+        ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        ZonedDateTime batDau = nowHcm.withHour(1).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime ketThuc = batDau.plusHours(2);
+
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_08", null);
+        System.out.println("[Result] " + result);
+        assertTrue(result.contains("thanh cong"), "Mở phiên 01:00 -> 03:00 phải hợp lệ trong ca qua đêm.");
+    }
+
+    @Test
+    public void testCase9_OvernightChanMoPhienLuc12h() {
+        jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '22:00', ThoiGianDongCua = '06:00' WHERE MaCN = ?",
+                testBranchId);
+
+        ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        ZonedDateTime batDau = nowHcm.withHour(12).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime ketThuc = batDau.plusHours(1);
+
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_09", null);
+        System.out.println("[Result] " + result);
+        assertTrue(result.contains("Loi: Chi nhanh da qua gio hoat dong")
+                        || result.contains("Loi: Chi nhanh chua den gio mo cua"),
+                "Mở phiên lúc 12:00 phải bị chặn cho chi nhánh 22:00 -> 06:00.");
     }
 
     private String callStoredProcedure(String maKG, String maKH, ZonedDateTime batDau, ZonedDateTime ketThuc, String maPhien, String maDatCho) {

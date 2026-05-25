@@ -16,9 +16,13 @@ import com.wms.web.model.ThongTinNhanChoBangQR;
 import com.wms.web.repository.CongThongTinWebRepository;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.EmailUtil;
+import com.wms.util.BusinessHoursUtil;
 import com.wms.util.MaQRUtil;
+import com.wms.util.PasswordUtil;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,6 +44,7 @@ public class CongThongTinService {
     private static final Pattern MA_DAT_CHO_PATTERN = Pattern.compile("\\bDC\\d{3,12}\\b", Pattern.CASE_INSENSITIVE);
     private static final ZoneId MUI_GIO_VIET_NAM = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final int SO_GIO_DAT_CHO_MAC_DINH = 2;
+    private static final long AVATAR_MAX_BYTES = 2L * 1024L * 1024L;
 
     private final CongThongTinWebRepository khoDuLieu;
 
@@ -90,7 +95,49 @@ public class CongThongTinService {
                 form.getNgaySinh(),
                 form.getGioiTinh()
         );
+        capNhatAnhDaiDienNeuCo(user.getMaND(), form.getAnhDaiDien());
         return khoDuLieu.timThongTinTaiKhoan(user.getMaND());
+    }
+
+    public Optional<byte[]> layAnhDaiDien(NguoiDungPhien user) {
+        if (user == null || user.getMaND() == null || user.getMaND().isBlank()) {
+            return Optional.empty();
+        }
+        byte[] bytes = khoDuLieu.layAnhDaiDien(user.getMaND());
+        return bytes == null || bytes.length == 0 ? Optional.empty() : Optional.of(bytes);
+    }
+
+    @Transactional
+    public void doiMatKhau(NguoiDungPhien user, String matKhauHienTai,
+                           String matKhauMoi, String xacNhanMatKhauMoi) {
+        if (user == null) {
+            throw new IllegalArgumentException("Phiên đăng nhập đã hết hạn.");
+        }
+        if (matKhauHienTai == null || matKhauHienTai.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập mật khẩu hiện tại.");
+        }
+        if (matKhauMoi == null || matKhauMoi.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập mật khẩu mới.");
+        }
+        if (xacNhanMatKhauMoi == null || xacNhanMatKhauMoi.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng xác nhận mật khẩu mới.");
+        }
+        if (!matKhauMoi.equals(xacNhanMatKhauMoi)) {
+            throw new IllegalArgumentException("Xác nhận mật khẩu mới không khớp.");
+        }
+        if (matKhauMoi.length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu mới cần ít nhất 6 ký tự.");
+        }
+        if (matKhauMoi.equals(matKhauHienTai)) {
+            throw new IllegalArgumentException("Mật khẩu mới không được trùng mật khẩu hiện tại.");
+        }
+
+        String matKhauMaHoaHienTai = khoDuLieu.layMatKhauMaHoaTheoMaND(user.getMaND());
+        if (matKhauMaHoaHienTai == null || matKhauMaHoaHienTai.isBlank()
+                || !PasswordUtil.verify(matKhauHienTai, matKhauMaHoaHienTai)) {
+            throw new IllegalArgumentException("Mật khẩu hiện tại không đúng.");
+        }
+        khoDuLieu.capNhatMatKhau(user.getMaND(), PasswordUtil.hash(matKhauMoi));
     }
 
     public List<KhongGianView> layKhongGian(String branchId) {
@@ -115,46 +162,23 @@ public class CongThongTinService {
         LocalTime openTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianDongCua(), LocalTime.of(22, 0));
         LocalDateTime hienTai = layThoiGianHienTaiVietNam();
-        LocalDate ngayDat = hienTai.toLocalDate();
-        LocalTime gioBatDau;
-
-        if (hienTai.toLocalTime().isBefore(openTime)) {
-            gioBatDau = openTime;
-        } else if (!hienTai.toLocalTime().isBefore(closeTime)) {
-            ngayDat = ngayDat.plusDays(1);
-            gioBatDau = openTime;
-        } else {
-            gioBatDau = lamTronLenGioKeTiep(hienTai).toLocalTime();
+        BusinessHoursUtil.TimeWindow window = BusinessHoursUtil.nextWindowFrom(hienTai, openTime, closeTime);
+        LocalDateTime start = window.start().isAfter(hienTai) ? window.start() : lamTronLenGioKeTiep(hienTai);
+        if (!start.isBefore(window.end()) || start.plusHours(1).isAfter(window.end())) {
+            window = BusinessHoursUtil.nextWindowFrom(window.end().plusSeconds(1), openTime, closeTime);
+            start = window.start();
         }
-
-        LocalTime gioKetThuc = gioBatDau.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
-        if (gioBatDau.isBefore(openTime)
-                || !gioBatDau.isBefore(closeTime)
-                || !gioKetThuc.isAfter(gioBatDau)
-                || gioKetThuc.isAfter(closeTime)) {
-            ngayDat = ngayDat.plusDays(1);
-            gioBatDau = openTime;
-            gioKetThuc = openTime.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
+        LocalDateTime end = start.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
+        if (end.isAfter(window.end())) {
+            end = start.plusHours(1);
         }
-
-        LocalDateTime thoiGianGoiY = LocalDateTime.of(ngayDat, gioBatDau);
-        if (!thoiGianGoiY.isAfter(hienTai)) {
-            ngayDat = hienTai.toLocalDate().plusDays(1);
-            gioBatDau = openTime;
-            gioKetThuc = openTime.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
-        }
-
-        return new KhungGioDatCho(ngayDat, gioBatDau, gioKetThuc);
+        return new KhungGioDatCho(start.toLocalDate(), start.toLocalTime(), end.toLocalTime());
     }
 
     public List<String> layLuaChonGio(ChiNhanhView branch) {
         LocalTime openTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianDongCua(), LocalTime.of(22, 0));
-        java.util.ArrayList<String> options = new java.util.ArrayList<>();
-        for (LocalTime time = openTime; !time.isAfter(closeTime); time = time.plusHours(1)) {
-            options.add(time.toString());
-        }
-        return options;
+        return BusinessHoursUtil.hourlyOptions(openTime, closeTime, true);
     }
 
     public List<DatChoView> layDatChoTheoHoiVien(String maKH) {
@@ -705,20 +729,36 @@ public class CongThongTinService {
         }
         LocalTime openTime = docGioChiNhanh(space.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(space.getThoiGianDongCua(), LocalTime.of(22, 0));
-        LocalTime start = arrivalTime.toLocalTime();
-        LocalTime end = arrivalTime.plusHours(durationHours).toLocalTime();
+        LocalDateTime end = arrivalTime.plusHours(durationHours);
 
-        String openStr = String.format("%02d:%02d", openTime.getHour(), openTime.getMinute());
-        String closeStr = String.format("%02d:%02d", closeTime.getHour(), closeTime.getMinute());
+        String openStr = BusinessHoursUtil.format(openTime);
+        String closeStr = BusinessHoursUtil.format(closeTime);
 
-        if (start.isBefore(openTime) || !start.isBefore(closeTime)) {
+        if (!BusinessHoursUtil.fitsInBranchHours(arrivalTime, end, openTime, closeTime)) {
             throw new IllegalArgumentException("Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
         }
-        if (end.isAfter(closeTime) || (end.equals(LocalTime.MIDNIGHT) && !closeTime.equals(LocalTime.MIDNIGHT))) {
-            throw new IllegalArgumentException("Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.");
+    }
+
+    private void capNhatAnhDaiDienNeuCo(String maND, MultipartFile anhDaiDien) {
+        if (anhDaiDien == null || anhDaiDien.isEmpty()) {
+            return;
         }
-        if (!end.isAfter(start) && !end.equals(LocalTime.MIDNIGHT)) {
-            throw new IllegalArgumentException("Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
+        String contentType = anhDaiDien.getContentType() == null ? "" : anhDaiDien.getContentType().toLowerCase();
+        if (!contentType.equals("image/jpeg")
+                && !contentType.equals("image/png")
+                && !contentType.equals("image/webp")) {
+            throw new IllegalArgumentException("Ảnh đại diện phải là PNG, JPG hoặc WebP.");
+        }
+        if (anhDaiDien.getSize() > AVATAR_MAX_BYTES) {
+            throw new IllegalArgumentException("Ảnh đại diện không được vượt quá 2MB.");
+        }
+        try {
+            khoDuLieu.capNhatAnhDaiDien(maND, anhDaiDien.getBytes());
+        } catch (java.io.IOException ex) {
+            throw new IllegalArgumentException("Không đọc được ảnh đại diện. Vui lòng chọn lại tệp ảnh.");
+        } catch (DataAccessException ex) {
+            System.err.println("[CongThongTinService] Loi cap nhat anh dai dien: " + ex.getMessage());
+            throw new IllegalStateException("Không thể cập nhật ảnh đại diện lúc này. Vui lòng thử lại sau.");
         }
     }
 
@@ -731,7 +771,7 @@ public class CongThongTinService {
             normalized = normalized.substring(0, 5);
         }
         try {
-            return LocalTime.parse(normalized);
+            return BusinessHoursUtil.parseBranchTime(normalized, fallback);
         } catch (RuntimeException ex) {
             return fallback;
         }

@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tài khoản - Spring MNGT</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="/css/webapp.css">
 </head>
 <body class="member-page hienThiTaiKhoan-page">
@@ -39,8 +43,15 @@
 
         <div class="hienThiTaiKhoan-grid">
             <aside class="profile-card">
-                <div class="avatar-box">Ảnh đại diện</div>
-                <button type="button" class="button-secondary full-width">Thay đổi ảnh</button>
+                <div class="avatar-box">
+                    <img id="avatarPreview"
+                         th:if="${profile != null and profile.coAnhDaiDien}"
+                         th:src="@{/portal/account/avatar(v=${#dates.createNow().time})}"
+                         alt="Ảnh đại diện">
+                    <span id="avatarInitials"
+                          th:if="${profile == null or !profile.coAnhDaiDien}"
+                          th:text="${#strings.substring(profile != null ? profile.hoTen : user.hoTen, 0, 1)}">W</span>
+                </div>
                 <h3 th:text="${profile != null ? profile.hoTen : user.hoTen}">Hội viên</h3>
                 <strong th:text="${rankName}">Không có</strong>
                 <p th:text="'Tham gia từ: ' + ${#temporals.format(joinDate, 'dd/MM/yyyy')}">Tham gia từ</p>
@@ -49,7 +60,7 @@
 
             <section class="member-panel hienThiTaiKhoan-panel">
                 <h3>Hồ sơ cá nhân</h3>
-                <form th:action="@{/portal/account}" method="post" class="readonly-grid hienThiTaiKhoan-form">
+                <form th:action="@{/portal/account}" method="post" enctype="multipart/form-data" class="readonly-grid hienThiTaiKhoan-form">
                     <label>
                         Họ và tên
                         <input type="text" name="hoTen" th:value="${profile != null ? profile.hoTen : user.hoTen}">
@@ -78,30 +89,71 @@
                             <option value="Khác" th:selected="${profile != null and profile.gioiTinh == 'Khác'}">Khác</option>
                         </select>
                     </label>
+                    <label class="span-2">
+                        Ảnh đại diện
+                        <input type="file" name="anhDaiDien" id="avatarInput" accept="image/png,image/jpeg,image/webp">
+                    </label>
                     <button type="submit" class="button-primary">Cập nhật thông tin</button>
                 </form>
 
                 <hr>
                 <h3>Bảo mật & mật khẩu</h3>
-                <form class="password-row">
+                <div class="alert-stack" th:if="${successPassword != null or errorPassword != null}">
+                    <p class="flash success" th:if="${successPassword != null}">
+                        <span class="flash-icon">✓</span><span class="flash-body" th:text="${successPassword}">Đổi mật khẩu thành công.</span>
+                    </p>
+                    <p class="flash error" th:if="${errorPassword != null}">
+                        <span class="flash-icon">!</span><span class="flash-body" th:text="${errorPassword}">Không thể đổi mật khẩu.</span>
+                    </p>
+                </div>
+                <form th:action="@{/portal/account/change-password}" method="post" class="password-row">
                     <label>
                         Mật khẩu hiện tại
-                        <input type="password">
+                        <input type="password" name="currentPassword" autocomplete="current-password">
                     </label>
                     <label>
                         Mật khẩu mới
-                        <input type="password">
+                        <input type="password" name="newPassword" autocomplete="new-password">
                     </label>
                     <label>
                         Xác nhận mật khẩu
-                        <input type="password">
+                        <input type="password" name="confirmNewPassword" autocomplete="new-password">
                     </label>
-                    <button type="button" class="button-dark">Đổi mật khẩu</button>
+                    <button type="submit" class="button-dark">Đổi mật khẩu</button>
                 </form>
             </section>
         </div>
     </section>
 </main>
+<script>
+    const avatarInput = document.getElementById("avatarInput");
+    const avatarPreview = document.getElementById("avatarPreview");
+    const avatarInitials = document.getElementById("avatarInitials");
+    if (avatarInput) {
+        avatarInput.addEventListener("change", () => {
+            const file = avatarInput.files && avatarInput.files[0];
+            if (!file) return;
+            if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+                alert("Ảnh đại diện phải là PNG, JPG hoặc WebP.");
+                avatarInput.value = "";
+                return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Ảnh đại diện không được vượt quá 2MB.");
+                avatarInput.value = "";
+                return;
+            }
+            const preview = avatarPreview || document.createElement("img");
+            preview.id = "avatarPreview";
+            preview.alt = "Ảnh đại diện";
+            preview.src = URL.createObjectURL(file);
+            if (!avatarPreview) {
+                document.querySelector(".avatar-box").appendChild(preview);
+            }
+            if (avatarInitials) avatarInitials.style.display = "none";
+        });
+    }
+</script>
 <script src="/js/input-format.js"></script>
 </body>
 </html>

@@ -1,5 +1,8 @@
 package com.wms.web.model;
 
+import com.wms.util.BusinessHoursUtil;
+import java.time.LocalTime;
+
 public class ChiNhanhView {
     private final String maCN;
     private final String tenCN;
@@ -40,5 +43,17 @@ public class ChiNhanhView {
 
     public String getDuongDayNong() {
         return duongDayNong;
+    }
+
+    public boolean isMoQuaDem() {
+        LocalTime openTime = BusinessHoursUtil.parseBranchTime(thoiGianMoCua, LocalTime.of(7, 0));
+        LocalTime closeTime = BusinessHoursUtil.parseBranchTime(thoiGianDongCua, LocalTime.of(22, 0));
+        return BusinessHoursUtil.isOvernight(openTime, closeTime);
+    }
+
+    public boolean isMoHaiMuoiBonGio() {
+        LocalTime openTime = BusinessHoursUtil.parseBranchTime(thoiGianMoCua, LocalTime.of(7, 0));
+        LocalTime closeTime = BusinessHoursUtil.parseBranchTime(thoiGianDongCua, LocalTime.of(22, 0));
+        return BusinessHoursUtil.isTwentyFourHours(openTime, closeTime);
     }
 }
