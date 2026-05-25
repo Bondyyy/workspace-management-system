@@ -253,6 +253,7 @@ public final class ErrorMessageUtil {
             String trimmed = line.trim();
             if (trimmed.matches("(?i)^ORA-20\\d{3}:.*")) {
                 String body = trimmed.replaceFirst("(?i)^ORA-20\\d{3}:\\s*", "").trim();
+                body = body.replaceFirst("(?i)^Lỗi:\\s*", "").trim();
                 if (!body.isBlank() && !containsProcedureTechnicalDetails(body)) {
                     return body;
                 }

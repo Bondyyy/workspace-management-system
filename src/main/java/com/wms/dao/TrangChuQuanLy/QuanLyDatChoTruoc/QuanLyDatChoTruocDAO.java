@@ -4,9 +4,11 @@ import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyDatChoTruoc.DatChoTruocDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
+import com.wms.util.ErrorMessageUtil;
 import com.wms.util.MaQRUtil;
 import com.wms.util.MaTuDongUtil;
 
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -251,6 +253,12 @@ public class QuanLyDatChoTruocDAO {
                     return new KetQuaNhanChoDTO(false, "Đặt chỗ chưa ở trạng thái đã thanh toán thành công nên chưa thể tạo phiên.");
                 }
 
+                String loiThoiGianNhanCho = kiemTraThoiGianNhanCho(thoiGianDuKienToi, soGio);
+                if (loiThoiGianNhanCho != null) {
+                    conn.rollback();
+                    return new KetQuaNhanChoDTO(false, loiThoiGianNhanCho);
+                }
+
                 String maPhien = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
                 java.sql.Timestamp thoiGianDuKienKetThuc = thoiGianDuKienToi != null
                         ? java.sql.Timestamp.from(thoiGianDuKienToi.toInstant().plus(soGio, ChronoUnit.HOURS))
@@ -311,8 +319,9 @@ public class QuanLyDatChoTruocDAO {
                         maDatCho, maPhien);
             } catch (SQLException ex) {
                 conn.rollback();
-                System.err.println("[QuanLyDatChoTruocDAO] Lỗi mở phiên thủ công từ đặt chỗ: " + ex.getMessage());
-                return new KetQuaNhanChoDTO(false, "Không thể mở phiên thủ công: " + ex.getMessage());
+                System.err.println("[QuanLyDatChoTruocDAO] Lỗi mở phiên thủ công từ đặt chỗ: "
+                        + ex.getClass().getSimpleName() + " - " + ex.getErrorCode());
+                return new KetQuaNhanChoDTO(false, ErrorMessageUtil.toUserMessage(ex));
             } finally {
                 try {
                     conn.setAutoCommit(oldAutoCommit);
@@ -320,9 +329,26 @@ public class QuanLyDatChoTruocDAO {
                 }
             }
         } catch (Exception e) {
-            System.err.println("[QuanLyDatChoTruocDAO] Lỗi kết nối CSDL khi mở phiên thủ công: " + e.getMessage());
-            return new KetQuaNhanChoDTO(false, "Không thể mở phiên thủ công: " + e.getMessage());
+            System.err.println("[QuanLyDatChoTruocDAO] Lỗi kết nối CSDL khi mở phiên thủ công: "
+                    + e.getClass().getSimpleName());
+            return new KetQuaNhanChoDTO(false, ErrorMessageUtil.toUserMessage(e));
         }
+    }
+
+    private String kiemTraThoiGianNhanCho(java.sql.Timestamp thoiGianDuKienToi, int soGio) {
+        if (thoiGianDuKienToi == null) {
+            return null;
+        }
+        Instant now = Instant.now();
+        Instant batDauHopLe = thoiGianDuKienToi.toInstant();
+        Instant ketThucHopLe = batDauHopLe.plus(Math.max(1, soGio), ChronoUnit.HOURS);
+        if (now.isBefore(batDauHopLe)) {
+            return "Quá sớm, chưa đến giờ nhận chỗ hợp lệ.";
+        }
+        if (now.isAfter(ketThucHopLe)) {
+            return "Đặt chỗ đã quá giờ nhận chỗ.";
+        }
+        return null;
     }
 
     private String themGhiChuThuCong(String ghiChuHienTai) {

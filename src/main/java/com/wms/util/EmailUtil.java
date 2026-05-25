@@ -83,6 +83,43 @@ public class EmailUtil {
         }
     }
 
+    public static boolean sendPasswordResetOTP(String toEmail, String otp) {
+        System.out.println("[EmailUtil] Đang gửi OTP đặt lại mật khẩu tới: " + maskEmail(toEmail));
+        if (SENDER_EMAIL == null || SENDER_EMAIL.isBlank()
+                || SENDER_APP_PASSWORD == null || SENDER_APP_PASSWORD.isBlank()) {
+            System.err.println("[EmailUtil] Lỗi: email gửi hoặc app password chưa được cấu hình!");
+            return false;
+        }
+
+        Session session = createSmtpSession();
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(SENDER_EMAIL));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            setUtf8Subject(message, "Mã OTP đặt lại mật khẩu WMS");
+            message.setSentDate(new Date());
+
+            String content = """
+                    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#1f1722;">
+                        <h2 style="color:#eb5e8d;">Đặt lại mật khẩu WMS</h2>
+                        <p>Bạn vừa yêu cầu đặt lại mật khẩu trên Spring Workspace.</p>
+                        <p>Mã OTP của bạn là:</p>
+                        <p style="font-size:28px;font-weight:800;letter-spacing:4px;color:#231e30;">%s</p>
+                        <p>Mã có hiệu lực trong 5 phút.</p>
+                        <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+                    </div>
+                    """.formatted(html(otp));
+            setHtmlUtf8Content(message, content);
+
+            Transport.send(message);
+            System.out.println("[EmailUtil] Đã gửi OTP đặt lại mật khẩu tới email đã mask: " + maskEmail(toEmail));
+            return true;
+        } catch (MessagingException e) {
+            System.err.println("[EmailUtil] Lỗi gửi mail đặt lại mật khẩu: " + e.getMessage());
+            return false;
+        }
+    }
+
     public static boolean guiEmailXacNhanDatChoDaThanhToan(
             String toEmail,
             String hoTen,

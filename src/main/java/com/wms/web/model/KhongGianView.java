@@ -14,6 +14,7 @@ public class KhongGianView {
     private final String tenCN;
     private final String thoiGianMoCua;
     private final String thoiGianDongCua;
+    private final Integer sucChua;
     private final BigDecimal donGiaTheoGio;
     private final int toaDoX;
     private final int toaDoY;
@@ -23,58 +24,78 @@ public class KhongGianView {
     private final LocalDateTime busyUntil;
 
     public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio) {
-        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, tenCN, donGiaTheoGio, 0, 0, 1, 1, true, null);
+                         String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, null, null,
+                null, donGiaTheoGio, 0, 0, 1, 1, true, null);
     }
 
     public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio,
-                     int toaDoX, int toaDoY, int chieuDai, int chieuRong) {
-        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, tenCN, donGiaTheoGio,
-                toaDoX, toaDoY, chieuDai, chieuRong, true, null);
+                         String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio,
+                         int toaDoX, int toaDoY, int chieuDai, int chieuRong) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, null, null,
+                null, donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, true, null);
     }
 
     public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
-                     BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong) {
-        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, tenCN, thoiGianMoCua, thoiGianDongCua,
-                donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, true, null);
-    }
-
-    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String maCN, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
-                     BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong) {
-        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, maCN, tenCN, thoiGianMoCua, thoiGianDongCua,
-                donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, true, null);
-    }
-
-    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio,
-                     boolean available, LocalDateTime busyUntil) {
-        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, tenCN, donGiaTheoGio,
-                0, 0, 1, 1, available, busyUntil);
-    }
-
-    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio,
-                     int toaDoX, int toaDoY, int chieuDai, int chieuRong,
-                     boolean available, LocalDateTime busyUntil) {
-        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, tenCN, null, null,
-                donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, available, busyUntil);
-    }
-
-    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
-                     BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong,
-                     boolean available, LocalDateTime busyUntil) {
+                         String trangThaiKG, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
+                         BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong) {
         this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, thoiGianMoCua, thoiGianDongCua,
-                donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, available, busyUntil);
+                null, donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, true, null);
     }
 
     public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
-                     String trangThaiKG, String maCN, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
-                     BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong,
-                     boolean available, LocalDateTime busyUntil) {
+                         String trangThaiKG, String maCN, String tenCN, String thoiGianMoCua,
+                         String thoiGianDongCua, BigDecimal donGiaTheoGio,
+                         int toaDoX, int toaDoY, int chieuDai, int chieuRong) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, maCN, tenCN, thoiGianMoCua, thoiGianDongCua,
+                null, donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, true, null);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                         String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio,
+                         boolean available, LocalDateTime busyUntil) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, null, null,
+                null, donGiaTheoGio, 0, 0, 1, 1, available, busyUntil);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                         String trangThaiKG, String tenCN, BigDecimal donGiaTheoGio,
+                         int toaDoX, int toaDoY, int chieuDai, int chieuRong,
+                         boolean available, LocalDateTime busyUntil) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, null, null,
+                null, donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, available, busyUntil);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                         String trangThaiKG, String tenCN, Integer sucChua, BigDecimal donGiaTheoGio,
+                         int toaDoX, int toaDoY, int chieuDai, int chieuRong,
+                         boolean available, LocalDateTime busyUntil) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, null, null,
+                sucChua, donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, available, busyUntil);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                         String trangThaiKG, String tenCN, String thoiGianMoCua, String thoiGianDongCua,
+                         BigDecimal donGiaTheoGio, int toaDoX, int toaDoY, int chieuDai, int chieuRong,
+                         boolean available, LocalDateTime busyUntil) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, null, tenCN, thoiGianMoCua, thoiGianDongCua,
+                null, donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, available, busyUntil);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                         String trangThaiKG, String maCN, String tenCN, String thoiGianMoCua,
+                         String thoiGianDongCua, BigDecimal donGiaTheoGio,
+                         int toaDoX, int toaDoY, int chieuDai, int chieuRong,
+                         boolean available, LocalDateTime busyUntil) {
+        this(maKG, tenKG, tenLoaiKG, viTri, trangThaiKG, maCN, tenCN, thoiGianMoCua, thoiGianDongCua,
+                null, donGiaTheoGio, toaDoX, toaDoY, chieuDai, chieuRong, available, busyUntil);
+    }
+
+    public KhongGianView(String maKG, String tenKG, String tenLoaiKG, String viTri,
+                         String trangThaiKG, String maCN, String tenCN, String thoiGianMoCua,
+                         String thoiGianDongCua, Integer sucChua, BigDecimal donGiaTheoGio,
+                         int toaDoX, int toaDoY, int chieuDai, int chieuRong,
+                         boolean available, LocalDateTime busyUntil) {
         this.maKG = maKG;
         this.tenKG = tenKG;
         this.tenLoaiKG = tenLoaiKG;
@@ -84,6 +105,7 @@ public class KhongGianView {
         this.tenCN = tenCN;
         this.thoiGianMoCua = thoiGianMoCua;
         this.thoiGianDongCua = thoiGianDongCua;
+        this.sucChua = sucChua;
         this.donGiaTheoGio = donGiaTheoGio;
         this.toaDoX = Math.max(0, toaDoX);
         this.toaDoY = Math.max(0, toaDoY);
@@ -129,6 +151,10 @@ public class KhongGianView {
         return thoiGianDongCua;
     }
 
+    public Integer getSucChua() {
+        return sucChua;
+    }
+
     public BigDecimal getDonGiaTheoGio() {
         return donGiaTheoGio;
     }
@@ -168,20 +194,20 @@ public class KhongGianView {
     public String getStatusClass() {
         String normalized = chuanHoaTrangThai(trangThaiKG);
         if (normalized.contains("bao tri")) {
-            return "node-maintenance";
+            return "maintenance";
         }
         if (normalized.contains("dang hoat dong")
                 || normalized.contains("dang su dung")
                 || normalized.contains("co nguoi ngoi")) {
-            return "node-active";
+            return "active";
         }
         if (normalized.contains("dat truoc") || normalized.equals("da dat") || !available) {
-            return "node-booked";
+            return "booked";
         }
         if ("trong".equals(normalized)) {
-            return "node-empty";
+            return "empty";
         }
-        return available ? "node-empty" : "node-booked";
+        return "unknown";
     }
 
     public String getTrangThaiHienThi() {
@@ -213,6 +239,8 @@ public class KhongGianView {
         }
         return Normalizer.normalize(value, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D')
                 .toLowerCase()
                 .trim();
     }

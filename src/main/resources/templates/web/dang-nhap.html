@@ -8,12 +8,15 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/css/webapp.css">
+    <link rel="stylesheet" th:href="@{/css/webapp.css}">
 </head>
 <body class="workspace-auth-page">
 <main class="workspace-auth">
     <section class="auth-glass">
-        <a class="auth-brand" th:href="@{/}">SPRING WORKSPACE</a>
+        <a class="auth-brand-link" th:href="@{/}" aria-label="Về trang chủ">
+            <img class="auth-brand-icon" th:src="@{/icons/cherry-blossom-32x32.png}" alt="" aria-hidden="true">
+            <span>SPRING WORKSPACE</span>
+        </a>
         <div class="auth-title">
             <h1>Spring xin chào</h1>
             <p>Đăng nhập để vào hệ thống</p>
@@ -21,7 +24,7 @@
 
         <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
-        <form th:action="@{/dangNhap}" th:object="${DangNhapWebForm}" method="post" class="workspace-form">
+        <form th:action="@{/dangNhap}" th:object="${DangNhapWebForm}" method="post" class="workspace-form" data-loading-form>
             <label>
                 Tên tài khoản (Email hoặc SĐT)
                 <input type="text" th:field="*{tenTaiKhoan}">
@@ -29,11 +32,22 @@
             </label>
             <label>
                 Mật khẩu
-                <input type="password" th:field="*{matKhau}">
+                <span class="auth-password-field">
+                    <input type="password" th:field="*{matKhau}">
+                    <button type="button" class="auth-password-toggle" data-toggle-password="#matKhau" aria-label="Hiện mật khẩu">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </span>
                 <span class="field-error" th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}"></span>
             </label>
-            <a class="form-link right" href="#">Quên mật khẩu?</a>
-            <button type="submit" class="pink-button submit">Đăng nhập</button>
+            <a class="form-link right" th:href="@{/quen-mat-khau}">Quên mật khẩu?</a>
+            <button type="submit" class="pink-button submit auth-submit-btn js-submit-loading" data-loading-text="Đang đăng nhập...">
+                <span class="btn-label">Đăng nhập</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
         </form>
 
         <p class="auth-switch">Chưa có tài khoản? <a th:href="@{/register}">Đăng ký ngay</a></p>
@@ -46,5 +60,6 @@
         </div>
     </section>
 </main>
+<script th:src="@{/js/auth-ui.js}" defer></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tạo tài khoản - Spring Workspace</title>
+    <title>Đặt lại mật khẩu - Spring Workspace</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="shortcut icon" href="/favicon.ico">
@@ -12,72 +12,63 @@
 </head>
 <body class="workspace-auth-page">
 <main class="workspace-auth">
-    <section class="auth-glass register-glass">
+    <section class="auth-glass otp-glass">
         <a class="auth-brand-link" th:href="@{/}" aria-label="Về trang chủ">
             <img class="auth-brand-icon" th:src="@{/icons/cherry-blossom-32x32.png}" alt="" aria-hidden="true">
             <span>SPRING WORKSPACE</span>
         </a>
         <div class="auth-title">
-            <h1>Tạo tài khoản</h1>
-            <p>Nhập thông tin và xác thực OTP qua email</p>
+            <h1>Đặt lại mật khẩu</h1>
+            <p>Mã OTP đã gửi tới <strong th:text="${email}">email</strong></p>
         </div>
 
         <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
-        <form th:action="@{/register}" th:object="${DangKyWebForm}" method="post" class="workspace-form" data-loading-form>
+        <form th:action="@{/quen-mat-khau/dat-lai}" th:object="${DatLaiMatKhauWebForm}" method="post" class="workspace-form" data-loading-form>
             <label>
-                Tên đăng nhập
-                <input type="text" th:field="*{tenTaiKhoan}">
-                <span class="field-error" th:if="${#fields.hasErrors('tenTaiKhoan')}" th:errors="*{tenTaiKhoan}"></span>
+                Nhập mã OTP
+                <input class="otp-input" type="text" inputmode="numeric" maxlength="6" th:field="*{otp}" placeholder="000000" autocomplete="one-time-code">
+                <span class="field-error" th:if="${#fields.hasErrors('otp')}" th:errors="*{otp}"></span>
             </label>
             <label>
-                Họ và tên
-                <input type="text" th:field="*{hoTen}">
-                <span class="field-error" th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}"></span>
-            </label>
-            <label>
-                Email
-                <input type="email" th:field="*{email}">
-                <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
-            </label>
-            <label>
-                Mật khẩu
+                Mật khẩu mới
                 <span class="auth-password-field">
-                    <input type="password" th:field="*{matKhau}">
-                    <button type="button" class="auth-password-toggle" data-toggle-password="#matKhau" aria-label="Hiện mật khẩu">
+                    <input type="password" th:field="*{matKhauMoi}" autocomplete="new-password">
+                    <button type="button" class="auth-password-toggle" data-toggle-password="#matKhauMoi" aria-label="Hiện mật khẩu">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                     </button>
                 </span>
-                <span class="field-error" th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}"></span>
+                <span class="field-error" th:if="${#fields.hasErrors('matKhauMoi')}" th:errors="*{matKhauMoi}"></span>
             </label>
             <label>
-                Xác nhận mật khẩu
+                Xác nhận mật khẩu mới
                 <span class="auth-password-field">
-                    <input type="password" th:field="*{xacNhanMatKhau}">
-                    <button type="button" class="auth-password-toggle" data-toggle-password="#xacNhanMatKhau" aria-label="Hiện mật khẩu">
+                    <input type="password" th:field="*{xacNhanMatKhauMoi}" autocomplete="new-password">
+                    <button type="button" class="auth-password-toggle" data-toggle-password="#xacNhanMatKhauMoi" aria-label="Hiện mật khẩu">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                     </button>
                 </span>
-                <span class="field-error" th:if="${#fields.hasErrors('xacNhanMatKhau')}" th:errors="*{xacNhanMatKhau}"></span>
+                <span class="field-error" th:if="${#fields.hasErrors('xacNhanMatKhauMoi')}" th:errors="*{xacNhanMatKhauMoi}"></span>
             </label>
-            <button type="submit" class="pink-button submit auth-submit-btn js-submit-loading" data-loading-text="Đang gửi OTP...">
-                <span class="btn-label">Gửi mã OTP</span>
+            <button type="submit" class="pink-button submit auth-submit-btn js-submit-loading" data-loading-text="Đang đổi mật khẩu...">
+                <span class="btn-label">Xác nhận đổi mật khẩu</span>
                 <span class="btn-spinner" aria-hidden="true"></span>
             </button>
         </form>
 
-        <p class="auth-switch">Đã có tài khoản? <a th:href="@{/dangNhap}">Đăng nhập</a></p>
+        <p class="auth-switch">Cần mã mới? <a th:href="@{/quen-mat-khau}">Gửi lại OTP</a></p>
     </section>
 
     <section class="auth-hero-copy">
         <div>
             <h2>SPRING WORKSPACE</h2>
+            <p>Nhập OTP hợp lệ và mật khẩu mới để hoàn tất khôi phục tài khoản.</p>
         </div>
     </section>
 </main>

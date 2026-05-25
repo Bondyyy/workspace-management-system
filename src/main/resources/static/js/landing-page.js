@@ -9,6 +9,7 @@
     var toggle = nav.querySelector(".landing-menu-toggle");
     var menu = document.getElementById("landingMenu");
     var sectionLinks = document.querySelectorAll("[data-section-link]");
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     function setMenuOpen(isOpen) {
         if (!toggle || !menu) {
@@ -38,14 +39,37 @@
             event.preventDefault();
             setMenuOpen(false);
             target.scrollIntoView({
-                behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+                behavior: reduceMotion ? "auto" : "smooth",
                 block: "start"
             });
             history.replaceState(null, "", targetSelector);
         });
     });
 
-    if ("IntersectionObserver" in window) {
+    document.querySelectorAll(".landing-process-card").forEach(function (card) {
+        card.addEventListener("mouseenter", function () {
+            if (!reduceMotion) {
+                card.classList.add("is-hovered");
+            }
+        });
+        card.addEventListener("mouseleave", function () {
+            card.classList.remove("is-hovered");
+        });
+        card.addEventListener("focusin", function () {
+            if (!reduceMotion) {
+                card.classList.add("is-hovered");
+            }
+        });
+        card.addEventListener("focusout", function () {
+            card.classList.remove("is-hovered");
+        });
+    });
+
+    if (reduceMotion) {
+        document.querySelectorAll(".landing-reveal").forEach(function (element) {
+            element.classList.add("is-visible");
+        });
+    } else if ("IntersectionObserver" in window) {
         var revealObserver = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
@@ -66,24 +90,48 @@
         });
     }
 
-    var observedSections = Array.prototype.slice.call(document.querySelectorAll("main section[id]"));
-    if ("IntersectionObserver" in window && observedSections.length > 0) {
-        var activeObserver = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (!entry.isIntersecting) {
-                    return;
-                }
-                var activeId = "#" + entry.target.id;
-                sectionLinks.forEach(function (link) {
-                    link.classList.toggle("is-active", link.getAttribute("href") === activeId);
-                });
-            });
-        }, {
-            rootMargin: "-35% 0px -55% 0px"
-        });
-
-        observedSections.forEach(function (section) {
-            activeObserver.observe(section);
+    function setActiveLink(targetSelector) {
+        var activeSelector = targetSelector || "#top";
+        sectionLinks.forEach(function (link) {
+            link.classList.toggle("is-active", link.getAttribute("href") === activeSelector);
         });
     }
+
+    function updateActiveSection() {
+        var hero = document.querySelector(".landing-hero");
+        var topBoundary = hero ? hero.offsetHeight * 0.5 : 320;
+        if ((!window.location.hash || window.location.hash === "#top") && window.scrollY < topBoundary) {
+            setActiveLink("#top");
+            return;
+        }
+
+        var bestSelector = "#top";
+        var bestVisible = 0;
+        Array.prototype.slice.call(document.querySelectorAll("main section[id]")).forEach(function (section) {
+            var rect = section.getBoundingClientRect();
+            var visible = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+            if (visible > bestVisible && rect.bottom > 0 && rect.top < window.innerHeight) {
+                bestVisible = visible;
+                bestSelector = "#" + section.id;
+            }
+        });
+        setActiveLink(bestSelector);
+    }
+
+    sectionLinks.forEach(function (link) {
+        link.addEventListener("click", function () {
+            window.setTimeout(function () {
+                setActiveLink(link.getAttribute("href"));
+            }, 0);
+        });
+    });
+
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+    if (window.location.hash) {
+        setActiveLink(window.location.hash);
+    } else {
+        setActiveLink("#top");
+    }
+    updateActiveSection();
 }());

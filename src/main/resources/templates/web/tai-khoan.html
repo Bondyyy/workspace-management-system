@@ -109,15 +109,39 @@
                 <form th:action="@{/portal/account/change-password}" method="post" class="password-row">
                     <label>
                         Mật khẩu hiện tại
-                        <input type="password" name="currentPassword" autocomplete="current-password">
+                        <span class="auth-password-field">
+                            <input type="password" id="currentPassword" name="currentPassword" autocomplete="current-password">
+                            <button type="button" class="auth-password-toggle" data-toggle-password="#currentPassword" aria-label="Hiện mật khẩu">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </span>
                     </label>
                     <label>
                         Mật khẩu mới
-                        <input type="password" name="newPassword" autocomplete="new-password">
+                        <span class="auth-password-field">
+                            <input type="password" id="newPassword" name="newPassword" autocomplete="new-password">
+                            <button type="button" class="auth-password-toggle" data-toggle-password="#newPassword" aria-label="Hiện mật khẩu">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </span>
                     </label>
                     <label>
                         Xác nhận mật khẩu
-                        <input type="password" name="confirmNewPassword" autocomplete="new-password">
+                        <span class="auth-password-field">
+                            <input type="password" id="confirmNewPassword" name="confirmNewPassword" autocomplete="new-password">
+                            <button type="button" class="auth-password-toggle" data-toggle-password="#confirmNewPassword" aria-label="Hiện mật khẩu">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </span>
                     </label>
                     <button type="submit" class="button-dark">Đổi mật khẩu</button>
                 </form>
@@ -155,5 +179,6 @@
     }
 </script>
 <script src="/js/input-format.js"></script>
+<script src="/js/auth-ui.js"></script>
 </body>
 </html>

@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -53,7 +54,12 @@ public class CongThongTinService {
     }
 
     public List<ChiNhanhView> layChiNhanh() {
-        return khoDuLieu.timChiNhanhHoatDong();
+        try {
+            return khoDuLieu.timChiNhanhHoatDong();
+        } catch (DataAccessException ex) {
+            System.err.println("[CongThongTinService] Loi tai danh sach chi nhanh: " + ex.getMessage());
+            throw new IllegalStateException("Không thể tải danh sách chi nhánh lúc này. Vui lòng thử lại sau.");
+        }
     }
 
     public ThongTinTaiKhoanView layThongTinTaiKhoan(NguoiDungPhien user) {
@@ -141,16 +147,30 @@ public class CongThongTinService {
     }
 
     public List<KhongGianView> layKhongGian(String branchId) {
-        return khoDuLieu.timKhongGian((branchId == null || branchId.isBlank()) ? null : branchId);
+        try {
+            return sapXepKhongGian(khoDuLieu.timKhongGian(chuanHoaMaCN(branchId)));
+        } catch (DataAccessException ex) {
+            System.err.println("[CongThongTinService] Loi tai khong gian maCN=" + branchId + ": " + ex.getMessage());
+            throw new IllegalStateException("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.");
+        }
     }
 
     public List<KhongGianView> layKhongGian(String branchId, LocalDateTime selectedStart, LocalDateTime selectedEnd) {
-        return khoDuLieu.timKhongGian((branchId == null || branchId.isBlank()) ? null : branchId, selectedStart, selectedEnd);
+        try {
+            return sapXepKhongGian(khoDuLieu.timKhongGian(chuanHoaMaCN(branchId), selectedStart, selectedEnd));
+        } catch (DataAccessException ex) {
+            System.err.println("[CongThongTinService] Loi tai khong gian maCN=" + branchId + ": " + ex.getMessage());
+            throw new IllegalStateException("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.");
+        }
     }
 
     public Optional<ChiNhanhView> layMotChiNhanh(String branchId) {
+        String maCN = chuanHoaMaCN(branchId);
+        if (maCN == null) {
+            return Optional.empty();
+        }
         return layChiNhanh().stream()
-                .filter(branch -> branch.getMaCN().equals(branchId))
+                .filter(branch -> branch.getMaCN().equalsIgnoreCase(maCN))
                 .findFirst();
     }
 
@@ -737,6 +757,25 @@ public class CongThongTinService {
         if (!BusinessHoursUtil.fitsInBranchHours(arrivalTime, end, openTime, closeTime)) {
             throw new IllegalArgumentException("Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
         }
+    }
+
+    private String chuanHoaMaCN(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private List<KhongGianView> sapXepKhongGian(List<KhongGianView> spaces) {
+        if (spaces == null || spaces.isEmpty()) {
+            return List.of();
+        }
+        return spaces.stream()
+                .sorted(Comparator
+                        .comparing((KhongGianView space) -> space.getViTri() == null ? "" : space.getViTri(),
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(space -> space.getTenKG() == null ? "" : space.getTenKG(),
+                                String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(space -> space.getMaKG() == null ? "" : space.getMaKG(),
+                                String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     private void capNhatAnhDaiDienNeuCo(String maND, MultipartFile anhDaiDien) {

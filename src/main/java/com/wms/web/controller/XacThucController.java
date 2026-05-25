@@ -1,10 +1,13 @@
 package com.wms.web.controller;
 
 import com.wms.web.form.DangNhapWebForm;
+import com.wms.web.form.DatLaiMatKhauWebForm;
 import com.wms.web.form.MaOtpForm;
 import com.wms.web.form.DangKyWebForm;
+import com.wms.web.form.QuenMatKhauWebForm;
 import com.wms.web.model.DangKyChoXacThuc;
 import com.wms.web.model.NguoiDungPhien;
+import com.wms.web.model.YeuCauDatLaiMatKhau;
 import com.wms.web.service.XacThucWebService;
 import com.wms.web.util.WebErrorMessages;
 import jakarta.servlet.http.HttpSession;
@@ -68,6 +71,79 @@ public class XacThucController {
     @GetMapping("/dangKy")
     public String hienThiDangKyAlias() {
         return "redirect:/register";
+    }
+
+    @GetMapping("/quen-mat-khau")
+    public String hienThiQuenMatKhau(Model model) {
+        if (!model.containsAttribute("QuenMatKhauWebForm")) {
+            model.addAttribute("QuenMatKhauWebForm", new QuenMatKhauWebForm());
+        }
+        return "web/quen-mat-khau";
+    }
+
+    @PostMapping("/quen-mat-khau/gui-otp")
+    public String guiOtpQuenMatKhau(@Valid @ModelAttribute("QuenMatKhauWebForm") QuenMatKhauWebForm form,
+                                    BindingResult bindingResult,
+                                    HttpSession session,
+                                    Model model,
+                                    RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            return "web/quen-mat-khau";
+        }
+
+        try {
+            YeuCauDatLaiMatKhau yeuCau = xacThucWebService.yeuCauOtpDatLaiMatKhau(form);
+            session.setAttribute("YeuCauDatLaiMatKhau", yeuCau);
+            redirectAttributes.addFlashAttribute("success", "Mã OTP đặt lại mật khẩu đã được gửi tới email của bạn.");
+            return "redirect:/quen-mat-khau/dat-lai";
+        } catch (RuntimeException ex) {
+            model.addAttribute("error", WebErrorMessages.thanThien(
+                    "Không thể gửi OTP đặt lại mật khẩu lúc này. Vui lòng thử lại sau.", ex));
+            return "web/quen-mat-khau";
+        }
+    }
+
+    @GetMapping("/quen-mat-khau/dat-lai")
+    public String hienThiDatLaiMatKhau(HttpSession session, Model model) {
+        YeuCauDatLaiMatKhau yeuCau =
+                (YeuCauDatLaiMatKhau) session.getAttribute("YeuCauDatLaiMatKhau");
+        if (yeuCau == null) {
+            return "redirect:/quen-mat-khau";
+        }
+        if (!model.containsAttribute("DatLaiMatKhauWebForm")) {
+            model.addAttribute("DatLaiMatKhauWebForm", new DatLaiMatKhauWebForm());
+        }
+        model.addAttribute("email", yeuCau.getEmail());
+        return "web/dat-lai-mat-khau";
+    }
+
+    @PostMapping("/quen-mat-khau/dat-lai")
+    public String datLaiMatKhau(@Valid @ModelAttribute("DatLaiMatKhauWebForm") DatLaiMatKhauWebForm form,
+                                BindingResult bindingResult,
+                                HttpSession session,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        YeuCauDatLaiMatKhau yeuCau =
+                (YeuCauDatLaiMatKhau) session.getAttribute("YeuCauDatLaiMatKhau");
+        if (yeuCau == null) {
+            return "redirect:/quen-mat-khau";
+        }
+
+        model.addAttribute("email", yeuCau.getEmail());
+        if (bindingResult.hasErrors()) {
+            return "web/dat-lai-mat-khau";
+        }
+
+        try {
+            xacThucWebService.datLaiMatKhau(yeuCau, form);
+            session.removeAttribute("YeuCauDatLaiMatKhau");
+            redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
+            return "redirect:/dangNhap";
+        } catch (RuntimeException ex) {
+            model.addAttribute("error", WebErrorMessages.thanThien(
+                    "Không thể đổi mật khẩu lúc này. Vui lòng kiểm tra thông tin và thử lại.", ex));
+            return "web/dat-lai-mat-khau";
+        }
     }
 
     @PostMapping("/register")

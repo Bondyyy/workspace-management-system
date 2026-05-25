@@ -65,7 +65,7 @@
                     <span class="overnight-pill" th:if="${branch.moQuaDem}">Mở qua đêm</span>
                     <span class="overnight-pill" th:if="${branch.moHaiMuoiBonGio}">Mở 24h</span>
                     <a th:if="${guestMode == true}"
-                       th:href="@{/so-do-khong-gian(branchId=${branch.maCN})}"
+                       th:href="@{/so-do-khong-gian(maCN=${branch.maCN})}"
                        class="button-primary branch-map-link">Xem sơ đồ</a>
                     <a th:if="${guestMode != true}"
                        th:href="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}"

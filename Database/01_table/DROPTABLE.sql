@@ -92,4 +92,3 @@ EXCEPTION
 END;
 /
 
-select * from PHIEUGIAMGIA

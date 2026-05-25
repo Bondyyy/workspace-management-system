@@ -4,8 +4,11 @@ import com.wms.util.EmailUtil;
 import com.wms.util.PasswordUtil;
 import com.wms.web.form.DangNhapWebForm;
 import com.wms.web.form.DangKyWebForm;
+import com.wms.web.form.DatLaiMatKhauWebForm;
+import com.wms.web.form.QuenMatKhauWebForm;
 import com.wms.web.model.DangKyChoXacThuc;
 import com.wms.web.model.NguoiDungPhien;
+import com.wms.web.model.YeuCauDatLaiMatKhau;
 import com.wms.web.repository.CongThongTinWebRepository;
 import com.wms.web.util.WebErrorMessages;
 import org.slf4j.Logger;
@@ -88,6 +91,76 @@ public class XacThucWebService {
         );
     }
 
+    public YeuCauDatLaiMatKhau yeuCauOtpDatLaiMatKhau(QuenMatKhauWebForm form) {
+        String dinhDanh = form == null || form.getDinhDanh() == null ? "" : form.getDinhDanh().trim();
+        if (dinhDanh.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập email hoặc tên tài khoản.");
+        }
+
+        try {
+            CongThongTinWebRepository.BanGhiXacThuc record = khoDuLieu.timThongTinXacThuc(dinhDanh);
+            if (record == null) {
+                throw new IllegalArgumentException("Không tìm thấy tài khoản phù hợp.");
+            }
+            if (!isActive(record.trangThaiND())) {
+                throw new IllegalArgumentException(WebErrorMessages.LOGIN_INACTIVE_MESSAGE);
+            }
+            if (record.email() == null || record.email().isBlank()) {
+                throw new IllegalArgumentException("Tài khoản chưa có email để nhận OTP.");
+            }
+
+            String otp = EmailUtil.generateRandomOTP();
+            boolean sent = EmailUtil.sendPasswordResetOTP(record.email().trim(), otp);
+            if (!sent) {
+                throw new IllegalArgumentException("Không gửi được OTP. Hãy kiểm tra cấu hình email trong config.properties.");
+            }
+            return new YeuCauDatLaiMatKhau(
+                    record.maND(),
+                    record.email().trim(),
+                    otp,
+                    LocalDateTime.now().plusMinutes(5)
+            );
+        } catch (DataAccessException ex) {
+            LOGGER.error("PASSWORD_RESET_OTP_FAILED_SYSTEM_ERROR: {}", ex.getClass().getSimpleName());
+            throw new IllegalStateException("Không thể gửi OTP đặt lại mật khẩu lúc này. Vui lòng thử lại sau.", ex);
+        }
+    }
+
+    @Transactional
+    public void datLaiMatKhau(YeuCauDatLaiMatKhau yeuCau, DatLaiMatKhauWebForm form) {
+        if (yeuCau == null) {
+            throw new IllegalArgumentException("Phiên đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu OTP mới.");
+        }
+        if (yeuCau.daHetHan()) {
+            throw new IllegalArgumentException("Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
+        }
+        if (form == null || !yeuCau.khopMa(form.getOtp())) {
+            throw new IllegalArgumentException("Mã OTP không đúng.");
+        }
+        String matKhauMoi = form.getMatKhauMoi() == null ? "" : form.getMatKhauMoi();
+        String xacNhan = form.getXacNhanMatKhauMoi() == null ? "" : form.getXacNhanMatKhauMoi();
+        if (matKhauMoi.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập mật khẩu mới.");
+        }
+        if (matKhauMoi.length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu cần ít nhất 6 ký tự.");
+        }
+        if (!matKhauMoi.equals(xacNhan)) {
+            throw new IllegalArgumentException("Mật khẩu nhập lại chưa khớp.");
+        }
+
+        try {
+            String matKhauCu = khoDuLieu.layMatKhauMaHoaTheoMaND(yeuCau.getMaND());
+            if (matKhauCu != null && !matKhauCu.isBlank() && matKhauKhop(matKhauMoi, matKhauCu)) {
+                throw new IllegalArgumentException("Mật khẩu mới không được trùng mật khẩu cũ.");
+            }
+            khoDuLieu.capNhatMatKhau(yeuCau.getMaND(), PasswordUtil.hash(matKhauMoi));
+        } catch (DataAccessException ex) {
+            LOGGER.error("PASSWORD_RESET_FAILED_SYSTEM_ERROR: {}", ex.getClass().getSimpleName());
+            throw new IllegalStateException("Không thể cập nhật mật khẩu lúc này. Vui lòng thử lại sau.", ex);
+        }
+    }
+
     @Transactional
     public void hoanTatDangKy(DangKyChoXacThuc DangKyChoXacThuc, String submittedOtp) {
         if (DangKyChoXacThuc == null) {
@@ -133,6 +206,15 @@ public class XacThucWebService {
                 && !normalized.contains("khong hoat dong")
                 && !normalized.contains("ngung hoat dong")
                 && !normalized.contains("khoa");
+    }
+
+    private boolean matKhauKhop(String plainPassword, String hashedPassword) {
+        try {
+            return PasswordUtil.verify(plainPassword, hashedPassword);
+        } catch (RuntimeException ex) {
+            LOGGER.warn("PASSWORD_RESET_OLD_HASH_VERIFY_SKIPPED: {}", ex.getClass().getSimpleName());
+            return false;
+        }
     }
 
     private String chuanHoa(String value) {

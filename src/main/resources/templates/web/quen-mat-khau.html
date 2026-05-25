@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác thực OTP - Spring Workspace</title>
+    <title>Quên mật khẩu - Spring Workspace</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="shortcut icon" href="/favicon.ico">
@@ -18,31 +18,31 @@
             <span>SPRING WORKSPACE</span>
         </a>
         <div class="auth-title">
-            <h1>Xác thực OTP</h1>
-            <p>Mã đã gửi tới <strong th:text="${email}"></strong></p>
+            <h1>Quên mật khẩu</h1>
+            <p>Nhập email hoặc tên tài khoản để nhận OTP</p>
         </div>
 
         <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
-        <form th:action="@{/register/verify}" th:object="${MaOtpForm}" method="post" class="workspace-form" data-loading-form>
+        <form th:action="@{/quen-mat-khau/gui-otp}" th:object="${QuenMatKhauWebForm}" method="post" class="workspace-form" data-loading-form>
             <label>
-                Nhập mã OTP
-                <input class="otp-input" type="text" inputmode="numeric" maxlength="6" th:field="*{otp}" placeholder="000000">
-                <span class="field-error" th:if="${#fields.hasErrors('otp')}" th:errors="*{otp}"></span>
+                Email hoặc tên tài khoản
+                <input type="text" th:field="*{dinhDanh}" autocomplete="username">
+                <span class="field-error" th:if="${#fields.hasErrors('dinhDanh')}" th:errors="*{dinhDanh}"></span>
             </label>
-            <button type="submit" class="pink-button submit auth-submit-btn js-submit-loading" data-loading-text="Đang xác thực...">
-                <span class="btn-label">Xác thực và tạo tài khoản</span>
+            <button type="submit" class="pink-button submit auth-submit-btn js-submit-loading" data-loading-text="Đang gửi OTP...">
+                <span class="btn-label">Gửi mã OTP</span>
                 <span class="btn-spinner" aria-hidden="true"></span>
             </button>
         </form>
 
-        <p class="auth-switch">Sai email? <a th:href="@{/register}">Đăng ký lại</a></p>
+        <p class="auth-switch">Nhớ mật khẩu? <a th:href="@{/dangNhap}">Đăng nhập</a></p>
     </section>
 
     <section class="auth-hero-copy">
         <div>
             <h2>SPRING WORKSPACE</h2>
-            <p>Hoàn tất xác thực để bắt đầu đặt chỗ trực tiếp trên web.</p>
+            <p>Lấy lại quyền truy cập tài khoản web WMS bằng mã OTP gửi qua email.</p>
         </div>
     </section>
 </main>

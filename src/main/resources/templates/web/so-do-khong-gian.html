@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sơ đồ không gian - Spring MNGT</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="shortcut icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/css/webapp.css">
+    <title>Sơ đồ không gian - WMS</title>
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/favicon-16x16.png}">
+    <link rel="shortcut icon" th:href="@{/favicon.ico}">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+    <link rel="stylesheet" th:href="@{/css/webapp.css}">
+    <script th:src="@{/js/space-map.js}" defer></script>
 </head>
-<body class="member-page">
+<body class="member-page space-page"
+      th:data-guest="${guestMode == true}"
+      th:data-open="${chiNhanhDangChon != null ? chiNhanhDangChon.thoiGianMoCua : '07:00'}"
+      th:data-close="${chiNhanhDangChon != null ? chiNhanhDangChon.thoiGianDongCua : '22:00'}">
 <aside class="member-sidebar">
-    <a class="member-brand" th:href="${guestMode == true} ? '/' : '/portal'">
+    <a class="member-brand" th:href="${guestMode == true} ? @{/} : @{/portal}">
         <strong>WMS</strong>
-        <span th:text="${guestMode == true} ? 'PUBLIC VIEW' : 'MEMBER PORTAL'">MEMBER PORTAL</span>
+        <span th:text="${guestMode == true} ? 'PUBLIC VIEW' : 'MEMBER PORTAL'">PUBLIC VIEW</span>
     </a>
     <nav class="member-nav" th:if="${guestMode != true}">
         <a th:href="@{/portal}">Trang chủ</a>
@@ -26,283 +30,202 @@
     <nav class="member-nav" th:if="${guestMode == true}">
         <a th:href="@{/}">Trang chủ</a>
         <a th:href="@{/chi-nhanh}">Chọn chi nhánh</a>
-        <a th:href="@{/so-do-khong-gian(branchId=${branch.maCN})}" class="active">Sơ đồ</a>
+        <a th:href="@{/so-do-khong-gian(maCN=${selectedMaCN})}" class="active">Sơ đồ</a>
         <a th:href="@{/dangNhap}">Đăng nhập</a>
+        <a th:href="@{/register}">Đăng ký</a>
     </nav>
     <form th:if="${guestMode != true}" th:action="@{/dangXuat}" method="post" class="member-dangXuat">
-        <button type="submit">← Đăng xuất</button>
+        <button type="submit">Đăng xuất</button>
     </form>
 </aside>
 
 <main class="member-main">
     <header class="member-topbar">
         <h1 th:if="${guestMode != true}">Xin chào <span th:text="${user.hoTen}">Hội viên</span>!</h1>
-        <h1 th:if="${guestMode == true}">Bạn đang xem sơ đồ khách</h1>
+        <h1 th:if="${guestMode == true}">Sơ đồ không gian WMS</h1>
         <strong th:if="${guestMode != true}" th:text="'Hạng: ' + ${rankName}">Hạng: Không có</strong>
-        <a th:if="${guestMode == true}" class="button-secondary" th:href="@{/dangNhap}">Đăng nhập để đặt chỗ</a>
+        <div class="header-actions" th:if="${guestMode == true}">
+            <a class="button-secondary" th:href="@{/dangNhap}">Đăng nhập</a>
+            <a class="button-primary" th:href="@{/register}">Đăng ký</a>
+        </div>
     </header>
 
-    <section class="map-title">
-        <h2 th:text="'Sơ đồ Không gian - ' + ${branch.tenCN}">Sơ đồ Không gian</h2>
-    </section>
+    <section class="space-container">
+        <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
-    <section class="member-content map-layout">
-        <div class="map-panel">
-            <div class="panel-head compact-head">
-                <h3>Bản đồ không gian</h3>
-                <span class="subtle-text">
-                    <span th:text="${#temporals.format(selectedDate, 'dd/MM/yyyy')}"></span>,
-                    <span th:text="${selectedStart}"></span> - <span th:text="${selectedEnd}"></span>
-                </span>
+        <div class="space-toolbar">
+            <div class="space-heading">
+                <p>Sơ đồ không gian</p>
+                <h2 th:text="${chiNhanhDangChon != null ? chiNhanhDangChon.tenCN : 'Chọn chi nhánh'}">Chọn chi nhánh</h2>
             </div>
-
-            <div class="floor-shell" th:style="|--map-cols:${mapColumns}; --map-rows:${mapRows};|">
-                <div class="reception">RECEPTION</div>
-                <div class="entrance">ENTRANCE</div>
-                <button type="button"
-                        class="space-node"
-                        th:each="space : ${spaces}"
-                        th:classappend="' ' + ${space.statusClass}"
-                        th:style="|--x:${space.toaDoX}; --y:${space.toaDoY}; --w:${space.chieuDai}; --h:${space.chieuRong};|"
-                        th:disabled="${!space.coTheDat}"
-                        th:data-id="${space.maKG}"
-                        th:data-name="${space.tenKG}"
-                        th:data-price="${space.donGiaTheoGio != null ? space.donGiaTheoGio : 0}"
-                        th:data-available="${space.coTheDat}">
-                    <strong th:text="${space.tenKG}">Không gian</strong>
-                    <small th:text="${space.tenLoaiKG}">Loại</small>
-                    <em th:text="${space.trangThaiHienThi}">Trống</em>
-                    <em th:if="${!space.coTheDat and space.busyUntil != null}"
-                        th:text="|Trống sau ${#temporals.format(space.busyUntil, 'HH:mm')}|"></em>
-                </button>
-            </div>
-            <div class="map-legend">
-                <span><i class="legend-reception"></i> Quầy lễ tân</span>
-                <span><i class="legend-empty"></i> Trống</span>
-                <span><i class="legend-selected"></i> Đang chọn</span>
-                <span><i class="legend-booked"></i> Đã đặt</span>
-                <span><i class="legend-active"></i> Đang dùng</span>
-                <span><i class="legend-maintenance"></i> Bảo trì</span>
-            </div>
-        </div>
-
-        <aside class="booking-side">
-            <h3>Đặt chỗ</h3>
-
-            <div th:replace="~{web/fragments/alerts :: messages}"></div>
-            <p id="thongBaoDatCho" class="form-hint warning" style="display:none;"></p>
-
-            <form th:action="${guestMode == true} ? '/so-do-khong-gian' : '/portal/branches/' + ${branch.maCN} + '/spaces'" method="get" id="timeFilterForm" class="form-grid">
-                <input th:if="${guestMode == true}" type="hidden" name="branchId" th:value="${branch.maCN}">
-                <input type="hidden" name="canhBao" id="canhBaoThoiGian">
+            <form class="space-branch-select" th:action="@{/so-do-khong-gian}" method="get" data-branch-form>
                 <label>
                     Chi nhánh
-                    <input type="text" th:value="${branch.tenCN}" readonly>
+                    <select name="maCN" data-branch-select>
+                        <option value="" th:if="${danhSachChiNhanh == null or danhSachChiNhanh.isEmpty()}">
+                            Chưa có chi nhánh
+                        </option>
+                        <option th:each="chiNhanh : ${danhSachChiNhanh}"
+                                th:value="${chiNhanh.maCN}"
+                                th:selected="${chiNhanh.maCN == selectedMaCN}"
+                                th:text="${chiNhanh.maCN + ' - ' + chiNhanh.tenCN}">
+                            CN - Chi nhánh
+                        </option>
+                    </select>
                 </label>
-                <label>
-                    Ngày
-                    <input type="date" name="date" id="bookingDate" th:value="${selectedDate}" required>
-                </label>
-                <div class="time-row">
-                    <label>
-                        Từ giờ
-                        <input type="time" name="start" id="startHour"
-                               th:value="${selectedStart}"
-                               step="60" required>
-                    </label>
-                    <label>
-                        Đến giờ
-                        <input type="time" name="end" id="endHour"
-                               th:value="${selectedEnd}"
-                               step="60" required>
-                    </label>
-                </div>
+                <button class="button-secondary" type="submit">Xem</button>
             </form>
+        </div>
 
-            <form th:action="${guestMode == true} ? '/dangNhap' : '/portal/checkout'" method="get" id="mapBookingForm" class="form-grid">
-                <input type="hidden" name="maKG" id="maKG">
-                <input type="hidden" name="arrivalTime" id="arrivalTime">
-                <input type="hidden" name="durationHours" id="durationHours" th:value="${selectedDuration}">
+        <div class="space-empty-state" th:if="${danhSachChiNhanh == null or danhSachChiNhanh.isEmpty()}">
+            <strong>Hiện chưa có chi nhánh hoạt động để hiển thị.</strong>
+        </div>
 
-                <label>
-                    Chỗ chọn
-                    <input type="text" id="selectedSpaceName" value="Chưa chọn" readonly>
-                </label>
-                <label>
-                    Ghi chú
-                    <textarea name="note" rows="2" placeholder="Ví dụ: phòng yên tĩnh"></textarea>
-                </label>
-                <div class="estimate-box">
-                    <span>Dự kiến</span>
-                    <strong id="estimateTotal">0 VNĐ</strong>
+        <div class="space-empty-state" th:if="${danhSachChiNhanh != null and !danhSachChiNhanh.isEmpty() and chiNhanhDangChon == null}">
+            <strong>Chi nhánh không tồn tại hoặc đã ngừng hoạt động.</strong>
+            <a class="button-secondary" th:href="@{/chi-nhanh}">Quay lại chọn chi nhánh</a>
+        </div>
+
+        <div th:if="${chiNhanhDangChon != null}">
+            <section class="space-branch-summary">
+                <div>
+                    <span th:text="${chiNhanhDangChon.maCN}">CN</span>
+                    <h3 th:text="${chiNhanhDangChon.tenCN}">Tên chi nhánh</h3>
+                    <p th:text="${chiNhanhDangChon.diaChi}">Địa chỉ</p>
                 </div>
-                <button type="submit" class="button-primary full-width" id="continueButton" disabled
-                        th:text="${guestMode == true} ? 'Đăng nhập để đặt chỗ' : 'Thanh toán'">Thanh toán</button>
-                <a th:href="${guestMode == true} ? '/chi-nhanh' : '/portal/branches'" class="button-secondary full-width">Đổi chi nhánh</a>
-            </form>
-        </aside>
+                <div>
+                    <strong th:text="${chiNhanhDangChon.thoiGianMoCua + ' - ' + chiNhanhDangChon.thoiGianDongCua}">
+                        07:00 - 22:00
+                    </strong>
+                    <a class="button-secondary" th:href="@{/chi-nhanh}">Đổi chi nhánh</a>
+                </div>
+            </section>
+
+            <div class="space-legend" aria-label="Chú thích trạng thái">
+                <span><i class="space-node-empty"></i> Trống</span>
+                <span><i class="space-node-booked"></i> Đã đặt</span>
+                <span><i class="space-node-active"></i> Đang dùng</span>
+                <span><i class="space-node-maintenance"></i> Bảo trì</span>
+                <span><i class="space-node-unknown"></i> Không xác định</span>
+            </div>
+
+            <section class="space-content-grid">
+                <div class="space-map-wrapper">
+                    <div class="space-map-head">
+                        <h3>Bản đồ không gian</h3>
+                        <form th:action="${guestMode == true} ? @{/so-do-khong-gian} : @{/portal/branches/{maCN}/spaces(maCN=${chiNhanhDangChon.maCN})}"
+                              method="get"
+                              class="space-time-form"
+                              id="timeFilterForm">
+                            <input th:if="${guestMode == true}" type="hidden" name="maCN" th:value="${chiNhanhDangChon.maCN}">
+                            <input type="hidden" name="canhBao" id="canhBaoThoiGian">
+                            <label>
+                                Ngày
+                                <input type="date" name="date" id="bookingDate" th:value="${selectedDate}" required>
+                            </label>
+                            <label>
+                                Từ
+                                <input type="time" name="start" id="startHour" th:value="${selectedStart}" step="60" required>
+                            </label>
+                            <label>
+                                Đến
+                                <input type="time" name="end" id="endHour" th:value="${selectedEnd}" step="60" required>
+                            </label>
+                        </form>
+                    </div>
+
+                    <div class="space-empty-state" th:if="${danhSachKhongGian == null or danhSachKhongGian.isEmpty()}">
+                        <strong>Chi nhánh này chưa có không gian để hiển thị.</strong>
+                    </div>
+
+                    <div th:if="${danhSachKhongGian != null and !danhSachKhongGian.isEmpty() and !dungGridFallback}"
+                         class="space-map-canvas"
+                         th:style="|--map-cols:${mapColumns}; --map-rows:${mapRows};|">
+                        <article th:each="khongGian : ${danhSachKhongGian}"
+                                 th:class="'space-node space-node-' + ${khongGian.statusClass}"
+                                 th:style="|--x:${khongGian.toaDoX}; --y:${khongGian.toaDoY}; --w:${khongGian.chieuDai}; --h:${khongGian.chieuRong};|"
+                                 th:data-id="${khongGian.maKG}"
+                                 th:data-name="${khongGian.tenKG}"
+                                 th:data-price="${khongGian.donGiaTheoGio != null ? khongGian.donGiaTheoGio : 0}"
+                                 th:data-available="${khongGian.coTheDat}"
+                                 data-space-node>
+                            <strong class="space-node-title" th:title="${khongGian.tenKG}" th:text="${khongGian.tenKG}">Không gian</strong>
+                            <span class="space-node-meta" th:title="${khongGian.tenLoaiKG}" th:text="${khongGian.tenLoaiKG != null ? khongGian.tenLoaiKG : 'Chưa phân loại'}">Loại</span>
+                            <small class="space-node-meta" th:text="${khongGian.sucChua != null ? 'Sức chứa ' + khongGian.sucChua : 'Sức chứa chưa cập nhật'}">
+                                Sức chứa
+                            </small>
+                            <small class="space-node-price" th:text="${khongGian.donGiaTheoGio != null ? #numbers.formatDecimal(khongGian.donGiaTheoGio, 0, 'POINT', 0, 'COMMA') + ' VNĐ/giờ' : '0 VNĐ/giờ'}">
+                                Giá
+                            </small>
+                            <em class="space-node-status" th:text="${khongGian.trangThaiHienThi}">Trạng thái</em>
+                            <button type="button"
+                                    th:disabled="${!khongGian.coTheDat}"
+                                    th:text="${khongGian.coTheDat ? (daDangNhap ? 'Đặt chỗ' : 'Đăng nhập để đặt chỗ') : 'Không thể đặt'}">
+                                Đặt chỗ
+                            </button>
+                        </article>
+                    </div>
+
+                    <div th:if="${danhSachKhongGian != null and !danhSachKhongGian.isEmpty() and dungGridFallback}"
+                         class="space-map-grid">
+                        <article th:each="khongGian : ${danhSachKhongGian}"
+                                 th:class="'space-node space-node-' + ${khongGian.statusClass}"
+                                 th:data-id="${khongGian.maKG}"
+                                 th:data-name="${khongGian.tenKG}"
+                                 th:data-price="${khongGian.donGiaTheoGio != null ? khongGian.donGiaTheoGio : 0}"
+                                 th:data-available="${khongGian.coTheDat}"
+                                 data-space-node>
+                            <strong class="space-node-title" th:title="${khongGian.tenKG}" th:text="${khongGian.tenKG}">Không gian</strong>
+                            <span class="space-node-meta" th:title="${khongGian.tenLoaiKG}" th:text="${khongGian.tenLoaiKG != null ? khongGian.tenLoaiKG : 'Chưa phân loại'}">Loại</span>
+                            <small class="space-node-meta" th:text="${khongGian.sucChua != null ? 'Sức chứa ' + khongGian.sucChua : 'Sức chứa chưa cập nhật'}">
+                                Sức chứa
+                            </small>
+                            <small class="space-node-price" th:text="${khongGian.donGiaTheoGio != null ? #numbers.formatDecimal(khongGian.donGiaTheoGio, 0, 'POINT', 0, 'COMMA') + ' VNĐ/giờ' : '0 VNĐ/giờ'}">
+                                Giá
+                            </small>
+                            <em class="space-node-status" th:text="${khongGian.trangThaiHienThi}">Trạng thái</em>
+                            <button type="button"
+                                    th:disabled="${!khongGian.coTheDat}"
+                                    th:text="${khongGian.coTheDat ? (daDangNhap ? 'Đặt chỗ' : 'Đăng nhập để đặt chỗ') : 'Không thể đặt'}">
+                                Đặt chỗ
+                            </button>
+                        </article>
+                    </div>
+                </div>
+
+                <aside class="space-detail-panel">
+                    <h3>Đặt chỗ</h3>
+                    <p id="thongBaoDatCho" class="form-hint warning" style="display:none;"></p>
+                    <form th:action="${daDangNhap == true} ? @{/portal/checkout} : @{/dangNhap}"
+                          method="get"
+                          id="mapBookingForm"
+                          class="form-grid">
+                        <input type="hidden" name="maKG" id="maKG">
+                        <input type="hidden" name="arrivalTime" id="arrivalTime">
+                        <input type="hidden" name="durationHours" id="durationHours" th:value="${selectedDuration}">
+                        <input th:if="${daDangNhap != true}" type="hidden" name="returnUrl"
+                               th:value="@{/so-do-khong-gian(maCN=${chiNhanhDangChon.maCN})}">
+                        <label>
+                            Chỗ chọn
+                            <input type="text" id="selectedSpaceName" value="Chưa chọn" readonly>
+                        </label>
+                        <label th:if="${daDangNhap == true}">
+                            Ghi chú
+                            <textarea name="note" rows="2" placeholder="Ví dụ: phòng yên tĩnh"></textarea>
+                        </label>
+                        <div class="estimate-box">
+                            <span>Dự kiến</span>
+                            <strong id="estimateTotal">0 VNĐ</strong>
+                        </div>
+                        <button type="submit" class="button-primary full-width" id="continueButton" disabled
+                                th:text="${daDangNhap == true} ? 'Thanh toán' : 'Đăng nhập để đặt chỗ'">
+                            Thanh toán
+                        </button>
+                    </form>
+                </aside>
+            </section>
+        </div>
     </section>
 </main>
-
-<script th:inline="javascript">
-    const nodes = document.querySelectorAll(".space-node");
-    const selectedInput = document.getElementById("selectedSpaceName");
-    const maKGInput = document.getElementById("maKG");
-    const arrivalInput = document.getElementById("arrivalTime");
-    const durationInput = document.getElementById("durationHours");
-    const dateInput = document.getElementById("bookingDate");
-    const startInput = document.getElementById("startHour");
-    const endInput = document.getElementById("endHour");
-    const timeFilterForm = document.getElementById("timeFilterForm");
-    const bookingForm = document.getElementById("mapBookingForm");
-    const canhBaoThoiGianInput = document.getElementById("canhBaoThoiGian");
-    const thongBaoDatCho = document.getElementById("thongBaoDatCho");
-    const totalLabel = document.getElementById("estimateTotal");
-    const continueButton = document.getElementById("continueButton");
-    const isGuest = [[${guestMode == true}]];
-    let selectedPrice = 0;
-
-    function minutes(value) {
-        if (!value) return 0;
-        const [hour, minute] = value.split(":").map(Number);
-        return hour * 60 + minute;
-    }
-
-    function formatMoney(value) {
-        return new Intl.NumberFormat("vi-VN").format(value) + " VNĐ";
-    }
-
-    function syncHiddenTime() {
-        const startMinutes = minutes(startInput.value);
-        const endMinutes = minutes(endInput.value);
-        let delta = endMinutes - startMinutes;
-        if (delta <= 0) {
-            delta += 24 * 60;
-        }
-        const duration = Math.max(0, Math.round(delta / 60));
-        durationInput.value = duration;
-        arrivalInput.value = dateInput.value + "T" + startInput.value;
-        totalLabel.textContent = formatMoney(selectedPrice * duration);
-    }
-
-    function capNhatTrangThaiNutThanhToan() {
-        continueButton.disabled = !maKGInput.value;
-    }
-
-    function hienThongBaoDatCho(noiDung, loai) {
-        if (!thongBaoDatCho) return;
-        thongBaoDatCho.textContent = noiDung;
-        thongBaoDatCho.className = "form-hint " + (loai || "warning");
-        thongBaoDatCho.style.display = noiDung ? "block" : "none";
-    }
-
-    function xoaLuaChonKhongGian() {
-        nodes.forEach((node) => node.classList.remove("selected"));
-        selectedPrice = 0;
-        maKGInput.value = "";
-        selectedInput.value = "Chưa chọn";
-        syncHiddenTime();
-        capNhatTrangThaiNutThanhToan();
-    }
-
-    function hienThongBaoCanChonLaiKhongGian() {
-        hienThongBaoDatCho("Bạn đã thay đổi thời gian. Vui lòng chọn lại không gian phù hợp với khung giờ mới.", "warning");
-    }
-
-    function kiemTraThoiGianHopLe() {
-        syncHiddenTime();
-        if (!dateInput.value || !startInput.value || !endInput.value) {
-            return "Vui lòng chọn đầy đủ ngày giờ đặt chỗ.";
-        }
-        
-        const moCua = [[${branch.thoiGianMoCua}]];
-        const dongCua = [[${branch.thoiGianDongCua}]];
-        const startMin = minutes(startInput.value);
-        const endMin = minutes(endInput.value);
-        const openMin = minutes(moCua);
-        const closeMin = minutes(dongCua);
-        const quaDem = openMin > closeMin;
-        const haiMuoiBonGio = openMin === closeMin;
-
-        const startTrongGio = haiMuoiBonGio
-            || (!quaDem && startMin >= openMin && startMin < closeMin)
-            || (quaDem && (startMin >= openMin || startMin < closeMin));
-        let normalizedEndMin = endMin;
-        if (quaDem && endMin <= startMin) {
-            normalizedEndMin += 24 * 60;
-        }
-        const normalizedCloseMin = haiMuoiBonGio
-            ? openMin + 24 * 60
-            : (quaDem ? closeMin + 24 * 60 : closeMin);
-        const normalizedStartMin = quaDem && startMin < closeMin ? startMin + 24 * 60 : startMin;
-
-        if (!startTrongGio) {
-            return "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + moCua + " - " + dongCua + ".";
-        }
-        if (!haiMuoiBonGio && normalizedEndMin > normalizedCloseMin) {
-            return "Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.";
-        }
-        if (normalizedEndMin <= normalizedStartMin) {
-            return "Giờ kết thúc phải sau giờ bắt đầu.";
-        }
-
-        const thoiGianBatDau = new Date(dateInput.value + "T" + startInput.value + ":00");
-        if (Number.isNaN(thoiGianBatDau.getTime()) || thoiGianBatDau <= new Date()) {
-            return "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
-        }
-        return "";
-    }
-
-    function khiDoiThoiGian() {
-        xoaLuaChonKhongGian();
-        const loiThoiGian = kiemTraThoiGianHopLe();
-        if (loiThoiGian) {
-            hienThongBaoDatCho(loiThoiGian, "error");
-            return;
-        }
-        hienThongBaoCanChonLaiKhongGian();
-        nodes.forEach((node) => node.disabled = true);
-        selectedInput.value = "Đang cập nhật khung giờ...";
-        if (canhBaoThoiGianInput) {
-            canhBaoThoiGianInput.value = "chon-lai-khong-gian";
-        }
-        window.setTimeout(() => timeFilterForm.submit(), 250);
-    }
-
-    nodes.forEach((node) => {
-        node.addEventListener("click", () => {
-            if (node.disabled || node.dataset.available !== "true") return;
-            nodes.forEach((item) => item.classList.remove("selected"));
-            node.classList.add("selected");
-            selectedPrice = Number(node.dataset.price || 0);
-            maKGInput.value = node.dataset.id;
-            selectedInput.value = node.dataset.name;
-            syncHiddenTime();
-            capNhatTrangThaiNutThanhToan();
-            hienThongBaoDatCho("", "warning");
-        });
-    });
-
-    [dateInput, startInput, endInput].forEach((input) => input.addEventListener("change", khiDoiThoiGian));
-    bookingForm.addEventListener("submit", (event) => {
-        const loiThoiGian = kiemTraThoiGianHopLe();
-        if (loiThoiGian) {
-            event.preventDefault();
-            hienThongBaoDatCho(loiThoiGian, "error");
-            return;
-        }
-        if (!maKGInput.value) {
-            event.preventDefault();
-            hienThongBaoCanChonLaiKhongGian();
-            return;
-        }
-        if (isGuest) {
-            return;
-        }
-    });
-    syncHiddenTime();
-    capNhatTrangThaiNutThanhToan();
-</script>
-<script src="/js/input-format.js"></script>
 </body>
 </html>

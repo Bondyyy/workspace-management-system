@@ -103,24 +103,30 @@ public class CongThongTinController {
 
     @GetMapping("/chi-nhanh/{branchId}")
     public String chuyenDenSoDoCongKhai(@PathVariable("branchId") String branchId) {
-        return "redirect:/so-do-khong-gian?branchId=" + branchId;
+        return "redirect:/so-do-khong-gian?maCN=" + branchId;
     }
 
     @GetMapping("/so-do-khong-gian")
-    public String hienThiSoDoCongKhai(@RequestParam(name = "branchId", required = false) String branchId,
+    public String hienThiSoDoCongKhai(@RequestParam(name = "maCN", required = false) String maCN,
+                                      @RequestParam(name = "branchId", required = false) String branchId,
                                       @RequestParam(name = "date", required = false) String bookingDateText,
                                       @RequestParam(name = "start", required = false) String startTimeText,
                                       @RequestParam(name = "end", required = false) String endTimeText,
                                       HttpSession session,
                                       Model model,
                                       RedirectAttributes redirectAttributes) {
-        if (branchId == null || branchId.isBlank()) {
-            return "redirect:/chi-nhanh";
+        List<ChiNhanhView> danhSachChiNhanh = layChiNhanhAnToan(model);
+        String selectedMaCN = chonMaCN(maCN, branchId, danhSachChiNhanh);
+        ChiNhanhView branch = timChiNhanhTheoMa(danhSachChiNhanh, selectedMaCN);
+        if (danhSachChiNhanh.isEmpty()) {
+            NguoiDungPhien user = (NguoiDungPhien) session.getAttribute("user");
+            return napModelSoDoKhongGianRong(user, danhSachChiNhanh, selectedMaCN,
+                    "Hiện chưa có chi nhánh hoạt động để hiển thị.", model);
         }
-        ChiNhanhView branch = congThongTinService.layMotChiNhanh(branchId).orElse(null);
         if (branch == null) {
-            redirectAttributes.addFlashAttribute("error", "Không tìm thấy chi nhánh cần xem sơ đồ.");
-            return "redirect:/chi-nhanh";
+            NguoiDungPhien user = (NguoiDungPhien) session.getAttribute("user");
+            return napModelSoDoKhongGianRong(user, danhSachChiNhanh, selectedMaCN,
+                    "Chi nhánh không tồn tại hoặc đã ngừng hoạt động.", model);
         }
         LocalDate bookingDate = null;
         LocalTime startTime = null;
@@ -138,7 +144,7 @@ public class CongThongTinController {
                 ? null
                 : congThongTinService.layThongTinTaiKhoan(user);
         return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, endTime,
-                loiNgayGio, null, model);
+                loiNgayGio, null, danhSachChiNhanh, model);
     }
 
     @GetMapping("/portal/branches/{branchId}/spaces")
@@ -177,7 +183,76 @@ public class CongThongTinController {
         }
 
         return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, endTime,
-                loiNgayGio, doiMaCanhBaoDatCho(canhBao), model);
+                loiNgayGio, doiMaCanhBaoDatCho(canhBao), layChiNhanhAnToan(model), model);
+    }
+
+    private List<ChiNhanhView> layChiNhanhAnToan(Model model) {
+        try {
+            return congThongTinService.layChiNhanh();
+        } catch (IllegalStateException ex) {
+            System.err.println("[Web] Khong the tai danh sach chi nhanh: " + ex.getMessage());
+            if (model != null) {
+                model.addAttribute("error", WebErrorMessages.thanThien(
+                        "Không thể tải danh sách chi nhánh lúc này. Vui lòng thử lại sau.", ex));
+            }
+            return List.of();
+        }
+    }
+
+    private String chonMaCN(String maCN, String branchId, List<ChiNhanhView> danhSachChiNhanh) {
+        String selectedMaCN = maCN == null || maCN.isBlank() ? branchId : maCN;
+        if (selectedMaCN != null && !selectedMaCN.isBlank()) {
+            return selectedMaCN.trim();
+        }
+        return danhSachChiNhanh == null || danhSachChiNhanh.isEmpty()
+                ? null
+                : danhSachChiNhanh.get(0).getMaCN();
+    }
+
+    private ChiNhanhView timChiNhanhTheoMa(List<ChiNhanhView> danhSachChiNhanh, String maCN) {
+        if (danhSachChiNhanh == null || maCN == null || maCN.isBlank()) {
+            return null;
+        }
+        return danhSachChiNhanh.stream()
+                .filter(branch -> branch.getMaCN() != null && branch.getMaCN().equalsIgnoreCase(maCN.trim()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String napModelSoDoKhongGianRong(NguoiDungPhien user,
+                                             List<ChiNhanhView> danhSachChiNhanh,
+                                             String selectedMaCN,
+                                             String thongBaoLoi,
+                                             Model model) {
+        List<ChiNhanhView> safeBranches = danhSachChiNhanh == null ? List.of() : danhSachChiNhanh;
+        model.addAttribute("user", user);
+        model.addAttribute("daDangNhap", user != null && !user.laNhanVien());
+        model.addAttribute("profile", null);
+        model.addAttribute("rankName", user == null || user.laNhanVien() ? "" : congThongTinService.layTenHangThanhVien(user));
+        model.addAttribute("activePage", "booking");
+        model.addAttribute("guestMode", user == null);
+        model.addAttribute("danhSachChiNhanh", safeBranches);
+        model.addAttribute("hienThiChiNhanh", safeBranches);
+        model.addAttribute("branch", null);
+        model.addAttribute("chiNhanhDangChon", null);
+        model.addAttribute("selectedBranch", null);
+        model.addAttribute("selectedMaCN", selectedMaCN == null ? "" : selectedMaCN);
+        model.addAttribute("spaces", List.of());
+        model.addAttribute("danhSachKhongGian", List.of());
+        model.addAttribute("khongGianList", List.of());
+        model.addAttribute("dungGridFallback", true);
+        model.addAttribute("selectedDate", LocalDate.now());
+        model.addAttribute("selectedStart", LocalTime.of(7, 0));
+        model.addAttribute("selectedEnd", LocalTime.of(9, 0));
+        model.addAttribute("selectedDuration", 2);
+        model.addAttribute("overnightBranch", false);
+        model.addAttribute("twentyFourHoursBranch", false);
+        model.addAttribute("mapColumns", 12);
+        model.addAttribute("mapRows", 8);
+        model.addAttribute("error", thongBaoLoi);
+        model.addAttribute("thongBaoLoi", thongBaoLoi);
+        model.addAttribute("canhBao", null);
+        return "web/so-do-khong-gian";
     }
 
     private LocalTime docGioChiNhanh(String value, LocalTime fallback) {
@@ -203,6 +278,7 @@ public class CongThongTinController {
                                          LocalTime endTime,
                                          String thongBaoLoi,
                                          String canhBao,
+                                         List<ChiNhanhView> danhSachChiNhanh,
                                          Model model) {
         var defaultWindow = congThongTinService.khungGioDatChoMacDinh(branch);
         
@@ -233,7 +309,15 @@ public class CongThongTinController {
         List<String> layLuaChonGioBatDau = BusinessHoursUtil.hourlyOptions(openTime, closeTime, false);
         List<String> layLuaChonGioKetThuc = BusinessHoursUtil.hourlyOptions(openTime, closeTime, true);
 
-        List<KhongGianView> spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
+        List<KhongGianView> spaces = List.of();
+        try {
+            spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
+        } catch (IllegalStateException ex) {
+            System.err.println("[Web] Khong the tai so do maCN=" + branch.getMaCN() + ": " + ex.getMessage());
+            thongBaoLoi = WebErrorMessages.thanThien("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.", ex);
+        }
+        boolean dungGridFallback = !spaces.isEmpty()
+                && spaces.stream().allMatch(space -> space.getToaDoX() == 0 && space.getToaDoY() == 0);
         int maxSpaceColumn = spaces.stream()
                 .mapToInt(space -> space.getToaDoX() + space.getChieuDai())
                 .max()
@@ -246,12 +330,21 @@ public class CongThongTinController {
         int mapRows = Math.min(8, Math.max(4, maxSpaceRow + 1));
 
         model.addAttribute("user", user);
+        model.addAttribute("daDangNhap", user != null && !user.laNhanVien());
         model.addAttribute("profile", profile);
         model.addAttribute("rankName", user == null || user.laNhanVien() ? "" : congThongTinService.layTenHangThanhVien(user));
         model.addAttribute("activePage", "booking");
         model.addAttribute("guestMode", user == null);
+        model.addAttribute("danhSachChiNhanh", danhSachChiNhanh == null ? List.of() : danhSachChiNhanh);
+        model.addAttribute("hienThiChiNhanh", danhSachChiNhanh == null ? List.of() : danhSachChiNhanh);
         model.addAttribute("branch", branch);
+        model.addAttribute("chiNhanhDangChon", branch);
+        model.addAttribute("selectedBranch", branch);
+        model.addAttribute("selectedMaCN", branch.getMaCN());
         model.addAttribute("spaces", spaces);
+        model.addAttribute("danhSachKhongGian", spaces);
+        model.addAttribute("khongGianList", spaces);
+        model.addAttribute("dungGridFallback", dungGridFallback);
         model.addAttribute("layLuaChonGioBatDau", layLuaChonGioBatDau);
         model.addAttribute("layLuaChonGioKetThuc", layLuaChonGioKetThuc);
         model.addAttribute("selectedDate", selectedDate);
@@ -263,6 +356,7 @@ public class CongThongTinController {
         model.addAttribute("mapColumns", mapColumns);
         model.addAttribute("mapRows", mapRows);
         model.addAttribute("error", thongBaoLoi);
+        model.addAttribute("thongBaoLoi", thongBaoLoi);
         model.addAttribute("canhBao", canhBao);
         return "web/so-do-khong-gian";
     }
@@ -657,7 +751,7 @@ public class CongThongTinController {
                 ? null
                 : arrivalTime.plusHours(durationHours).toLocalTime();
         return napModelSoDoKhongGian(user, profile, branch, ngayDat, gioBatDau, gioKetThuc,
-                thongBaoLoi, null, model);
+                thongBaoLoi, null, layChiNhanhAnToan(model), model);
     }
 
     private String doiMaCanhBaoDatCho(String canhBao) {

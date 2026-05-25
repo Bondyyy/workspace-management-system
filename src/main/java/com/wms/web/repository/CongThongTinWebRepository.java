@@ -46,7 +46,7 @@ public class CongThongTinWebRepository {
 
     public BanGhiXacThuc timThongTinXacThuc(String identifier) {
         String sql = """
-                SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.TrangThaiND,
+                SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.Email, n.MatKhauMaHoa, n.TrangThaiND,
                        kh.MaKH, nv.MaNV
                 FROM NGUOIDUNG n
                 LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND
@@ -58,6 +58,7 @@ public class CongThongTinWebRepository {
                     rs.getString("MaND"),
                     rs.getString("HoTen"),
                     rs.getString("TenTaiKhoan"),
+                    rs.getString("Email"),
                     rs.getString("MatKhauMaHoa"),
                     rs.getString("TrangThaiND"),
                     rs.getString("MaKH"),
@@ -261,7 +262,8 @@ public class CongThongTinWebRepository {
         String baseSql = """
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
                        kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
-                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
+                       lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua,
+                       NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong
                 FROM KHONGGIAN kg
@@ -276,7 +278,9 @@ public class CongThongTinWebRepository {
                         THEN TO_NUMBER(REGEXP_SUBSTR(kg.MaCN, '[0-9]+$'))
                     END NULLS LAST,
                     kg.MaCN,
-                    kg.TenKG
+                    kg.ViTri NULLS LAST,
+                    kg.TenKG,
+                    kg.MaKG
                 """;
         Object[] params = { branchId };
         if (branchId == null || branchId.isBlank()) {
@@ -287,28 +291,35 @@ public class CongThongTinWebRepository {
                             THEN TO_NUMBER(REGEXP_SUBSTR(kg.MaCN, '[0-9]+$'))
                         END NULLS LAST,
                         kg.MaCN,
-                        kg.TenKG
+                        kg.ViTri NULLS LAST,
+                        kg.TenKG,
+                        kg.MaKG
                     """;
             params = new Object[0];
         }
-        return mauJdbc.query(sql, (rs, rowNum) -> new KhongGianView(
-                rs.getString("MaKG"),
-                rs.getString("TenKG"),
-                rs.getString("TenLoaiKG"),
-                rs.getString("ViTri"),
-                rs.getString("TrangThaiKG"),
-                rs.getString("MaCN"),
-                rs.getString("TenCN"),
-                null,
-                null,
-                rs.getBigDecimal("DonGiaTheoGio"),
-                rs.getInt("ToaDoX"),
-                rs.getInt("ToaDoY"),
-                rs.getInt("ChieuDai"),
-                rs.getInt("ChieuRong"),
-                true,
-                null
-        ), params);
+        return mauJdbc.query(sql, (rs, rowNum) -> {
+            int sucChua = rs.getInt("SucChua");
+            boolean sucChuaNull = rs.wasNull();
+            return new KhongGianView(
+                    rs.getString("MaKG"),
+                    rs.getString("TenKG"),
+                    rs.getString("TenLoaiKG"),
+                    rs.getString("ViTri"),
+                    rs.getString("TrangThaiKG"),
+                    rs.getString("MaCN"),
+                    rs.getString("TenCN"),
+                    rs.getString("ThoiGianMoCua"),
+                    rs.getString("ThoiGianDongCua"),
+                    sucChuaNull ? null : sucChua,
+                    rs.getBigDecimal("DonGiaTheoGio"),
+                    rs.getInt("ToaDoX"),
+                    rs.getInt("ToaDoY"),
+                    rs.getInt("ChieuDai"),
+                    rs.getInt("ChieuRong"),
+                    true,
+                    null
+            );
+        }, params);
     }
 
     public List<KhongGianView> timKhongGian(String branchId, LocalDateTime selectedStart, LocalDateTime selectedEnd) {
@@ -319,7 +330,8 @@ public class CongThongTinWebRepository {
         String baseSql = """
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
                        kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
-                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
+                       lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua,
+                       NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong,
                        MAX(CASE
@@ -353,16 +365,18 @@ public class CongThongTinWebRepository {
                 WHERE kg.MaCN = ?
                 GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
                          kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
-                         lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
+                         lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua, NVL(lkg.DonGiaTheoGio, 0),
                          NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
                          NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
                 ORDER BY
                     CASE
-                        WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
-                        THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                        WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
+                        THEN TO_NUMBER(REGEXP_SUBSTR(kg.MaCN, '[0-9]+$'))
                     END NULLS LAST,
-                    cn.MaCN,
-                    kg.TenKG
+                    kg.MaCN,
+                    kg.ViTri NULLS LAST,
+                    kg.TenKG,
+                    kg.MaKG
                 """;
         Object[] params = {
                 Timestamp.valueOf(selectedEnd),
@@ -378,16 +392,18 @@ public class CongThongTinWebRepository {
             sql = baseSql + """
                     GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
                              kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
-                             lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
+                             lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua, NVL(lkg.DonGiaTheoGio, 0),
                              NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
                              NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
                     ORDER BY
                         CASE
-                            WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
-                            THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                            WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
+                            THEN TO_NUMBER(REGEXP_SUBSTR(kg.MaCN, '[0-9]+$'))
                         END NULLS LAST,
-                        cn.MaCN,
-                        kg.TenKG
+                        kg.MaCN,
+                        kg.ViTri NULLS LAST,
+                        kg.TenKG,
+                        kg.MaKG
                     """;
             params = new Object[] {
                     Timestamp.valueOf(selectedEnd),
@@ -402,6 +418,8 @@ public class CongThongTinWebRepository {
 
         return mauJdbc.query(sql, (rs, rowNum) -> {
             Timestamp busyUntil = rs.getTimestamp("BusyUntil");
+            int sucChua = rs.getInt("SucChua");
+            boolean sucChuaNull = rs.wasNull();
             return new KhongGianView(
                     rs.getString("MaKG"),
                     rs.getString("TenKG"),
@@ -412,6 +430,7 @@ public class CongThongTinWebRepository {
                     rs.getString("TenCN"),
                     rs.getString("ThoiGianMoCua"),
                     rs.getString("ThoiGianDongCua"),
+                    sucChuaNull ? null : sucChua,
                     rs.getBigDecimal("DonGiaTheoGio"),
                     rs.getInt("ToaDoX"),
                     rs.getInt("ToaDoY"),
@@ -427,7 +446,8 @@ public class CongThongTinWebRepository {
         String sql = """
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
                        kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
-                       lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
+                       lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua,
+                       NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong
                 FROM KHONGGIAN kg
@@ -436,22 +456,29 @@ public class CongThongTinWebRepository {
                 WHERE kg.MaKG = ?
                 """;
         try {
-            return mauJdbc.queryForObject(sql, (rs, rowNum) -> new KhongGianView(
-                    rs.getString("MaKG"),
-                    rs.getString("TenKG"),
-                    rs.getString("TenLoaiKG"),
-                    rs.getString("ViTri"),
-                    rs.getString("TrangThaiKG"),
-                    rs.getString("MaCN"),
-                    rs.getString("TenCN"),
-                    rs.getString("ThoiGianMoCua"),
-                    rs.getString("ThoiGianDongCua"),
-                    rs.getBigDecimal("DonGiaTheoGio"),
-                    rs.getInt("ToaDoX"),
-                    rs.getInt("ToaDoY"),
-                    rs.getInt("ChieuDai"),
-                    rs.getInt("ChieuRong")
-            ), maKG);
+            return mauJdbc.queryForObject(sql, (rs, rowNum) -> {
+                int sucChua = rs.getInt("SucChua");
+                boolean sucChuaNull = rs.wasNull();
+                return new KhongGianView(
+                        rs.getString("MaKG"),
+                        rs.getString("TenKG"),
+                        rs.getString("TenLoaiKG"),
+                        rs.getString("ViTri"),
+                        rs.getString("TrangThaiKG"),
+                        rs.getString("MaCN"),
+                        rs.getString("TenCN"),
+                        rs.getString("ThoiGianMoCua"),
+                        rs.getString("ThoiGianDongCua"),
+                        sucChuaNull ? null : sucChua,
+                        rs.getBigDecimal("DonGiaTheoGio"),
+                        rs.getInt("ToaDoX"),
+                        rs.getInt("ToaDoY"),
+                        rs.getInt("ChieuDai"),
+                        rs.getInt("ChieuRong"),
+                        true,
+                        null
+                );
+            }, maKG);
         } catch (EmptyResultDataAccessException ex) {
             return null;
         }
@@ -1796,6 +1823,7 @@ public class CongThongTinWebRepository {
             String maND,
             String hoTen,
             String tenTaiKhoan,
+            String email,
             String matKhauMaHoa,
             String trangThaiND,
             String maKH,
