@@ -379,7 +379,17 @@ public class NhanVienDAO {
 
     public List<String[]> layDanhSachChiNhanh() {
         List<String[]> list = new ArrayList<>();
-        String sql = "SELECT MaCN, TenCN FROM CHINHANH WHERE TrangThai = 'Đang hoạt động'";
+        String sql = """
+                SELECT MaCN, TenCN
+                FROM CHINHANH
+                WHERE TrangThai = 'Đang hoạt động'
+                ORDER BY
+                    CASE
+                        WHEN REGEXP_LIKE(MaCN, '^CN[0-9]+$')
+                        THEN TO_NUMBER(REGEXP_SUBSTR(MaCN, '[0-9]+$'))
+                    END NULLS LAST,
+                    MaCN
+                """;
         try (Connection conn = getConn();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

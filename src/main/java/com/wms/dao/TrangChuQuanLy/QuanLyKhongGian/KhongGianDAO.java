@@ -14,7 +14,17 @@ public class KhongGianDAO {
 
     public List<String> layDanhSachChiNhanhHoatDong() {
         List<String> danhSach = new ArrayList<>();
-        String sql = "SELECT TenCN FROM CHINHANH WHERE TrangThai = 'Đang hoạt động'";
+        String sql = """
+                SELECT TenCN
+                FROM CHINHANH
+                WHERE TrangThai = 'Đang hoạt động'
+                ORDER BY
+                    CASE
+                        WHEN REGEXP_LIKE(MaCN, '^CN[0-9]+$')
+                        THEN TO_NUMBER(REGEXP_SUBSTR(MaCN, '[0-9]+$'))
+                    END NULLS LAST,
+                    MaCN
+                """;
         try (Connection conn = getConn();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {

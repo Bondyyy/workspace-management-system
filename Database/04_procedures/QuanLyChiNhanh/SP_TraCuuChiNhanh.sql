@@ -21,7 +21,12 @@ BEGIN
                OR UPPER(CN.TenCN)  LIKE '%' || UPPER(p_TuKhoa) || '%'
                OR UPPER(CN.DiaChi) LIKE '%' || UPPER(p_TuKhoa) || '%')
           AND (p_TrangThai IS NULL OR CN.TrangThai = p_TrangThai)
-        ORDER BY CN.TenCN;
+        ORDER BY
+            CASE
+                WHEN REGEXP_LIKE(CN.MaCN, '^CN[0-9]+$')
+                THEN TO_NUMBER(REGEXP_SUBSTR(CN.MaCN, '[0-9]+$'))
+            END NULLS LAST,
+            CN.MaCN;
 
     p_outMessage := 'Tra cứu chi nhánh thành công!';
 

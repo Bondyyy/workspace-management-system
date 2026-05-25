@@ -31,7 +31,15 @@ BEGIN
           AND (p_TrangThaiKG IS NULL OR KG.TrangThaiKG = p_TrangThaiKG)
           AND (p_TuKhoa IS NULL
                OR UPPER(KG.TenKG) LIKE '%' || UPPER(p_TuKhoa) || '%')
-        ORDER BY CN.TenCN, KG.ToaDoY, KG.ToaDoX, KG.TenKG;
+        ORDER BY
+            CASE
+                WHEN REGEXP_LIKE(CN.MaCN, '^CN[0-9]+$')
+                THEN TO_NUMBER(REGEXP_SUBSTR(CN.MaCN, '[0-9]+$'))
+            END NULLS LAST,
+            CN.MaCN,
+            KG.ToaDoY,
+            KG.ToaDoX,
+            KG.TenKG;
 
     p_outMessage := 'Tra cứu không gian thành công!';
 

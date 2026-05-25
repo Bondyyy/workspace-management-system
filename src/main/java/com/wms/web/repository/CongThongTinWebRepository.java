@@ -182,7 +182,12 @@ public class CongThongTinWebRepository {
         String sql = """
                 SELECT MaCN, TenCN, DiaChi, ThoiGianMoCua, ThoiGianDongCua, DuongDayNong
                 FROM CHINHANH
-                ORDER BY TenCN
+                ORDER BY
+                    CASE
+                        WHEN REGEXP_LIKE(MaCN, '^CN[0-9]+$')
+                        THEN TO_NUMBER(REGEXP_SUBSTR(MaCN, '[0-9]+$'))
+                    END NULLS LAST,
+                    MaCN
                 """;
         return mauJdbc.query(sql, (rs, rowNum) -> new ChiNhanhView(
                 rs.getString("MaCN"),
@@ -207,11 +212,25 @@ public class CongThongTinWebRepository {
                 """;
         String sql = baseSql + """
                 WHERE kg.MaCN = ?
-                ORDER BY cn.TenCN, kg.TenKG
+                ORDER BY
+                    CASE
+                        WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
+                        THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                    END NULLS LAST,
+                    cn.MaCN,
+                    kg.TenKG
                 """;
         Object[] params = { branchId };
         if (branchId == null || branchId.isBlank()) {
-            sql = baseSql + "ORDER BY cn.TenCN, kg.TenKG";
+            sql = baseSql + """
+                    ORDER BY
+                        CASE
+                            WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
+                            THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                        END NULLS LAST,
+                        cn.MaCN,
+                        kg.TenKG
+                    """;
             params = new Object[0];
         }
         return mauJdbc.query(sql, (rs, rowNum) -> new KhongGianView(
@@ -279,7 +298,13 @@ public class CongThongTinWebRepository {
                          lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
                          NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
                          NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
-                ORDER BY cn.TenCN, kg.TenKG
+                ORDER BY
+                    CASE
+                        WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
+                        THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                    END NULLS LAST,
+                    cn.MaCN,
+                    kg.TenKG
                 """;
         Object[] params = {
                 Timestamp.valueOf(selectedEnd),
@@ -298,7 +323,13 @@ public class CongThongTinWebRepository {
                              lkg.TenLoaiKG, NVL(lkg.DonGiaTheoGio, 0),
                              NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
                              NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
-                    ORDER BY cn.TenCN, kg.TenKG
+                    ORDER BY
+                        CASE
+                            WHEN REGEXP_LIKE(cn.MaCN, '^CN[0-9]+$')
+                            THEN TO_NUMBER(REGEXP_SUBSTR(cn.MaCN, '[0-9]+$'))
+                        END NULLS LAST,
+                        cn.MaCN,
+                        kg.TenKG
                     """;
             params = new Object[] {
                     Timestamp.valueOf(selectedEnd),
