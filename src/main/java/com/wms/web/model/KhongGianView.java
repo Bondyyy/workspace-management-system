@@ -1,6 +1,7 @@
 package com.wms.web.model;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 
 public class KhongGianView {
@@ -149,10 +150,62 @@ public class KhongGianView {
     }
 
     public boolean conTrong() {
-        return available;
+        return coTheDat();
+    }
+
+    public boolean coTheDat() {
+        return available && "trong".equals(chuanHoaTrangThai(trangThaiKG));
+    }
+
+    public String getStatusClass() {
+        String normalized = chuanHoaTrangThai(trangThaiKG);
+        if (normalized.contains("bao tri")) {
+            return "node-maintenance";
+        }
+        if (normalized.contains("dang hoat dong")
+                || normalized.contains("dang su dung")
+                || normalized.contains("co nguoi ngoi")) {
+            return "node-active";
+        }
+        if (normalized.contains("dat truoc") || normalized.equals("da dat") || !available) {
+            return "node-booked";
+        }
+        if ("trong".equals(normalized)) {
+            return "node-empty";
+        }
+        return available ? "node-empty" : "node-booked";
+    }
+
+    public String getTrangThaiHienThi() {
+        String normalized = chuanHoaTrangThai(trangThaiKG);
+        if (normalized.contains("bao tri")) {
+            return "Bảo trì";
+        }
+        if (normalized.contains("dang hoat dong")
+                || normalized.contains("dang su dung")
+                || normalized.contains("co nguoi ngoi")) {
+            return "Đang dùng";
+        }
+        if (normalized.contains("dat truoc") || normalized.equals("da dat") || !available) {
+            return "Đã đặt";
+        }
+        if ("trong".equals(normalized)) {
+            return "Trống";
+        }
+        return trangThaiKG == null || trangThaiKG.isBlank() ? "Không xác định" : trangThaiKG;
     }
 
     public LocalDateTime getBusyUntil() {
         return busyUntil;
+    }
+
+    private String chuanHoaTrangThai(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .trim();
     }
 }

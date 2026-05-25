@@ -4,6 +4,7 @@ import com.wms.web.form.YeuCauNhanChoBangQR;
 import com.wms.web.model.KetQuaNhanChoBangQRView;
 import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.service.CongThongTinService;
+import com.wms.web.util.WebErrorMessages;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,15 +43,25 @@ public class NhanVienWebController {
 
     @PostMapping("/staff/bookings/{id}/xacNhan")
     public String xacNhan(@PathVariable("id") String bookingId, RedirectAttributes redirectAttributes) {
-        congThongTinService.xacNhanDatChoDaThanhToan(bookingId);
-        redirectAttributes.addFlashAttribute("success", "Đã xác nhận yêu cầu đặt chỗ.");
+        try {
+            congThongTinService.xacNhanDatChoDaThanhToan(bookingId);
+            redirectAttributes.addFlashAttribute("success", "Đã xác nhận yêu cầu đặt chỗ.");
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", WebErrorMessages.thanThien(
+                    "Không thể xác nhận đặt chỗ lúc này. Vui lòng thử lại.", ex));
+        }
         return "redirect:/staff/bookings";
     }
 
     @PostMapping("/staff/bookings/{id}/danhDauDaSuDung")
     public String danhDauDaSuDung(@PathVariable("id") String bookingId, RedirectAttributes redirectAttributes) {
-        congThongTinService.danhDauDatChoDaSuDung(bookingId);
-        redirectAttributes.addFlashAttribute("success", "Phiên đặt chỗ đã được đánh dấu đã sử dụng.");
+        try {
+            congThongTinService.danhDauDatChoDaSuDung(bookingId);
+            redirectAttributes.addFlashAttribute("success", "Phiên đặt chỗ đã được đánh dấu đã sử dụng.");
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("error", WebErrorMessages.thanThien(
+                    "Không thể cập nhật trạng thái đặt chỗ lúc này. Vui lòng thử lại.", ex));
+        }
         return "redirect:/staff/bookings";
     }
 

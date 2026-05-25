@@ -36,8 +36,7 @@
     </section>
 
     <section class="member-content payment-wait-layout">
-        <p class="flash success" th:if="${success}" th:text="${success}"></p>
-        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+        <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
         <div class="hienThiXacNhanDatCho-panel payment-summary-panel">
             <div class="panel-head">
@@ -71,8 +70,9 @@
                 </span>
             </div>
             <div class="payment-actions">
+                <a th:href="@{/portal}" class="button-secondary">Về trang chủ</a>
                 <a th:href="@{/portal/history}" class="button-secondary">Xem lịch sử đặt chỗ</a>
-                <a th:href="@{/portal/branches}" class="button-primary">Đặt chỗ khác</a>
+                <a th:href="@{/portal/branches}" class="button-primary">Quay lại đặt chỗ</a>
             </div>
             <form class="payment-actions demo-confirm-form"
                   th:action="@{'/portal/bookings/' + ${payment.maDatCho} + '/payment/mock-confirm'}"
@@ -92,6 +92,7 @@
                     <img th:src="${payment.qrChuyenKhoanUrl}" alt="Mã QR chuyển khoản đặt chỗ SPRING MNGT">
                 </div>
                 <p>QR đã gắn sẵn số tiền và nội dung chuyển khoản của phiếu đặt chỗ này.</p>
+                <p class="payment-refresh-note">Trang sẽ tự cập nhật trạng thái thanh toán sau vài giây.</p>
                 <dl class="bank-info">
                     <div>
                         <dt>Ngân hàng:</dt>

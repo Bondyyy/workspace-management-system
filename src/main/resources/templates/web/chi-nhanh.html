@@ -31,7 +31,7 @@
     </header>
 
     <section class="member-content">
-        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+        <div th:replace="~{web/fragments/alerts :: messages}"></div>
         <div class="section-title">
             <p>Hệ thống Chi nhánh Spring</p>
             <h2>Chọn chi nhánh để xem sơ đồ</h2>

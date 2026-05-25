@@ -401,6 +401,13 @@ public class CongThongTinService {
         ThongTinNhanChoBangQR thongTin = ketQuaTim.get();
         String trangThai = chuanHoa(thongTin.getTrangThaiDatTruoc());
         boolean coPhien = khoDuLieu.daCoPhienTheoDatCho(thongTin.getMaDatCho());
+        String maPhienDaMo = coPhien ? khoDuLieu.timMaPhienTheoDatCho(thongTin.getMaDatCho()) : null;
+
+        System.out.println("[QR CheckIn] MaDatCho=" + thongTin.getMaDatCho()
+                + ", MaKG=" + thongTin.getMaKG()
+                + ", TrangThaiDatTruoc=" + thongTin.getTrangThaiDatTruoc()
+                + ", ThoiGianDuKienToi=" + thongTin.getThoiGianDuKienToi()
+                + ", coPhien=" + coPhien);
 
         if (trangThai.contains("qua han nhan cho")) {
             return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ này đã quá hạn nhận chỗ.");
@@ -408,12 +415,24 @@ public class CongThongTinService {
 
         if (trangThai.contains("su dung")) {
             if (coPhien) {
-                return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
+                return KetQuaNhanChoBangQRView.thanhCong(
+                        "Phiên đã được mở trước đó. Mã phiên: " + maPhienDaMo,
+                        thongTin,
+                        maPhienDaMo
+                );
             }
         }
         
         if (coPhien) {
-            return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
+            return KetQuaNhanChoBangQRView.thanhCong(
+                    "Phiên đã được mở trước đó. Mã phiên: " + maPhienDaMo,
+                    thongTin,
+                    maPhienDaMo
+            );
+        }
+
+        if (thongTin.getMaQR() == null || thongTin.getMaQR().isBlank()) {
+            return KetQuaNhanChoBangQRView.thatBai("Mã QR không còn hiệu lực để nhận chỗ.");
         }
 
         if (!trangThai.contains("thanh toan thanh cong")) {
@@ -448,8 +467,22 @@ public class CongThongTinService {
 
         try {
             String maPhien = khoDuLieu.moPhienTuDatCho(thongTin);
+            System.out.println("[QR CheckIn] Mo phien thanh cong MaDatCho=" + thongTin.getMaDatCho()
+                    + ", MaKG=" + thongTin.getMaKG() + ", MaPhien=" + maPhien);
             return KetQuaNhanChoBangQRView.thanhCong("Mở phiên thành công.", thongTin, maPhien);
         } catch (RuntimeException ex) {
+            String maPhienRetry = khoDuLieu.timMaPhienTheoDatCho(thongTin.getMaDatCho());
+            if (maPhienRetry != null && !maPhienRetry.isBlank()) {
+                System.out.println("[QR CheckIn] Retry sau khi phien da mo MaDatCho="
+                        + thongTin.getMaDatCho() + ", MaPhien=" + maPhienRetry);
+                return KetQuaNhanChoBangQRView.thanhCong(
+                        "Phiên đã được mở trước đó. Mã phiên: " + maPhienRetry,
+                        thongTin,
+                        maPhienRetry
+                );
+            }
+            System.err.println("[QR CheckIn] Mo phien that bai MaDatCho=" + thongTin.getMaDatCho()
+                    + ", MaKG=" + thongTin.getMaKG() + ", loi=" + ex.getMessage());
             return KetQuaNhanChoBangQRView.thatBai(chuyenLoiNhanChoThanThien(ex));
         }
     }
@@ -611,6 +644,9 @@ public class CongThongTinService {
         if (normalized.contains("chua thanh toan") || normalized.contains("giao dich that bai")) {
             return "Đặt chỗ chưa thanh toán thành công.";
         }
+        if (normalized.contains("trang thai hien tai")) {
+            return ex.getMessage();
+        }
         if (normalized.contains("khong gian")) {
             return "Không gian chưa sẵn sàng để mở phiên.";
         }
@@ -619,7 +655,7 @@ public class CongThongTinService {
 
     private boolean laTrangThaiWebhookThanhCong(String status) {
         if (status == null || status.isBlank()) {
-            return true;
+            return false;
         }
         String normalized = chuanHoa(status);
         return normalized.equals("1")

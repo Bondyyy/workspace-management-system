@@ -10,6 +10,7 @@ import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.model.KhongGianView;
 import com.wms.web.model.PhieuGiamGiaView;
 import com.wms.web.service.CongThongTinService;
+import com.wms.web.util.WebErrorMessages;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -256,7 +257,8 @@ public class CongThongTinController {
             congThongTinService.kiemTraXacNhanDatCho(maKG, arrivalTime, durationHours);
         } catch (IllegalArgumentException ex) {
             return traVeSoDoKhongGianVoiLoi(user, checkoutProfile, space, arrivalTime, durationHours,
-                    ex.getMessage(), model, redirectAttributes);
+                    WebErrorMessages.thanThien("Không thể kiểm tra không gian lúc này. Vui lòng thử lại.", ex),
+                    model, redirectAttributes);
         }
 
         BigDecimal subtotal = congThongTinService.tinhTien(space, durationHours);
@@ -339,9 +341,12 @@ public class CongThongTinController {
             ThongTinTaiKhoanView profile = congThongTinService.layThongTinTaiKhoan(user);
             if (space != null) {
                 return traVeSoDoKhongGianVoiLoi(user, profile, space, DatChoForm.getThoiGianDen(),
-                        DatChoForm.getSoGioSuDung(), ex.getMessage(), model, redirectAttributes);
+                        DatChoForm.getSoGioSuDung(),
+                        WebErrorMessages.thanThien("Không thể tạo đặt chỗ lúc này. Vui lòng kiểm tra lại thông tin.", ex),
+                        model, redirectAttributes);
             }
-            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            redirectAttributes.addFlashAttribute("error", WebErrorMessages.thanThien(
+                    "Không thể tạo đặt chỗ lúc này. Vui lòng kiểm tra lại thông tin.", ex));
             return "redirect:/portal/branches";
         }
     }
@@ -487,8 +492,10 @@ public class CongThongTinController {
             }
             redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin tài khoản thành công.");
         } catch (IllegalArgumentException ex) {
-            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            redirectAttributes.addFlashAttribute("error", WebErrorMessages.thanThien(
+                    "Không thể cập nhật thông tin. Vui lòng kiểm tra lại dữ liệu.", ex));
         } catch (RuntimeException ex) {
+            System.err.println("[Web] Cap nhat tai khoan loi: " + ex.getMessage());
             redirectAttributes.addFlashAttribute("error", "Không thể cập nhật thông tin. Email hoặc số điện thoại có thể đã được sử dụng.");
         }
         return "redirect:/portal/account";

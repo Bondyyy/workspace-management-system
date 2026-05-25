@@ -50,16 +50,17 @@
                 <button type="button"
                         class="space-node"
                         th:each="space : ${spaces}"
-                        th:classappend="${!space.conTrong ? ' node-locked' : ''}"
+                        th:classappend="' ' + ${space.statusClass}"
                         th:style="|--x:${space.toaDoX}; --y:${space.toaDoY}; --w:${space.chieuDai}; --h:${space.chieuRong};|"
-                        th:disabled="${!space.conTrong}"
+                        th:disabled="${!space.coTheDat}"
                         th:data-id="${space.maKG}"
                         th:data-name="${space.tenKG}"
                         th:data-price="${space.donGiaTheoGio != null ? space.donGiaTheoGio : 0}"
-                        th:data-available="${space.conTrong}">
+                        th:data-available="${space.coTheDat}">
                     <strong th:text="${space.tenKG}">Không gian</strong>
                     <small th:text="${space.tenLoaiKG}">Loại</small>
-                    <em th:if="${!space.conTrong and space.busyUntil != null}"
+                    <em th:text="${space.trangThaiHienThi}">Trống</em>
+                    <em th:if="${!space.coTheDat and space.busyUntil != null}"
                         th:text="|Trống sau ${#temporals.format(space.busyUntil, 'HH:mm')}|"></em>
                 </button>
             </div>
@@ -69,14 +70,14 @@
                 <span><i class="legend-selected"></i> Đang chọn</span>
                 <span><i class="legend-booked"></i> Đã đặt</span>
                 <span><i class="legend-active"></i> Đang dùng</span>
+                <span><i class="legend-maintenance"></i> Bảo trì</span>
             </div>
         </div>
 
         <aside class="booking-side">
             <h3>Đặt chỗ</h3>
 
-            <p class="booking-panel-alert error" th:if="${error}" th:text="${error}"></p>
-            <p class="booking-panel-alert warning" th:if="${canhBao}" th:text="${canhBao}"></p>
+            <div th:replace="~{web/fragments/alerts :: messages}"></div>
             <p id="thongBaoDatCho" class="form-hint warning" style="display:none;"></p>
 
             <form th:action="@{'/portal/branches/' + ${branch.maCN} + '/spaces'}" method="get" id="timeFilterForm" class="form-grid">

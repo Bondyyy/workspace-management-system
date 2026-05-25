@@ -15,8 +15,7 @@
             <p>Đăng nhập để vào hệ thống</p>
         </div>
 
-        <p class="flash success" th:if="${success}" th:text="${success}"></p>
-        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+        <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
         <form th:action="@{/dangNhap}" th:object="${DangNhapWebForm}" method="post" class="workspace-form">
             <label>

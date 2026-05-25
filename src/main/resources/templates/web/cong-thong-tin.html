@@ -31,8 +31,7 @@
     </header>
 
     <section class="member-content">
-        <p class="flash success" th:if="${success}" th:text="${success}"></p>
-        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+        <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
         <div class="section-title">
             <p>Tổng quan hoạt động</p>

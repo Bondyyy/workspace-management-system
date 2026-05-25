@@ -606,27 +606,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         if (value == null) {
             return "";
         }
-        String fixed = value;
-        if (value.indexOf('Ã') >= 0 || value.indexOf('Ä') >= 0 || value.indexOf('Â') >= 0) {
-            try {
-                String repaired = new String(value.getBytes("ISO-8859-1"), java.nio.charset.StandardCharsets.UTF_8);
-                if (repaired.indexOf('\uFFFD') < 0 && repaired.indexOf('?') < 0) {
-                    fixed = repaired;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        if (fixed.indexOf('�') >= 0) {
-            try {
-                String repaired = new String(value.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),
-                        java.nio.charset.StandardCharsets.UTF_8);
-                if (repaired.indexOf('\uFFFD') < 0 && repaired.indexOf('?') < 0) {
-                    fixed = repaired;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        return Normalizer.normalize(fixed, Normalizer.Form.NFD)
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "")
                 .toLowerCase()
                 .replace('đ', 'd')

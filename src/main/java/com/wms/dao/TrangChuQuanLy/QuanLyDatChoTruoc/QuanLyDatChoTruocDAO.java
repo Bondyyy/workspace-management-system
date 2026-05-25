@@ -12,7 +12,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -487,15 +486,7 @@ public class QuanLyDatChoTruocDAO {
     }
 
     private String giaiMaLoiFont(String value) {
-        if (value == null || value.isBlank() || !coDauHieuLoiFont(value)) {
-            return value;
-        }
-        try {
-            String decoded = new String(value.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-            return decoded.indexOf('\uFFFD') >= 0 ? value : decoded;
-        } catch (RuntimeException ex) {
-            return value;
-        }
+        return value;
     }
 
     private boolean coDauHieuLoiFont(String value) {

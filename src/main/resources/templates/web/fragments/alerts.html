@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="messages"
+     class="alert-stack"
+     th:if="${success != null or error != null or warning != null or info != null or canhBao != null}">
+    <div class="flash success" role="alert" th:if="${success != null}">
+        <span class="flash-icon" aria-hidden="true">&#10003;</span>
+        <span class="flash-body" th:text="${success}">Thao tác thành công.</span>
+    </div>
+    <div class="flash error" role="alert" th:if="${error != null}">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span class="flash-body" th:text="${error}">Không thể xử lý yêu cầu.</span>
+    </div>
+    <div class="flash warning" role="alert" th:if="${warning != null or canhBao != null}">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span class="flash-body" th:text="${warning != null ? warning : canhBao}">Vui lòng kiểm tra lại thông tin.</span>
+    </div>
+    <div class="flash info" role="status" th:if="${info != null}">
+        <span class="flash-icon" aria-hidden="true">i</span>
+        <span class="flash-body" th:text="${info}">Thông tin.</span>
+    </div>
+</div>
+</body>
+</html>

@@ -15,7 +15,7 @@
             <p>Nhập thông tin và xác thực OTP qua email</p>
         </div>
 
-        <p class="flash error" th:if="${error}" th:text="${error}"></p>
+        <div th:replace="~{web/fragments/alerts :: messages}"></div>
 
         <form th:action="@{/register}" th:object="${DangKyWebForm}" method="post" class="workspace-form">
             <label>

@@ -30,7 +30,7 @@
                 <a class="button-secondary small-button" th:href="@{/staff/bookings/scan}">Quét QR nhận chỗ</a>
             </div>
         </div>
-        <p class="flash success" th:if="${success}" th:text="${success}"></p>
+        <div th:replace="~{web/fragments/alerts :: messages}"></div>
         <div class="booking-table-wrap">
             <table class="booking-table">
                 <thead>

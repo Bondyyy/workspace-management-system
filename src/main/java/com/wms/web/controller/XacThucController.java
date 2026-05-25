@@ -6,6 +6,7 @@ import com.wms.web.form.DangKyWebForm;
 import com.wms.web.model.DangKyChoXacThuc;
 import com.wms.web.model.NguoiDungPhien;
 import com.wms.web.service.XacThucWebService;
+import com.wms.web.util.WebErrorMessages;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -80,7 +81,8 @@ public class XacThucController {
             redirectAttributes.addFlashAttribute("success", "Mã OTP đã được gửi tới email của bạn.");
             return "redirect:/register/verify";
         } catch (RuntimeException ex) {
-            model.addAttribute("error", ex.getMessage());
+            model.addAttribute("error", WebErrorMessages.thanThien(
+                    "Không thể gửi mã OTP lúc này. Vui lòng thử lại sau.", ex));
             return "web/dang-ky";
         }
     }
@@ -122,7 +124,8 @@ public class XacThucController {
             redirectAttributes.addFlashAttribute("success", "Đăng ký thành công. Bạn có thể đăng nhập ngay.");
             return "redirect:/dangNhap";
         } catch (RuntimeException ex) {
-            model.addAttribute("error", "Không tạo được tài khoản: " + ex.getMessage());
+            model.addAttribute("error", WebErrorMessages.thanThien(
+                    "Không tạo được tài khoản. Vui lòng kiểm tra thông tin và thử lại.", ex));
             return "web/xac-thuc-otp";
         }
     }

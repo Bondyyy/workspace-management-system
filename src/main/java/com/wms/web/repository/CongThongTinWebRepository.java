@@ -23,7 +23,6 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -541,10 +540,48 @@ public class CongThongTinWebRepository {
         return soLuong != null && soLuong > 0;
     }
 
+    public String timMaPhienTheoDatCho(String maDatCho) {
+        if (maDatCho == null || maDatCho.isBlank()) {
+            return null;
+        }
+        try {
+            return mauJdbc.queryForObject(
+                    """
+                    SELECT MaPhien
+                    FROM PHIENLAMVIEC
+                    WHERE MaDatCho = ?
+                    ORDER BY
+                        CASE WHEN TrangThaiPhien = ? THEN 0 ELSE 1 END,
+                        ThoiGianBatDau DESC
+                    FETCH FIRST 1 ROW ONLY
+                    """,
+                    String.class,
+                    maDatCho,
+                    giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động")
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            return null;
+        }
+    }
+
     public String moPhienTuDatCho(ThongTinNhanChoBangQR thongTin) {
         if (thongTin == null) {
             throw new IllegalArgumentException("Thiếu thông tin đặt chỗ để mở phiên.");
         }
+        String trangThaiKhongGian = mauJdbc.queryForObject(
+                "SELECT TrangThaiKG FROM KHONGGIAN WHERE MaKG = ? FOR UPDATE",
+                String.class,
+                thongTin.getMaKG()
+        );
+        String normalizedSpaceStatus = chuanHoa(trangThaiKhongGian);
+        if (normalizedSpaceStatus.contains("bao tri")) {
+            throw new IllegalStateException("Không gian đang bảo trì, không thể mở phiên.");
+        }
+        if (!normalizedSpaceStatus.equals("trong") && !normalizedSpaceStatus.contains("dat truoc")) {
+            throw new IllegalStateException("Không gian của đặt chỗ chưa sẵn sàng để nhận khách. Trạng thái hiện tại: "
+                    + trangThaiKhongGian + ".");
+        }
+
         java.time.LocalDateTime thoiGianDuKienKetThuc = thongTin.getThoiGianDuKienToi() != null
                 ? thongTin.getThoiGianDuKienToi().plusHours(thongTin.laySoGioSuDungAnToan())
                 : layThoiGianHienTaiVietNam().plusHours(thongTin.laySoGioSuDungAnToan());
@@ -950,6 +987,7 @@ public class CongThongTinWebRepository {
                     TrangThaiThanhToan = ?
                 WHERE MaPhien = ?
                 """,
+                maDatCho,
                 maDatCho,
                 maDatCho,
                 giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
@@ -1692,12 +1730,7 @@ public class CongThongTinWebRepository {
     }
 
     private String giaiMaLoiFont(String value) {
-        try {
-            String decoded = new String(value.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-            return decoded.indexOf('\uFFFD') >= 0 ? value : decoded;
-        } catch (RuntimeException ex) {
-            return value;
-        }
+        return value;
     }
 
     public record BanGhiXacThuc(
