@@ -30,6 +30,7 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
         txtMaND.setEditable(false);
         // Mở khóa để nhập khi tạo mới
         txtTaiKhoan.setEditable(true);
+        com.wms.util.DateInputUtil.attachDatePicker(txtNgaySinh);
     }
 
     private void setupEvents() {

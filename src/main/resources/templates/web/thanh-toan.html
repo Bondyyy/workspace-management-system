@@ -58,7 +58,7 @@
                 </span>
                 <span>
                     <strong>Thời gian</strong>
-                    <em th:text="${#temporals.format(payment.thoiGianDuKienToi, 'HH:mm dd/MM/yyyy')} + ' · ' + ${payment.khoangThoiGianSuDung} + ' giờ'">--</em>
+                    <em th:text="${#temporals.format(payment.thoiGianDuKienToi, 'dd/MM/yyyy HH:mm')} + ' · ' + ${payment.khoangThoiGianSuDung} + ' giờ'">--</em>
                 </span>
                 <span>
                     <strong>Hết hạn giữ chỗ</strong>

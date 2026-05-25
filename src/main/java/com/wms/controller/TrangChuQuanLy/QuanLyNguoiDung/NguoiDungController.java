@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.time.LocalDate;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.io.ByteArrayInputStream;
@@ -90,7 +91,7 @@ public class NguoiDungController {
         view.getCbxGioiTinh().setSelectedItem(user.getGioiTinh());
         view.getTxtNgaySinh()
                 .setText(user.getNgaySinh() != null
-                        ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(user.getNgaySinh())
+                        ? com.wms.util.DateInputUtil.formatDate(user.getNgaySinh())
                         : "");
         view.getTxtSDT().setText(user.getSdt());
         view.getTxtEmail().setText(user.getEmail());
@@ -242,16 +243,12 @@ public class NguoiDungController {
             user.setVaiTro(java.util.List.of(selectedRole));
         }
 
-        try {
-            String birthStr = view.getTxtNgaySinh().getText().trim();
-            if (!birthStr.isEmpty()) {
-                java.util.Date date = new java.text.SimpleDateFormat("dd/MM/yyyy").parse(birthStr);
-                user.setNgaySinh(new java.sql.Date(date.getTime()));
-            }
-        } catch (Exception e) {
-            showError("Ngày sinh không hợp lệ (định dạng dd/MM/yyyy)!");
+        LocalDate ngaySinh = com.wms.util.DateInputUtil.parseDate(view.getTxtNgaySinh().getText(), "Ngày sinh");
+        if (ngaySinh != null && ngaySinh.isAfter(LocalDate.now())) {
+            showError("Ngày sinh không được lớn hơn ngày hiện tại.");
             return null;
         }
+        user.setNgaySinh(com.wms.util.DateInputUtil.toSqlDate(ngaySinh));
 
         return user;
     }

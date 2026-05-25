@@ -4,6 +4,7 @@ import com.wms.web.form.YeuCauWebhookThanhToan;
 import com.wms.web.service.CongThongTinService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
@@ -68,5 +69,13 @@ public class WebhookThanhToanController {
         System.out.println("[WebhookController] Ket qua xu ly: success=" + result.success() + ", message='" + result.message() + "'");
         System.out.println("[WebhookController] ========================================");
         return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> xuLyPayloadKhongHopLe(HttpMessageNotReadableException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("message", "Dữ liệu thời gian thanh toán không đúng định dạng. Vui lòng kiểm tra lại.");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 }

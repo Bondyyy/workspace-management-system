@@ -8,6 +8,8 @@ import com.wms.model.TrangChuQuanLy.QuanLyKhongGian.KhongGianDTO;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +59,7 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
         lblHeaderTitle.setText("Sơ đồ Không gian - " + tenChiNhanhHienTai);
         txtChiNhanh.setText(tenChiNhanhHienTai);
         txtNgayDat.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        com.wms.util.DateInputUtil.attachDatePicker(txtNgayDat);
         
         setupTimeComboBoxes();
         
@@ -216,16 +219,26 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
             return;
         }
 
-        String ngayDat = txtNgayDat.getText().trim();
-        if (ngayDat.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập ngày sử dụng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         String gioBD = (String) cbxGioBatDau.getSelectedItem();
         String gioKT = (String) cbxGioKetThuc.getSelectedItem();
         
         try {
+            LocalDate ngaySuDung = com.wms.util.DateInputUtil.requireDate(
+                    txtNgayDat.getText(), "Ngày sử dụng", "Vui lòng nhập ngày sử dụng.");
+            LocalTime batDau = com.wms.util.DateInputUtil.requireTime(
+                    gioBD, "Giờ bắt đầu", "Vui lòng chọn giờ bắt đầu.");
+            LocalTime ketThuc = com.wms.util.DateInputUtil.requireTime(
+                    gioKT, "Giờ kết thúc", "Vui lòng chọn giờ kết thúc.");
+            if (!ketThuc.isAfter(batDau)) {
+                JOptionPane.showMessageDialog(this, "Giờ kết thúc phải sau giờ bắt đầu.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!LocalDateTime.of(ngaySuDung, batDau).isAfter(LocalDateTime.now())) {
+                JOptionPane.showMessageDialog(this, "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            txtNgayDat.setText(com.wms.util.DateInputUtil.formatDate(ngaySuDung));
+
             String tongTienStr = txtTongTien.getText().replaceAll("[^0-9]", "");
             double tongTien = Double.parseDouble(tongTienStr);
 
@@ -234,12 +247,15 @@ public class XemSoDoKhongGianForm extends javax.swing.JPanel {
                 ((com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) win).showPanel(new com.wms.view.TrangChuHoiVien.DatChoKhongGian.XacNhan.ChuyenKhoanDatTruoc(
                         maChiNhanhHienTai, tenChiNhanhHienTai, 
                         khongGianDangChon.getMaKG(), khongGianDangChon.getTenKG(),
-                        ngayDat, gioBD, gioKT, tongTien
+                        com.wms.util.DateInputUtil.formatDate(ngaySuDung),
+                        com.wms.util.DateInputUtil.formatTime(batDau),
+                        com.wms.util.DateInputUtil.formatTime(ketThuc),
+                        tongTien
                     )
                 );
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi xử lý dữ liệu đặt chỗ!");
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 

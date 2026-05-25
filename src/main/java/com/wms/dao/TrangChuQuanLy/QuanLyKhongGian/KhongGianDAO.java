@@ -219,7 +219,7 @@ public class KhongGianDAO {
                     String timeStr = rs.getString("ThoiGianDongCua");
                     if (timeStr != null && !timeStr.trim().isEmpty()) {
                         if (timeStr.length() > 5) timeStr = timeStr.substring(0, 5);
-                        return java.time.LocalTime.parse(timeStr);
+                        return com.wms.util.DateInputUtil.parseTime(timeStr, "Giờ đóng cửa");
                     }
                 }
             }

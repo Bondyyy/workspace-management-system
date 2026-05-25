@@ -6,6 +6,7 @@ import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
 
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.time.LocalTime;
 import java.util.List;
 
 public class QuanLyChiNhanhForm extends javax.swing.JPanel {
@@ -19,6 +20,8 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         initComponents();
         setupTable();
         tableModel = (DefaultTableModel) tblChiNhanh.getModel();
+        com.wms.util.DateInputUtil.attachTimeFormatter(txtGioMoCua);
+        com.wms.util.DateInputUtil.attachTimeFormatter(txtGioDongCua);
         loadTableData(controller.layDanhSach());
         clearForm();
         com.wms.util.TienIchFormQuanLy.apDung(this);
@@ -80,8 +83,15 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         ChiNhanhDTO cn = new ChiNhanhDTO();
         cn.setTenCN(txtTenChiNhanh.getText().trim());
         cn.setDiaChi(txtDiaChi.getText().trim());
-        cn.setThoiGianMoCua(txtGioMoCua.getText().trim());
-        cn.setThoiGianDongCua(txtGioDongCua.getText().trim());
+        LocalTime gioMoCua = com.wms.util.DateInputUtil.requireTime(
+                txtGioMoCua.getText(), "Giờ mở cửa", "Vui lòng nhập giờ mở cửa.");
+        LocalTime gioDongCua = com.wms.util.DateInputUtil.requireTime(
+                txtGioDongCua.getText(), "Giờ đóng cửa", "Vui lòng nhập giờ đóng cửa.");
+        if (!gioDongCua.isAfter(gioMoCua)) {
+            throw new IllegalArgumentException("Giờ đóng cửa phải sau giờ mở cửa.");
+        }
+        cn.setThoiGianMoCua(com.wms.util.DateInputUtil.formatTime(gioMoCua));
+        cn.setThoiGianDongCua(com.wms.util.DateInputUtil.formatTime(gioDongCua));
         cn.setDuongDayNong(txtHotline1.getText().trim());
         cn.setTrangThai(cbxTrangThai.getSelectedItem() != null
                 ? cbxTrangThai.getSelectedItem().toString()
@@ -90,14 +100,18 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
     }
 
     private void btnThemMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        ChiNhanhDTO cn = buildChiNhanhFromForm();
-        String loi = controller.themMoi(cn);
-        if (loi == null) {
-            JOptionPane.showMessageDialog(this, "Thêm mới chi nhánh thành công!");
-            loadTableData(controller.layDanhSach());
-            clearForm();
-        } else {
-            JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        try {
+            ChiNhanhDTO cn = buildChiNhanhFromForm();
+            String loi = controller.themMoi(cn);
+            if (loi == null) {
+                JOptionPane.showMessageDialog(this, "Thêm mới chi nhánh thành công!");
+                loadTableData(controller.layDanhSach());
+                clearForm();
+            } else {
+                JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
     }
 
@@ -106,14 +120,18 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn chi nhánh cần cập nhật từ bảng!");
             return;
         }
-        ChiNhanhDTO cn = buildChiNhanhFromForm();
-        cn.setMaCN(selectedMaCN);
-        String loi = controller.capNhat(cn);
-        if (loi == null) {
-            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-            loadTableData(controller.layDanhSach());
-        } else {
-            JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        try {
+            ChiNhanhDTO cn = buildChiNhanhFromForm();
+            cn.setMaCN(selectedMaCN);
+            String loi = controller.capNhat(cn);
+            if (loi == null) {
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                loadTableData(controller.layDanhSach());
+            } else {
+                JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
     }
 

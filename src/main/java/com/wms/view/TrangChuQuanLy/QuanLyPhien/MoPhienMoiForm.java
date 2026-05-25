@@ -79,7 +79,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
             java.time.ZoneId zoneId = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
             java.time.ZonedDateTime nowHcm = java.time.ZonedDateTime.now(zoneId);
             
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss - dd/MM/yyyy");
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
             txtThoiGianBatDau.setText(sdf.format(java.util.Date.from(nowHcm.toInstant())));
 
             String suDungStr = txtThoiGianSuDung.getText().trim();
@@ -115,7 +115,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                     // "24:00" = het ngay = nua dem ngay hom sau (00:00 sang hom sau)
                     final boolean dongCuaLaNuaDemSauNgay = "24:00".equals(gioDongCua.trim());
 
-                    java.time.LocalTime openLocalTime = java.time.LocalTime.parse(gioMoCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+                    java.time.LocalTime openLocalTime = com.wms.util.DateInputUtil.parseTime(gioMoCua.trim(), "Giờ mở cửa");
                     java.time.ZonedDateTime openDateTime = nowHcm.with(openLocalTime).withSecond(0).withNano(0);
 
                     // closeDateTime: neu la "24:00" thi tinh la 00:00 cua ngay hom sau
@@ -124,7 +124,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                         closeDateTime = nowHcm.toLocalDate().plusDays(1)
                                 .atStartOfDay(nowHcm.getZone());
                     } else {
-                        java.time.LocalTime closeLocalTime = java.time.LocalTime.parse(gioDongCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+                        java.time.LocalTime closeLocalTime = com.wms.util.DateInputUtil.parseTime(gioDongCua.trim(), "Giờ đóng cửa");
                         closeDateTime = nowHcm.with(closeLocalTime).withSecond(0).withNano(0);
                         // Neu gio dong cua < gio mo cua (vi du: dong cua 02:00, mo cua 08:00)
                         // thi closeDateTime thuoc sang hom sau

@@ -34,6 +34,7 @@ import java.awt.RenderingHints;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -111,6 +112,8 @@ public class TongQuanForm extends JPanel {
 
         txtTuNgay = new JTextField();
         txtDenNgay = new JTextField();
+        com.wms.util.DateInputUtil.attachDatePicker(txtTuNgay);
+        com.wms.util.DateInputUtil.attachDatePicker(txtDenNgay);
         cbxChiNhanh = new JComboBox<>();
         cbxLoaiBaoCao = new JComboBox<>(new String[]{
                 TongQuanService.BAO_CAO_DOANH_THU,
@@ -384,8 +387,19 @@ public class TongQuanForm extends JPanel {
     }
 
     private boolean boLocHopLe() {
-        if (txtTuNgay.getText().trim().isEmpty() || txtDenNgay.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ Từ ngày - Đến ngày.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+        try {
+            LocalDate tuNgay = com.wms.util.DateInputUtil.requireDate(
+                    txtTuNgay.getText(), "Từ ngày", "Vui lòng nhập từ ngày.");
+            LocalDate denNgay = com.wms.util.DateInputUtil.requireDate(
+                    txtDenNgay.getText(), "Đến ngày", "Vui lòng nhập đến ngày.");
+            if (tuNgay.isAfter(denNgay)) {
+                JOptionPane.showMessageDialog(this, "Từ ngày không được sau đến ngày.", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return false;
+            }
+            txtTuNgay.setText(com.wms.util.DateInputUtil.formatDate(tuNgay));
+            txtDenNgay.setText(com.wms.util.DateInputUtil.formatDate(denNgay));
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.WARNING_MESSAGE);
             return false;
         }
         return true;

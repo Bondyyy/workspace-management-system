@@ -5,19 +5,20 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
     private final PhieuGiamGiaController controller = new PhieuGiamGiaController();
-    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
     public QuanLyPhieuGiamGiaForm() {
         initComponents();
         setupTable();
         txtMaPGG.setText("");
-        sdf.setLenient(false);
+        com.wms.util.DateInputUtil.attachDateTimePicker(txtNgayBatDauApDung);
+        com.wms.util.DateInputUtil.attachDateTimePicker(txtNgayKetThucApDung);
         com.wms.util.InputFormatUtil.attachThousandsFormatter(txtGiaTriGiamGia);
         com.wms.util.InputFormatUtil.attachThousandsFormatter(txtGiaTriApDungToiThieu);
         com.wms.util.InputFormatUtil.attachThousandsFormatter(txtSLToiDa);
@@ -54,8 +55,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
                 dto.getMaChuSoPGG(),
                 com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriGiamGia()),
                 com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriApDungToiThieu()),
-                sdf.format(dto.getNgayBatDauApDung()),
-                sdf.format(dto.getNgayKetThucApDung()),
+                com.wms.util.DateInputUtil.formatDateTime(dto.getNgayBatDauApDung()),
+                com.wms.util.DateInputUtil.formatDateTime(dto.getNgayKetThucApDung()),
                 dto.getSlDaDung(),
                 dto.getSlToiDa(),
                 dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực"
@@ -110,22 +111,19 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
             throw new IllegalArgumentException("Số lượng phát hành phải lớn hơn 0.");
         }
 
-        if (txtNgayBatDauApDung.getText().trim().isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng nhập ngày bắt đầu áp dụng.");
+        LocalDateTime batDau = com.wms.util.DateInputUtil.requireDateTime(
+                txtNgayBatDauApDung.getText(),
+                "Thời gian bắt đầu áp dụng",
+                "Vui lòng nhập thời gian bắt đầu áp dụng.");
+        LocalDateTime ketThuc = com.wms.util.DateInputUtil.requireDateTime(
+                txtNgayKetThucApDung.getText(),
+                "Thời gian kết thúc áp dụng",
+                "Vui lòng nhập thời gian kết thúc áp dụng.");
+        if (!ketThuc.isAfter(batDau)) {
+            throw new IllegalArgumentException("Thời gian kết thúc áp dụng phải sau thời gian bắt đầu.");
         }
-        if (txtNgayKetThucApDung.getText().trim().isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng nhập ngày kết thúc áp dụng.");
-        }
-
-        try {
-            dto.setNgayBatDauApDung(sdf.parse(txtNgayBatDauApDung.getText().trim()));
-            dto.setNgayKetThucApDung(sdf.parse(txtNgayKetThucApDung.getText().trim()));
-        } catch (java.text.ParseException ex) {
-            throw new IllegalArgumentException("Ngày áp dụng phải đúng định dạng dd/MM/yyyy.");
-        }
-        if (dto.getNgayKetThucApDung().before(dto.getNgayBatDauApDung())) {
-            throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
-        }
+        dto.setNgayBatDauApDung(Timestamp.valueOf(batDau));
+        dto.setNgayKetThucApDung(Timestamp.valueOf(ketThuc));
 
         dto.setGiaTriGiamGia(giaTri.doubleValue());
         dto.setGiaTriApDungToiThieu(apDungToiThieu.doubleValue());
@@ -256,7 +254,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
         lblNgayBatDauApDung.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgayBatDauApDung.setForeground(new java.awt.Color(35, 30, 48));
-        lblNgayBatDauApDung.setText("Ngày Bắt đầu (dd/MM/yyyy) (*)");
+        lblNgayBatDauApDung.setText("Bắt đầu áp dụng (dd/MM/yyyy HH:mm) (*)");
         pnMain.add(lblNgayBatDauApDung);
         lblNgayBatDauApDung.setBounds(20, 200, 360, 18);
 
@@ -266,7 +264,7 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
         lblNgayKetThucApDung.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblNgayKetThucApDung.setForeground(new java.awt.Color(35, 30, 48));
-        lblNgayKetThucApDung.setText("Ngày Kết thúc (dd/MM/yyyy) (*)");
+        lblNgayKetThucApDung.setText("Kết thúc áp dụng (dd/MM/yyyy HH:mm) (*)");
         pnMain.add(lblNgayKetThucApDung);
         lblNgayKetThucApDung.setBounds(20, 270, 360, 18);
 
@@ -441,8 +439,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
                 dto.getMaChuSoPGG(),
                 com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriGiamGia()),
                 com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriApDungToiThieu()),
-                sdf.format(dto.getNgayBatDauApDung()),
-                sdf.format(dto.getNgayKetThucApDung()),
+                com.wms.util.DateInputUtil.formatDateTime(dto.getNgayBatDauApDung()),
+                com.wms.util.DateInputUtil.formatDateTime(dto.getNgayKetThucApDung()),
                 dto.getSlDaDung(),
                 dto.getSlToiDa(),
                 dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực"
@@ -461,8 +459,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
                 txtGiaTriGiamGia.setText(com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriGiamGia()));
                 txtGiaTriApDungToiThieu.setText(com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriApDungToiThieu()));
                 txtSLToiDa.setText(com.wms.util.InputFormatUtil.formatThousands(dto.getSlToiDa()));
-                txtNgayBatDauApDung.setText(sdf.format(dto.getNgayBatDauApDung()));
-                txtNgayKetThucApDung.setText(sdf.format(dto.getNgayKetThucApDung()));
+                txtNgayBatDauApDung.setText(com.wms.util.DateInputUtil.formatDateTime(dto.getNgayBatDauApDung()));
+                txtNgayKetThucApDung.setText(com.wms.util.DateInputUtil.formatDateTime(dto.getNgayKetThucApDung()));
                 cbxTrangThai.setSelectedItem(dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");
             }
         }

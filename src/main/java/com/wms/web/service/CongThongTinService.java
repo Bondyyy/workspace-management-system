@@ -79,6 +79,9 @@ public class CongThongTinService {
         if (form.getHoTen() == null || form.getHoTen().isBlank()) {
             throw new IllegalArgumentException("Vui lòng nhập họ và tên.");
         }
+        if (form.getNgaySinh() != null && form.getNgaySinh().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày sinh không được lớn hơn ngày hiện tại.");
+        }
         khoDuLieu.capNhatThongTinTaiKhoan(
                 user.getMaND(),
                 form.getHoTen().trim(),
@@ -803,7 +806,7 @@ public class CongThongTinService {
     }
 
     private String dinhDangKhoangThoiGian(ThongTinXacNhanDatChoDTO thongTin) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         if (thongTin.getThoiGianBatDau() == null) {
             return "Chưa có";
         }

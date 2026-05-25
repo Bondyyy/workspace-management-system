@@ -54,7 +54,7 @@ public class QuanLyDatChoTruocService {
     }
 
     private String dinhDangKhoangThoiGian(ThongTinXacNhanDatChoDTO thongTin) {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm dd/MM/yyyy");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         if (thongTin.getThoiGianBatDau() == null) {
             return "Chưa có";
         }

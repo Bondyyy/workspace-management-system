@@ -10,7 +10,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
      */
     private final com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController controller;
     private java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO> currentList;
-    private final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy");
+    private final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
     private javax.swing.Timer realTimeTimer;
     private javax.swing.SwingWorker<java.util.List<com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecFullDTO>, Void> loadPhienWorker;
     private static final String LABEL_CHUA_KET_THUC = "Ch\u01b0a k\u1ebft th\u00fac";

@@ -1,7 +1,9 @@
 package com.wms.util;
 
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLDataException;
 import java.sql.SQLException;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
 
 public final class ErrorMessageUtil {
@@ -16,6 +18,9 @@ public final class ErrorMessageUtil {
         }
         Throwable current = ex;
         while (current != null) {
+            if (current instanceof DateTimeParseException) {
+                return "Ngày giờ không đúng định dạng. Vui lòng kiểm tra lại.";
+            }
             if (current instanceof SQLException sqlException) {
                 return mapSqlException(sqlException);
             }
@@ -47,6 +52,7 @@ public final class ErrorMessageUtil {
         return upper.contains("ORA-")
                 || upper.contains("SQL")
                 || upper.contains("JDBC")
+                || upper.contains("DATETIMEPARSEEXCEPTION")
                 || upper.contains("STACKTRACE")
                 || upper.contains("EXCEPTION")
                 || upper.contains("CONSTRAINT")
@@ -59,6 +65,9 @@ public final class ErrorMessageUtil {
     private static String mapSqlException(SQLException ex) {
         String message = ex.getMessage() == null ? "" : ex.getMessage();
         int code = ex.getErrorCode();
+        if (ex instanceof SQLDataException) {
+            return mapDateOrDataMessage(message);
+        }
         if (ex instanceof SQLIntegrityConstraintViolationException && code == 1) {
             return mapUniqueConstraint(message);
         }
@@ -82,6 +91,14 @@ public final class ErrorMessageUtil {
         }
         if (upper.contains("ORA-01400")) {
             return mapNullField(message);
+        }
+        if (upper.contains("ORA-01843")
+                || upper.contains("ORA-01830")
+                || upper.contains("ORA-01861")
+                || upper.contains("ORA-01847")
+                || upper.contains("DATETIMEPARSEEXCEPTION")
+                || upper.contains("SQLDATAEXCEPTION")) {
+            return mapDateOrDataMessage(message);
         }
         if (upper.contains("ORA-02290")) {
             return mapCheckConstraint(message);
@@ -111,6 +128,7 @@ public final class ErrorMessageUtil {
         return switch (code) {
             case 1 -> mapUniqueConstraint(message);
             case 1400 -> mapNullField(message);
+            case 1843, 1830, 1861, 1847 -> mapDateOrDataMessage(message);
             case 2290 -> mapCheckConstraint(message);
             case 2291 -> "Dữ liệu liên kết không hợp lệ hoặc đã bị xóa. Vui lòng tải lại danh sách và chọn lại.";
             case 2292 -> "Không thể xóa dữ liệu này vì đang được sử dụng ở dữ liệu khác.";
@@ -120,6 +138,26 @@ public final class ErrorMessageUtil {
             case 12899 -> "Dữ liệu bạn nhập quá dài so với giới hạn cho phép.";
             default -> mapTechnicalMessage(message);
         };
+    }
+
+    private static String mapDateOrDataMessage(String message) {
+        String upper = message == null ? "" : message.toUpperCase(Locale.ROOT);
+        if (upper.contains("ORA-01843")) {
+            return "Ngày tháng không hợp lệ. Vui lòng nhập đúng định dạng dd/MM/yyyy.";
+        }
+        if (upper.contains("ORA-01830")) {
+            return "Ngày tháng không đúng định dạng. Vui lòng kiểm tra lại.";
+        }
+        if (upper.contains("ORA-01861")) {
+            return "Ngày tháng không đúng định dạng yêu cầu.";
+        }
+        if (upper.contains("ORA-01847")) {
+            return "Ngày trong tháng không hợp lệ.";
+        }
+        if (upper.contains("DATETIMEPARSEEXCEPTION")) {
+            return "Ngày giờ không đúng định dạng. Vui lòng kiểm tra lại.";
+        }
+        return "Dữ liệu nhập không đúng định dạng. Vui lòng kiểm tra lại.";
     }
 
     private static String mapUniqueConstraint(String message) {

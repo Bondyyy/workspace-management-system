@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
+import java.time.LocalDate;
 import java.util.List;
 
 public class QuanLyNhanVienForm extends javax.swing.JPanel {
@@ -21,6 +22,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     public QuanLyNhanVienForm() {
         initComponents();
         com.wms.util.InputFormatUtil.attachThousandsFormatter(txtLuong);
+        com.wms.util.DateInputUtil.attachDatePicker(txtNgaySinh);
         loadComboBoxData();
         apDungPhanQuyen();
         loadData();
@@ -621,16 +623,11 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         nd.setSdt(txtSDT.getText().trim());
         nd.setGioiTinh((String) cbxGioiTinh.getSelectedItem());
 
-        String nsStr = txtNgaySinh.getText().trim();
-        if (!nsStr.isEmpty()) {
-            try {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-                java.util.Date d = sdf.parse(nsStr);
-                nd.setNgaySinh(new java.sql.Date(d.getTime()));
-            } catch (Exception e) {
-                // Có thể ném exception hoặc để null
-            }
+        LocalDate ngaySinh = com.wms.util.DateInputUtil.parseDate(txtNgaySinh.getText(), "Ngày sinh");
+        if (ngaySinh != null && ngaySinh.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày sinh không được lớn hơn ngày hiện tại.");
         }
+        nd.setNgaySinh(com.wms.util.DateInputUtil.toSqlDate(ngaySinh));
 
         Object data = lblAnhDaiDien.getClientProperty("anhData");
         nd.setAnhDaiDien(data instanceof byte[] ? (byte[]) data : null);
@@ -671,8 +668,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
 
         Object ns = tblNhanVien.getClientProperty("ngaySinh_" + key);
         if (ns instanceof java.util.Date) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-            txtNgaySinh.setText(sdf.format((java.util.Date) ns));
+            txtNgaySinh.setText(com.wms.util.DateInputUtil.formatDate((java.util.Date) ns));
         } else {
             txtNgaySinh.setText("");
         }

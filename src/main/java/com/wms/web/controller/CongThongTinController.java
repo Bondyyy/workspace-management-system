@@ -31,6 +31,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -88,12 +90,9 @@ public class CongThongTinController {
 
     @GetMapping("/portal/branches/{branchId}/spaces")
     public String hienThiKhongGianTheoChiNhanh(@PathVariable("branchId") String branchId,
-                               @RequestParam(name = "date", required = false)
-                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bookingDate,
-                               @RequestParam(name = "start", required = false)
-                               @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
-                               @RequestParam(name = "end", required = false)
-                               @DateTimeFormat(pattern = "HH:mm") LocalTime endTime,
+                               @RequestParam(name = "date", required = false) String bookingDateText,
+                               @RequestParam(name = "start", required = false) String startTimeText,
+                               @RequestParam(name = "end", required = false) String endTimeText,
                                @RequestParam(name = "canhBao", required = false) String canhBao,
                               HttpSession session,
                               Model model,
@@ -112,8 +111,20 @@ public class CongThongTinController {
             return "redirect:/portal/branches";
         }
 
+        LocalDate bookingDate = null;
+        LocalTime startTime = null;
+        LocalTime endTime = null;
+        String loiNgayGio = null;
+        try {
+            bookingDate = parseWebDate(bookingDateText, "Ngày đặt chỗ");
+            startTime = parseWebTime(startTimeText, "Từ giờ");
+            endTime = parseWebTime(endTimeText, "Đến giờ");
+        } catch (IllegalArgumentException ex) {
+            loiNgayGio = ex.getMessage();
+        }
+
         return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, endTime,
-                null, doiMaCanhBaoDatCho(canhBao), model);
+                loiNgayGio, doiMaCanhBaoDatCho(canhBao), model);
     }
 
     private LocalTime docGioChiNhanh(String value, LocalTime fallback) {
@@ -219,7 +230,7 @@ public class CongThongTinController {
 
     @GetMapping("/portal/checkout")
     public String hienThiXacNhanDatCho(@RequestParam("maKG") String maKG,
-                           @RequestParam("arrivalTime") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime arrivalTime,
+                           @RequestParam("arrivalTime") String arrivalTimeText,
                            @RequestParam("durationHours") Integer durationHours,
                            @RequestParam(name = "voucherCode", required = false) String voucherCode,
                            @RequestParam(name = "note", required = false) String note,
@@ -240,6 +251,13 @@ public class CongThongTinController {
         if (space == null) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng chọn không gian và khung giờ hợp lệ.");
             return "redirect:/portal/branches";
+        }
+        LocalDateTime arrivalTime;
+        try {
+            arrivalTime = parseWebDateTimeRequired(arrivalTimeText, "Thời gian đặt chỗ");
+        } catch (IllegalArgumentException ex) {
+            return traVeSoDoKhongGianVoiLoi(user, checkoutProfile, space, null, durationHours,
+                    ex.getMessage(), model, redirectAttributes);
         }
         if (durationHours == null || durationHours < 1) {
             return traVeSoDoKhongGianVoiLoi(user, checkoutProfile, space, arrivalTime, durationHours,
@@ -322,13 +340,14 @@ public class CongThongTinController {
             return "redirect:/portal/branches";
         }
         if (bindingResult.hasErrors()) {
+            String thongBaoBinding = thongBaoLoiBindingDatCho(bindingResult);
             KhongGianView space = congThongTinService.layMotKhongGian(DatChoForm.getMaKG());
             ThongTinTaiKhoanView profile = congThongTinService.layThongTinTaiKhoan(user);
             if (space != null) {
                 return traVeSoDoKhongGianVoiLoi(user, profile, space, DatChoForm.getThoiGianDen(),
-                        DatChoForm.getSoGioSuDung(), "Vui lòng kiểm tra lại thông tin đặt chỗ.", model, redirectAttributes);
+                        DatChoForm.getSoGioSuDung(), thongBaoBinding, model, redirectAttributes);
             }
-            redirectAttributes.addFlashAttribute("error", "Vui lòng kiểm tra lại thông tin đặt chỗ.");
+            redirectAttributes.addFlashAttribute("error", thongBaoBinding);
             return "redirect:/portal/branches";
         }
 
@@ -472,11 +491,17 @@ public class CongThongTinController {
 
     @PostMapping("/portal/account")
     public String capNhatTaiKhoan(@ModelAttribute ThongTinTaiKhoanForm form,
+                                BindingResult bindingResult,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
         NguoiDungPhien user = layHoiVienHienTai(session);
         if (user == null) {
             return "redirect:/dangNhap";
+        }
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Ngày sinh không đúng định dạng. Vui lòng chọn bằng lịch.");
+            return "redirect:/portal/account";
         }
 
         try {
@@ -564,5 +589,44 @@ public class CongThongTinController {
             return "Bạn đã thay đổi thời gian. Vui lòng chọn lại không gian phù hợp với khung giờ mới.";
         }
         return null;
+    }
+
+    private LocalDate parseWebDate(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value.trim());
+        } catch (DateTimeParseException ex) {
+            throw new IllegalArgumentException(fieldName + " không đúng định dạng. Vui lòng chọn bằng lịch.");
+        }
+    }
+
+    private LocalTime parseWebTime(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return com.wms.util.DateInputUtil.parseTime(value.trim(), fieldName);
+    }
+
+    private LocalDateTime parseWebDateTimeRequired(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn thời gian đặt chỗ.");
+        }
+        try {
+            return LocalDateTime.parse(value.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+        } catch (DateTimeParseException ex) {
+            throw new IllegalArgumentException(fieldName + " không đúng định dạng. Vui lòng chọn lại ngày giờ.");
+        }
+    }
+
+    private String thongBaoLoiBindingDatCho(BindingResult bindingResult) {
+        if (bindingResult.getFieldError("arrivalTime") != null) {
+            return "Thời gian đặt chỗ không đúng định dạng. Vui lòng chọn lại ngày giờ.";
+        }
+        if (bindingResult.getFieldError("durationHours") != null) {
+            return "Vui lòng chọn khung giờ hợp lệ.";
+        }
+        return "Vui lòng kiểm tra lại thông tin đặt chỗ.";
     }
 }

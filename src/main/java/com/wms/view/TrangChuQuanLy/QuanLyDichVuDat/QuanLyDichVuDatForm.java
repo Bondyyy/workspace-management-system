@@ -11,7 +11,7 @@ import java.util.List;
 public class QuanLyDichVuDatForm extends javax.swing.JPanel {
 
     private final QuanLyDichVuDatController controller = new QuanLyDichVuDatController();
-    private final SimpleDateFormat sdfHienThi = new SimpleDateFormat("HH:mm dd/MM/yyyy");
+    private final SimpleDateFormat sdfHienThi = new SimpleDateFormat("dd/MM/yyyy HH:mm");
     private List<DichVuDaDatDTO> currentDichVuList;
 
     public QuanLyDichVuDatForm() {

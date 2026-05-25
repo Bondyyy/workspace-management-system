@@ -16,7 +16,6 @@ import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 import java.text.DecimalFormat;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import javax.swing.JOptionPane;
 
 /**
@@ -388,8 +387,10 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
             dc.setTrangThaiDatTruoc("Đang chờ thanh toán");
             dc.setThoiGianDat(new Timestamp(System.currentTimeMillis()));
             
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-            LocalDateTime batDau = LocalDateTime.parse(txtNgay.getText() + " " + txtBatDau.getText(), dtf);
+            LocalDateTime batDau = com.wms.util.DateInputUtil.requireDateTime(
+                    txtNgay.getText() + " " + txtBatDau.getText(),
+                    "Thời gian bắt đầu đặt chỗ",
+                    "Vui lòng nhập thời gian bắt đầu đặt chỗ.");
             dc.setThoiGianDuKienToi(Timestamp.valueOf(batDau));
 
             DatChoDAO dcDAO = new DatChoDAO();
@@ -407,7 +408,13 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
             phien.setTrangThaiPhien("Đã đặt trước");
             
             phien.setThoiGianBatDau(Timestamp.valueOf(batDau));
-            LocalDateTime ketThuc = LocalDateTime.parse(txtNgay.getText() + " " + txtKetThuc.getText(), dtf);
+            LocalDateTime ketThuc = com.wms.util.DateInputUtil.requireDateTime(
+                    txtNgay.getText() + " " + txtKetThuc.getText(),
+                    "Thời gian kết thúc đặt chỗ",
+                    "Vui lòng nhập thời gian kết thúc đặt chỗ.");
+            if (!ketThuc.isAfter(batDau)) {
+                throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu.");
+            }
             phien.setThoiGianDuKienKetThuc(Timestamp.valueOf(ketThuc));
 
             PhienLamViecDAO pDAO = new PhienLamViecDAO();
@@ -448,8 +455,7 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Lỗi khi tạo phiên đặt chỗ!");
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            com.wms.util.MessageUtil.showError(this, "Lỗi xử lý đặt chỗ.", e);
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 

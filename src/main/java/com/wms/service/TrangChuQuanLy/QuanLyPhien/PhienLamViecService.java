@@ -128,8 +128,8 @@ public class PhienLamViecService {
         java.time.ZoneId zoneId = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
         java.time.ZonedDateTime nowHcm = java.time.ZonedDateTime.now(zoneId);
 
-        java.time.LocalTime openLocalTime = java.time.LocalTime.parse(gioMoCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
-        java.time.LocalTime closeLocalTime = java.time.LocalTime.parse(gioDongCua.trim(), java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+        java.time.LocalTime openLocalTime = com.wms.util.DateInputUtil.parseTime(gioMoCua.trim(), "Giờ mở cửa");
+        java.time.LocalTime closeLocalTime = com.wms.util.DateInputUtil.parseTime(gioDongCua.trim(), "Giờ đóng cửa");
 
         java.time.ZonedDateTime todayOpen = nowHcm.with(openLocalTime).withSecond(0).withNano(0);
         java.time.ZonedDateTime todayClose = nowHcm.with(closeLocalTime).withSecond(0).withNano(0);
@@ -225,7 +225,7 @@ public class PhienLamViecService {
     }
 
     private String dinhDangKhoangThoiGian(ThongTinXacNhanDatChoDTO thongTin) {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm dd/MM/yyyy");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         if (thongTin.getThoiGianBatDau() == null) {
             return "Chưa có";
         }

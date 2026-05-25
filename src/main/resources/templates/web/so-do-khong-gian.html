@@ -93,21 +93,19 @@
                 <div class="time-row">
                     <label>
                         Từ giờ
-                        <select name="start" id="startHour">
-                            <option th:each="time : ${layLuaChonGioBatDau}"
-                                    th:value="${time}"
-                                    th:text="${time}"
-                                    th:selected="${time == selectedStart.toString()}"></option>
-                        </select>
+                        <input type="time" name="start" id="startHour"
+                               th:value="${selectedStart}"
+                               th:min="${branch.thoiGianMoCua}"
+                               th:max="${branch.thoiGianDongCua}"
+                               step="60" required>
                     </label>
                     <label>
                         Đến giờ
-                        <select name="end" id="endHour">
-                            <option th:each="time : ${layLuaChonGioKetThuc}"
-                                    th:value="${time}"
-                                    th:text="${time}"
-                                    th:selected="${time == selectedEnd.toString()}"></option>
-                        </select>
+                        <input type="time" name="end" id="endHour"
+                               th:value="${selectedEnd}"
+                               th:min="${branch.thoiGianMoCua}"
+                               th:max="${branch.thoiGianDongCua}"
+                               step="60" required>
                     </label>
                 </div>
             </form>

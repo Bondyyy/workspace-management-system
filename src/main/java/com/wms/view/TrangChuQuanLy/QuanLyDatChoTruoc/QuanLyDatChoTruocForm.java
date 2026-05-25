@@ -10,7 +10,6 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -25,7 +24,6 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private List<DatChoTruocDTO> currentList = new ArrayList<>();
     private final DecimalFormat moneyFormat = new DecimalFormat("#,###",
             java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
-    private final DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     /**
      * Creates new form QuanLyDatChoTruocForm
@@ -202,7 +200,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
 
         lblDuKienToi.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblDuKienToi.setForeground(new java.awt.Color(35, 30, 48));
-        lblDuKienToi.setText("Dự kiến tới (YYYY-MM-DD HH:mm)");
+        lblDuKienToi.setText("Dự kiến tới (dd/MM/yyyy HH:mm)");
         pnRight.add(lblDuKienToi);
         lblDuKienToi.setBounds(20, 185, 220, 20);
 
@@ -492,7 +490,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         if (timestamp == null) {
             return "";
         }
-        return dateTimeFormat.format(timestamp.toLocalDateTime());
+        return com.wms.util.DateInputUtil.formatDateTime(timestamp.toLocalDateTime());
     }
 
     private String layMaDatChoTuQR(String value) {

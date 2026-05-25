@@ -8,6 +8,7 @@ import com.wms.model.TrangChuQuanLy.TongQuan.DuLieuBaoCaoTongQuatDTO;
 import com.wms.model.TrangChuQuanLy.TongQuan.TongQuanDTO;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class TongQuanService {
     private final ChiNhanhDAO chiNhanhDAO = new ChiNhanhDAO();
 
     public TongQuanDTO layDuLieuTongQuan(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
+        validateDateRange(tuNgay, denNgay);
         Map<String, Double> stats = thongKeDAO.layDoanhThuTongHop(tuNgay, denNgay, chiNhanh, loaiDT);
         List<Double> chart7Ngay = thongKeDAO.layDoanhThu7NgayGanNhat(chiNhanh);
         Map<String, Integer> coCau = thongKeDAO.layCoCauThanhToan();
@@ -45,10 +47,12 @@ public class TongQuanService {
     }
 
     public List<Object[]> layDanhSachHoaDonTheoDieuKien(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
+        validateDateRange(tuNgay, denNgay);
         return thongKeDAO.layDanhSachHoaDonTheoDieuKien(tuNgay, denNgay, chiNhanh, loaiDT);
     }
 
     public List<DoanhThuReportRowDTO> layDongBaoCaoDoanhThu(String tuNgay, String denNgay, String chiNhanh, String loaiDT) {
+        validateDateRange(tuNgay, denNgay);
         return thongKeDAO.layDongBaoCaoDoanhThu(tuNgay, denNgay, chiNhanh, loaiDT);
     }
 
@@ -60,6 +64,7 @@ public class TongQuanService {
             String loaiDoanhThu,
             String nguoiXuat
     ) {
+        validateDateRange(tuNgay, denNgay);
         String loaiBaoCaoAnToan = loaiBaoCao == null || loaiBaoCao.isBlank()
                 ? BAO_CAO_DOANH_THU
                 : loaiBaoCao.trim();
@@ -87,6 +92,14 @@ public class TongQuanService {
 
     private String giaTriNgay(String value) {
         return value == null || value.isBlank() ? "Không giới hạn" : value.trim();
+    }
+
+    private void validateDateRange(String tuNgay, String denNgay) {
+        LocalDate start = com.wms.util.DateInputUtil.parseDate(tuNgay, "Từ ngày");
+        LocalDate end = com.wms.util.DateInputUtil.parseDate(denNgay, "Đến ngày");
+        if (start != null && end != null && start.isAfter(end)) {
+            throw new IllegalArgumentException("Từ ngày không được sau đến ngày.");
+        }
     }
 
     private String tenChiNhanhHienThi(String value) {

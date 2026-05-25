@@ -72,7 +72,7 @@ public class ThongKeDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
-            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay, true);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -191,7 +191,7 @@ public class ThongKeDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
-            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay, true);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 DecimalFormat df = new DecimalFormat("#,###");
@@ -233,7 +233,7 @@ public class ThongKeDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
-            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay, true);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 DecimalFormat df = new DecimalFormat("#,###");
@@ -287,7 +287,7 @@ public class ThongKeDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
-            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay, true);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -348,7 +348,7 @@ public class ThongKeDAO {
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            int idx = bindDateRange(ps, 1, tuNgay, denNgay);
+            int idx = bindDateRange(ps, 1, tuNgay, denNgay, false);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -410,7 +410,7 @@ public class ThongKeDAO {
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            int idx = bindDateRange(ps, 1, tuNgay, denNgay);
+            int idx = bindDateRange(ps, 1, tuNgay, denNgay, false);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -484,7 +484,7 @@ public class ThongKeDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
-            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay, true);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -552,7 +552,7 @@ public class ThongKeDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
-            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay, true);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -606,7 +606,7 @@ public class ThongKeDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             int idx = 1;
             ps.setString(idx++, TRANG_THAI_DA_THANH_TOAN);
-            idx = bindDateRange(ps, idx, tuNgay, denNgay);
+            idx = bindDateRange(ps, idx, tuNgay, denNgay, true);
             bindBranch(ps, idx, maChiNhanh);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -667,13 +667,8 @@ public class ThongKeDAO {
                 ps.setString(idx++, extractBranchCode(maChiNhanh));
             }
 
-            java.time.LocalDate start = null;
-            java.time.LocalDate end = null;
-            java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            try {
-                if (tuNgay != null && !tuNgay.isBlank()) start = java.time.LocalDate.parse(tuNgay, dtf);
-                if (denNgay != null && !denNgay.isBlank()) end = java.time.LocalDate.parse(denNgay, dtf);
-            } catch (Exception e) {}
+            java.time.LocalDate start = com.wms.util.DateInputUtil.parseDate(tuNgay, "Từ ngày");
+            java.time.LocalDate end = com.wms.util.DateInputUtil.parseDate(denNgay, "Đến ngày");
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -755,26 +750,34 @@ public class ThongKeDAO {
 
     private void appendDateAndBranchFilters(StringBuilder sql, String dateColumn, boolean timestampColumn,
                                             String branchColumn, String tuNgay, String denNgay, String maChiNhanh) {
-        String dateFunction = timestampColumn ? "TO_TIMESTAMP" : "TO_DATE";
         if (tuNgay != null && !tuNgay.isBlank()) {
-            sql.append("AND ").append(dateColumn).append(" >= ")
-                    .append(dateFunction).append("(?, 'YYYY-MM-DD HH24:MI:SS') ");
+            sql.append("AND ").append(dateColumn).append(" >= ? ");
         }
         if (denNgay != null && !denNgay.isBlank()) {
-            sql.append("AND ").append(dateColumn).append(" <= ")
-                    .append(dateFunction).append("(?, 'YYYY-MM-DD HH24:MI:SS') ");
+            sql.append("AND ").append(dateColumn).append(timestampColumn ? " <= ? " : " < ? ");
         }
         if (hasBranchFilter(maChiNhanh) && branchColumn != null && !branchColumn.isBlank()) {
             sql.append("AND ").append(branchColumn).append(" = ? ");
         }
     }
 
-    private int bindDateRange(PreparedStatement ps, int idx, String tuNgay, String denNgay) throws java.sql.SQLException {
+    private int bindDateRange(PreparedStatement ps, int idx, String tuNgay, String denNgay, boolean timestampColumn)
+            throws java.sql.SQLException {
         if (tuNgay != null && !tuNgay.isBlank()) {
-            ps.setString(idx++, convertFormat(tuNgay) + " 00:00:00");
+            java.time.LocalDate start = com.wms.util.DateInputUtil.parseDate(tuNgay, "Từ ngày");
+            if (timestampColumn) {
+                ps.setTimestamp(idx++, java.sql.Timestamp.valueOf(start.atStartOfDay()));
+            } else {
+                ps.setDate(idx++, java.sql.Date.valueOf(start));
+            }
         }
         if (denNgay != null && !denNgay.isBlank()) {
-            ps.setString(idx++, convertFormat(denNgay) + " 23:59:59");
+            java.time.LocalDate end = com.wms.util.DateInputUtil.parseDate(denNgay, "Đến ngày");
+            if (timestampColumn) {
+                ps.setTimestamp(idx++, java.sql.Timestamp.valueOf(end.atTime(23, 59, 59)));
+            } else {
+                ps.setDate(idx++, java.sql.Date.valueOf(end.plusDays(1)));
+            }
         }
         return idx;
     }
@@ -800,15 +803,6 @@ public class ThongKeDAO {
             return "";
         }
         return maChiNhanh.split(" - ")[0].trim();
-    }
-
-    private String convertFormat(String dateStr) {
-        try {
-            String[] p = dateStr.split("/");
-            return p[2] + "-" + p[1] + "-" + p[0];
-        } catch (Exception e) {
-            return dateStr;
-        }
     }
 
     private String giaTriMacDinh(String value, String defaultValue) {

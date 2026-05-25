@@ -6,7 +6,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.List;
 
 public class QuanLyHoiVienForm extends javax.swing.JPanel {
@@ -14,10 +14,10 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
     private List<HoiVienDTO> hoiVienList;
     private HoiVienDTO selectedHoiVien;
     private byte[] currentAvatarData = null;
-    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
     public QuanLyHoiVienForm() {
         initComponents();
+        com.wms.util.DateInputUtil.attachDatePicker(txtNgaySinh);
         setupTierComboBox();
         loadDataToTable();
         laMoiForm();
@@ -79,12 +79,11 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         dto.setTrangThai((String) cbxTrangThai.getSelectedItem());
         dto.setHangThanhVien((String) cbxHangTV.getSelectedItem());
 
-        String dateStr = txtNgaySinh.getText().trim();
-        if (!dateStr.isEmpty()) {
-            dto.setNgaySinh(new java.sql.Date(sdf.parse(dateStr).getTime()));
-        } else {
-            dto.setNgaySinh(null);
+        LocalDate ngaySinh = com.wms.util.DateInputUtil.parseDate(txtNgaySinh.getText(), "Ngày sinh");
+        if (ngaySinh != null && ngaySinh.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày sinh không được lớn hơn ngày hiện tại.");
         }
+        dto.setNgaySinh(com.wms.util.DateInputUtil.toSqlDate(ngaySinh));
         return dto;
     }
 
@@ -416,7 +415,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             txtHoTen.setText(selectedHoiVien.getHoTen());
             txtSDT.setText(selectedHoiVien.getSdt());
             txtEmail.setText(selectedHoiVien.getEmail());
-            txtNgaySinh.setText(selectedHoiVien.getNgaySinh() != null ? sdf.format(selectedHoiVien.getNgaySinh()) : "");
+            txtNgaySinh.setText(com.wms.util.DateInputUtil.formatDate(selectedHoiVien.getNgaySinh()));
             cbxHangTV.setSelectedItem(selectedHoiVien.getHangThanhVien());
             cbxGioiTinh.setSelectedItem(selectedHoiVien.getGioiTinh());
             cbxTrangThai.setSelectedItem(selectedHoiVien.getTrangThai());

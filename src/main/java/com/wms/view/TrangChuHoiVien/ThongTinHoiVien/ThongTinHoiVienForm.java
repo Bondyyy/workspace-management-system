@@ -4,6 +4,7 @@ import com.wms.controller.TrangChuQuanLy.QuanLyHoiVien.ThongTinHoiVienController
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
 import javax.swing.ImageIcon;
 import java.awt.Image;
+import java.time.LocalDate;
 
 public class ThongTinHoiVienForm extends javax.swing.JPanel {
 
@@ -11,6 +12,7 @@ public class ThongTinHoiVienForm extends javax.swing.JPanel {
 
     public ThongTinHoiVienForm() {
         initComponents();
+        com.wms.util.DateInputUtil.attachDatePicker(txtNgaySinh);
         controller = new ThongTinHoiVienController();
         loadData();
     }
@@ -22,16 +24,14 @@ public class ThongTinHoiVienForm extends javax.swing.JPanel {
         lblDisplayName.setText(dto.getHoTen());
         lblDisplayTier.setText(dto.getHangThanhVien());
         if (dto.getThoiGianTao() != null) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-            lblJoinDate.setText("Tham gia từ: " + sdf.format(dto.getThoiGianTao()));
+            lblJoinDate.setText("Tham gia từ: " + com.wms.util.DateInputUtil.formatDate(dto.getThoiGianTao()));
         }
         
         txtHoTen.setText(dto.getHoTen());
         txtSDT.setText(dto.getSdt());
         txtEmail.setText(dto.getEmail());
         if (dto.getNgaySinh() != null) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-            txtNgaySinh.setText(sdf.format(dto.getNgaySinh()));
+            txtNgaySinh.setText(com.wms.util.DateInputUtil.formatDate(dto.getNgaySinh()));
         }
         
         if (dto.getGioiTinh() != null) {
@@ -294,12 +294,11 @@ public class ThongTinHoiVienForm extends javax.swing.JPanel {
             dto.setHoTen(txtHoTen.getText().trim());
             dto.setSdt(txtSDT.getText().trim());
             
-            String ns = txtNgaySinh.getText().trim();
-            if (!ns.isEmpty()) {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-                java.util.Date date = sdf.parse(ns);
-                dto.setNgaySinh(new java.sql.Date(date.getTime()));
+            LocalDate ngaySinh = com.wms.util.DateInputUtil.parseDate(txtNgaySinh.getText(), "Ngày sinh");
+            if (ngaySinh != null && ngaySinh.isAfter(LocalDate.now())) {
+                throw new IllegalArgumentException("Ngày sinh không được lớn hơn ngày hiện tại.");
             }
+            dto.setNgaySinh(com.wms.util.DateInputUtil.toSqlDate(ngaySinh));
             
             dto.setGioiTinh(cbxGioiTinh.getSelectedItem().toString());
             
@@ -313,7 +312,7 @@ public class ThongTinHoiVienForm extends javax.swing.JPanel {
                 javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng nhập ngày sinh đúng định dạng dd/MM/yyyy", "Lỗi nhập liệu", javax.swing.JOptionPane.WARNING_MESSAGE);
+            com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
         }
     }
 

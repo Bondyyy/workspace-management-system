@@ -26,7 +26,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     private DefaultTableModel tableModel;
     private final DecimalFormat df = new DecimalFormat("#,### VNĐ",
             java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
-    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
     private HoaDonDTO currentHD;
     private List<HoaDonDTO> dsHoaDon = Collections.emptyList(); // cache, tránh gọi DB 2 lần
     private javax.swing.Timer realTimeTimer;
