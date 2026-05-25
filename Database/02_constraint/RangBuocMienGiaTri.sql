@@ -31,10 +31,14 @@ ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_TrangThai
         'Đang chờ thanh toán', 'Đã thanh toán thành công', 'Thanh toán không thành công',
         'Đã sử dụng', 'Quá hạn nhận chỗ'));
 
+ALTER TABLE DATCHO ADD CONSTRAINT CHK_DC_ThoiGianDat
+    CHECK (ThoiGianDat <= ThoiGianDuKienToi);
 -- 5. Bảng PHIENLAMVIEC
 ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_TrangThai
     CHECK (TrangThaiPhien IN ('Đang hoạt động', 'Đã kết thúc'));
 
+ALTER TABLE PHIENLAMVIEC ADD CONSTRAINT CHK_PLV_ThoiGianDuKien
+    CHECK (ThoiGianDuKienKetThuc >= ThoiGianBatDau + INTERVAL '1' HOUR);
 -- 6. Bảng DICHVU & CHITIETDICHVU
 ALTER TABLE DICHVU ADD CONSTRAINT CHK_DV_DonGia 
     CHECK (DonGia >= 0);
@@ -85,12 +89,13 @@ ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_PTTT
 ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TrangThai
     CHECK (TrangThaiThanhToan IN ('Đang chờ thanh toán', 'Đã trả trước', 'Đã thanh toán thành công', 'Thanh toán không thành công'));
 
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TongTien 
-    CHECK (TongTien >= 0);
-
-ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_ThanhTien 
-    CHECK (ThanhTien >= 0);
-
+ALTER TABLE HOADON ADD CONSTRAINT CHK_HD_TienHopLe
+    CHECK (
+        TongTien >= 0
+        AND ThanhTien >= 0
+        AND DaTraTruoc >= 0
+        AND ThanhTien <= TongTien
+    );
 -- 11. Bảng PHIEUGIAMGIA
 ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_GiaTri 
     CHECK (GiaTriGiamGia > 0);
@@ -103,3 +108,6 @@ ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_SLToiDa
 
 ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_TrangThai
     CHECK (TrangThai IN ('Đang có hiệu lực', 'Chưa đến hạn bắt đầu', 'Hết hiệu lực', 'Đã vô hiệu hoá'));
+
+ALTER TABLE PHIEUGIAMGIA ADD CONSTRAINT CHK_PGG_SLDaDung
+    CHECK (SLDaDung >= 0 AND SLDaDung <= SLToiDa);

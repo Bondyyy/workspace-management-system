@@ -189,6 +189,7 @@ public class NguoiDungDAO {
                     psVT.executeUpdate();
                 }
 
+                dongBoHoSoNhanVienTheoVaiTro(maND, conn);
                 conn.commit();
             } catch (SQLException e) {
                 conn.rollback();
@@ -309,6 +310,7 @@ public class NguoiDungDAO {
                     psVT.executeUpdate();
                 }
 
+                dongBoHoSoNhanVienTheoVaiTro(user.getMaND(), conn);
                 conn.commit();
             } catch (SQLException e) {
                 conn.rollback();
@@ -368,5 +370,77 @@ public class NguoiDungDAO {
             System.err.println("[NguoiDungDAO] Lỗi lấy chức năng người dùng: " + e.getMessage());
         }
         return list;
+    }
+
+    private void dongBoHoSoNhanVienTheoVaiTro(String maND, Connection conn) throws SQLException {
+        String sqlRoles = "SELECT vt.TenVaiTro " +
+                          "FROM CHITIETVAITRO ctv " +
+                          "JOIN VAITRO vt ON ctv.MaVaiTro = vt.MaVaiTro " +
+                          "WHERE ctv.MaND = ?";
+        boolean isCustomerOnly = true;
+        boolean isAdmin = false;
+        boolean isStaff = false;
+        String staffRoleName = null;
+
+        try (PreparedStatement ps = conn.prepareStatement(sqlRoles)) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String tenVaiTro = rs.getString("TenVaiTro").toLowerCase();
+                    if (tenVaiTro.contains("quản trị viên hệ thống")) {
+                        isAdmin = true;
+                        isCustomerOnly = false;
+                    } else if (tenVaiTro.contains("hội viên")) {
+                        // isCustomerOnly remains true if no other roles
+                    } else {
+                        isStaff = true;
+                        isCustomerOnly = false;
+                        if (staffRoleName == null || tenVaiTro.contains("quản lý")) {
+                            staffRoleName = rs.getString("TenVaiTro");
+                        }
+                    }
+                }
+            }
+        }
+
+        String sqlCheckNV = "SELECT MaNV FROM NHANVIEN WHERE MaND = ?";
+        String maNV = null;
+        try (PreparedStatement ps = conn.prepareStatement(sqlCheckNV)) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    maNV = rs.getString("MaNV");
+                }
+            }
+        }
+
+        if (isCustomerOnly && !isAdmin && !isStaff) {
+            if (maNV != null) {
+                String sqlUpdate = "UPDATE NHANVIEN SET TrangThaiLamViec = 'Ngừng làm việc' WHERE MaNV = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
+                    ps.setString(1, maNV);
+                    ps.executeUpdate();
+                }
+            }
+        } else if (isAdmin) {
+            // Keep existing NHANVIEN, do nothing
+        } else if (isStaff) {
+            String loaiNV = (staffRoleName != null && staffRoleName.toLowerCase().contains("quản lý")) ? "Quản lý" : "Nhân viên";
+            if (maNV == null) {
+                String sqlInsert = "INSERT INTO NHANVIEN (LoaiNV, NgayVaoLam, TrangThaiLamViec, MaND) VALUES (?, CURRENT_DATE, 'Đang làm việc', ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
+                    ps.setString(1, loaiNV);
+                    ps.setString(2, maND);
+                    ps.executeUpdate();
+                }
+            } else {
+                String sqlUpdate = "UPDATE NHANVIEN SET LoaiNV = ?, TrangThaiLamViec = 'Đang làm việc' WHERE MaNV = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
+                    ps.setString(1, loaiNV);
+                    ps.setString(2, maNV);
+                    ps.executeUpdate();
+                }
+            }
+        }
     }
 }

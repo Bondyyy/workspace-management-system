@@ -24,6 +24,7 @@ public class KhachHangDAO {
                 "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
                 "WHERE kh.MaKH NOT LIKE 'KH_ADMIN%' " +
                 "AND NOT EXISTS (SELECT 1 FROM NHANVIEN nv WHERE nv.MaND = kh.MaND) " +
+                "AND NOT EXISTS (SELECT 1 FROM CHITIETVAITRO ctv JOIN VAITRO vt ON ctv.MaVaiTro = vt.MaVaiTro WHERE ctv.MaND = kh.MaND AND LOWER(vt.TenVaiTro) LIKE '%quản trị viên hệ thống%') " +
                 "ORDER BY kh.MaKH DESC";
 
         try (Connection conn = getConn();
@@ -62,6 +63,7 @@ public class KhachHangDAO {
                 "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
                 "WHERE kh.MaKH NOT LIKE 'KH_ADMIN%' " +
                 "AND NOT EXISTS (SELECT 1 FROM NHANVIEN nv WHERE nv.MaND = kh.MaND) " +
+                "AND NOT EXISTS (SELECT 1 FROM CHITIETVAITRO ctv JOIN VAITRO vt ON ctv.MaVaiTro = vt.MaVaiTro WHERE ctv.MaND = kh.MaND AND LOWER(vt.TenVaiTro) LIKE '%quản trị viên hệ thống%') " +
                 "AND (nd.HoTen LIKE ? OR nd.SDT LIKE ? OR nd.Email LIKE ?) " +
                 "ORDER BY kh.MaKH DESC";
 
@@ -108,6 +110,7 @@ public class KhachHangDAO {
                 "LEFT JOIN HANGTHANHVIEN h ON kh.MaHangThanhVien = h.MaHangThanhVien " +
                 "WHERE kh.MaKH NOT LIKE 'KH_ADMIN%' " +
                 "AND NOT EXISTS (SELECT 1 FROM NHANVIEN nv WHERE nv.MaND = kh.MaND) " +
+                "AND NOT EXISTS (SELECT 1 FROM CHITIETVAITRO ctv JOIN VAITRO vt ON ctv.MaVaiTro = vt.MaVaiTro WHERE ctv.MaND = kh.MaND AND LOWER(vt.TenVaiTro) LIKE '%quản trị viên hệ thống%') " +
                 "AND nd.SDT = ? " +
                 "ORDER BY kh.MaKH DESC";
 

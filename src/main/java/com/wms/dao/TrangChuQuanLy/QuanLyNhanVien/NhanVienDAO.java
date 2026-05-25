@@ -34,6 +34,11 @@ public class NhanVienDAO {
                         "LEFT JOIN VAITRO vt ON cvt.MaVaiTro = vt.MaVaiTro");
 
         sql.append(" WHERE nv.MaNV != 'NV_ADMIN'");
+
+        sql.append(" AND EXISTS (SELECT 1 FROM CHITIETVAITRO ctv_ex JOIN VAITRO vt_ex ON vt_ex.MaVaiTro = ctv_ex.MaVaiTro WHERE ctv_ex.MaND = nd.MaND AND LOWER(vt_ex.TenVaiTro) NOT LIKE '%hội viên%' AND LOWER(vt_ex.TenVaiTro) NOT LIKE '%quản trị viên hệ thống%')");
+        sql.append(" AND NOT EXISTS (SELECT 1 FROM CHITIETVAITRO ctv_nx JOIN VAITRO vt_nx ON vt_nx.MaVaiTro = ctv_nx.MaVaiTro WHERE ctv_nx.MaND = nd.MaND AND LOWER(vt_nx.TenVaiTro) LIKE '%quản trị viên hệ thống%')");
+        sql.append(" AND nv.TrangThaiLamViec != 'Ngừng làm việc'");
+        
         if (tuKhoa != null && !tuKhoa.trim().isEmpty()) {
             sql.append(" AND (LOWER(nd.HoTen) LIKE ? OR nd.SDT LIKE ?)");
         }
@@ -161,7 +166,11 @@ public class NhanVienDAO {
                     cs.setString(1, nv.getLoaiNV());
                     cs.setString(2, nv.getTrangThaiLamViec() != null ? nv.getTrangThaiLamViec() : "Đang làm việc");
                     cs.setString(3, nv.getCaLamViec());
-                    cs.setDouble(4, nv.getLuongCoBan());
+                    if (nv.getLuongCoBan() != null) {
+                        cs.setDouble(4, nv.getLuongCoBan());
+                    } else {
+                        cs.setNull(4, Types.NUMERIC);
+                    }
                     cs.setString(5, nv.getMaCN());
                     cs.setString(6, maND);
                     cs.registerOutParameter(7, Types.VARCHAR);
@@ -267,7 +276,11 @@ public class NhanVienDAO {
                 try (PreparedStatement ps = conn.prepareStatement(sqlNV)) {
                     ps.setString(1, nv.getLoaiNV());
                     ps.setString(2, nv.getCaLamViec());
-                    ps.setDouble(3, nv.getLuongCoBan());
+                    if (nv.getLuongCoBan() != null) {
+                        ps.setDouble(3, nv.getLuongCoBan());
+                    } else {
+                        ps.setNull(3, Types.NUMERIC);
+                    }
                     ps.setString(4, nv.getMaCN());
                     ps.setString(5, nv.getTrangThaiLamViec());
                     ps.setString(6, nv.getMaNV());

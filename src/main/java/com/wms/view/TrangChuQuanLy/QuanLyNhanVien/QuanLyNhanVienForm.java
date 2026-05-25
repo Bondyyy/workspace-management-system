@@ -103,8 +103,10 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
                 continue; // Ẩn thông tin của chính mình (quản lý đang đăng nhập)
             }
 
+            String caLam = (r[4] != null && !r[4].toString().trim().isEmpty()) ? r[4].toString() : "Chưa phân";
+            String chiNhanh = (r[5] != null && !r[5].toString().trim().isEmpty()) ? r[5].toString() : "Chưa phân";
             model.addRow(new Object[] {
-                    r[0], r[1], r[2], r[4], r[5], r[6], r[7]
+                    r[0], r[1], r[2], caLam, chiNhanh, r[6], r[7]
             });
             String key = (String) r[0]; // MaNV làm key duy nhất
             tblNhanVien.putClientProperty("maCN_" + key, r[11]);
@@ -588,9 +590,14 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         nv.setTrangThaiLamViec((String) cbxTrangThai.getSelectedItem());
         nv.setMaCN(getMaCNDangChon());
         try {
-            nv.setLuongCoBan(Double.parseDouble(txtLuong.getText().trim()));
+            String luongStr = txtLuong.getText().trim();
+            if (luongStr.isEmpty() || luongStr.equalsIgnoreCase("Chưa phân")) {
+                nv.setLuongCoBan(null);
+            } else {
+                nv.setLuongCoBan(Double.parseDouble(luongStr));
+            }
         } catch (Exception e) {
-            nv.setLuongCoBan(0.0);
+            nv.setLuongCoBan(null);
         }
         return nv;
     }
