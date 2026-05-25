@@ -34,6 +34,12 @@ public class VaiTroDAO {
             boolean autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 String maVT;
                 String sqlVT = """
@@ -103,6 +109,12 @@ public class VaiTroDAO {
             boolean autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 try (PreparedStatement ps = conn
                         .prepareStatement("UPDATE VAITRO SET TenVaiTro = ?, MoTa = ? WHERE MaVaiTro = ?")) {
@@ -144,6 +156,12 @@ public class VaiTroDAO {
             boolean autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 String sqlCheck = "SELECT COUNT(*) FROM CHITIETVAITRO WHERE MaVaiTro = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {

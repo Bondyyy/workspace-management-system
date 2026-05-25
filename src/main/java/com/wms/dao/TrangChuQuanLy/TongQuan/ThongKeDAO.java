@@ -619,6 +619,123 @@ public class ThongKeDAO {
         return tong;
     }
 
+    public DuLieuBaoCaoTongQuatDTO layBaoCaoTraLuongNhanVien(String tuNgay, String denNgay, String maChiNhanh, String loaiNV) {
+        DuLieuBaoCaoTongQuatDTO duLieu = taoBaoCaoCoBan(
+                "Báo cáo trả lương nhân viên",
+                "BÁO CÁO TRẢ LƯƠNG NHÂN VIÊN",
+                List.of("Mã NV", "Họ tên (Loại NV)", "Chi nhánh", "Ngày vào làm", "Lương CB", "Phụ cấp & Thưởng", "Số ngày TL", "Tổng lương"),
+                "Tổng lương = (Lương CB / 30) * Số ngày TL + Phụ cấp + Tiền thưởng. Số ngày TL tính từ Từ ngày (hoặc Ngày vào làm nếu sau Từ ngày) đến Đến ngày."
+        );
+        List<DongBaoCaoTongQuatDTO> rows = new ArrayList<>();
+        int tongNhanVien = 0;
+        double tongLuongCoBan = 0;
+        double tongPhaiTra = 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT nv.MaNV, nd.HoTen, nv.LoaiNV, cn.TenCN, nv.NgayVaoLam, " +
+                        "NVL(nv.LuongCoBan, 0) AS LuongCoBan, NVL(nv.PhuCap, 0) AS PhuCap, NVL(nv.TienThuong, 0) AS TienThuong " +
+                        "FROM NHANVIEN nv " +
+                        "JOIN NGUOIDUNG nd ON nv.MaND = nd.MaND " +
+                        "LEFT JOIN CHINHANH cn ON nv.MaCN = cn.MaCN " +
+                        "WHERE NVL(nv.TrangThaiLamViec, 'Đang làm việc') <> 'Ngừng làm việc' " +
+                        "AND NOT EXISTS (" +
+                        "   SELECT 1 FROM CHITIETVAITRO ctv JOIN VAITRO vt ON vt.MaVaiTro = ctv.MaVaiTro " +
+                        "   WHERE ctv.MaND = nd.MaND AND LOWER(vt.TenVaiTro) LIKE '%quản trị viên hệ thống%'" +
+                        ") " +
+                        "AND NOT EXISTS (" +
+                        "   SELECT 1 FROM CHITIETVAITRO ctv JOIN VAITRO vt ON vt.MaVaiTro = ctv.MaVaiTro " +
+                        "   WHERE ctv.MaND = nd.MaND AND LOWER(vt.TenVaiTro) LIKE '%hội viên%'" +
+                        ") ");
+
+        if (loaiNV != null && !loaiNV.isBlank() && !"Tất cả".equalsIgnoreCase(loaiNV)) {
+            sql.append("AND nv.LoaiNV = ? ");
+        }
+        if (hasBranchFilter(maChiNhanh)) {
+            sql.append("AND nv.MaCN = ? ");
+        }
+
+        sql.append("ORDER BY nv.MaNV ASC");
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            int idx = 1;
+            if (loaiNV != null && !loaiNV.isBlank() && !"Tất cả".equalsIgnoreCase(loaiNV)) {
+                ps.setString(idx++, loaiNV);
+            }
+            if (hasBranchFilter(maChiNhanh)) {
+                ps.setString(idx++, extractBranchCode(maChiNhanh));
+            }
+
+            java.time.LocalDate start = null;
+            java.time.LocalDate end = null;
+            java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            try {
+                if (tuNgay != null && !tuNgay.isBlank()) start = java.time.LocalDate.parse(tuNgay, dtf);
+                if (denNgay != null && !denNgay.isBlank()) end = java.time.LocalDate.parse(denNgay, dtf);
+            } catch (Exception e) {}
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    java.sql.Date ngayVaoLamSql = rs.getDate("NgayVaoLam");
+                    if (ngayVaoLamSql == null) continue;
+                    java.time.LocalDate ngayVaoLam = ngayVaoLamSql.toLocalDate();
+
+                    java.time.LocalDate ngayBatDauTinhLuong = ngayVaoLam;
+                    if (start != null && start.isAfter(ngayVaoLam)) {
+                        ngayBatDauTinhLuong = start;
+                    }
+
+                    java.time.LocalDate ngayKetThucTinhLuong = end != null ? end : java.time.LocalDate.now();
+
+                    if (ngayBatDauTinhLuong.isAfter(ngayKetThucTinhLuong)) {
+                        continue; 
+                    }
+                    if (ngayVaoLam.isAfter(ngayKetThucTinhLuong)) {
+                        continue; 
+                    }
+
+                    long soNgayTinhLuong = java.time.temporal.ChronoUnit.DAYS.between(ngayBatDauTinhLuong, ngayKetThucTinhLuong) + 1;
+
+                    double luongCoBan = rs.getDouble("LuongCoBan");
+                    double phuCap = rs.getDouble("PhuCap");
+                    double tienThuong = rs.getDouble("TienThuong");
+
+                    double luongTheoNgay = luongCoBan / 30.0;
+                    double tongLuong = (luongTheoNgay * soNgayTinhLuong) + phuCap + tienThuong;
+
+                    tongNhanVien++;
+                    tongLuongCoBan += luongCoBan;
+                    tongPhaiTra += tongLuong;
+
+                    String hoTenLoai = rs.getString("HoTen") + " (" + rs.getString("LoaiNV") + ")";
+
+                    rows.add(new DongBaoCaoTongQuatDTO(
+                            rs.getString("MaNV"),
+                            hoTenLoai,
+                            giaTriMacDinh(rs.getString("TenCN"), "Chưa phân"),
+                            dinhDangNgay(ngayVaoLamSql),
+                            dinhDangTien(luongCoBan),
+                            dinhDangTien(phuCap + tienThuong),
+                            String.valueOf(soNgayTinhLuong),
+                            dinhDangTien(tongLuong)
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        duLieu.setDanhSachDongBaoCao(rows);
+        duLieu.setNhanTongGiaTri1("Tổng số nhân viên");
+        duLieu.setTongGiaTri1(FORMAT_SO.format(tongNhanVien));
+        duLieu.setNhanTongGiaTri2("Tổng lương cơ bản");
+        duLieu.setTongGiaTri2(dinhDangTien(tongLuongCoBan));
+        duLieu.setNhanTongGiaTri3("Tổng lương phải trả");
+        duLieu.setTongGiaTri3(dinhDangTien(tongPhaiTra));
+        return duLieu;
+    }
+
     private DuLieuBaoCaoTongQuatDTO taoBaoCaoCoBan(String loaiBaoCao, String tieuDe,
                                                    List<String> danhSachTieuDeCot, String ghiChu) {
         DuLieuBaoCaoTongQuatDTO duLieu = new DuLieuBaoCaoTongQuatDTO();

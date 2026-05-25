@@ -98,6 +98,12 @@ public class NhanVienDAO {
             autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 String hashedPw = (matKhau != null && !matKhau.isEmpty()) ? PasswordUtil.hash(matKhau)
                         : PasswordUtil.hash("123456");
@@ -245,6 +251,12 @@ public class NhanVienDAO {
             autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 boolean hasNewPw = (matKhau != null && !matKhau.isEmpty());
                 String sqlND = "UPDATE NGUOIDUNG SET HoTen = ?, TenTaiKhoan = ?, SDT = ?, Email = ?, GioiTinh = ?, AnhDaiDien = ?, NgaySinh = ?, CapNhatLanCuoi = CURRENT_TIMESTAMP"
@@ -326,6 +338,12 @@ public class NhanVienDAO {
             autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 String[] queries = {
                         "DELETE FROM CHITIETVAITRO WHERE MaND = ?",

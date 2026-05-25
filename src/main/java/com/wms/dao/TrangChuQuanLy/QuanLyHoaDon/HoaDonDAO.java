@@ -190,11 +190,11 @@ public class HoaDonDAO {
 
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
         ThongTinHoaDonDTO thongTin = null;
-        String sqlChung = "SELECT h.MaHoaDon, " +
+        String sqlChung = "SELECT h.MaHoaDon, h.NgayLapHoaDon, h.PhuongThucThanhToan, " +
             "NVL(h.TongTien, FN_TinhTongTien(p.MaPhien)) AS TongTien, " +
             "NVL(h.ThanhTien, GREATEST(0, NVL(h.TongTien, FN_TinhTongTien(p.MaPhien)) - NVL(h.DaTraTruoc, 0))) AS ThanhTien, " +
             "p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, " +
-            "nd.HoTen AS HoTenKH, kg.TenKG, p.MaDatCho, dc.KhoangThoiGianSuDung, "
+            "nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho, dc.KhoangThoiGianSuDung, "
             + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc, "
             + "NVL(h.DaTraTruoc, 0) AS DaTraTruoc, "
             + "FN_TinhTienKhongGian(p.MaPhien) AS TienKhongGian, "
@@ -204,6 +204,7 @@ public class HoaDonDAO {
                 "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
                 "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                 "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
+                "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN " +
                 "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
                 "WHERE h.MaHoaDon = ?";
 
@@ -221,6 +222,13 @@ public class HoaDonDAO {
                     thongTin.setMaHoaDon(rsChung.getString("MaHoaDon"));
                     thongTin.setHoTenKH(rsChung.getString("HoTenKH"));
                     thongTin.setTenKhongGian(rsChung.getString("TenKG"));
+                    thongTin.setTenChiNhanh(rsChung.getString("TenCN"));
+                    thongTin.setPhuongThucThanhToan(rsChung.getString("PhuongThucThanhToan"));
+                    
+                    Timestamp ngayLap = rsChung.getTimestamp("NgayLapHoaDon");
+                    if (ngayLap != null) {
+                        thongTin.setNgayLapHoaDon(new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ngayLap));
+                    }
 
                     double tt = rsChung.getDouble("TongTienGoc");
                     if (tt <= 0) {

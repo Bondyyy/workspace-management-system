@@ -137,6 +137,12 @@ public class NguoiDungDAO {
             boolean autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 String maND;
                 try (CallableStatement cs = conn.prepareCall(sqlND)) {
@@ -273,6 +279,12 @@ public class NguoiDungDAO {
             boolean autoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
+                
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER SESSION DISABLE PARALLEL DML");
+                } catch (Exception e) {
+                    System.err.println("Cannot disable parallel DML: " + e.getMessage());
+                }
 
                 try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
                     int idx = 1;

@@ -626,7 +626,25 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
     private void xuatPDFHoaDon(com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO hoaDonHienTai) {
         if (hoaDonHienTai == null) return;
-        com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, 0); // No discount context in preview
+        Object[] options = {"Bill 80mm", "A4 PDF", "Hủy"};
+        int choice = JOptionPane.showOptionDialog(this, "Chọn khổ giấy in hóa đơn:", "Xuất hóa đơn",
+                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                
+        if (choice == 0) {
+            try {
+                com.wms.util.HoaDonJasperExporter.xuatHoaDon80mm(this, hoaDonHienTai, 0);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi xuất Jasper 80mm, tự động dùng iText...\n" + e.getMessage(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, 0);
+            }
+        } else if (choice == 1) {
+            try {
+                com.wms.util.HoaDonJasperExporter.xuatHoaDonA4(this, hoaDonHienTai, 0);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi xuất Jasper A4, tự động dùng iText...\n" + e.getMessage(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                com.wms.util.HoaDonPDFExporter.xuatHoaDonPDF(this, hoaDonHienTai, 0);
+            }
+        }
     }
 
     private void resetForm() {

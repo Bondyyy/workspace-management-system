@@ -117,7 +117,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         }
 
         // Gọi form Tổng quan lên đầu tiên
-        showPanel(new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanForm());
+        showPanel(new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanTabbedForm());
         setActiveMenu(btnMenuTongQuan);
     }
 
@@ -740,7 +740,7 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
     }
 
     private void btnMenuTongQuanActionPerformed(java.awt.event.ActionEvent evt) {
-        showPanel(new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanForm());
+        showPanel(new com.wms.view.TrangChuQuanLy.TongQuan.TongQuanTabbedForm());
         setActiveMenu(btnMenuTongQuan);
     }
 

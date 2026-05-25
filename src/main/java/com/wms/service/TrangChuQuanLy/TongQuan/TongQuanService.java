@@ -19,6 +19,7 @@ public class TongQuanService {
     public static final String BAO_CAO_CHI_PHI_NHAP_KHO = "Báo cáo chi phí nhập kho";
     public static final String BAO_CAO_DICH_VU_BAN_CHAY = "Báo cáo dịch vụ bán chạy";
     public static final String BAO_CAO_LOI_NHUAN_GOP_UOC_TINH = "Báo cáo lợi nhuận gộp ước tính";
+    public static final String BAO_CAO_TRA_LUONG_NHAN_VIEN = "Báo cáo trả lương nhân viên";
 
     private final ThongKeDAO thongKeDAO = new ThongKeDAO();
     private final ChiNhanhDAO chiNhanhDAO = new ChiNhanhDAO();
@@ -69,6 +70,7 @@ public class TongQuanService {
             case BAO_CAO_CHI_PHI_NHAP_KHO -> duLieu = thongKeDAO.layBaoCaoChiPhiNhapKho(tuNgay, denNgay, maChiNhanh);
             case BAO_CAO_DICH_VU_BAN_CHAY -> duLieu = thongKeDAO.layBaoCaoDichVuBanChay(tuNgay, denNgay, maChiNhanh);
             case BAO_CAO_LOI_NHUAN_GOP_UOC_TINH -> duLieu = thongKeDAO.layBaoCaoLoiNhuanGopUocTinh(tuNgay, denNgay, maChiNhanh);
+            case BAO_CAO_TRA_LUONG_NHAN_VIEN -> duLieu = thongKeDAO.layBaoCaoTraLuongNhanVien(tuNgay, denNgay, maChiNhanh, loaiDoanhThu); // loaiDoanhThu acts as loaiNV here
             case BAO_CAO_DOANH_THU -> duLieu = thongKeDAO.layBaoCaoDoanhThu(tuNgay, denNgay, maChiNhanh, loaiDoanhThu);
             default -> duLieu = thongKeDAO.layBaoCaoDoanhThu(tuNgay, denNgay, maChiNhanh, loaiDoanhThu);
         }

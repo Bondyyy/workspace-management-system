@@ -18,6 +18,9 @@ public class ThongTinHoaDonDTO {
     private List<DichVuDaDungDTO> danhSachDichVu;
     private double soTienDaTraTruoc;
     private boolean daTraTruoc;
+    private String ngayLapHoaDon;
+    private String phuongThucThanhToan;
+    private String tenChiNhanh;
 
     public ThongTinHoaDonDTO() {
         this.danhSachDichVu = new ArrayList<>();
@@ -49,4 +52,10 @@ public class ThongTinHoaDonDTO {
     public void setSoTienDaTraTruoc(double soTienDaTraTruoc) { this.soTienDaTraTruoc = soTienDaTraTruoc; }
     public boolean isDaTraTruoc() { return daTraTruoc; }
     public void setDaTraTruoc(boolean daTraTruoc) { this.daTraTruoc = daTraTruoc; }
+    public String getNgayLapHoaDon() { return ngayLapHoaDon; }
+    public void setNgayLapHoaDon(String ngayLapHoaDon) { this.ngayLapHoaDon = ngayLapHoaDon; }
+    public String getPhuongThucThanhToan() { return phuongThucThanhToan; }
+    public void setPhuongThucThanhToan(String phuongThucThanhToan) { this.phuongThucThanhToan = phuongThucThanhToan; }
+    public String getTenChiNhanh() { return tenChiNhanh; }
+    public void setTenChiNhanh(String tenChiNhanh) { this.tenChiNhanh = tenChiNhanh; }
 }
