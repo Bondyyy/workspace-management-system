@@ -10,7 +10,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.InputStream;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class HoaDonJasperExporter {
 
-    private static final DecimalFormat formatTien = new DecimalFormat("#,##0");
     private static final Map<String, JasperReport> REPORT_CACHE = new ConcurrentHashMap<>();
 
     public static void xuatHoaDonA4(Component parentComponent, ThongTinHoaDonDTO hoaDon, double tienGiamGia) throws Exception {
@@ -86,14 +84,27 @@ public class HoaDonJasperExporter {
         params.put("TRANG_THAI_THANH_TOAN", giaTri(hoaDon.getTrangThaiThanhToan()));
         params.put("PHUONG_THUC_THANH_TOAN", giaTri(hoaDon.getPhuongThucThanhToan()));
 
-        double tongTienGoc = hoaDon.getTongTien();
-        double tienDaTraTruoc = hoaDon.isDaTraTruoc() ? hoaDon.getSoTienDaTraTruoc() : 0;
-        double conPhaiThanhToan = Math.max(0, tongTienGoc - tienDaTraTruoc - tienGiamGia);
+        double tongTienGoc = Math.max(0, hoaDon.getTongTien());
+        double tienDaTraTruoc = Math.max(0, hoaDon.getSoTienDaTraTruoc());
+        HoaDonGiamGiaUtil.ThongTinGiamGia giamGia =
+                HoaDonGiamGiaUtil.taoThongTinGiamGia(hoaDon, tienGiamGia);
+        double conPhaiThanhToan = HoaDonGiamGiaUtil.layConPhaiThanhToan(hoaDon, giamGia, tienGiamGia);
 
-        params.put("TONG_CONG", formatTien.format(tongTienGoc));
-        params.put("DA_TRA_TRUOC", "-" + formatTien.format(tienDaTraTruoc));
-        params.put("GIAM_GIA", "-" + formatTien.format(tienGiamGia));
-        params.put("CON_PHAI_THANH_TOAN", formatTien.format(conPhaiThanhToan));
+        params.put("TONG_CONG", HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc));
+        params.put("DA_TRA_TRUOC", tienDaTraTruoc > 0 ? HoaDonGiamGiaUtil.formatTienVnd(tienDaTraTruoc) : "");
+        params.put("GIAM_GIA", giamGia.coTongGiam() ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()) : "");
+        params.put("GIAM_VOUCHER_LABEL", giamGia.coGiamVoucher() ? giamGia.getNhanVoucher() + ":" : "");
+        params.put("GIAM_VOUCHER", giamGia.coGiamVoucher()
+                ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamVoucher())
+                : "");
+        params.put("GIAM_HANG_TV_LABEL", giamGia.coGiamHangThanhVien() ? giamGia.getNhanHangThanhVien() + ":" : "");
+        params.put("GIAM_HANG_TV", giamGia.coGiamHangThanhVien()
+                ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamHangThanhVien())
+                : "");
+        params.put("TONG_GIAM", giamGia.coTongGiam()
+                ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam())
+                : "");
+        params.put("CON_PHAI_THANH_TOAN", HoaDonGiamGiaUtil.formatTienVnd(conPhaiThanhToan));
 
         List<DongHoaDonJasperDTO> rows = new ArrayList<>();
         int stt = 1;
@@ -119,8 +130,8 @@ public class HoaDonJasperExporter {
                         String.valueOf(stt++),
                         tenDV,
                         soLuongStr,
-                        formatTien.format(dv.getDonGia()),
-                        formatTien.format(dv.getThanhTien())
+                        HoaDonGiamGiaUtil.formatTienVnd(dv.getDonGia()),
+                        HoaDonGiamGiaUtil.formatTienVnd(dv.getThanhTien())
                 ));
             }
         }

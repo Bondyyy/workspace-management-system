@@ -219,6 +219,8 @@ public class HoaDonDAO {
             "FN_TinhThanhTien(p.MaPhien, h.MaPGG) AS TongTienSauGiam, " +
             "p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, " +
             "nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho, dc.KhoangThoiGianSuDung, "
+            + "h.MaPGG, pgg.MaChuSoPGG, NVL(pgg.GiaTriGiamGia, 0) AS GiaTriGiamVoucher, "
+            + "htv.TenHangThanhVien, NVL(htv.PhanTramTienGiam, 0) AS PhanTramGiamHangThanhVien, "
             + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc, "
             + "NVL(h.DaTraTruoc, 0) AS DaTraTruoc, "
             + "FN_TinhTienKhongGian(p.MaPhien) AS TienKhongGian, "
@@ -226,9 +228,11 @@ public class HoaDonDAO {
                 "FROM HOADON h " +
                 "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
                 "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
+                "LEFT JOIN HANGTHANHVIEN htv ON kh.MaHangThanhVien = htv.MaHangThanhVien " +
                 "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
                 "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
                 "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN " +
+                "LEFT JOIN PHIEUGIAMGIA pgg ON h.MaPGG = pgg.MaPGG " +
                 "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
                 "WHERE h.MaHoaDon = ?";
 
@@ -260,6 +264,22 @@ public class HoaDonDAO {
                     double tt = tongTienLuu != null && tongTienLuu > 0 ? tongTienLuu : tongTienGoc;
 
                     double soTienDaTraTruoc = rsChung.getDouble("SoTienDaTraTruoc");
+                    String maPGG = rsChung.getString("MaPGG");
+                    String maChuSoPGG = rsChung.getString("MaChuSoPGG");
+                    double soTienGiamVoucher = 0;
+                    if (maPGG != null && !maPGG.isBlank()) {
+                        soTienGiamVoucher = Math.min(
+                                Math.max(0, rsChung.getDouble("GiaTriGiamVoucher")),
+                                Math.max(0, tt));
+                    }
+                    double phanTramGiamHangThanhVien = Math.min(100,
+                            Math.max(0, rsChung.getDouble("PhanTramGiamHangThanhVien")));
+                    double soTienSauVoucher = Math.max(0, tt - soTienGiamVoucher);
+                    double soTienGiamHangThanhVien = phanTramGiamHangThanhVien > 0
+                            ? Math.round(soTienSauVoucher * phanTramGiamHangThanhVien / 100.0)
+                            : 0;
+                    double tongTienGiam = Math.min(Math.max(0, tt),
+                            Math.max(0, soTienGiamVoucher + soTienGiamHangThanhVien));
                     double thanh;
                     if (thanhTienLuu != null) {
                         thanh = Math.max(0, thanhTienLuu);
@@ -282,6 +302,20 @@ public class HoaDonDAO {
                     thongTin.setTrangThaiThanhToan(rsChung.getString("TrangThaiThanhToan"));
                     thongTin.setSoTienDaTraTruoc(soTienDaTraTruoc);
                     thongTin.setDaTraTruoc(soTienDaTraTruoc > 0);
+                    thongTin.setMaPGG(maPGG);
+                    thongTin.setMaChuSoPGG(maChuSoPGG);
+                    thongTin.setMaVoucher((maChuSoPGG != null && !maChuSoPGG.isBlank()) ? maChuSoPGG : maPGG);
+                    thongTin.setTenHangThanhVien(rsChung.getString("TenHangThanhVien"));
+                    thongTin.setPhanTramGiamHangThanhVien(phanTramGiamHangThanhVien);
+                    thongTin.setSoTienGiamVoucher(soTienGiamVoucher);
+                    thongTin.setSoTienGiamHangThanhVien(soTienGiamHangThanhVien);
+                    thongTin.setTongTienGiam(tongTienGiam);
+
+                    double conPhaiThanhToanTinh = Math.max(0, tt - tongTienGiam - soTienDaTraTruoc);
+                    if (Math.abs(conPhaiThanhToanTinh - thanh) > 1) {
+                        System.out.println("[HoaDonDAO] Chenh lech thanh tien hoa don " + maHoaDon
+                                + ": DB=" + thanh + ", tinhLai=" + conPhaiThanhToanTinh);
+                    }
 
                     Timestamp tBD = rsChung.getTimestamp("ThoiGianBatDau");
                     Timestamp tKT = rsChung.getTimestamp("ThoiGianKetThuc");

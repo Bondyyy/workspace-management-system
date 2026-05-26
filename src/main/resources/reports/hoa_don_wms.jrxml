@@ -13,6 +13,11 @@
 	<parameter name="TONG_CONG" class="java.lang.String"/>
 	<parameter name="DA_TRA_TRUOC" class="java.lang.String"/>
 	<parameter name="GIAM_GIA" class="java.lang.String"/>
+	<parameter name="GIAM_VOUCHER_LABEL" class="java.lang.String"/>
+	<parameter name="GIAM_VOUCHER" class="java.lang.String"/>
+	<parameter name="GIAM_HANG_TV_LABEL" class="java.lang.String"/>
+	<parameter name="GIAM_HANG_TV" class="java.lang.String"/>
+	<parameter name="TONG_GIAM" class="java.lang.String"/>
 	<parameter name="CON_PHAI_THANH_TOAN" class="java.lang.String"/>
 	<field name="stt" class="java.lang.String"/>
 	<field name="noiDung" class="java.lang.String"/>
@@ -201,9 +206,9 @@
 		</band>
 	</detail>
 	<summary>
-		<band height="150" splitType="Stretch">
+		<band height="205" splitType="Stretch">
 			<staticText>
-				<reportElement x="280" y="20" width="120" height="20" uuid="7cfed73b-5a1e-4519-a1b6-710515153205"/>
+				<reportElement x="210" y="20" width="190" height="20" uuid="7cfed73b-5a1e-4519-a1b6-710515153205"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
@@ -217,9 +222,66 @@
 				<textFieldExpression><![CDATA[$P{TONG_CONG}]]></textFieldExpression>
 			</textField>
 			
+			<textField>
+				<reportElement x="210" y="40" width="190" height="20" uuid="7d6c6e5f-14fc-48d6-9dc5-d0c8d1b1f603">
+					<printWhenExpression><![CDATA[!$P{GIAM_VOUCHER}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_VOUCHER_LABEL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="400" y="40" width="150" height="20" uuid="f984ed71-9258-45e0-8a42-5e8ed5993883">
+					<printWhenExpression><![CDATA[!$P{GIAM_VOUCHER}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_VOUCHER}]]></textFieldExpression>
+			</textField>
+			
+			<textField>
+				<reportElement x="190" y="60" width="210" height="20" uuid="b8d707c6-e180-4085-8d6e-60f51e5ad819">
+					<printWhenExpression><![CDATA[!$P{GIAM_HANG_TV}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_HANG_TV_LABEL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="400" y="60" width="150" height="20" uuid="17efefab-7c6e-4926-a195-e81f16381b73">
+					<printWhenExpression><![CDATA[!$P{GIAM_HANG_TV}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_HANG_TV}]]></textFieldExpression>
+			</textField>
+
 			<staticText>
-				<reportElement x="280" y="40" width="120" height="20" uuid="e63f9602-5e60-4b95-a7b2-60144d18ccbe">
-					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.equals("-0")]]></printWhenExpression>
+				<reportElement x="210" y="80" width="190" height="20" uuid="591d8245-c8c7-4eb7-9a0c-6959f64f529b">
+					<printWhenExpression><![CDATA[!$P{TONG_GIAM}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" isBold="true" pdfEncoding="Identity-H"/>
+				</textElement>
+				<text><![CDATA[Tổng giảm:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="400" y="80" width="150" height="20" uuid="45c8cf8d-9dd3-4033-b8c3-9646099b4243">
+					<printWhenExpression><![CDATA[!$P{TONG_GIAM}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" isBold="true" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{TONG_GIAM}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="210" y="100" width="190" height="20" uuid="e63f9602-5e60-4b95-a7b2-60144d18ccbe">
+					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.isEmpty()]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
@@ -227,8 +289,8 @@
 				<text><![CDATA[Đã trả trước:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="400" y="40" width="150" height="20" uuid="09d1d115-416d-49d7-86c5-e6aeb632f012">
-					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.equals("-0")]]></printWhenExpression>
+				<reportElement x="400" y="100" width="150" height="20" uuid="09d1d115-416d-49d7-86c5-e6aeb632f012">
+					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.isEmpty()]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
@@ -237,33 +299,14 @@
 			</textField>
 			
 			<staticText>
-				<reportElement x="280" y="60" width="120" height="20" uuid="7d6c6e5f-14fc-48d6-9dc5-d0c8d1b1f603">
-					<printWhenExpression><![CDATA[!$P{GIAM_GIA}.equals("-0")]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
-				</textElement>
-				<text><![CDATA[Giảm giá:]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="400" y="60" width="150" height="20" uuid="f984ed71-9258-45e0-8a42-5e8ed5993883">
-					<printWhenExpression><![CDATA[!$P{GIAM_GIA}.equals("-0")]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" pdfEncoding="Identity-H"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{GIAM_GIA}]]></textFieldExpression>
-			</textField>
-			
-			<staticText>
-				<reportElement x="250" y="80" width="150" height="25" forecolor="#EB5E8D" uuid="aa8c1305-b1a7-4b72-bdfc-2794eb0b8a4f"/>
+				<reportElement x="200" y="125" width="200" height="25" forecolor="#EB5E8D" uuid="aa8c1305-b1a7-4b72-bdfc-2794eb0b8a4f"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="14" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
-				<text><![CDATA[CÒN PHẢI TRẢ:]]></text>
+				<text><![CDATA[CÒN PHẢI THANH TOÁN:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="400" y="80" width="150" height="25" forecolor="#EB5E8D" uuid="7d19e075-87bb-411a-8bb7-f4e1f7d10d65"/>
+				<reportElement x="400" y="125" width="150" height="25" forecolor="#EB5E8D" uuid="7d19e075-87bb-411a-8bb7-f4e1f7d10d65"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="14" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
@@ -271,7 +314,7 @@
 			</textField>
 			
 			<textField>
-				<reportElement x="0" y="110" width="550" height="20" uuid="ec1c54ff-f60f-4886-9a25-e51c89f5bc3a"/>
+				<reportElement x="0" y="160" width="550" height="20" uuid="ec1c54ff-f60f-4886-9a25-e51c89f5bc3a"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="11" pdfEncoding="Identity-H"/>
 				</textElement>
@@ -279,7 +322,7 @@
 			</textField>
 			
 			<staticText>
-				<reportElement x="0" y="130" width="550" height="20" uuid="2a4e21d6-8488-46de-a4f6-8c43916962f9"/>
+				<reportElement x="0" y="180" width="550" height="20" uuid="2a4e21d6-8488-46de-a4f6-8c43916962f9"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="11" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>

@@ -20,6 +20,11 @@
 	<parameter name="TONG_CONG" class="java.lang.String"/>
 	<parameter name="DA_TRA_TRUOC" class="java.lang.String"/>
 	<parameter name="GIAM_GIA" class="java.lang.String"/>
+	<parameter name="GIAM_VOUCHER_LABEL" class="java.lang.String"/>
+	<parameter name="GIAM_VOUCHER" class="java.lang.String"/>
+	<parameter name="GIAM_HANG_TV_LABEL" class="java.lang.String"/>
+	<parameter name="GIAM_HANG_TV" class="java.lang.String"/>
+	<parameter name="TONG_GIAM" class="java.lang.String"/>
 	<parameter name="CON_PHAI_THANH_TOAN" class="java.lang.String"/>
 	<field name="noiDung" class="java.lang.String"/>
 	<field name="soLuong" class="java.lang.String"/>
@@ -44,7 +49,8 @@
 				<textFieldExpression><![CDATA["Chi nhánh: " + $P{TEN_CHI_NHANH}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="0" y="30" width="206" height="10" uuid="line1">
+				<reportElement x="0" y="30" width="206" height="10" uuid="line1"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
 				<text><![CDATA[-------------------------------------------------------------------------]]></text>
@@ -85,7 +91,8 @@
 				<textFieldExpression><![CDATA["Không gian: " + $P{TEN_KHONG_GIAN}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="0" y="105" width="206" height="10" uuid="line2">
+				<reportElement x="0" y="105" width="206" height="10" uuid="line2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
 				<text><![CDATA[-------------------------------------------------------------------------]]></text>
@@ -143,31 +150,89 @@
 		</band>
 	</detail>
 	<summary>
-		<band height="120" splitType="Stretch">
+		<band height="170" splitType="Stretch">
 			<staticText>
-				<reportElement x="0" y="0" width="206" height="10" uuid="line3">
+				<reportElement x="0" y="0" width="206" height="10" uuid="line3"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
 				<text><![CDATA[-------------------------------------------------------------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="10" width="100" height="15" uuid="7cfed73b-5a1e-4519-a1b6-710515153205"/>
+				<reportElement x="0" y="10" width="105" height="15" uuid="7cfed73b-5a1e-4519-a1b6-710515153205"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
 				<text><![CDATA[Tổng cộng:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="100" y="10" width="106" height="15" uuid="70a1cfc8-ecbb-447a-af08-72e7f847ff8e"/>
+				<reportElement x="105" y="10" width="101" height="15" uuid="70a1cfc8-ecbb-447a-af08-72e7f847ff8e"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{TONG_CONG}]]></textFieldExpression>
 			</textField>
+
+			<textField>
+				<reportElement x="0" y="25" width="128" height="15" uuid="7d6c6e5f-14fc-48d6-9dc5-d0c8d1b1f603">
+					<printWhenExpression><![CDATA[!$P{GIAM_VOUCHER}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_VOUCHER_LABEL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="128" y="25" width="78" height="15" uuid="f984ed71-9258-45e0-8a42-5e8ed5993883">
+					<printWhenExpression><![CDATA[!$P{GIAM_VOUCHER}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_VOUCHER}]]></textFieldExpression>
+			</textField>
 			
+			<textField>
+				<reportElement x="0" y="40" width="128" height="15" uuid="b8d707c6-e180-4085-8d6e-60f51e5ad819">
+					<printWhenExpression><![CDATA[!$P{GIAM_HANG_TV}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_HANG_TV_LABEL}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="128" y="40" width="78" height="15" uuid="17efefab-7c6e-4926-a195-e81f16381b73">
+					<printWhenExpression><![CDATA[!$P{GIAM_HANG_TV}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{GIAM_HANG_TV}]]></textFieldExpression>
+			</textField>
+
 			<staticText>
-				<reportElement x="0" y="25" width="100" height="15" uuid="e63f9602-5e60-4b95-a7b2-60144d18ccbe">
-					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.equals("-0")]]></printWhenExpression>
+				<reportElement x="0" y="55" width="105" height="15" uuid="591d8245-c8c7-4eb7-9a0c-6959f64f529b">
+					<printWhenExpression><![CDATA[!$P{TONG_GIAM}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
+				</textElement>
+				<text><![CDATA[Tổng giảm:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="105" y="55" width="101" height="15" uuid="45c8cf8d-9dd3-4033-b8c3-9646099b4243">
+					<printWhenExpression><![CDATA[!$P{TONG_GIAM}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{TONG_GIAM}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="70" width="105" height="15" uuid="e63f9602-5e60-4b95-a7b2-60144d18ccbe">
+					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.isEmpty()]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Identity-H"/>
@@ -175,8 +240,8 @@
 				<text><![CDATA[Đã trả trước:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="100" y="25" width="106" height="15" uuid="09d1d115-416d-49d7-86c5-e6aeb632f012">
-					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.equals("-0")]]></printWhenExpression>
+				<reportElement x="105" y="70" width="101" height="15" uuid="09d1d115-416d-49d7-86c5-e6aeb632f012">
+					<printWhenExpression><![CDATA[!$P{DA_TRA_TRUOC}.isEmpty()]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Identity-H"/>
@@ -185,33 +250,14 @@
 			</textField>
 			
 			<staticText>
-				<reportElement x="0" y="40" width="100" height="15" uuid="7d6c6e5f-14fc-48d6-9dc5-d0c8d1b1f603">
-					<printWhenExpression><![CDATA[!$P{GIAM_GIA}.equals("-0")]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" pdfEncoding="Identity-H"/>
-				</textElement>
-				<text><![CDATA[Giảm giá:]]></text>
-			</staticText>
-			<textField>
-				<reportElement x="100" y="40" width="106" height="15" uuid="f984ed71-9258-45e0-8a42-5e8ed5993883">
-					<printWhenExpression><![CDATA[!$P{GIAM_GIA}.equals("-0")]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" pdfEncoding="Identity-H"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{GIAM_GIA}]]></textFieldExpression>
-			</textField>
-			
-			<staticText>
-				<reportElement x="0" y="55" width="100" height="15" uuid="aa8c1305-b1a7-4b72-bdfc-2794eb0b8a4f"/>
+				<reportElement x="0" y="88" width="105" height="15" uuid="aa8c1305-b1a7-4b72-bdfc-2794eb0b8a4f"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
 				<text><![CDATA[Còn phải trả:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="100" y="55" width="106" height="15" uuid="7d19e075-87bb-411a-8bb7-f4e1f7d10d65"/>
+				<reportElement x="105" y="88" width="101" height="15" uuid="7d19e075-87bb-411a-8bb7-f4e1f7d10d65"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
@@ -219,7 +265,7 @@
 			</textField>
 			
 			<textField>
-				<reportElement x="0" y="70" width="206" height="15" uuid="ec1c54ff-f60f-4886-9a25-e51c89f5bc3a"/>
+				<reportElement x="0" y="108" width="206" height="15" uuid="ec1c54ff-f60f-4886-9a25-e51c89f5bc3a"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Identity-H"/>
 				</textElement>
@@ -227,14 +273,15 @@
 			</textField>
 			
 			<staticText>
-				<reportElement x="0" y="85" width="206" height="10" uuid="line4">
+				<reportElement x="0" y="128" width="206" height="10" uuid="line4"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
 				<text><![CDATA[-------------------------------------------------------------------------]]></text>
 			</staticText>
 			
 			<staticText>
-				<reportElement x="0" y="95" width="206" height="15" uuid="2a4e21d6-8488-46de-a4f6-8c43916962f9"/>
+				<reportElement x="0" y="140" width="206" height="15" uuid="2a4e21d6-8488-46de-a4f6-8c43916962f9"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>

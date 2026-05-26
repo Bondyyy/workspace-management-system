@@ -796,16 +796,39 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         sb.append("Thời gian: ").append(tt.getThoiGianSửDung()).append("\n");
         sb.append("Số giờ tính: ").append(tt.getTongSoGio()).append(" giờ\n");
         sb.append("--------------------------------\n");
-        sb.append(String.format("%-20s %3s %10s\n", "Dịch vụ", "SL", "Đơn giá"));
+        sb.append(String.format("%-20s %3s %15s\n", "Dịch vụ", "SL", "Đơn giá"));
         for (com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO dv : tt.getDanhSachDichVu()) {
-            sb.append(String.format("%-20s %3d %,10.0f\n", dv.getTenDichVu(), dv.getSoLuong(), dv.getDonGia()));
+            sb.append(String.format("%-20s %3d %15s\n",
+                    dv.getTenDichVu(),
+                    dv.getSoLuong(),
+                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dv.getDonGia())));
         }
         sb.append("--------------------------------\n");
-        sb.append("TỔNG CỘNG: ").append(com.wms.util.InputFormatUtil.formatThousands(tt.getTongTien())).append(" VNĐ\n");
-        sb.append("ĐÃ TRẢ TRƯỚC: ").append(com.wms.util.InputFormatUtil.formatThousands(tt.getSoTienDaTraTruoc())).append(" VNĐ\n");
+        com.wms.util.HoaDonGiamGiaUtil.ThongTinGiamGia giamGia =
+                com.wms.util.HoaDonGiamGiaUtil.taoThongTinGiamGia(tt, 0);
+        sb.append("TỔNG CỘNG: ").append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getTongTien())).append("\n");
+        if (giamGia.coGiamVoucher()) {
+            sb.append(giamGia.getNhanVoucher()).append(": ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamVoucher()))
+                    .append("\n");
+        }
+        if (giamGia.coGiamHangThanhVien()) {
+            sb.append(giamGia.getNhanHangThanhVien()).append(": ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamHangThanhVien()))
+                    .append("\n");
+        }
+        if (giamGia.coTongGiam()) {
+            sb.append("TỔNG GIẢM: ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()))
+                    .append("\n");
+        }
+        sb.append("ĐÃ TRẢ TRƯỚC: ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienDaTraTruoc()))
+                .append("\n");
         sb.append("CÒN PHẢI THANH TOÁN: ")
-                .append(com.wms.util.InputFormatUtil.formatThousands(Math.max(0, tt.getThanhTien())))
-                .append(" VNĐ\n\n");
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(
+                        com.wms.util.HoaDonGiamGiaUtil.layConPhaiThanhToan(tt, giamGia, 0)))
+                .append("\n\n");
         sb.append("      --- CẢM ƠN QUÝ KHÁCH ---");
 
         javax.swing.JTextArea textArea = new javax.swing.JTextArea(sb.toString());

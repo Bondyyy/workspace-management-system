@@ -21,6 +21,14 @@ public class ThongTinHoaDonDTO {
     private String ngayLapHoaDon;
     private String phuongThucThanhToan;
     private String tenChiNhanh;
+    private String maPGG;
+    private String maVoucher;
+    private String maChuSoPGG;
+    private String tenHangThanhVien;
+    private double phanTramGiamHangThanhVien;
+    private double soTienGiamVoucher;
+    private double soTienGiamHangThanhVien;
+    private double tongTienGiam;
 
     public ThongTinHoaDonDTO() {
         this.danhSachDichVu = new ArrayList<>();
@@ -58,4 +66,20 @@ public class ThongTinHoaDonDTO {
     public void setPhuongThucThanhToan(String phuongThucThanhToan) { this.phuongThucThanhToan = phuongThucThanhToan; }
     public String getTenChiNhanh() { return tenChiNhanh; }
     public void setTenChiNhanh(String tenChiNhanh) { this.tenChiNhanh = tenChiNhanh; }
+    public String getMaPGG() { return maPGG; }
+    public void setMaPGG(String maPGG) { this.maPGG = maPGG; }
+    public String getMaVoucher() { return maVoucher; }
+    public void setMaVoucher(String maVoucher) { this.maVoucher = maVoucher; }
+    public String getMaChuSoPGG() { return maChuSoPGG; }
+    public void setMaChuSoPGG(String maChuSoPGG) { this.maChuSoPGG = maChuSoPGG; }
+    public String getTenHangThanhVien() { return tenHangThanhVien; }
+    public void setTenHangThanhVien(String tenHangThanhVien) { this.tenHangThanhVien = tenHangThanhVien; }
+    public double getPhanTramGiamHangThanhVien() { return phanTramGiamHangThanhVien; }
+    public void setPhanTramGiamHangThanhVien(double phanTramGiamHangThanhVien) { this.phanTramGiamHangThanhVien = phanTramGiamHangThanhVien; }
+    public double getSoTienGiamVoucher() { return soTienGiamVoucher; }
+    public void setSoTienGiamVoucher(double soTienGiamVoucher) { this.soTienGiamVoucher = soTienGiamVoucher; }
+    public double getSoTienGiamHangThanhVien() { return soTienGiamHangThanhVien; }
+    public void setSoTienGiamHangThanhVien(double soTienGiamHangThanhVien) { this.soTienGiamHangThanhVien = soTienGiamHangThanhVien; }
+    public double getTongTienGiam() { return tongTienGiam; }
+    public void setTongTienGiam(double tongTienGiam) { this.tongTienGiam = tongTienGiam; }
 }

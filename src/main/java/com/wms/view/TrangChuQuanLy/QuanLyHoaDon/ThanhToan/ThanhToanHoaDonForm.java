@@ -228,22 +228,37 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelFooter.add(panelHienThiGiamGia);
         panelFooter.add(Box.createRigidArea(new Dimension(0, 5)));
 
-        JPanel panelThanhTien = new JPanel(new BorderLayout(10, 10));
+        JPanel panelThanhTien = new JPanel(new GridBagLayout());
         panelThanhTien.setBackground(mauHongNhat);
-        panelThanhTien.setBorder(new EmptyBorder(20, 20, 20, 20));
-        panelThanhTien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        panelThanhTien.setBorder(new EmptyBorder(12, 14, 12, 14));
+        panelThanhTien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         panelThanhTien.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-        JLabel lblTextThanhTien = new JLabel("CÒN PHẢI THANH TOÁN:");
-        lblTextThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        JLabel lblTextThanhTien = new JLabel("<html>CÒN PHẢI<br>THANH TOÁN:</html>");
+        lblTextThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblTextThanhTien.setForeground(mauXamDam);
-        panelThanhTien.add(lblTextThanhTien, BorderLayout.WEST);
 
         lblThanhTien = new JLabel("0 ₫");
-        lblThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 19));
         lblThanhTien.setForeground(mauHongChinh);
         lblThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
-        panelThanhTien.add(lblThanhTien, BorderLayout.CENTER);
+
+        GridBagConstraints gbcText = new GridBagConstraints();
+        gbcText.gridx = 0;
+        gbcText.gridy = 0;
+        gbcText.weightx = 0;
+        gbcText.insets = new Insets(0, 0, 0, 10);
+        gbcText.anchor = GridBagConstraints.WEST;
+        gbcText.fill = GridBagConstraints.NONE;
+        panelThanhTien.add(lblTextThanhTien, gbcText);
+
+        GridBagConstraints gbcMoney = new GridBagConstraints();
+        gbcMoney.gridx = 1;
+        gbcMoney.gridy = 0;
+        gbcMoney.weightx = 1;
+        gbcMoney.anchor = GridBagConstraints.EAST;
+        gbcMoney.fill = GridBagConstraints.HORIZONTAL;
+        panelThanhTien.add(lblThanhTien, gbcMoney);
 
         panelFooter.add(panelThanhTien);
         panel.add(panelFooter, BorderLayout.SOUTH);

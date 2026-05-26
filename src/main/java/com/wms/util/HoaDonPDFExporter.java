@@ -7,6 +7,7 @@ import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import javax.swing.JFileChooser;
@@ -16,13 +17,12 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.Normalizer;
-import java.text.NumberFormat;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class HoaDonPDFExporter {
 
-    private static final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+    private static BaseFont unicodeBaseFont;
+    private static boolean daThuTaiFontUnicode;
 
     public static void xuatHoaDonPDF(Component parentComponent, ThongTinHoaDonDTO hoaDon, double tienGiamGia) {
         if (hoaDon == null)
@@ -65,58 +65,68 @@ public class HoaDonPDFExporter {
         PdfWriter.getInstance(document, new FileOutputStream(pdfFile));
         document.open();
 
-        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
-        Font boldFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
-        Font normalFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
+        Font titleFont = taoFontPdf(18, Font.BOLD);
+        Font boldFont = taoFontPdf(12, Font.BOLD);
+        Font normalFont = taoFontPdf(12, Font.NORMAL);
 
-        Paragraph title = new Paragraph("HOA DON THANH TOAN", titleFont);
+        Paragraph title = new Paragraph(pdfText("HÓA ĐƠN THANH TOÁN"), titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
         document.add(new Paragraph(" "));
 
-        document.add(new Paragraph("Ma HD: " + hoaDon.getMaHoaDon(), boldFont));
-        document.add(new Paragraph("Khach hang: " + removeAccents(hoaDon.getHoTenKH()), normalFont));
-        document.add(new Paragraph("Khong gian: " + removeAccents(hoaDon.getTenKhongGian()), normalFont));
-        document.add(new Paragraph("Thoi gian: " + removeAccents(hoaDon.getThoiGianSửDung()), normalFont));
+        document.add(new Paragraph(pdfText("Mã HĐ: " + hoaDon.getMaHoaDon()), boldFont));
+        document.add(new Paragraph(pdfText("Khách hàng: " + giaTri(hoaDon.getHoTenKH())), normalFont));
+        document.add(new Paragraph(pdfText("Không gian: " + giaTri(hoaDon.getTenKhongGian())), normalFont));
+        document.add(new Paragraph(pdfText("Thời gian: " + giaTri(hoaDon.getThoiGianSửDung())), normalFont));
         document.add(new Paragraph(
-                "So gio tinh tien: " + String.format(Locale.US, "%.1f", hoaDon.getTongSoGio()) + " gio",
+                pdfText("Số giờ tính tiền: " + String.format(java.util.Locale.US, "%.1f", hoaDon.getTongSoGio()) + " giờ"),
                 normalFont));
         document.add(new Paragraph(" "));
 
         PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(100);
-        table.addCell(new Phrase("Ten dich vu", boldFont));
-        table.addCell(new Phrase("SL/Gio", boldFont));
-        table.addCell(new Phrase("Don gia (VND)", boldFont));
-        table.addCell(new Phrase("Thanh tien (VND)", boldFont));
+        table.addCell(new Phrase(pdfText("Tên dịch vụ"), boldFont));
+        table.addCell(new Phrase(pdfText("SL/Giờ"), boldFont));
+        table.addCell(new Phrase(pdfText("Đơn giá"), boldFont));
+        table.addCell(new Phrase(pdfText("Thành tiền"), boldFont));
 
         // Danh sách dịch vụ, trong đó dòng đầu tiên là tiền thuê không gian thực tế
         if (hoaDon.getDanhSachDichVu() != null) {
             for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
-                table.addCell(new Phrase(removeAccents(dv.getTenDichVu()), normalFont));
-                String slStr = dv.getTenDichVu().startsWith("Thuê") ? String.format(Locale.US, "%.1f gio", (double) dv.getSoLuong()) : String.valueOf(dv.getSoLuong());
-                table.addCell(new Phrase(slStr, normalFont));
-                table.addCell(new Phrase(InputFormatUtil.formatThousands(dv.getDonGia()), normalFont));
-                table.addCell(new Phrase(InputFormatUtil.formatThousands(dv.getThanhTien()), normalFont));
+                table.addCell(new Phrase(pdfText(giaTri(dv.getTenDichVu())), normalFont));
+                String slStr = dv.getTenDichVu().startsWith("Thuê")
+                        ? String.format(java.util.Locale.US, "%.1f giờ", (double) dv.getSoLuong())
+                        : String.valueOf(dv.getSoLuong());
+                table.addCell(new Phrase(pdfText(slStr), normalFont));
+                table.addCell(new Phrase(pdfText(HoaDonGiamGiaUtil.formatTienVnd(dv.getDonGia())), normalFont));
+                table.addCell(new Phrase(pdfText(HoaDonGiamGiaUtil.formatTienVnd(dv.getThanhTien())), normalFont));
             }
         }
         document.add(table);
         document.add(new Paragraph(" "));
 
-        double tongTienGoc = hoaDon.getTongTien();
-        double tienDaTraTruoc = hoaDon.getSoTienDaTraTruoc();
-        double conPhaiThanhToan = Math.max(0, tongTienGoc - tienDaTraTruoc - tienGiamGia);
+        HoaDonGiamGiaUtil.ThongTinGiamGia giamGia =
+                HoaDonGiamGiaUtil.taoThongTinGiamGia(hoaDon, tienGiamGia);
+        double conPhaiThanhToan = HoaDonGiamGiaUtil.layConPhaiThanhToan(hoaDon, giamGia, tienGiamGia);
 
-        document.add(new Paragraph("TONG CONG: " + formatTien.format(tongTienGoc), boldFont));
-        if (tienDaTraTruoc > 0) {
-            document.add(new Paragraph("DA TRA TRUOC (ONLINE): -" + formatTien.format(tienDaTraTruoc), normalFont));
+        document.add(new Paragraph(pdfText("TỔNG CỘNG: " + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getTongTien())), boldFont));
+        if (giamGia.coGiamVoucher()) {
+            document.add(new Paragraph(pdfText(giamGia.getNhanVoucher() + ": "
+                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamVoucher())), normalFont));
         }
-        if (tienGiamGia > 0) {
-            document.add(new Paragraph("GIAM GIA: -" + formatTien.format(tienGiamGia), normalFont));
+        if (giamGia.coGiamHangThanhVien()) {
+            document.add(new Paragraph(pdfText(giamGia.getNhanHangThanhVien() + ": "
+                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamHangThanhVien())), normalFont));
         }
-
-        document.add(new Paragraph("CON PHAI THANH TOAN: " + formatTien.format(conPhaiThanhToan), boldFont));
-        Paragraph end = new Paragraph("\n      --- CAM ON QUY KHACH ---");
+        if (giamGia.coTongGiam()) {
+            document.add(new Paragraph(pdfText("TỔNG GIẢM: "
+                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam())), normalFont));
+        }
+        document.add(new Paragraph(pdfText("ĐÃ TRẢ TRƯỚC: "
+                + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienDaTraTruoc())), normalFont));
+        document.add(new Paragraph(pdfText("CÒN PHẢI THANH TOÁN: "
+                + HoaDonGiamGiaUtil.formatTienVnd(conPhaiThanhToan)), boldFont));
+        Paragraph end = new Paragraph(pdfText("\n      --- CẢM ƠN QUÝ KHÁCH ---"), normalFont);
         end.setAlignment(Element.ALIGN_CENTER);
         document.add(end);
         document.close();
@@ -140,5 +150,56 @@ public class HoaDonPDFExporter {
         } catch (Exception e) {
             return str;
         }
+    }
+
+    private static Font taoFontPdf(int size, int style) {
+        BaseFont baseFont = getUnicodeBaseFont();
+        if (baseFont != null) {
+            return new Font(baseFont, size, style);
+        }
+        return new Font(Font.FontFamily.HELVETICA, size, style);
+    }
+
+    private static String pdfText(String text) {
+        if (getUnicodeBaseFont() != null) {
+            return text == null ? "" : text;
+        }
+        return removeAccents(text).replace("VNĐ", "VND");
+    }
+
+    private static String giaTri(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static synchronized BaseFont getUnicodeBaseFont() {
+        if (daThuTaiFontUnicode) {
+            return unicodeBaseFont;
+        }
+        daThuTaiFontUnicode = true;
+
+        String windir = System.getenv("WINDIR");
+        String[] fontPaths = {
+                windir == null ? null : windir + File.separator + "Fonts" + File.separator + "arial.ttf",
+                "C:" + File.separator + "Windows" + File.separator + "Fonts" + File.separator + "arial.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
+        };
+
+        for (String fontPath : fontPaths) {
+            if (fontPath == null) {
+                continue;
+            }
+            File fontFile = new File(fontPath);
+            if (!fontFile.exists()) {
+                continue;
+            }
+            try {
+                unicodeBaseFont = BaseFont.createFont(fontFile.getAbsolutePath(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                return unicodeBaseFont;
+            } catch (Exception ignored) {
+                // Thử font tiếp theo nếu font hệ thống hiện tại không nạp được.
+            }
+        }
+        return null;
     }
 }
