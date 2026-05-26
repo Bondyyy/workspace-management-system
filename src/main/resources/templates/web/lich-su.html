@@ -50,10 +50,6 @@
                             <h3 th:text="${item.tenKhongGian}">Không gian</h3>
                             <p th:text="${item.tenChiNhanh}">Chi nhánh</p>
                         </div>
-                        <div class="hienThiLichSu-qr" th:if="${item.maQR != null and !#strings.isEmpty(item.maQR)}">
-                            <img th:src="@{'/portal/history/bookings/' + ${item.maDatCho} + '/qr.png'}" alt="QR nhận chỗ">
-                            <span>QR nhận chỗ</span>
-                        </div>
                     </div>
                     <div class="hienThiLichSu-money">
                         <span>Tổng cộng</span>
@@ -83,6 +79,59 @@
                         <strong>Trạng thái phiên</strong>
                         <em th:text="${item.trangThaiPhien}">--</em>
                     </span>
+                </div>
+
+                <div class="booking-qr-section history-qr-section"
+                     th:if="${item.maQR != null and !#strings.isEmpty(item.maQR)}">
+                    <div class="booking-qr-card">
+                        <h3>Mã QR nhận chỗ</h3>
+                        <img class="booking-qr-image"
+                             th:src="@{'/portal/history/bookings/' + ${item.maDatCho} + '/qr.png'}"
+                             alt="Mã QR nhận chỗ">
+                        <p>Xuất trình mã này tại quầy để nhân viên xác nhận phiên làm việc.</p>
+                    </div>
+
+                    <div class="booking-qr-info-card">
+                        <h3>Thông tin mã nhận chỗ</h3>
+                        <div class="qr-info-row">
+                            <span>Mã đặt chỗ</span>
+                            <strong th:text="${item.maDatCho}">DC000001</strong>
+                        </div>
+                        <div class="qr-info-row">
+                            <span>Mã QR để nhập thủ công</span>
+                            <code class="qr-raw-code" th:text="${item.maQR}">QR_CODE</code>
+                        </div>
+                        <div class="qr-info-row">
+                            <span>Chi nhánh</span>
+                            <strong th:text="${item.tenChiNhanh}">Chi nhánh</strong>
+                        </div>
+                        <div class="qr-info-row">
+                            <span>Không gian</span>
+                            <strong th:text="${item.tenKhongGian}">Không gian</strong>
+                        </div>
+                        <div class="qr-info-row">
+                            <span>Thời gian nhận chỗ</span>
+                            <strong th:text="${item.thoiGianBatDau != null ? #temporals.format(item.thoiGianBatDau, 'dd/MM/yyyy HH:mm') : 'Theo giờ đặt chỗ'}">--</strong>
+                        </div>
+                        <div class="qr-info-row">
+                            <span>Trạng thái đặt chỗ</span>
+                            <strong th:text="${item.trangThaiThanhToan}">Đã thanh toán thành công</strong>
+                        </div>
+                        <button type="button"
+                                class="qr-copy-button"
+                                th:attr="data-copy=${item.maQR}">
+                            Sao chép mã QR
+                        </button>
+                        <p class="qr-helper-text">
+                            Nếu không quét được QR, nhân viên có thể nhập mã này để xác nhận nhận chỗ.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="booking-qr-pending"
+                     th:if="${(item.maQR == null or #strings.isEmpty(item.maQR)) and item.trangThaiThanhToan != null and #strings.containsIgnoreCase(item.trangThaiThanhToan, 'chờ')}">
+                    <strong>QR sẽ được tạo sau khi thanh toán thành công.</strong>
+                    <span>QR nhận chỗ khác với QR chuyển khoản và chỉ xuất hiện cho phiếu đặt chỗ của bạn.</span>
                 </div>
 
                 <details class="service-details">
@@ -116,5 +165,6 @@
         </div>
     </section>
 </main>
+<script src="/js/booking-qr.js"></script>
 </body>
 </html>

@@ -157,6 +157,7 @@ public class CongThongTinService {
 
     public List<KhongGianView> layKhongGian(String branchId, LocalDateTime selectedStart, LocalDateTime selectedEnd) {
         try {
+            hetHanDatChoChoThanhToan();
             return sapXepKhongGian(khoDuLieu.timKhongGian(chuanHoaMaCN(branchId), selectedStart, selectedEnd));
         } catch (DataAccessException ex) {
             System.err.println("[CongThongTinService] Loi tai khong gian maCN=" + branchId + ": " + ex.getMessage());
@@ -241,6 +242,7 @@ public class CongThongTinService {
         }
         kiemTraThoiGianDatCho(form.getThoiGianDen(), form.getSoGioSuDung());
         kiemTraKhungGioChiNhanh(space, form.getThoiGianDen(), form.getSoGioSuDung());
+        hetHanDatChoChoThanhToan();
         if (khoDuLieu.coTrungLich(
                 form.getMaKG(),
                 form.getThoiGianDen(),
@@ -446,9 +448,20 @@ public class CongThongTinService {
         }
 
         ThongTinNhanChoBangQR thongTin = ketQuaTim.get();
+        String maCNNhanVien = nhanVien.getMaCN() == null ? "" : nhanVien.getMaCN().trim();
+        String maCNDatCho = thongTin.getMaCN() == null ? "" : thongTin.getMaCN().trim();
+        if (maCNNhanVien.isBlank()) {
+            return KetQuaNhanChoBangQRView.thatBai("Tài khoản nhân viên chưa được gán chi nhánh để nhận chỗ.");
+        }
+        if (maCNDatCho.isBlank()) {
+            return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ thiếu thông tin chi nhánh, không thể nhận chỗ.");
+        }
+        if (!maCNNhanVien.equalsIgnoreCase(maCNDatCho)) {
+            return KetQuaNhanChoBangQRView.thatBai("Nhân viên chỉ có thể nhận chỗ cho đặt chỗ thuộc chi nhánh đang làm việc.");
+        }
+
         String trangThai = chuanHoa(thongTin.getTrangThaiDatTruoc());
         boolean coPhien = khoDuLieu.daCoPhienTheoDatCho(thongTin.getMaDatCho());
-        String maPhienDaMo = coPhien ? khoDuLieu.timMaPhienTheoDatCho(thongTin.getMaDatCho()) : null;
 
         System.out.println("[QR CheckIn] MaDatCho=" + thongTin.getMaDatCho()
                 + ", MaKG=" + thongTin.getMaKG()
@@ -462,20 +475,12 @@ public class CongThongTinService {
 
         if (trangThai.contains("su dung")) {
             if (coPhien) {
-                return KetQuaNhanChoBangQRView.thanhCong(
-                        "Phiên đã được mở trước đó. Mã phiên: " + maPhienDaMo,
-                        thongTin,
-                        maPhienDaMo
-                );
+                return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
             }
         }
         
         if (coPhien) {
-            return KetQuaNhanChoBangQRView.thanhCong(
-                    "Phiên đã được mở trước đó. Mã phiên: " + maPhienDaMo,
-                    thongTin,
-                    maPhienDaMo
-            );
+            return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
         }
 
         if (thongTin.getMaQR() == null || thongTin.getMaQR().isBlank()) {
@@ -501,7 +506,7 @@ public class CongThongTinService {
             return KetQuaNhanChoBangQRView.thatBai("Đặt chỗ đã quá giờ nhận chỗ. Hệ thống đã nhả không gian.");
         }
 
-        if (bayGio.isBefore(gioDuKienToi)) {
+        if (bayGio.isBefore(gioDuKienToi.minusMinutes(15))) {
             return KetQuaNhanChoBangQRView.thatBai("Quá sớm, chưa đến giờ nhận chỗ hợp lệ.");
         }
         if (bayGio.isAfter(gioDuKienToi.plusHours(thongTin.laySoGioSuDungAnToan()))) {
@@ -833,7 +838,7 @@ public class CongThongTinService {
         if (maQR == null || maQR.isBlank()) {
             return Optional.empty();
         }
-        byte[] png = MaQRUtil.taoAnhPng(maQR);
+        byte[] png = MaQRUtil.taoAnhPng(maQR, 600);
         return png.length == 0 ? Optional.empty() : Optional.of(png);
     }
 

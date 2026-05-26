@@ -56,6 +56,100 @@ public class KhongGianDAO {
         return timKiem(null, maCN, null);
     }
 
+    public List<KhongGianDTO> layTheoChiNhanh(String maCN, java.sql.Timestamp batDau, java.sql.Timestamp ketThuc) {
+        if (batDau == null || ketThuc == null || !ketThuc.after(batDau)) {
+            return layTheoChiNhanh(maCN);
+        }
+        hetHanDatChoChoThanhToan();
+        String sql = """
+                SELECT kg.MaKG, kg.TenKG, kg.TrangThaiKG, kg.ViTri, kg.MaLoaiKG,
+                       lkg.TenLoaiKG, lkg.TrangThai AS TrangThaiLoaiKG,
+                       kg.MaCN, cn.TenCN, kg.ToaDoX, kg.ToaDoY, kg.ChieuDai, kg.ChieuRong,
+                       lkg.DonGiaTheoGio,
+                       CASE
+                           WHEN kg.TrangThaiKG = 'Bảo trì' THEN 'Bảo trì'
+                           WHEN kg.TrangThaiKG = 'Đang hoạt động' THEN 'Đang hoạt động'
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM PHIENLAMVIEC p
+                               WHERE p.MaKG = kg.MaKG
+                                 AND p.TrangThaiPhien = 'Đang hoạt động'
+                                 AND p.ThoiGianBatDau < ?
+                                 AND p.ThoiGianDuKienKetThuc > ?
+                           ) THEN 'Đang hoạt động'
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM DATCHO dc
+                               WHERE dc.MaKG = kg.MaKG
+                                 AND dc.TrangThaiDatTruoc = 'Đang chờ thanh toán'
+                                 AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
+                                 AND dc.ThoiGianDuKienToi < ?
+                                 AND dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR') > ?
+                           ) THEN 'Tạm khóa'
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM DATCHO dc
+                               WHERE dc.MaKG = kg.MaKG
+                                 AND dc.TrangThaiDatTruoc IN ('Đã thanh toán thành công', 'Đã đặt trước')
+                                 AND dc.ThoiGianDuKienToi < ?
+                                 AND dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR') > ?
+                           ) THEN 'Đã đặt trước'
+                           ELSE 'Trống'
+                       END AS TrangThaiHienThi
+                FROM KHONGGIAN kg
+                LEFT JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG
+                LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN
+                WHERE (? IS NULL OR kg.MaCN = ?)
+                ORDER BY kg.MaKG ASC
+                """;
+        List<KhongGianDTO> list = new ArrayList<>();
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setTimestamp(1, ketThuc);
+            ps.setTimestamp(2, batDau);
+            ps.setTimestamp(3, ketThuc);
+            ps.setTimestamp(4, batDau);
+            ps.setTimestamp(5, ketThuc);
+            ps.setTimestamp(6, batDau);
+            ps.setString(7, maCN);
+            ps.setString(8, maCN);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    KhongGianDTO dto = mapRow(rs);
+                    String hienThi = rs.getString("TrangThaiHienThi");
+                    dto.setTrangThaiHienThi(hienThi);
+                    dto.setCoTheDat("Trống".equals(hienThi));
+                    dto.setLyDoKhongTheDat(dto.isCoTheDat() ? null : hienThi);
+                    list.add(dto);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[KhongGianDAO] Lỗi lấy sơ đồ theo khung giờ: " + e.getMessage());
+        }
+        return list;
+    }
+
+    private void hetHanDatChoChoThanhToan() {
+        String sql = """
+                UPDATE DATCHO
+                SET TrangThaiDatTruoc = 'Thanh toán không thành công',
+                    MaQR = NULL,
+                    GhiChu = CASE
+                        WHEN GhiChu LIKE '%[SYSTEM_PAYMENT_EXPIRED]%' THEN GhiChu
+                        ELSE NVL(GhiChu, '') || ' | [SYSTEM_PAYMENT_EXPIRED] Hết hạn thanh toán sau 10 phút.'
+                    END,
+                    CapNhatLanCuoi = CURRENT_TIMESTAMP
+                WHERE TrangThaiDatTruoc = 'Đang chờ thanh toán'
+                  AND ThoiGianDat < CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
+                """;
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[KhongGianDAO] Lỗi xử lý giữ chỗ hết hạn: " + e.getMessage());
+        }
+    }
+
     public List<KhongGianDTO> layTatCaKhongGian() {
         return timKiem(null, null, null);
     }

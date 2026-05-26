@@ -147,13 +147,7 @@ BEGIN
                 WHERE p.MaKG = kg.MaKG
                   AND p.TrangThaiPhien = 'Đang hoạt động'
             ) THEN 'Đang hoạt động'
-            WHEN EXISTS (
-                SELECT 1
-                FROM DATCHO dc
-                WHERE dc.MaKG = kg.MaKG
-                  AND dc.TrangThaiDatTruoc = 'Đã thanh toán thành công'
-                  AND SYSTIMESTAMP <= dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')
-            ) THEN 'Đã đặt trước'
+            WHEN kg.TrangThaiKG = 'Bảo trì' THEN 'Bảo trì'
             ELSE 'Trống'
         END
     WHERE kg.MaKG = v_MaKG;

@@ -33,7 +33,7 @@ BEGIN
     IF LOWER(:NEW.TrangThaiPhien) NOT LIKE '%t tr%' THEN
         IF SYSTIMESTAMP > (v_ThoiGianToi + NUMTODSINTERVAL(NVL(v_KhoangThoiGianSuDung, 1), 'HOUR')) THEN
             RAISE_APPLICATION_ERROR(-20005, 'Lỗi: Vé đã quá hạn chờ.');
-        ELSIF SYSTIMESTAMP < v_ThoiGianToi THEN
+        ELSIF SYSTIMESTAMP < (v_ThoiGianToi - INTERVAL '15' MINUTE) THEN
             RAISE_APPLICATION_ERROR(-20006, 'Lỗi: Quá sớm, chưa đến giờ nhận chỗ hợp lệ.');
         END IF;
     END IF;

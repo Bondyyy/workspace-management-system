@@ -58,6 +58,9 @@ public class XacThucWebService {
             return new NguoiDungPhien(
                     record.maND(),
                     record.maKH(),
+                    record.maNV(),
+                    record.maCN(),
+                    record.tenCN(),
                     record.hoTen(),
                     record.tenTaiKhoan(),
                     record.laNhanVien()

@@ -1,6 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyDatChoTruoc;
 
 import com.wms.model.TrangChuQuanLy.QuanLyDatChoTruoc.DatChoTruocDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.service.TrangChuQuanLy.QuanLyDatChoTruoc.QuanLyDatChoTruocService;
@@ -24,5 +25,9 @@ public class QuanLyDatChoTruocController {
 
     public KetQuaNhanChoDTO moPhienTuDatChoThuCong(DatChoTruocDTO dto) {
         return service.moPhienTuDatChoThuCong(dto);
+    }
+
+    public KetQuaNhanChoDTO xacNhanNhanChoBangQr(String qrRaw, NguoiDungDTO nhanVienDangNhap) {
+        return service.xacNhanNhanChoBangQr(qrRaw, nhanVienDangNhap);
     }
 }

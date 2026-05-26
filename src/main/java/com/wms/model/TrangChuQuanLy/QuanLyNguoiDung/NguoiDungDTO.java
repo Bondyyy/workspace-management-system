@@ -19,6 +19,8 @@ public class NguoiDungDTO {
     private List<String> vaiTro;
     private List<String> chucNang; // Danh sách MaChucNang được phép truy cập
     private String maNV;
+    private String maCN;
+    private String tenCN;
 
     public NguoiDungDTO() {}
 
@@ -175,5 +177,21 @@ public class NguoiDungDTO {
 
     public void setMaNV(String maNV) {
         this.maNV = maNV;
+    }
+
+    public String getMaCN() {
+        return maCN;
+    }
+
+    public void setMaCN(String maCN) {
+        this.maCN = maCN;
+    }
+
+    public String getTenCN() {
+        return tenCN;
+    }
+
+    public void setTenCN(String tenCN) {
+        this.tenCN = tenCN;
     }
 }

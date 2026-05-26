@@ -4904,6 +4904,12 @@ hr {
     border-color: #ffb74d;
 }
 
+.space-page .space-node-locked {
+    color: #8a4f00;
+    background: #fff7d6;
+    border-color: #f6bd4f;
+}
+
 .space-page .space-node-active {
     color: #1b5e20;
     background: #e8f5e9;
@@ -5547,4 +5553,149 @@ hr {
 
 .landing-page .landing-hero-visual {
     display: none;
+}
+
+/* Booking check-in QR */
+.booking-qr-section {
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    gap: 28px;
+    align-items: stretch;
+    margin-top: 20px;
+}
+
+.booking-qr-card,
+.booking-qr-info-card {
+    background: #fff;
+    border: 1px solid rgba(235, 94, 141, 0.18);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 18px 45px rgba(35, 30, 48, 0.08);
+}
+
+.booking-qr-card {
+    display: grid;
+    gap: 14px;
+    justify-items: center;
+    text-align: center;
+}
+
+.booking-qr-card h3,
+.booking-qr-info-card h3 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 1.1rem;
+}
+
+.booking-qr-card p,
+.qr-helper-text,
+.booking-qr-pending span {
+    margin: 0;
+    color: #7b7284;
+    line-height: 1.5;
+}
+
+.booking-qr-image {
+    width: 300px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: auto;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.booking-qr-info-card {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.qr-info-row {
+    display: grid;
+    gap: 8px;
+}
+
+.qr-info-row span {
+    color: #7b7284;
+    font-weight: 800;
+}
+
+.qr-info-row strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.qr-raw-code {
+    display: block;
+    padding: 14px 16px;
+    border: 1px solid rgba(235, 94, 141, 0.22);
+    border-radius: 14px;
+    color: #231e30;
+    background: #fff0f5;
+    font-weight: 850;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.qr-copy-button {
+    min-height: 44px;
+    width: fit-content;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    background: #eb5e8d;
+    cursor: pointer;
+    font-weight: 850;
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.qr-copy-button:hover,
+.qr-copy-button.is-copied {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(235, 94, 141, 0.25);
+}
+
+.qr-copy-button.is-copied {
+    background: #1d8a4b;
+}
+
+.booking-qr-pending {
+    display: grid;
+    gap: 6px;
+    margin-top: 18px;
+    padding: 16px 18px;
+    border: 1px dashed rgba(235, 94, 141, 0.36);
+    border-radius: 16px;
+    background: #fff8fb;
+}
+
+.booking-qr-pending strong {
+    color: var(--primary-strong);
+}
+
+.payment-qr-pending {
+    margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+    .booking-qr-section {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-qr-image {
+        width: min(280px, 100%);
+    }
+
+    .booking-qr-card,
+    .booking-qr-info-card {
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .qr-copy-button {
+        width: 100%;
+    }
 }

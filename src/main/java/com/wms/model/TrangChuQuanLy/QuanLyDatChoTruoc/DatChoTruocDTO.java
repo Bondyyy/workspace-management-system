@@ -9,6 +9,11 @@ public class DatChoTruocDTO {
     private String hoTenKhachHang;
     private String maKG;
     private String tenKhongGian;
+    private String tenChiNhanh;
+    private String tenLoaiKhongGian;
+    private String emailKhachHang;
+    private String soDienThoaiKhachHang;
+    private String maQR;
     private Timestamp thoiGianDuKienToi;
     private Integer khoangThoiGianSuDung;
     private String trangThaiDatTruoc;
@@ -53,6 +58,46 @@ public class DatChoTruocDTO {
 
     public void setTenKhongGian(String tenKhongGian) {
         this.tenKhongGian = tenKhongGian;
+    }
+
+    public String getTenChiNhanh() {
+        return tenChiNhanh;
+    }
+
+    public void setTenChiNhanh(String tenChiNhanh) {
+        this.tenChiNhanh = tenChiNhanh;
+    }
+
+    public String getTenLoaiKhongGian() {
+        return tenLoaiKhongGian;
+    }
+
+    public void setTenLoaiKhongGian(String tenLoaiKhongGian) {
+        this.tenLoaiKhongGian = tenLoaiKhongGian;
+    }
+
+    public String getEmailKhachHang() {
+        return emailKhachHang;
+    }
+
+    public void setEmailKhachHang(String emailKhachHang) {
+        this.emailKhachHang = emailKhachHang;
+    }
+
+    public String getSoDienThoaiKhachHang() {
+        return soDienThoaiKhachHang;
+    }
+
+    public void setSoDienThoaiKhachHang(String soDienThoaiKhachHang) {
+        this.soDienThoaiKhachHang = soDienThoaiKhachHang;
+    }
+
+    public String getMaQR() {
+        return maQR;
+    }
+
+    public void setMaQR(String maQR) {
+        this.maQR = maQR;
     }
 
     public Timestamp getThoiGianDuKienToi() {

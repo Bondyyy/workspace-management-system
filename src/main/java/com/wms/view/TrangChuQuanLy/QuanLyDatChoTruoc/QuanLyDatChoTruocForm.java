@@ -5,9 +5,11 @@
 package com.wms.view.TrangChuQuanLy.QuanLyDatChoTruoc;
 
 import com.wms.controller.TrangChuQuanLy.QuanLyDatChoTruoc.QuanLyDatChoTruocController;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.model.TrangChuQuanLy.QuanLyDatChoTruoc.DatChoTruocDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.KetQuaNhanChoDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
+import com.wms.util.QRCodeScannerUtil;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -261,7 +263,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         btnNhanCho.setBackground(new java.awt.Color(235, 94, 141));
         btnNhanCho.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnNhanCho.setForeground(new java.awt.Color(255, 255, 255));
-        btnNhanCho.setText("Đã nhận chỗ");
+        btnNhanCho.setText("Quét mã QR để nhận chỗ");
         btnNhanCho.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNhanCho.addActionListener(this::btnNhanChoActionPerformed);
         pnRight.add(btnNhanCho);
@@ -288,7 +290,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnNhanChoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNhanChoActionPerformed
-        xacNhanNhanCho();
+        quetQrNhanCho();
     }//GEN-LAST:event_btnNhanChoActionPerformed
 
     private void btnChuyenKhoanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChuyenKhoanActionPerformed
@@ -297,15 +299,37 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
 
     private void initLogic() {
         txtMaDatCho.setEditable(false);
+        txtMaKH.setEditable(false);
         txtMaKG.setEditable(false);
         txtDuKienToi.setEditable(false);
         spnThoiGianSuDung.setEnabled(false);
         txtThanhTien.setEditable(false);
         txtTrangThai.setEditable(false);
+        txtGhiChu.setEditable(false);
         txtThanhTien.setBackground(new java.awt.Color(240, 240, 240));
         txtTrangThai.setBackground(new java.awt.Color(240, 240, 240));
         txtMaKG.setBackground(new java.awt.Color(240, 240, 240));
         txtDuKienToi.setBackground(new java.awt.Color(240, 240, 240));
+        txtMaKH.setBackground(new java.awt.Color(240, 240, 240));
+        txtGhiChu.setBackground(new java.awt.Color(250, 250, 250));
+        lblMaKH.setText("Khách hàng");
+        lblMaKG.setText("Không gian / Chi nhánh");
+        lblGhiChu.setText("Yêu cầu thêm của khách hàng");
+        btnNhanCho.setText("Quét mã QR để nhận chỗ");
+        btnNhanCho.setBounds(20, 460, 360, 35);
+        btnCapNhat.setVisible(false);
+
+        tblDatCho.setModel(new DefaultTableModel(
+                new Object[][] {},
+                new String[] { "Mã đặt chỗ", "Khách hàng", "Chi nhánh", "Không gian", "Thời gian tới", "Giờ", "Trạng thái", "Thành tiền" }
+        ) {
+            final boolean[] canEdit = new boolean[] { false, false, false, false, false, false, false, false };
+
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit[columnIndex];
+            }
+        });
 
         btnTimKiem.addActionListener(evt -> loadData(txtTimKiem.getText()));
         btnLamMoi.addActionListener(evt -> {
@@ -313,7 +337,6 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             loadData("");
             clearDetail();
         });
-        btnCapNhat.addActionListener(evt -> capNhatDatCho());
         txtTimKiem.addActionListener(evt -> loadData(txtTimKiem.getText()));
         tblDatCho.getSelectionModel().addListSelectionListener(evt -> {
             if (!evt.getValueIsAdjusting()) {
@@ -338,22 +361,29 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             model.addRow(new Object[] {
                 dto.getMaDatCho(),
                 dto.getHoTenKhachHang(),
+                dto.getTenChiNhanh(),
                 dto.getTenKhongGian(),
                 formatDateTime(dto.getThoiGianDuKienToi()),
-                dto.getTrangThaiDatTruoc()
+                dto.getKhoangThoiGianSuDung() == null ? "" : dto.getKhoangThoiGianSuDung(),
+                dto.getTrangThaiDatTruoc(),
+                dto.getThanhTien() == null ? "0" : moneyFormat.format(dto.getThanhTien())
             });
         }
     }
 
     private void fillDetail(DatChoTruocDTO dto) {
         txtMaDatCho.setText(dto.getMaDatCho());
-        txtMaKH.setText(dto.getMaKH());
-        txtMaKG.setText(dto.getMaKG());
+        txtMaKH.setText((dto.getHoTenKhachHang() == null ? "" : dto.getHoTenKhachHang())
+                + (dto.getSoDienThoaiKhachHang() == null || dto.getSoDienThoaiKhachHang().isBlank()
+                ? "" : " · " + dto.getSoDienThoaiKhachHang()));
+        txtMaKG.setText((dto.getMaKG() == null ? "" : dto.getMaKG())
+                + (dto.getTenKhongGian() == null ? "" : " - " + dto.getTenKhongGian())
+                + (dto.getTenChiNhanh() == null ? "" : " · " + dto.getTenChiNhanh()));
         txtDuKienToi.setText(formatDateTime(dto.getThoiGianDuKienToi()));
         spnThoiGianSuDung.setValue(dto.getKhoangThoiGianSuDung() == null ? 1 : dto.getKhoangThoiGianSuDung());
         txtThanhTien.setText(dto.getThanhTien() == null ? "0" : moneyFormat.format(dto.getThanhTien()));
         txtTrangThai.setText(dto.getTrangThaiDatTruoc() == null ? "" : dto.getTrangThaiDatTruoc());
-        txtGhiChu.setText(dto.getGhiChu() == null ? "" : dto.getGhiChu());
+        txtGhiChu.setText(dto.getGhiChu() == null || dto.getGhiChu().isBlank() ? "Không có yêu cầu thêm." : dto.getGhiChu());
         apDungKhoaTheoTrangThai(dto.getTrangThaiDatTruoc());
     }
 
@@ -367,14 +397,13 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         txtTrangThai.setText("");
         txtGhiChu.setText("");
         btnChuyenKhoan.setEnabled(false);
-        btnNhanCho.setEnabled(false);
+        btnNhanCho.setEnabled(true);
     }
 
     private void apDungKhoaTheoTrangThai(String trangThai) {
         boolean choThanhToan = "Đang chờ thanh toán".equals(trangThai);
-        boolean daThanhToan = "Đã thanh toán thành công".equals(trangThai);
         btnChuyenKhoan.setEnabled(choThanhToan);
-        btnNhanCho.setEnabled(daThanhToan);
+        btnNhanCho.setEnabled(true);
     }
 
     private void xacNhanChuyenKhoan() {
@@ -414,40 +443,47 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     }
 
     private void xacNhanNhanCho() {
-        if (txtMaDatCho.getText().isBlank()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một đặt chỗ từ danh sách.",
-                    "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (!"Đã thanh toán thành công".equals(txtTrangThai.getText())) {
-            JOptionPane.showMessageDialog(this,
-                    "Chỉ có thể nhận chỗ khi đặt trước đã thanh toán thành công.",
-                    "Không thể thực hiện", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        int choice = JOptionPane.showConfirmDialog(this,
-                "Xác nhận mở phiên làm việc mới cho đặt chỗ này?\nKhách sẽ có thể sử dụng không gian ngay.",
-                "Xác nhận nhận chỗ",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
-        if (choice != JOptionPane.YES_OPTION) {
-            return;
-        }
+        quetQrNhanCho();
+    }
 
-        String maDatCho = txtMaDatCho.getText().trim();
-        DatChoTruocDTO dto = new DatChoTruocDTO();
-        dto.setMaDatCho(maDatCho);
-        KetQuaNhanChoDTO ketQua = controller.moPhienTuDatChoThuCong(dto);
+    private void quetQrNhanCho() {
+        String qrRaw = QRCodeScannerUtil.quetHoacNhapThuCong(this);
+        if (qrRaw == null || qrRaw.isBlank()) {
+            return;
+        }
+        KetQuaNhanChoDTO ketQua = controller.xacNhanNhanChoBangQr(qrRaw, DangNhapController.getCurrentUser());
         if (ketQua.isThanhCong()) {
             JOptionPane.showMessageDialog(this,
-                    "Đã tạo phiên mới: " + ketQua.getMaPhien() + "\nKhách có thể sử dụng ngay.",
+                    dinhDangKetQuaNhanCho(ketQua),
                     "Nhận chỗ thành công", JOptionPane.INFORMATION_MESSAGE);
-            taiLaiVaChon(maDatCho);
+            if (ketQua.getMaDatCho() != null) {
+                taiLaiVaChon(ketQua.getMaDatCho());
+            } else {
+                loadData(txtTimKiem.getText());
+            }
             return;
         }
         JOptionPane.showMessageDialog(this,
                 "Không thể nhận chỗ.\nLý do: " + ketQua.getThongBao(),
                 "Thông báo", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private String dinhDangKetQuaNhanCho(KetQuaNhanChoDTO ketQua) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Đã mở phiên: ").append(ketQua.getMaPhien() == null ? "" : ketQua.getMaPhien());
+        if (ketQua.getTenKhachHang() != null && !ketQua.getTenKhachHang().isBlank()) {
+            builder.append("\nKhách hàng: ").append(ketQua.getTenKhachHang());
+        }
+        if (ketQua.getTenChiNhanh() != null && !ketQua.getTenChiNhanh().isBlank()) {
+            builder.append("\nChi nhánh: ").append(ketQua.getTenChiNhanh());
+        }
+        if (ketQua.getTenKhongGian() != null && !ketQua.getTenKhongGian().isBlank()) {
+            builder.append("\nKhông gian: ").append(ketQua.getTenKhongGian());
+        }
+        if (ketQua.getThoiGianDuKienKetThuc() != null) {
+            builder.append("\nDự kiến kết thúc: ").append(formatDateTime(ketQua.getThoiGianDuKienKetThuc()));
+        }
+        return builder.toString();
     }
 
     private void taiLaiVaChon(String maDatCho) {

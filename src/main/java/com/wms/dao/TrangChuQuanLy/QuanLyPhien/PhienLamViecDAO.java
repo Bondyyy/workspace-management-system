@@ -184,14 +184,6 @@ public class PhienLamViecDAO {
                                               AND p.TrangThaiPhien = 'Đang hoạt động'
                                         ) THEN 'Đang hoạt động'
                                 
-                                        WHEN EXISTS (
-                                            SELECT 1
-                                            FROM DATCHO dc
-                                            WHERE dc.MaKG = kg.MaKG
-                                              AND dc.TrangThaiDatTruoc = 'Đã thanh toán thành công'
-                                              AND SYSTIMESTAMP <= dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')
-                                        ) THEN 'Đã đặt trước'
-                                
                                         ELSE 'Trống'
                                     END
                                 WHERE kg.MaKG = ?
@@ -293,8 +285,8 @@ public class PhienLamViecDAO {
                 } catch (SQLException ignored) {}
             }
         } catch (Exception e) {
-            System.err.println("[PhienLamViecDAO] Lỗi mở phiên từ QR đặt chỗ: " + e.getMessage());
-            return new KetQuaNhanChoDTO(false, "Không thể mở phiên từ QR: " + e.getMessage());
+            System.err.println("[PhienLamViecDAO] Lỗi mở phiên từ QR đặt chỗ: " + e.getClass().getSimpleName());
+            return new KetQuaNhanChoDTO(false, com.wms.util.ErrorMessageUtil.toUserMessage(e));
         }
     }
 

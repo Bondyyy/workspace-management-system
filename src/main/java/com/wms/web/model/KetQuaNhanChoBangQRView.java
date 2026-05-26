@@ -7,6 +7,7 @@ public class KetQuaNhanChoBangQRView {
     private String maPhien;
     private String tenKhachHang;
     private String tenKhongGian;
+    private String tenChiNhanh;
 
     public KetQuaNhanChoBangQRView() {
     }
@@ -18,12 +19,19 @@ public class KetQuaNhanChoBangQRView {
 
     public KetQuaNhanChoBangQRView(boolean thanhCong, String thongBao, String maDatCho,
                                    String maPhien, String tenKhachHang, String tenKhongGian) {
+        this(thanhCong, thongBao, maDatCho, maPhien, tenKhachHang, tenKhongGian, null);
+    }
+
+    public KetQuaNhanChoBangQRView(boolean thanhCong, String thongBao, String maDatCho,
+                                   String maPhien, String tenKhachHang, String tenKhongGian,
+                                   String tenChiNhanh) {
         this.thanhCong = thanhCong;
         this.thongBao = thongBao;
         this.maDatCho = maDatCho;
         this.maPhien = maPhien;
         this.tenKhachHang = tenKhachHang;
         this.tenKhongGian = tenKhongGian;
+        this.tenChiNhanh = tenChiNhanh;
     }
 
     public static KetQuaNhanChoBangQRView thatBai(String thongBao) {
@@ -37,7 +45,8 @@ public class KetQuaNhanChoBangQRView {
                 thongTin.getMaDatCho(),
                 maPhien,
                 thongTin.getTenKhachHang(),
-                thongTin.getTenKG()
+                thongTin.getTenKG(),
+                thongTin.getTenCN()
         );
     }
 
@@ -87,5 +96,13 @@ public class KetQuaNhanChoBangQRView {
 
     public void setTenKhongGian(String tenKhongGian) {
         this.tenKhongGian = tenKhongGian;
+    }
+
+    public String getTenChiNhanh() {
+        return tenChiNhanh;
+    }
+
+    public void setTenChiNhanh(String tenChiNhanh) {
+        this.tenChiNhanh = tenChiNhanh;
     }
 }

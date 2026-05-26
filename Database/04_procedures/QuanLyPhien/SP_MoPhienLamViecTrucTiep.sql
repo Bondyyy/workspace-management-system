@@ -111,7 +111,7 @@ BEGIN
             p_outMessage := 'Khong gian hien khong kha dung. Trang thai hien tai: ' || v_TrangThaiKG;
             RETURN;
         END IF;
-    ELSIF v_TrangThaiKG NOT IN ('Trống', 'Đã đặt trước') THEN
+    ELSIF v_TrangThaiKG NOT IN ('Trống', 'Đã đặt trước', 'Tạm khoá', 'Tạm khóa') THEN
         p_outMessage := 'Khong gian hien khong kha dung. Trang thai hien tai: ' || v_TrangThaiKG;
         RETURN;
     END IF;

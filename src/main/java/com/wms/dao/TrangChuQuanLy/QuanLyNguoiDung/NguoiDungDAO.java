@@ -14,11 +14,12 @@ public class NguoiDungDAO {
                     SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.AnhDaiDien,
                            n.GioiTinh, n.Email, n.SDT, n.NgaySinh,
                            n.ThoiGianTao, n.CapNhatLanCuoi, n.LanCuoiDangNhap, n.TrangThaiND,
-                           v.TenVaiTro, v.MaVaiTro, nv_table.MaNV
+                           v.TenVaiTro, v.MaVaiTro, nv_table.MaNV, nv_table.MaCN, cn.TenCN
                     FROM NGUOIDUNG n
                     LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND
                     LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro
                     LEFT JOIN NHANVIEN nv_table ON n.MaND = nv_table.MaND
+                    LEFT JOIN CHINHANH cn ON cn.MaCN = nv_table.MaCN
                     WHERE n.TenTaiKhoan = ? OR n.Email = ? OR n.SDT = ?
                 """;
 
@@ -55,6 +56,8 @@ public class NguoiDungDAO {
                         }
                         user.setHoTen(hoTen);
                         user.setMaNV(rs.getString("MaNV"));
+                        user.setMaCN(rs.getString("MaCN"));
+                        user.setTenCN(rs.getString("TenCN"));
                     }
 
                     String tenVaiTro = rs.getString("TenVaiTro");

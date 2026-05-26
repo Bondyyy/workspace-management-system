@@ -657,6 +657,9 @@ public class CongThongTinController {
                 session.setAttribute("user", new NguoiDungPhien(
                         user.getMaND(),
                         user.getMaKH(),
+                        user.getMaNV(),
+                        user.getMaCN(),
+                        user.getTenCN(),
                         profile.getHoTen(),
                         user.getTenTaiKhoan(),
                         user.laNhanVien()

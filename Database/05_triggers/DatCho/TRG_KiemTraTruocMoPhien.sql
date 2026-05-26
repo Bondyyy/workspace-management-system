@@ -19,7 +19,7 @@ BEGIN
                 'Lỗi: Mở phiên trực tiếp chỉ được phép khi không gian đang Trống (Trạng thái: '
                 || v_TrangThaiKG || ').'
             );
-        ELSIF :NEW.MaDatCho IS NOT NULL AND v_TrangThaiKG NOT IN ('Trống', 'Đã đặt trước') THEN
+        ELSIF :NEW.MaDatCho IS NOT NULL AND v_TrangThaiKG NOT IN ('Trống', 'Đã đặt trước', 'Tạm khoá', 'Tạm khóa') THEN
             RAISE_APPLICATION_ERROR(
                 -20001,
                 'Lỗi: Không gian của đặt chỗ chưa sẵn sàng để nhận khách (Trạng thái: '

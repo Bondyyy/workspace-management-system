@@ -10,6 +10,9 @@ public class KhongGianDTO {
     private String trangThaiLoaiKG;
     private String maCN;
     private String tenCN;
+    private String trangThaiHienThi;
+    private boolean coTheDat = true;
+    private String lyDoKhongTheDat;
     private int chieuDai;
     private int chieuRong;
     private Double donGia;
@@ -89,6 +92,30 @@ public class KhongGianDTO {
 
     public void setMaCN(String maCN) {
         this.maCN = maCN;
+    }
+
+    public String getTrangThaiHienThi() {
+        return trangThaiHienThi == null || trangThaiHienThi.isBlank() ? trangThaiKG : trangThaiHienThi;
+    }
+
+    public void setTrangThaiHienThi(String trangThaiHienThi) {
+        this.trangThaiHienThi = trangThaiHienThi;
+    }
+
+    public boolean isCoTheDat() {
+        return coTheDat;
+    }
+
+    public void setCoTheDat(boolean coTheDat) {
+        this.coTheDat = coTheDat;
+    }
+
+    public String getLyDoKhongTheDat() {
+        return lyDoKhongTheDat;
+    }
+
+    public void setLyDoKhongTheDat(String lyDoKhongTheDat) {
+        this.lyDoKhongTheDat = lyDoKhongTheDat;
     }
     
     private Integer toaDoX;

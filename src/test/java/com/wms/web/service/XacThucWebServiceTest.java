@@ -94,9 +94,12 @@ class XacThucWebServiceTest {
                 maND,
                 "Người dùng",
                 "user",
+                "user@example.com",
                 hashedPassword,
                 status,
                 "KH01",
+                null,
+                null,
                 null
         );
     }

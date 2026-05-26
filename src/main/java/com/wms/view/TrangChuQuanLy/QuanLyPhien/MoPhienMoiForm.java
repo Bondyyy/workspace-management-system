@@ -422,6 +422,8 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
         btnNhanChoQr.addActionListener(this::btnNhanChoQrActionPerformed);
         pnLeftMap.add(btnNhanChoQr);
         btnNhanChoQr.setBounds(430, 15, 190, 30);
+        btnNhanChoQr.setVisible(false);
+        btnNhanChoQr.setEnabled(false);
 
         pnSoDo.setBackground(new java.awt.Color(255, 255, 255));
         pnSoDo.setLayout(new java.awt.GridLayout(4, 4, 10, 10));

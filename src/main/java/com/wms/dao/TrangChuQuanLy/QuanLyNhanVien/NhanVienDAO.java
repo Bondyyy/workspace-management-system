@@ -435,6 +435,27 @@ public class NhanVienDAO {
         return null;
     }
 
+    public String layTenCNTuMaND(String maND) {
+        String sql = """
+                SELECT cn.TenCN
+                FROM NHANVIEN nv
+                LEFT JOIN CHINHANH cn ON cn.MaCN = nv.MaCN
+                WHERE nv.MaND = ?
+                """;
+        try (Connection conn = getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("TenCN");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[NhanVienDAO] Lỗi lấy tên chi nhánh nhân viên: " + e.getMessage());
+        }
+        return null;
+    }
+
     public List<String[]> layDanhSachQuanLy() {
         List<String[]> list = new ArrayList<>();
         String sql = "SELECT nv.MaNV, nd.HoTen " +

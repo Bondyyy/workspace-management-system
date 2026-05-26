@@ -6,6 +6,7 @@ package com.wms.view.TrangChuQuanLy;
 
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 import com.wms.controller.TrangChuGioiThieu.DangNhapController;
+import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NhanVienDAO;
 
 /**
  *
@@ -101,7 +102,12 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         if (user != null) {
             String name = (user.getHoTen() != null && !user.getHoTen().isEmpty()) ? user.getHoTen()
                     : user.getTenTaiKhoan();
-            lblGreeting.setText("Xin chào " + (name != null ? name : "Admin") + "!");
+            String tenChiNhanh = user.getTenCN();
+            if (tenChiNhanh == null || tenChiNhanh.isBlank()) {
+                tenChiNhanh = new NhanVienDAO().layTenCNTuMaND(user.getMaND());
+            }
+            String hienThiChiNhanh = tenChiNhanh == null || tenChiNhanh.isBlank() ? "Toàn hệ thống" : tenChiNhanh;
+            lblGreeting.setText("Xin chào " + (name != null ? name : "Admin") + " · Chi nhánh: " + hienThiChiNhanh);
             // Xác định tên hiển thị vai trò cho header
             String roleDisplay = "Nhân viên";
             if (user.getVaiTro() != null && !user.getVaiTro().isEmpty()) {

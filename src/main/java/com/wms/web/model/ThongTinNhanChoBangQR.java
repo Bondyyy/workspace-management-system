@@ -11,11 +11,14 @@ public class ThongTinNhanChoBangQR {
     private final String maKH;
     private final String maKG;
     private final String tenKG;
+    private final String maCN;
+    private final String tenCN;
     private final String tenKhachHang;
 
     public ThongTinNhanChoBangQR(String maDatCho, String maQR, String trangThaiDatTruoc,
                                  LocalDateTime thoiGianDuKienToi, Integer khoangThoiGianSuDung,
-                                 String maKH, String maKG, String tenKG, String tenKhachHang) {
+                                 String maKH, String maKG, String tenKG, String maCN,
+                                 String tenCN, String tenKhachHang) {
         this.maDatCho = maDatCho;
         this.maQR = maQR;
         this.trangThaiDatTruoc = trangThaiDatTruoc;
@@ -24,6 +27,8 @@ public class ThongTinNhanChoBangQR {
         this.maKH = maKH;
         this.maKG = maKG;
         this.tenKG = tenKG;
+        this.maCN = maCN;
+        this.tenCN = tenCN;
         this.tenKhachHang = tenKhachHang;
     }
 
@@ -61,6 +66,14 @@ public class ThongTinNhanChoBangQR {
 
     public String getTenKG() {
         return tenKG;
+    }
+
+    public String getMaCN() {
+        return maCN;
+    }
+
+    public String getTenCN() {
+        return tenCN;
     }
 
     public String getTenKhachHang() {

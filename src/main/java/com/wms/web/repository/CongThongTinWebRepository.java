@@ -47,10 +47,11 @@ public class CongThongTinWebRepository {
     public BanGhiXacThuc timThongTinXacThuc(String identifier) {
         String sql = """
                 SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.Email, n.MatKhauMaHoa, n.TrangThaiND,
-                       kh.MaKH, nv.MaNV
+                       kh.MaKH, nv.MaNV, nv.MaCN, cn.TenCN
                 FROM NGUOIDUNG n
                 LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND
                 LEFT JOIN NHANVIEN nv ON nv.MaND = n.MaND
+                LEFT JOIN CHINHANH cn ON cn.MaCN = nv.MaCN
                 WHERE n.TenTaiKhoan = ? OR n.Email = ? OR n.SDT = ?
                 """;
         try {
@@ -62,7 +63,9 @@ public class CongThongTinWebRepository {
                     rs.getString("MatKhauMaHoa"),
                     rs.getString("TrangThaiND"),
                     rs.getString("MaKH"),
-                    rs.getString("MaNV")
+                    rs.getString("MaNV"),
+                    rs.getString("MaCN"),
+                    rs.getString("TenCN")
             ), identifier, identifier, identifier);
         } catch (EmptyResultDataAccessException ex) {
             return null;
@@ -328,46 +331,68 @@ public class CongThongTinWebRepository {
         }
 
         String baseSql = """
-                SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
+                SELECT kg.MaKG, kg.TenKG, kg.ViTri,
+                       CASE
+                           WHEN kg.TrangThaiKG = ? THEN ?
+                           WHEN kg.TrangThaiKG = ?
+                                OR EXISTS (
+                                    SELECT 1
+                                    FROM PHIENLAMVIEC p
+                                    WHERE p.MaKG = kg.MaKG
+                                      AND p.TrangThaiPhien = ?
+                                      AND p.ThoiGianBatDau < ?
+                                      AND p.ThoiGianDuKienKetThuc > ?
+                                      AND (p.ThoiGianKetThuc IS NULL OR p.ThoiGianKetThuc > ?)
+                                ) THEN ?
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM DATCHO dc
+                               WHERE dc.MaKG = kg.MaKG
+                                 AND dc.TrangThaiDatTruoc = ?
+                                 AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
+                                 AND dc.ThoiGianDuKienToi < ?
+                                 AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
+                           ) THEN ?
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM DATCHO dc
+                               WHERE dc.MaKG = kg.MaKG
+                                 AND dc.TrangThaiDatTruoc IN (?, ?)
+                                 AND dc.ThoiGianDuKienToi < ?
+                                 AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
+                           ) THEN ?
+                           ELSE ?
+                       END AS TrangThaiKG,
                        kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                        lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua,
                        NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong,
-                       MAX(CASE
-                           WHEN p.MaPhien IS NOT NULL THEN p.ThoiGianDuKienKetThuc
-                           WHEN dc.MaDatCho IS NOT NULL
-                               THEN dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')
-                           ELSE NULL
-                       END) AS BusyUntil
+                       (SELECT MAX(p.ThoiGianDuKienKetThuc)
+                        FROM PHIENLAMVIEC p
+                        WHERE p.MaKG = kg.MaKG
+                          AND p.TrangThaiPhien = ?
+                          AND p.ThoiGianBatDau < ?
+                          AND p.ThoiGianDuKienKetThuc > ?
+                          AND (p.ThoiGianKetThuc IS NULL OR p.ThoiGianKetThuc > ?)) AS PhienBusyUntil,
+                       (SELECT MAX(dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR'))
+                        FROM DATCHO dc
+                        WHERE dc.MaKG = kg.MaKG
+                          AND dc.ThoiGianDuKienToi < ?
+                          AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
+                          AND (
+                              dc.TrangThaiDatTruoc IN (?, ?)
+                              OR (
+                                  dc.TrangThaiDatTruoc = ?
+                                  AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
+                              )
+                          )) AS DatChoBusyUntil
                 FROM KHONGGIAN kg
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
-                LEFT JOIN PHIENLAMVIEC p ON p.MaKG = kg.MaKG
-                    AND p.ThoiGianBatDau < ?
-                    AND p.ThoiGianDuKienKetThuc > ?
-                    AND (
-                        p.ThoiGianKetThuc IS NULL
-                        OR p.ThoiGianKetThuc > ?
-                    )
-                LEFT JOIN DATCHO dc ON dc.MaKG = kg.MaKG
-                    AND dc.ThoiGianDuKienToi < ?
-                    AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
-                    AND (
-                        dc.TrangThaiDatTruoc = ?
-                        OR (
-                            dc.TrangThaiDatTruoc = ?
-                            AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
-                        )
-                    )
                 """;
         String sql = baseSql + """
                 WHERE kg.MaCN = ?
-                GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
-                         kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
-                         lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua, NVL(lkg.DonGiaTheoGio, 0),
-                         NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
-                         NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
                 ORDER BY
                     CASE
                         WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
@@ -379,22 +404,37 @@ public class CongThongTinWebRepository {
                     kg.MaKG
                 """;
         Object[] params = {
+                trangThaiKhongGianDb("Bao tri"),
+                "Bảo trì",
+                trangThaiKhongGianDb("Dang hoat dong"),
+                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
+                Timestamp.valueOf(selectedEnd),
+                Timestamp.valueOf(selectedStart),
+                Timestamp.valueOf(selectedStart),
+                "Đang hoạt động",
+                trangThaiDatChoDb("Dang cho thanh toan"),
+                Timestamp.valueOf(selectedEnd),
+                Timestamp.valueOf(selectedStart),
+                "Tạm khóa",
+                trangThaiDatChoDb("Da thanh toan thanh cong"),
+                "Đã đặt trước",
+                Timestamp.valueOf(selectedEnd),
+                Timestamp.valueOf(selectedStart),
+                "Đã đặt trước",
+                "Trống",
+                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
                 Timestamp.valueOf(selectedStart),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
                 trangThaiDatChoDb("Da thanh toan thanh cong"),
+                "Đã đặt trước",
                 trangThaiDatChoDb("Dang cho thanh toan"),
                 branchId
         };
         if (branchId == null || branchId.isBlank()) {
             sql = baseSql + """
-                    GROUP BY kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
-                             kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
-                             lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua, NVL(lkg.DonGiaTheoGio, 0),
-                             NVL(kg.ToaDoX, 0), NVL(kg.ToaDoY, 0),
-                             NVL(kg.ChieuDai, 1), NVL(kg.ChieuRong, 1)
                     ORDER BY
                         CASE
                             WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
@@ -406,18 +446,38 @@ public class CongThongTinWebRepository {
                         kg.MaKG
                     """;
             params = new Object[] {
+                    trangThaiKhongGianDb("Bao tri"),
+                    "Bảo trì",
+                    trangThaiKhongGianDb("Dang hoat dong"),
+                    giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
+                    Timestamp.valueOf(selectedEnd),
+                    Timestamp.valueOf(selectedStart),
+                    Timestamp.valueOf(selectedStart),
+                    "Đang hoạt động",
+                    trangThaiDatChoDb("Dang cho thanh toan"),
+                    Timestamp.valueOf(selectedEnd),
+                    Timestamp.valueOf(selectedStart),
+                    "Tạm khóa",
+                    trangThaiDatChoDb("Da thanh toan thanh cong"),
+                    "Đã đặt trước",
+                    Timestamp.valueOf(selectedEnd),
+                    Timestamp.valueOf(selectedStart),
+                    "Đã đặt trước",
+                    "Trống",
+                    giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                     Timestamp.valueOf(selectedEnd),
                     Timestamp.valueOf(selectedStart),
                     Timestamp.valueOf(selectedStart),
                     Timestamp.valueOf(selectedEnd),
                     Timestamp.valueOf(selectedStart),
                     trangThaiDatChoDb("Da thanh toan thanh cong"),
+                    "Đã đặt trước",
                     trangThaiDatChoDb("Dang cho thanh toan")
             };
         }
 
         return mauJdbc.query(sql, (rs, rowNum) -> {
-            Timestamp busyUntil = rs.getTimestamp("BusyUntil");
+            Timestamp busyUntil = thoiGianBanRonLonHon(rs.getTimestamp("PhienBusyUntil"), rs.getTimestamp("DatChoBusyUntil"));
             int sucChua = rs.getInt("SucChua");
             boolean sucChuaNull = rs.wasNull();
             return new KhongGianView(
@@ -507,7 +567,7 @@ public class CongThongTinWebRepository {
                        AND ThoiGianDuKienToi < ?
                        AND (ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')) > ?
                        AND (
-                           TrangThaiDatTruoc = ?
+                           TrangThaiDatTruoc IN (?, ?)
                            OR (
                                TrangThaiDatTruoc = ?
                                AND ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
@@ -524,6 +584,7 @@ public class CongThongTinWebRepository {
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
                 trangThaiDatChoDb("Da thanh toan thanh cong"),
+                "Đã đặt trước",
                 trangThaiDatChoDb("Dang cho thanh toan")
         );
         return count != null && count > 0;
@@ -590,9 +651,12 @@ public class CongThongTinWebRepository {
                        dc.MaKH,
                        dc.MaKG,
                        kg.TenKG,
+                       kg.MaCN,
+                       cn.TenCN,
                        nd.HoTen AS TenKhachHang
                 FROM DATCHO dc
                 JOIN KHONGGIAN kg ON dc.MaKG = kg.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN KHACHHANG kh ON dc.MaKH = kh.MaKH
                 LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND
                 WHERE dc.MaQR = ?
@@ -663,7 +727,9 @@ public class CongThongTinWebRepository {
         if (normalizedSpaceStatus.contains("bao tri")) {
             throw new IllegalStateException("Không gian đang bảo trì, không thể mở phiên.");
         }
-        if (!normalizedSpaceStatus.equals("trong") && !normalizedSpaceStatus.contains("dat truoc")) {
+        if (!normalizedSpaceStatus.equals("trong")
+                && !normalizedSpaceStatus.contains("dat truoc")
+                && !normalizedSpaceStatus.contains("tam khoa")) {
             throw new IllegalStateException("Không gian của đặt chỗ chưa sẵn sàng để nhận khách. Trạng thái hiện tại: "
                     + trangThaiKhongGian + ".");
         }
@@ -779,11 +845,6 @@ public class CongThongTinWebRepository {
             }
         });
 
-        mauJdbc.update(
-                "UPDATE KHONGGIAN SET TrangThaiKG = ? WHERE MaKG = ?",
-                trangThaiKhongGianDb("Tam khoa"),
-                maKG
-        );
         return maDatCho;
     }
 
@@ -943,20 +1004,7 @@ public class CongThongTinWebRepository {
                 maDatCho,
                 trangThaiDatChoDb("Dang cho thanh toan")
         );
-        if (updated == 0) {
-            return false;
-        }
-
-        mauJdbc.update(
-                """
-                UPDATE KHONGGIAN
-                SET TrangThaiKG = ?
-                WHERE MaKG = (SELECT MaKG FROM DATCHO WHERE MaDatCho = ?)
-                """,
-                trangThaiKhongGianDb("Da dat truoc"),
-                maDatCho
-        );
-        return true;
+        return updated > 0;
     }
 
     public boolean ghiNhanThanhToanDatChoThatBai(String maDatCho, String reason) {
@@ -979,15 +1027,6 @@ public class CongThongTinWebRepository {
             return false;
         }
 
-        mauJdbc.update(
-                """
-                UPDATE KHONGGIAN
-                SET TrangThaiKG = ?
-                WHERE MaKG = (SELECT MaKG FROM DATCHO WHERE MaDatCho = ?)
-                """,
-                trangThaiKhongGianDb("Trong"),
-                maDatCho
-        );
         return true;
     }
 
@@ -1425,6 +1464,16 @@ public class CongThongTinWebRepository {
         );
     }
 
+    private Timestamp thoiGianBanRonLonHon(Timestamp first, Timestamp second) {
+        if (first == null) {
+            return second;
+        }
+        if (second == null) {
+            return first;
+        }
+        return first.after(second) ? first : second;
+    }
+
     private ThongTinNhanChoBangQR anhXaThongTinNhanChoBangQR(java.sql.ResultSet rs) throws java.sql.SQLException {
         Timestamp thoiGianDuKienToi = rs.getTimestamp("ThoiGianDuKienToi");
         int khoangThoiGian = rs.getInt("KhoangThoiGianSuDung");
@@ -1438,6 +1487,8 @@ public class CongThongTinWebRepository {
                 rs.getString("MaKH"),
                 rs.getString("MaKG"),
                 giaiMaLoiFont(rs.getString("TenKG")),
+                rs.getString("MaCN"),
+                giaiMaLoiFont(rs.getString("TenCN")),
                 giaiMaLoiFont(rs.getString("TenKhachHang"))
         );
     }
@@ -1748,26 +1799,19 @@ public class CongThongTinWebRepository {
                               AND p.TrangThaiPhien = ?
                         ) THEN ?
                 
-                        WHEN EXISTS (
-                            SELECT 1
-                            FROM DATCHO dc
-                            WHERE dc.MaKG = kg.MaKG
-                              AND dc.TrangThaiDatTruoc = ?
-                              AND SYSTIMESTAMP <= dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')
-                        ) THEN ?
-                
                         ELSE ?
                     END
                 WHERE kg.MaKG = ?
+                  AND kg.TrangThaiKG IN (?, ?)
                 """;
         mauJdbc.update(
                 sql,
                 giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                 trangThaiKhongGianDb("Dang hoat dong"),
-                trangThaiDatChoDb("Da thanh toan thanh cong"),
-                trangThaiKhongGianDb("Da dat truoc"),
                 trangThaiKhongGianDb("Trong"),
-                maKG
+                maKG,
+                trangThaiKhongGianDb("Dat truoc"),
+                trangThaiKhongGianDb("Tam khoa")
         );
     }
 
@@ -1799,9 +1843,12 @@ public class CongThongTinWebRepository {
                        dc.MaKH,
                        dc.MaKG,
                        kg.TenKG,
+                       kg.MaCN,
+                       cn.TenCN,
                        nd.HoTen AS TenKhachHang
                 FROM DATCHO dc
                 JOIN KHONGGIAN kg ON dc.MaKG = kg.MaKG
+                JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN KHACHHANG kh ON dc.MaKH = kh.MaKH
                 LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND
                 WHERE dc.MaDatCho = ?
@@ -1827,7 +1874,9 @@ public class CongThongTinWebRepository {
             String matKhauMaHoa,
             String trangThaiND,
             String maKH,
-            String maNV
+            String maNV,
+            String maCN,
+            String tenCN
     ) {
         public boolean laNhanVien() {
             return maNV != null && !maNV.isBlank();

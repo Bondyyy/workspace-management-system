@@ -18,6 +18,8 @@ public class SoDoKhongGianPanel extends JPanel {
     private final Color mauTrong_Vien = Color.decode("#E0E0E0");
     private final Color mauDaDat_Nen = Color.decode("#FFF3E0");
     private final Color mauDaDat_Vien = Color.decode("#FFB74D");
+    private final Color mauTamKhoa_Nen = Color.decode("#FFF8E1");
+    private final Color mauTamKhoa_Vien = Color.decode("#F9A825");
     private final Color mauDangDung_Nen = Color.decode("#E8F5E9");
     private final Color mauDangDung_Vien = Color.decode("#66BB6A");
     private final Color mauBaoTri_Nen = Color.decode("#F5F5F5");
@@ -174,7 +176,7 @@ public class SoDoKhongGianPanel extends JPanel {
             mauVienBtn = mauHongChinh;
             mauChu = Color.WHITE;
         } else {
-            String status = kg.getTrangThaiKG() != null ? kg.getTrangThaiKG().trim() : "Trống";
+            String status = kg.getTrangThaiHienThi() != null ? kg.getTrangThaiHienThi().trim() : "Trống";
             switch (status) {
                 case "Trống":
                     mauNenBtn = mauTrong_Nen;
@@ -185,6 +187,13 @@ public class SoDoKhongGianPanel extends JPanel {
                     mauNenBtn = mauDaDat_Nen;
                     mauVienBtn = mauDaDat_Vien;
                     mauChu = Color.decode("#E65100");
+                    break;
+                case "Tạm khóa":
+                case "Tạm khoá":
+                case "Đang chờ thanh toán":
+                    mauNenBtn = mauTamKhoa_Nen;
+                    mauVienBtn = mauTamKhoa_Vien;
+                    mauChu = Color.decode("#9A6700");
                     break;
                 case "Đang hoạt động":
                     mauNenBtn = mauDangDung_Nen;

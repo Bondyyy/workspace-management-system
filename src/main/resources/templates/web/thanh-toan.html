@@ -73,6 +73,10 @@
                     <em class="money" th:text="${#numbers.formatDecimal(payment.thanhTien, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">0 VNĐ</em>
                 </span>
             </div>
+            <div class="booking-qr-pending payment-qr-pending">
+                <strong>QR sẽ được tạo sau khi thanh toán thành công.</strong>
+                <span>Đây là QR nhận chỗ tại quầy, khác với QR chuyển khoản ở khung bên phải.</span>
+            </div>
             <div class="payment-actions">
                 <a th:href="@{/portal}" class="button-secondary">Về trang chủ</a>
                 <a th:href="@{/portal/history}" class="button-secondary">Xem lịch sử đặt chỗ</a>
