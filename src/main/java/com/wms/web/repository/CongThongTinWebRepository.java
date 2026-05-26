@@ -799,27 +799,34 @@ public class CongThongTinWebRepository {
 
         mauJdbc.update(
                 """
-                UPDATE HOADON
-                SET DaTraTruoc = (
-                        SELECT NVL(ThanhTien, 0)
-                        FROM DATCHO
-                        WHERE MaDatCho = ?
-                    ),
-                    TongTien = (
-                        SELECT NVL(ThanhTien, 0)
-                        FROM DATCHO
-                        WHERE MaDatCho = ?
-                    ),
-                    ThanhTien = 0,
-                    NgayLapHoaDon = CURRENT_TIMESTAMP,
-                    PhuongThucThanhToan = ?,
-                    TrangThaiThanhToan = ?
-                WHERE MaPhien = ?
+                UPDATE HOADON h
+                SET (DaTraTruoc, TongTien, TongTienGoc, TienGocDatTruoc,
+                     TienGocPhatSinh, MaPGGDatTruoc, TienGiamVoucherDatTruoc,
+                     PhanTramGiamHangTVDatTruoc, TienGiamHangTVDatTruoc,
+                     TongTienGiam, ThanhTien, NgayLapHoaDon, PhuongThucThanhToan,
+                     TrangThaiThanhToan) = (
+                    SELECT NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)),
+                           NVL(dc.TongTienGoc, 0),
+                           NVL(dc.TongTienGoc, 0),
+                           NVL(dc.TongTienGoc, 0),
+                           0,
+                           dc.MaPGG,
+                           NVL(dc.TienGiamVoucher, 0),
+                           NVL(dc.PhanTramGiamHangTV, 0),
+                           NVL(dc.TienGiamHangTV, 0),
+                           NVL(dc.TienGiamVoucher, 0) + NVL(dc.TienGiamHangTV, 0),
+                           0,
+                           CURRENT_TIMESTAMP,
+                           ?,
+                           ?
+                    FROM DATCHO dc
+                    WHERE dc.MaDatCho = ?
+                )
+                WHERE h.MaPhien = ?
                 """,
-                thongTin.getMaDatCho(),
-                thongTin.getMaDatCho(),
                 giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
                 trangThaiHoaDonDb("Da tra truoc"),
+                thongTin.getMaDatCho(),
                 maPhien
         );
 
@@ -857,10 +864,14 @@ public class CongThongTinWebRepository {
                     BEGIN
                         INSERT INTO DATCHO (
                             ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung,
-                            TrangThaiDatTruoc, ThanhTien,
+                            TrangThaiDatTruoc, ThanhTien, TongTienGoc,
+                            MaPGG, MaChuSoPGG, TienGiamVoucher,
+                            PhanTramGiamHangTV, TienGiamHangTV, ThanhTienSauGiam,
                             GhiChu, CapNhatLanCuoi, MaKH, MaKG
                         ) VALUES (
-                            ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?,
+                            ?, ?, ?,
                             ?, CURRENT_TIMESTAMP, ?, ?
                         )
                         RETURNING MaDatCho INTO ?;
@@ -872,12 +883,19 @@ public class CongThongTinWebRepository {
                 cs.setObject(3, durationHours);
                 cs.setString(4, giaTriDb("CHK_DC_TRANGTHAI", "dang cho thanh toan", 0, "Đang chờ thanh toán"));
                 cs.setBigDecimal(5, thanhTienSauGiam == null ? BigDecimal.ZERO : thanhTienSauGiam);
-                cs.setString(6, note);
-                cs.setString(7, user.getMaKH());
-                cs.setString(8, maKG);
-                cs.registerOutParameter(9, Types.VARCHAR);
+                cs.setBigDecimal(6, tongTienGoc == null ? BigDecimal.ZERO : tongTienGoc);
+                cs.setString(7, maPGG);
+                cs.setString(8, maChuSoPGG);
+                cs.setBigDecimal(9, tienGiamVoucher == null ? BigDecimal.ZERO : tienGiamVoucher);
+                cs.setBigDecimal(10, phanTramGiamHangTV == null ? BigDecimal.ZERO : phanTramGiamHangTV);
+                cs.setBigDecimal(11, tienGiamHangTV == null ? BigDecimal.ZERO : tienGiamHangTV);
+                cs.setBigDecimal(12, thanhTienSauGiam == null ? BigDecimal.ZERO : thanhTienSauGiam);
+                cs.setString(13, note);
+                cs.setString(14, user.getMaKH());
+                cs.setString(15, maKG);
+                cs.registerOutParameter(16, Types.VARCHAR);
                 cs.execute();
-                return cs.getString(9);
+                return cs.getString(16);
             }
         });
 
@@ -1155,27 +1173,34 @@ public class CongThongTinWebRepository {
 
         mauJdbc.update(
                 """
-                UPDATE HOADON
-                SET DaTraTruoc = (
-                        SELECT NVL(ThanhTien, 0)
-                        FROM DATCHO
-                        WHERE MaDatCho = ?
-                    ),
-                    TongTien = (
-                        SELECT NVL(ThanhTien, 0)
-                        FROM DATCHO
-                        WHERE MaDatCho = ?
-                    ),
-                    ThanhTien = 0,
-                    NgayLapHoaDon = CURRENT_TIMESTAMP,
-                    PhuongThucThanhToan = ?,
-                    TrangThaiThanhToan = ?
-                WHERE MaPhien = ?
+                UPDATE HOADON h
+                SET (DaTraTruoc, TongTien, TongTienGoc, TienGocDatTruoc,
+                     TienGocPhatSinh, MaPGGDatTruoc, TienGiamVoucherDatTruoc,
+                     PhanTramGiamHangTVDatTruoc, TienGiamHangTVDatTruoc,
+                     TongTienGiam, ThanhTien, NgayLapHoaDon, PhuongThucThanhToan,
+                     TrangThaiThanhToan) = (
+                    SELECT NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)),
+                           NVL(dc.TongTienGoc, 0),
+                           NVL(dc.TongTienGoc, 0),
+                           NVL(dc.TongTienGoc, 0),
+                           0,
+                           dc.MaPGG,
+                           NVL(dc.TienGiamVoucher, 0),
+                           NVL(dc.PhanTramGiamHangTV, 0),
+                           NVL(dc.TienGiamHangTV, 0),
+                           NVL(dc.TienGiamVoucher, 0) + NVL(dc.TienGiamHangTV, 0),
+                           0,
+                           CURRENT_TIMESTAMP,
+                           ?,
+                           ?
+                    FROM DATCHO dc
+                    WHERE dc.MaDatCho = ?
+                )
+                WHERE h.MaPhien = ?
                 """,
-                maDatCho,
-                maDatCho,
                 giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
                 trangThaiHoaDonDb("Da tra truoc"),
+                maDatCho,
                 maPhien
         );
 

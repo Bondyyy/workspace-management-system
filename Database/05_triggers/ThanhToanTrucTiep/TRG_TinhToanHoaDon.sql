@@ -17,6 +17,12 @@ BEGIN
             IF (:NEW.TongTien = 0 OR :NEW.TongTien IS NULL) AND :NEW.ThanhTien > 0 THEN
                 :NEW.TongTien := :NEW.ThanhTien;
             END IF;
+            IF :NEW.TongTienGoc IS NULL OR :NEW.TongTienGoc = 0 THEN
+                :NEW.TongTienGoc := NVL(:NEW.TongTien, 0);
+            END IF;
+            IF :NEW.TienGocPhatSinh IS NULL OR :NEW.TienGocPhatSinh = 0 THEN
+                :NEW.TienGocPhatSinh := NVL(:NEW.TongTien, 0);
+            END IF;
         EXCEPTION
             WHEN OTHERS THEN
                 -- Nếu có lỗi, giữ nguyên giá trị để tránh làm sập nghiệp vụ
@@ -30,6 +36,10 @@ BEGIN
 
     IF :NEW.TongTien IS NULL THEN
         :NEW.TongTien := 0;
+    END IF;
+
+    IF :NEW.TongTienGoc IS NULL THEN
+        :NEW.TongTienGoc := NVL(:NEW.TongTien, 0);
     END IF;
 
     IF :NEW.ThanhTien IS NULL THEN

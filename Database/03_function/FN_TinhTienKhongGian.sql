@@ -20,7 +20,7 @@ BEGIN
             PLV.ThoiGianBatDau,
             NVL(PLV.ThoiGianKetThuc, SYSTIMESTAMP),
             PLV.MaDatCho,
-            NVL(DC.ThanhTien, 0),
+            NVL(DC.TongTienGoc, 0),
             NVL(DC.KhoangThoiGianSuDung, 0)
         INTO 
             v_DonGiaTheoGio,

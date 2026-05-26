@@ -147,7 +147,8 @@ public class HoaDonDAO {
     }
 
     public HoaDonDTO capNhatHoaDonDatTruocTheoPhien(String maPhien, double tongTien, double thanhTien) {
-        String sqlUpdate = "UPDATE HOADON SET TongTien = ?, ThanhTien = ? WHERE MaPhien = ?";
+        String sqlUpdate = "UPDATE HOADON SET TongTien = ?, TongTienGoc = ?, TienGocDatTruoc = ?, "
+                + "DaTraTruoc = GREATEST(NVL(DaTraTruoc, 0), ?), ThanhTien = ? WHERE MaPhien = ?";
         String sqlSelect = "SELECT h.*, nd.HoTen AS HoTenKH, p.MaDatCho, p.TrangThaiPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.ThoiGianDuKienKetThuc, "
                 + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc "
                 + "FROM HOADON h "
@@ -160,8 +161,11 @@ public class HoaDonDAO {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
             psUpdate.setDouble(1, tongTien);
-            psUpdate.setDouble(2, thanhTien);
-            psUpdate.setString(3, maPhien);
+            psUpdate.setDouble(2, tongTien);
+            psUpdate.setDouble(3, tongTien);
+            psUpdate.setDouble(4, Math.max(0, tongTien - thanhTien));
+            psUpdate.setDouble(5, thanhTien);
+            psUpdate.setString(6, maPhien);
             psUpdate.executeUpdate();
 
             try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect)) {
@@ -215,31 +219,31 @@ public class HoaDonDAO {
         long start = System.currentTimeMillis();
         ThongTinHoaDonDTO thongTin = null;
         String sqlChung = "SELECT h.MaHoaDon, h.NgayLapHoaDon, h.PhuongThucThanhToan, "
-                + "NVL(h.TongTien, 0) AS TongTienGocLuu, h.TongTien AS TongTienLuu, h.ThanhTien AS ThanhTienLuu, "
-                + "0 AS TienGocDatTruoc, "
-                + "0 AS TienGocPhatSinh, "
-                + "h.MaPGG, CAST(NULL AS VARCHAR2(50)) AS MaPGGDatTruoc, "
-                + "CAST(NULL AS VARCHAR2(100)) AS MaChuSoPGGDatTruoc, "
-                + "CAST(NULL AS VARCHAR2(50)) AS MaPGGTaiQuay, "
-                + "CAST(NULL AS VARCHAR2(100)) AS MaChuSoPGGTaiQuay, "
+                + "NVL(NULLIF(h.TongTienGoc, 0), NVL(h.TongTien, 0)) AS TongTienGocLuu, h.TongTien AS TongTienLuu, h.ThanhTien AS ThanhTienLuu, "
+                + "NVL(h.TienGocDatTruoc, 0) AS TienGocDatTruoc, "
+                + "NVL(h.TienGocPhatSinh, 0) AS TienGocPhatSinh, "
+                + "h.MaPGG, h.MaPGGDatTruoc, "
+                + "pggdt.MaChuSoPGG AS MaChuSoPGGDatTruoc, "
+                + "h.MaPGGTaiQuay, "
+                + "pggtq.MaChuSoPGG AS MaChuSoPGGTaiQuay, "
                 + "pgg.MaChuSoPGG, NVL(pgg.GiaTriGiamGia, 0) AS GiaTriGiamVoucher, "
-                + "0 AS GiaTriGiamVoucherTaiQuay, "
-                + "0 AS TienGiamVoucherDatTruoc, "
-                + "0 AS PhanTramGiamHangTVDatTruoc, "
-                + "0 AS TienGiamHangTVDatTruoc, "
-                + "0 AS TienGiamVoucherTaiQuay, "
-                + "0 AS PhanTramGiamHangTVTaiQuay, "
-                + "0 AS TienGiamHangTVTaiQuay, "
-                + "0 AS TongTienGiamLuu, "
-                + "0 AS SoTienThanhToanTaiQuay, "
+                + "NVL(pggtq.GiaTriGiamGia, 0) AS GiaTriGiamVoucherTaiQuay, "
+                + "NVL(h.TienGiamVoucherDatTruoc, 0) AS TienGiamVoucherDatTruoc, "
+                + "NVL(h.PhanTramGiamHangTVDatTruoc, 0) AS PhanTramGiamHangTVDatTruoc, "
+                + "NVL(h.TienGiamHangTVDatTruoc, 0) AS TienGiamHangTVDatTruoc, "
+                + "NVL(h.TienGiamVoucherTaiQuay, 0) AS TienGiamVoucherTaiQuay, "
+                + "NVL(h.PhanTramGiamHangTVTaiQuay, 0) AS PhanTramGiamHangTVTaiQuay, "
+                + "NVL(h.TienGiamHangTVTaiQuay, 0) AS TienGiamHangTVTaiQuay, "
+                + "NVL(h.TongTienGiam, 0) AS TongTienGiamLuu, "
+                + "NVL(h.SoTienThanhToanTaiQuay, 0) AS SoTienThanhToanTaiQuay, "
                 + "p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, "
                 + "nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho, dc.KhoangThoiGianSuDung, dc.GhiChu, "
-                + "NVL(dc.ThanhTien, 0) AS DcTongTienGoc, "
-                + "NVL(dc.ThanhTien, 0) AS DcThanhTienSauGiam, "
-                + "CAST(NULL AS VARCHAR2(50)) AS DcMaPGG, CAST(NULL AS VARCHAR2(100)) AS DcMaChuSoPGG, "
-                + "0 AS DcTienGiamVoucher, "
-                + "0 AS DcPhanTramGiamHangTV, "
-                + "0 AS DcTienGiamHangTV, "
+                + "NVL(dc.TongTienGoc, 0) AS DcTongTienGoc, "
+                + "NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)) AS DcThanhTienSauGiam, "
+                + "dc.MaPGG AS DcMaPGG, dc.MaChuSoPGG AS DcMaChuSoPGG, "
+                + "NVL(dc.TienGiamVoucher, 0) AS DcTienGiamVoucher, "
+                + "NVL(dc.PhanTramGiamHangTV, 0) AS DcPhanTramGiamHangTV, "
+                + "NVL(dc.TienGiamHangTV, 0) AS DcTienGiamHangTV, "
                 + "NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio, "
                 + "htv.TenHangThanhVien, NVL(htv.PhanTramTienGiam, 0) AS PhanTramGiamHangThanhVien, "
                 + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc, "
@@ -254,6 +258,8 @@ public class HoaDonDAO {
                 + "LEFT JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG "
                 + "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN "
                 + "LEFT JOIN PHIEUGIAMGIA pgg ON h.MaPGG = pgg.MaPGG "
+                + "LEFT JOIN PHIEUGIAMGIA pggdt ON h.MaPGGDatTruoc = pggdt.MaPGG "
+                + "LEFT JOIN PHIEUGIAMGIA pggtq ON h.MaPGGTaiQuay = pggtq.MaPGG "
                 + "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho "
                 + "WHERE h.MaHoaDon = ?";
 
@@ -465,8 +471,8 @@ public class HoaDonDAO {
 
     public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG,
             double thanhTien) {
-        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, "
-                + "ThanhTien = 0, "
+        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, MaPGGTaiQuay = ?, "
+                + "SoTienThanhToanTaiQuay = ?, ThanhTien = 0, "
                 + "TrangThaiThanhToan = 'Đã thanh toán thành công', NgayLapHoaDon = CURRENT_TIMESTAMP "
                 + "WHERE MaHoaDon = ?";
 
@@ -475,7 +481,9 @@ public class HoaDonDAO {
             pstmt.setString(1, phuongThucThanhToan);
             pstmt.setString(2, maNV);
             pstmt.setString(3, maPGG);
-            pstmt.setString(4, maHoaDon);
+            pstmt.setString(4, maPGG);
+            pstmt.setDouble(5, Math.max(0, thanhTien));
+            pstmt.setString(6, maHoaDon);
             return pstmt.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();

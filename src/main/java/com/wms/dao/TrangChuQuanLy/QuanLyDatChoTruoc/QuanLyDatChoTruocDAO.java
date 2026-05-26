@@ -286,19 +286,33 @@ public class QuanLyDatChoTruocDAO {
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement("""
-                        UPDATE HOADON
-                        SET DaTraTruoc = ?,
-                            TongTien = ?,
-                            ThanhTien = ?,
-                            PhuongThucThanhToan = 'Đặt trước',
-                            TrangThaiThanhToan = 'Đã trả trước',
-                            NgayLapHoaDon = CURRENT_TIMESTAMP
-                        WHERE MaPhien = ?
+                        UPDATE HOADON h
+                        SET (DaTraTruoc, TongTien, TongTienGoc, TienGocDatTruoc,
+                             TienGocPhatSinh, MaPGGDatTruoc, TienGiamVoucherDatTruoc,
+                             PhanTramGiamHangTVDatTruoc, TienGiamHangTVDatTruoc,
+                             TongTienGiam, ThanhTien, PhuongThucThanhToan,
+                             TrangThaiThanhToan, NgayLapHoaDon) = (
+                            SELECT NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)),
+                                   NVL(dc.TongTienGoc, 0),
+                                   NVL(dc.TongTienGoc, 0),
+                                   NVL(dc.TongTienGoc, 0),
+                                   0,
+                                   dc.MaPGG,
+                                   NVL(dc.TienGiamVoucher, 0),
+                                   NVL(dc.PhanTramGiamHangTV, 0),
+                                   NVL(dc.TienGiamHangTV, 0),
+                                   NVL(dc.TienGiamVoucher, 0) + NVL(dc.TienGiamHangTV, 0),
+                                   0,
+                                   'Đặt trước',
+                                   'Đã trả trước',
+                                   CURRENT_TIMESTAMP
+                            FROM DATCHO dc
+                            WHERE dc.MaDatCho = ?
+                        )
+                        WHERE h.MaPhien = ?
                         """)) {
-                    ps.setDouble(1, thanhTien);
-                    ps.setDouble(2, thanhTien);
-                    ps.setDouble(3, 0);
-                    ps.setString(4, maPhien);
+                    ps.setString(1, maDatCho);
+                    ps.setString(2, maPhien);
                     ps.executeUpdate();
                 }
 
@@ -492,19 +506,33 @@ public class QuanLyDatChoTruocDAO {
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement("""
-                        UPDATE HOADON
-                        SET DaTraTruoc = ?,
-                            TongTien = ?,
-                            ThanhTien = ?,
-                            PhuongThucThanhToan = 'Đặt trước',
-                            TrangThaiThanhToan = 'Đã trả trước',
-                            NgayLapHoaDon = CURRENT_TIMESTAMP
-                        WHERE MaPhien = ?
+                        UPDATE HOADON h
+                        SET (DaTraTruoc, TongTien, TongTienGoc, TienGocDatTruoc,
+                             TienGocPhatSinh, MaPGGDatTruoc, TienGiamVoucherDatTruoc,
+                             PhanTramGiamHangTVDatTruoc, TienGiamHangTVDatTruoc,
+                             TongTienGiam, ThanhTien, PhuongThucThanhToan,
+                             TrangThaiThanhToan, NgayLapHoaDon) = (
+                            SELECT NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)),
+                                   NVL(dc.TongTienGoc, 0),
+                                   NVL(dc.TongTienGoc, 0),
+                                   NVL(dc.TongTienGoc, 0),
+                                   0,
+                                   dc.MaPGG,
+                                   NVL(dc.TienGiamVoucher, 0),
+                                   NVL(dc.PhanTramGiamHangTV, 0),
+                                   NVL(dc.TienGiamHangTV, 0),
+                                   NVL(dc.TienGiamVoucher, 0) + NVL(dc.TienGiamHangTV, 0),
+                                   0,
+                                   'Đặt trước',
+                                   'Đã trả trước',
+                                   CURRENT_TIMESTAMP
+                            FROM DATCHO dc
+                            WHERE dc.MaDatCho = ?
+                        )
+                        WHERE h.MaPhien = ?
                         """)) {
-                    ps.setDouble(1, thanhTien);
-                    ps.setDouble(2, thanhTien);
-                    ps.setDouble(3, 0);
-                    ps.setString(4, maPhien);
+                    ps.setString(1, maDatCho);
+                    ps.setString(2, maPhien);
                     ps.executeUpdate();
                 }
 
