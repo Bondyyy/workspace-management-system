@@ -33,6 +33,9 @@ public class QuanKhoService {
         if (giaNhap < 0) {
             throw new IllegalArgumentException("Giá nhập không được âm.");
         }
+        if ((maDV == null || maDV.isBlank()) && quanLyKhoDao.tonTaiTenDichVu(tenDV)) {
+            throw new IllegalArgumentException("Tên dịch vụ đã tồn tại. Vui lòng nhập tên dịch vụ mới hoặc chọn dòng dịch vụ trong bảng để nhập thêm tồn kho.");
+        }
         return quanLyKhoDao.nhapKhoDichVu(maDV, tenNV, tenLoaiDV, tenDV, soLuong, tenFile, giaNhap, fileData);
     }
 

@@ -310,8 +310,8 @@ public class CongThongTinController {
 
         String openStr = BusinessHoursUtil.format(openTime);
         String closeStr = BusinessHoursUtil.format(closeTime);
-        if (!BusinessHoursUtil.fitsInBranchHours(selectedStartDateTime, selectedEndDateTime, openTime, closeTime)) {
-            thongBaoLoi = "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
+        if (!BusinessHoursUtil.isStartWithinBusinessHours(selectedStartDateTime, openTime, closeTime)) {
+            thongBaoLoi = "Thời điểm bắt đầu đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
             selectedStart = defaultWindow.startTime();
             selectedDate = defaultWindow.date();
             selectedDuration = defaultDuration;

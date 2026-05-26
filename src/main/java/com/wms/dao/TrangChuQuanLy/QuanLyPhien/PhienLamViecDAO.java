@@ -151,12 +151,6 @@ public class PhienLamViecDAO {
         String bookingSql = """
                 SELECT dc.MaDatCho, dc.MaQR, dc.TrangThaiDatTruoc, dc.KhoangThoiGianSuDung,
                        NVL(dc.ThanhTien, 0) AS ThanhTien,
-                       NVL(dc.TongTienGoc, 0) AS TongTienGoc,
-                       NVL(dc.ThanhTienSauGiam, NVL(dc.ThanhTien, 0)) AS ThanhTienSauGiam,
-                       dc.MaPGG,
-                       NVL(dc.TienGiamVoucher, 0) AS TienGiamVoucher,
-                       NVL(dc.PhanTramGiamHangTV, 0) AS PhanTramGiamHangTV,
-                       NVL(dc.TienGiamHangTV, 0) AS TienGiamHangTV,
                        dc.MaKG, dc.MaKH, dc.GhiChu,
                        dc.ThoiGianDuKienToi
                 FROM DATCHO dc
@@ -171,12 +165,6 @@ public class PhienLamViecDAO {
                 String trangThai;
                 int soGio;
                 double thanhTien;
-                double tongTienGoc;
-                double thanhTienSauGiam;
-                String maPGGDatTruoc;
-                double tienGiamVoucherDatTruoc;
-                double phanTramGiamHangTVDatTruoc;
-                double tienGiamHangTVDatTruoc;
                 String maKG;
                 String maKH;
                 String ghiChu;
@@ -193,12 +181,6 @@ public class PhienLamViecDAO {
                         trangThai = rs.getString("TrangThaiDatTruoc");
                         soGio = Math.max(1, rs.getInt("KhoangThoiGianSuDung"));
                         thanhTien = rs.getDouble("ThanhTien");
-                        tongTienGoc = rs.getDouble("TongTienGoc");
-                        thanhTienSauGiam = rs.getDouble("ThanhTienSauGiam");
-                        maPGGDatTruoc = rs.getString("MaPGG");
-                        tienGiamVoucherDatTruoc = rs.getDouble("TienGiamVoucher");
-                        phanTramGiamHangTVDatTruoc = rs.getDouble("PhanTramGiamHangTV");
-                        tienGiamHangTVDatTruoc = rs.getDouble("TienGiamHangTV");
                         maKG = rs.getString("MaKG");
                         maKH = rs.getString("MaKH");
                         ghiChu = rs.getString("GhiChu");
@@ -317,38 +299,16 @@ public class PhienLamViecDAO {
                         UPDATE HOADON
                         SET DaTraTruoc = ?,
                             TongTien = ?,
-                            TongTienGoc = ?,
-                            TienGocDatTruoc = ?,
-                            TienGocPhatSinh = 0,
-                            MaPGGDatTruoc = ?,
-                            TienGiamVoucherDatTruoc = ?,
-                            PhanTramGiamHangTVDatTruoc = ?,
-                            TienGiamHangTVDatTruoc = ?,
-                            TongTienGiam = ?,
-                            SoTienThanhToanTaiQuay = 0,
                             ThanhTien = ?,
                             PhuongThucThanhToan = 'Đặt trước',
                             TrangThaiThanhToan = 'Đã trả trước',
                             NgayLapHoaDon = CURRENT_TIMESTAMP
                         WHERE MaPhien = ?
                         """)) {
-                    if (tongTienGoc <= 0) {
-                        tongTienGoc = thanhTien;
-                    }
-                    if (thanhTienSauGiam <= 0 && thanhTien > 0) {
-                        thanhTienSauGiam = thanhTien;
-                    }
-                    ps.setDouble(1, thanhTienSauGiam);
-                    ps.setDouble(2, tongTienGoc);
-                    ps.setDouble(3, tongTienGoc);
-                    ps.setDouble(4, tongTienGoc);
-                    ps.setString(5, maPGGDatTruoc);
-                    ps.setDouble(6, tienGiamVoucherDatTruoc);
-                    ps.setDouble(7, phanTramGiamHangTVDatTruoc);
-                    ps.setDouble(8, tienGiamHangTVDatTruoc);
-                    ps.setDouble(9, tienGiamVoucherDatTruoc + tienGiamHangTVDatTruoc);
-                    ps.setDouble(10, 0);
-                    ps.setString(11, maPhien);
+                    ps.setDouble(1, thanhTien);
+                    ps.setDouble(2, thanhTien);
+                    ps.setDouble(3, 0);
+                    ps.setString(4, maPhien);
                     ps.executeUpdate();
                 }
 
@@ -491,10 +451,16 @@ public class PhienLamViecDAO {
                 return true;
             }
             System.err.println("[PhienLamViecDAO] Lỗi từ SP_KetThucPhien: " + boDau(message));
-            return false;
+            // Giữ nguyên message có dấu để UI hiển thị đúng tiếng Việt
+            throw new IllegalArgumentException(message != null ? message : "Không thể kết thúc phiên làm việc.");
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (SQLException e) {
+            logSqlException(e);
+            throw new IllegalArgumentException("Lỗi database khi kết thúc phiên: " + boDau(e.getMessage()), e);
         } catch (Exception e) {
             System.err.println("[PhienLamViecDAO] Lỗi gọi SP_KetThucPhien: " + boDau(e.getMessage()));
-            return false;
+            throw new IllegalArgumentException("Không thể kết thúc phiên: " + boDau(e.getMessage()), e);
         }
     }
 

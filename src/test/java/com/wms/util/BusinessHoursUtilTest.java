@@ -88,6 +88,10 @@ class BusinessHoursUtilTest {
         LocalDateTime start = LocalDateTime.of(2026, 5, 26, 21, 0);
         LocalDateTime end = start.plusHours(2);
 
+        assertTrue(BusinessHoursUtil.isStartWithinBusinessHours(
+                start,
+                LocalTime.of(7, 0),
+                LocalTime.of(22, 0)));
         assertFalse(BusinessHoursUtil.fitsInBranchHours(
                 start,
                 end,
@@ -105,5 +109,34 @@ class BusinessHoursUtilTest {
                 end,
                 LocalTime.of(22, 0),
                 LocalTime.of(6, 0)));
+    }
+
+    @Test
+    void startCheckAllowsNormalWindowToEndAfterClose() {
+        assertTrue(BusinessHoursUtil.isStartWithinBusinessHours(
+                LocalDateTime.of(2026, 5, 26, 20, 0),
+                LocalTime.of(7, 0),
+                LocalTime.of(22, 0)));
+    }
+
+    @Test
+    void startCheckHandlesOvernightAndTwentyFourHours() {
+        assertTrue(BusinessHoursUtil.isStartWithinBusinessHours(
+                LocalDateTime.of(2026, 5, 26, 23, 0),
+                LocalTime.of(22, 0),
+                LocalTime.of(6, 0)));
+        assertTrue(BusinessHoursUtil.isStartWithinBusinessHours(
+                LocalDateTime.of(2026, 5, 26, 1, 0),
+                LocalTime.of(22, 0),
+                LocalTime.of(6, 0)));
+        assertFalse(BusinessHoursUtil.isStartWithinBusinessHours(
+                LocalDateTime.of(2026, 5, 26, 12, 0),
+                LocalTime.of(22, 0),
+                LocalTime.of(6, 0)));
+        assertTrue(BusinessHoursUtil.isOpen24h("00:00", "24:00"));
+        assertTrue(BusinessHoursUtil.isStartWithinBusinessHours(
+                LocalDateTime.of(2026, 5, 26, 23, 0),
+                LocalTime.MIDNIGHT,
+                LocalTime.MIDNIGHT));
     }
 }

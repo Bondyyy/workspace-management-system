@@ -728,8 +728,27 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên!");
                             btnKetThucPhien.setEnabled(true);
                         }
+                    } catch (java.util.concurrent.ExecutionException exWrapper) {
+                        Throwable cause = exWrapper.getCause();
+                        String msg = cause != null ? cause.getMessage() : exWrapper.getMessage();
+                        if (msg != null && (msg.contains("không ở trạng thái") || msg.contains("khong o trang thai"))) {
+                            javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                                    "Phiên " + maPhien + " đã được kết thúc trước đó.\nDanh sách sẽ được tải lại.",
+                                    "Phiên đã kết thúc", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                            loadData("");
+                            btnHuyActionPerformed();
+                        } else {
+                            // Hiển thị message thực từ SP/exception, không dùng chuỗi cứng
+                            String userMsg = (msg != null && !msg.isBlank()) ? msg : "Không thể kết thúc phiên, vui lòng thử lại.";
+                            javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                                    userMsg, "Lỗi kết thúc phiên", javax.swing.JOptionPane.ERROR_MESSAGE);
+                            btnKetThucPhien.setEnabled(true);
+                        }
                     } catch (Exception ex) {
-                        com.wms.util.MessageUtil.showError(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên.", ex);
+                        String msg = ex.getMessage();
+                        String userMsg = (msg != null && !msg.isBlank()) ? msg : "Không thể kết thúc phiên, vui lòng thử lại.";
+                        javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                                userMsg, "Lỗi kết thúc phiên", javax.swing.JOptionPane.ERROR_MESSAGE);
                         btnKetThucPhien.setEnabled(true);
                     }
                 }

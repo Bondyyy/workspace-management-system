@@ -183,16 +183,13 @@ public class CongThongTinService {
         LocalTime openTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianDongCua(), LocalTime.of(22, 0));
         LocalDateTime hienTai = layThoiGianHienTaiVietNam();
-        BusinessHoursUtil.TimeWindow window = BusinessHoursUtil.nextWindowFrom(hienTai, openTime, closeTime);
-        LocalDateTime start = window.start().isAfter(hienTai) ? window.start() : lamTronLenGioKeTiep(hienTai);
-        if (!start.isBefore(window.end()) || start.plusHours(1).isAfter(window.end())) {
-            window = BusinessHoursUtil.nextWindowFrom(window.end().plusSeconds(1), openTime, closeTime);
-            start = window.start();
+        LocalDateTime[] window = BusinessHoursUtil.nextWindowFrom(hienTai, openTime, closeTime);
+        LocalDateTime start = window[0].isAfter(hienTai) ? window[0] : lamTronLenGioKeTiep(hienTai);
+        if (!BusinessHoursUtil.isStartWithinBusinessHours(start, openTime, closeTime)) {
+            window = BusinessHoursUtil.nextWindowFrom(window[1].plusSeconds(1), openTime, closeTime);
+            start = window[0];
         }
         LocalDateTime end = start.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
-        if (end.isAfter(window.end())) {
-            end = start.plusHours(1);
-        }
         return new KhungGioDatCho(start.toLocalDate(), start.toLocalTime(), end.toLocalTime());
     }
 
@@ -803,13 +800,12 @@ public class CongThongTinService {
         }
         LocalTime openTime = docGioChiNhanh(space.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(space.getThoiGianDongCua(), LocalTime.of(22, 0));
-        LocalDateTime end = arrivalTime.plusHours(durationHours);
 
         String openStr = BusinessHoursUtil.format(openTime);
         String closeStr = BusinessHoursUtil.format(closeTime);
 
-        if (!BusinessHoursUtil.fitsInBranchHours(arrivalTime, end, openTime, closeTime)) {
-            throw new IllegalArgumentException("Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
+        if (!BusinessHoursUtil.isStartWithinBusinessHours(arrivalTime, openTime, closeTime)) {
+            throw new IllegalArgumentException("Thời điểm bắt đầu đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
         }
     }
 

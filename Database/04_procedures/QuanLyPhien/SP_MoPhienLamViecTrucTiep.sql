@@ -11,9 +11,10 @@ AS
     v_TrangThaiKG KHONGGIAN.TrangThaiKG%TYPE;
     v_GioMoCua VARCHAR2(8);
     v_GioDongCua VARCHAR2(8);
-    v_ThoiDiemMoCua TIMESTAMP;
-    v_ThoiDiemDongCua TIMESTAMP;
     v_RefTime TIMESTAMP;
+    v_GioBatDau VARCHAR2(5);
+    v_La24h BOOLEAN := FALSE;
+    v_TrongGioHoatDong BOOLEAN := FALSE;
     ex_resource_busy EXCEPTION;
     PRAGMA EXCEPTION_INIT(ex_resource_busy, -54);
 BEGIN
@@ -40,10 +41,15 @@ BEGIN
             RETURN;
     END;
 
-    -- 2. Tinh thoi diem mo/dong cua hom nay dua tren p_ThoiGianBatDau
+    -- 2. Chi kiem tra thoi diem bat dau co nam trong gio hoat dong hay khong.
+    -- Khong chan thoi gian ket thuc du kien vuot qua gio dong cua.
     v_RefTime := COALESCE(p_ThoiGianBatDau, CAST(CURRENT_TIMESTAMP AS TIMESTAMP));
+
+    IF p_ThoiGianDuKien IS NULL OR p_ThoiGianDuKien <= v_RefTime THEN
+        p_outMessage := 'Loi: Thoi gian du kien ket thuc phai lon hon thoi gian bat dau.';
+        RETURN;
+    END IF;
     
-    -- Xu ly truong hop gio dong cua <= gio mo cua (hoat dong qua dem hoac 24/24)
     v_GioMoCua := TRIM(v_GioMoCua);
     IF v_GioMoCua = '24:00' THEN
         v_GioMoCua := '00:00';
@@ -60,44 +66,25 @@ BEGIN
         v_GioDongCua := SUBSTR(v_GioDongCua, 1, 5);
     END IF;
 
-    v_ThoiDiemMoCua := TO_TIMESTAMP(TO_CHAR(v_RefTime, 'YYYY-MM-DD') || ' ' || v_GioMoCua, 'YYYY-MM-DD HH24:MI');
-    v_ThoiDiemDongCua := TO_TIMESTAMP(TO_CHAR(v_RefTime, 'YYYY-MM-DD') || ' ' || v_GioDongCua, 'YYYY-MM-DD HH24:MI');
-    
-    IF v_ThoiDiemDongCua <= v_ThoiDiemMoCua THEN
-        v_ThoiDiemDongCua := v_ThoiDiemDongCua + INTERVAL '1' DAY;
+    v_GioBatDau := TO_CHAR(v_RefTime, 'HH24:MI');
+    v_La24h := (v_GioMoCua = v_GioDongCua);
+
+    IF v_La24h THEN
+        v_TrongGioHoatDong := TRUE;
+    ELSIF v_GioDongCua > v_GioMoCua THEN
+        v_TrongGioHoatDong := (v_GioBatDau >= v_GioMoCua AND v_GioBatDau < v_GioDongCua);
+    ELSE
+        v_TrongGioHoatDong := (v_GioBatDau >= v_GioMoCua OR v_GioBatDau < v_GioDongCua);
     END IF;
 
-    -- Tinh thoi diem ca lam viec ngay hom qua (neu dang o trong ca do)
-    DECLARE
-        v_ThoiDiemMoCua_HomQua TIMESTAMP := v_ThoiDiemMoCua - INTERVAL '1' DAY;
-        v_ThoiDiemDongCua_HomQua TIMESTAMP := v_ThoiDiemDongCua - INTERVAL '1' DAY;
-        v_TrongCaHomNay BOOLEAN;
-        v_TrongCaHomQua BOOLEAN;
-        v_ThoiDiemDongCua_HienHanh TIMESTAMP;
-    BEGIN
-        v_TrongCaHomNay := (v_RefTime >= v_ThoiDiemMoCua AND v_RefTime < v_ThoiDiemDongCua);
-        v_TrongCaHomQua := (v_RefTime >= v_ThoiDiemMoCua_HomQua AND v_RefTime < v_ThoiDiemDongCua_HomQua);
-        
-        IF NOT (v_TrongCaHomNay OR v_TrongCaHomQua) THEN
-            IF v_RefTime < v_ThoiDiemMoCua AND v_RefTime >= v_ThoiDiemDongCua_HomQua THEN
-                p_outMessage := 'Loi: Chi nhanh chua den gio mo cua. Gio mo cua: ' || TRIM(v_GioMoCua) || '.';
-            ELSE
-                p_outMessage := 'Loi: Chi nhanh da qua gio hoat dong. Khong the mo phien moi.';
-            END IF;
-            RETURN;
-        END IF;
-        
-        IF v_TrongCaHomNay THEN
-            v_ThoiDiemDongCua_HienHanh := v_ThoiDiemDongCua;
+    IF NOT v_TrongGioHoatDong THEN
+        IF (v_GioDongCua > v_GioMoCua AND v_GioBatDau < v_GioMoCua) THEN
+            p_outMessage := 'Loi: Chi nhanh chua den gio mo cua. Gio mo cua: ' || TRIM(v_GioMoCua) || '.';
         ELSE
-            v_ThoiDiemDongCua_HienHanh := v_ThoiDiemDongCua_HomQua;
+            p_outMessage := 'Loi: Chi nhanh da qua gio hoat dong. Khong the mo phien moi.';
         END IF;
-
-        IF p_ThoiGianDuKien > v_ThoiDiemDongCua_HienHanh THEN
-            p_outMessage := 'Loi: Thoi gian su dung vuot qua gio dong cua cua chi nhanh. Chi nhanh dong cua luc ' || TRIM(v_GioDongCua) || '.';
-            RETURN;
-        END IF;
-    END;
+        RETURN;
+    END IF;
 
     -- 4. Kiem tra trang thai khong gian
     SELECT TrangThaiKG

@@ -87,9 +87,6 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
                 txtGioMoCua.getText(), "Giờ mở cửa", "Vui lòng nhập giờ mở cửa.");
         LocalTime gioDongCua = com.wms.util.DateInputUtil.requireTime(
                 txtGioDongCua.getText(), "Giờ đóng cửa", "Vui lòng nhập giờ đóng cửa.");
-        if (!gioDongCua.isAfter(gioMoCua)) {
-            throw new IllegalArgumentException("Giờ đóng cửa phải sau giờ mở cửa.");
-        }
         cn.setThoiGianMoCua(com.wms.util.DateInputUtil.formatTime(gioMoCua));
         cn.setThoiGianDongCua(com.wms.util.DateInputUtil.formatTime(gioDongCua));
         cn.setDuongDayNong(txtHotline1.getText().trim());

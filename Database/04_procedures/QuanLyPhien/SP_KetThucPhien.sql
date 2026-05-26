@@ -4,30 +4,55 @@ CREATE OR REPLACE PROCEDURE SP_KetThucPhien(
     p_outMessage OUT VARCHAR2
 ) AS
     v_TrangThaiPhien PHIENLAMVIEC.TrangThaiPhien%TYPE;
-    v_MaKG PHIENLAMVIEC.MaKG%TYPE;
-    v_MaDatCho PHIENLAMVIEC.MaDatCho%TYPE;
-    v_ThoiGianBatDau TIMESTAMP;
-    v_ThoiGianKetThuc TIMESTAMP;
-    v_KhoangThoiGianSuDung NUMBER;
-    v_TongPhut NUMBER;
-    v_GioNguyen NUMBER;
-    v_PhutLe NUMBER;
-    v_SoGioThucTe NUMBER;
-    v_SoGioQua NUMBER;
-    v_CountDV NUMBER;
-    v_MaHoaDon HOADON.MaHoaDon%TYPE;
-    v_MaPGG HOADON.MaPGG%TYPE;
-    v_DaTraTruoc NUMBER(18, 2) := 0;
-    v_TienDichVu NUMBER(18, 2) := 0;
-    v_TongTien NUMBER(18, 2) := 0;
-    v_ThanhTien NUMBER(18, 2) := 0;
-    v_TienGiamVoucher NUMBER(18, 2) := 0;
-    v_PhanTramGiamHangTV NUMBER(5, 2) := 0;
-    v_TienGiamHangTV NUMBER(18, 2) := 0;
-    v_TrangThaiThanhToan HOADON.TrangThaiThanhToan%TYPE;
-    v_SoHoaDon NUMBER;
-    ex_resource_busy EXCEPTION;
-    PRAGMA EXCEPTION_INIT(ex_resource_busy, -54);
+
+v_MaKG PHIENLAMVIEC.MaKG % TYPE;
+
+v_MaDatCho PHIENLAMVIEC.MaDatCho % TYPE;
+
+v_ThoiGianBatDau TIMESTAMP;
+
+v_ThoiGianKetThuc TIMESTAMP;
+
+v_KhoangThoiGianSuDung NUMBER;
+
+v_TongPhut NUMBER;
+
+v_GioNguyen NUMBER;
+
+v_PhutLe NUMBER;
+
+v_SoGioThucTe NUMBER;
+
+v_SoGioQua NUMBER;
+
+v_CountDV NUMBER;
+
+v_MaHoaDon HOADON.MaHoaDon % TYPE;
+
+v_MaPGGTaiQuay VARCHAR2 (50);
+
+v_DaTraTruoc NUMBER (18, 2) := 0;
+
+v_TienDichVu NUMBER (18, 2) := 0;
+
+v_TongTien NUMBER (18, 2) := 0;
+
+v_ThanhTien NUMBER (18, 2) := 0;
+
+v_TienGiamVoucher NUMBER (18, 2) := 0;
+
+v_PhanTramGiamHangTV NUMBER (5, 2) := 0;
+
+v_TienGiamHangTV NUMBER (18, 2) := 0;
+
+v_TrangThaiThanhToan HOADON.TrangThaiThanhToan % TYPE;
+
+v_SoHoaDon NUMBER;
+
+ex_resource_busy EXCEPTION;
+
+PRAGMA EXCEPTION_INIT (ex_resource_busy, -54);
+
 BEGIN
     IF p_MaPhien IS NULL OR LENGTH(TRIM(p_MaPhien)) = 0 THEN
         p_outMessage := 'Lỗi: Thiếu mã phiên cần kết thúc.';
@@ -77,8 +102,8 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT MaHoaDon, MaPGG, NVL(DaTraTruoc, 0), TrangThaiThanhToan
-    INTO v_MaHoaDon, v_MaPGG, v_DaTraTruoc, v_TrangThaiThanhToan
+    SELECT MaHoaDon, MaPGGTaiQuay, NVL(DaTraTruoc, 0), TrangThaiThanhToan
+    INTO v_MaHoaDon, v_MaPGGTaiQuay, v_DaTraTruoc, v_TrangThaiThanhToan
     FROM HOADON
     WHERE MaPhien = TRIM(p_MaPhien)
     FOR UPDATE NOWAIT;
@@ -145,12 +170,12 @@ BEGIN
         v_TrangThaiThanhToan := 'Đang chờ thanh toán';
     END IF;
 
-    IF v_MaPGG IS NOT NULL THEN
+    IF v_MaPGGTaiQuay IS NOT NULL THEN
         BEGIN
             SELECT LEAST(NVL(GiaTriGiamGia, 0), GREATEST(0, v_ThanhTien))
             INTO v_TienGiamVoucher
             FROM PHIEUGIAMGIA
-            WHERE MaPGG = v_MaPGG;
+            WHERE MaPGG = v_MaPGGTaiQuay;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
                 v_TienGiamVoucher := 0;
@@ -210,4 +235,5 @@ EXCEPTION
         ROLLBACK;
         p_outMessage := 'Lỗi kết thúc phiên: ' || SQLERRM;
 END SP_KetThucPhien;
+;
 /

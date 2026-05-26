@@ -118,6 +118,19 @@ public class QuanLyKhoDao {
         return list;
     }
 
+    public boolean tonTaiTenDichVu(String tenDV) {
+        String sql = "SELECT COUNT(*) FROM DICHVU WHERE LOWER(TRIM(TenDV)) = LOWER(TRIM(?))";
+        try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tenDV);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public double layDonGiaDichVu(String tenDV) {
         String sql = "SELECT DonGia FROM DICHVU WHERE LOWER(TenDV) = LOWER(?)";
         try (Connection conn = getConn(); PreparedStatement ps = conn.prepareStatement(sql)) {

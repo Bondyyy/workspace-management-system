@@ -20,6 +20,8 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private com.wms.controller.TrangChuQuanLy.QuanLyKho.QuanLyKhoController controller;
     private java.io.File currentSelectedFile = null;
     private String currentMaDV = "";
+    private String selectedTenDichVu = "";
+    private boolean fillingFormData = false;
 
     public QuanLyKhoForm() {
         initComponents();
@@ -81,7 +83,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
         cbNhanVien.setEditable(false);
         cbLoaiDichVu.setEditable(false);
-        cbTenDichVu.setEditable(false);
         txtNiemYet.setEditable(false);
         txtNiemYet.setBackground(new java.awt.Color(240, 240, 240));
 
@@ -95,14 +96,29 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             loaiModel.addElement(loai);
         cbLoaiDichVu.setModel(loaiModel);
 
-        cbTenDichVu.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn tên dịch vụ --" }));
+        txtTenDichVu.setText("");
         txtGiaNhap.setText("");
         txtNiemYet.setText("");
     }
 
     private void setupDynamicBehavior() {
         cbLoaiDichVu.addActionListener(e -> updateTheoLoaiDichVu());
-        cbTenDichVu.addActionListener(e -> updateDonGia());
+        txtTenDichVu.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                danhDauNhapTenMoi();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                danhDauNhapTenMoi();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                danhDauNhapTenMoi();
+            }
+        });
 
         tblKho.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -151,19 +167,17 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
     private void fillDataFromTable(int row) {
         try {
+            fillingFormData = true;
             // Tạm thời gỡ bỏ action listener để tránh xung đột khi fill dữ liệu
             java.awt.event.ActionListener[] loaiListeners = cbLoaiDichVu.getActionListeners();
             for (java.awt.event.ActionListener l : loaiListeners)
                 cbLoaiDichVu.removeActionListener(l);
 
-            java.awt.event.ActionListener[] tenListeners = cbTenDichVu.getActionListeners();
-            for (java.awt.event.ActionListener l : tenListeners)
-                cbTenDichVu.removeActionListener(l);
-
             // Lấy dữ liệu từ bảng (STT, MaDV, TenDV, LoaiDV, Niêm yết, Nhập, Tồn, Trạng
             // thái)
             currentMaDV = tblKho.getValueAt(row, 1).toString();
             String ten = tblKho.getValueAt(row, 2).toString();
+            selectedTenDichVu = ten;
             String loai = tblKho.getValueAt(row, 3).toString();
             String giaNiemYet = tblKho.getValueAt(row, 4).toString();
 
@@ -174,7 +188,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             updateTheoLoaiDichVu();
 
             // Điền tên dịch vụ
-            cbTenDichVu.setSelectedItem(ten);
+            txtTenDichVu.setText(ten);
             txtNiemYet.setText(giaNiemYet);
 
             // Hiển thị số lượng tồn hiện tại vào ô mới
@@ -202,21 +216,34 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             // Đăng ký lại action listener
             for (java.awt.event.ActionListener l : loaiListeners)
                 cbLoaiDichVu.addActionListener(l);
-            for (java.awt.event.ActionListener l : tenListeners)
-                cbTenDichVu.addActionListener(l);
 
         } catch (Exception e) {
             System.err.println("[QuanLyKhoForm] Loi khi dien du lieu tu bang: " + e.getMessage());
+        } finally {
+            fillingFormData = false;
+        }
+    }
+
+    private void danhDauNhapTenMoi() {
+        if (fillingFormData) {
+            return;
+        }
+        String tenDangNhap = txtTenDichVu.getText().trim();
+        if (!currentMaDV.isBlank() && !tenDangNhap.equalsIgnoreCase(selectedTenDichVu)) {
+            currentMaDV = "";
+            selectedTenDichVu = "";
+            txtSluongHienTai.setText("");
+            txtNiemYet.setText("");
+            btnXemHoaDon.setEnabled(false);
         }
     }
 
     private void updateDonGia() {
-        Object item = cbTenDichVu.getSelectedItem();
-        if (item == null || item.toString().isEmpty() || item.toString().startsWith("--")) {
+        String tenDV = txtTenDichVu.getText().trim();
+        if (tenDV.isEmpty()) {
             txtNiemYet.setText("");
             return;
         }
-        String tenDV = item.toString().trim();
         double donGia = controller.layDonGiaDichVu(tenDV);
         txtNiemYet.setText(donGia > 0 ? com.wms.util.InputFormatUtil.formatThousands(donGia) : "0");
     }
@@ -230,21 +257,9 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         btnChonFile.setVisible(!isTienIch);
         lblTrangThaiFile.setVisible(!isTienIch);
 
-        if (controller != null && !loaiDV.isEmpty() && !loaiDV.startsWith("--")) {
-            java.util.List<String> dsTen = controller.getDSTenDichVuTheoLoai(loaiDV);
-            javax.swing.DefaultComboBoxModel<String> tenModel = new javax.swing.DefaultComboBoxModel<>();
-            tenModel.addElement("-- Chọn tên dịch vụ --");
-            for (String ten : dsTen) {
-                tenModel.addElement(ten);
-            }
-            Object currentTyped = cbTenDichVu.getSelectedItem();
-            cbTenDichVu.setModel(tenModel);
-            if (currentTyped != null && !currentTyped.toString().isEmpty()) {
-                cbTenDichVu.setSelectedItem(currentTyped);
-            }
+        if (!loaiDV.isEmpty() && !loaiDV.startsWith("--")) {
             updateDonGia();
         } else {
-            cbTenDichVu.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-- Chọn tên dịch vụ --" }));
             txtNiemYet.setText("");
         }
     }
@@ -339,7 +354,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         lblLoaiDichVu = new javax.swing.JLabel();
         cbLoaiDichVu = new javax.swing.JComboBox<>();
         lblTenDichVu = new javax.swing.JLabel();
-        cbTenDichVu = new javax.swing.JComboBox<>();
+        txtTenDichVu = new javax.swing.JTextField();
         lblSoLuong = new javax.swing.JLabel();
         spnSoLuong = new javax.swing.JSpinner();
         lblChungTuTitle = new javax.swing.JLabel();
@@ -451,10 +466,9 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         pnRight.add(lblTenDichVu);
         lblTenDichVu.setBounds(210, 130, 180, 20);
 
-        cbTenDichVu.setEditable(true);
-        cbTenDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(cbTenDichVu);
-        cbTenDichVu.setBounds(210, 160, 170, 35);
+        txtTenDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(txtTenDichVu);
+        txtTenDichVu.setBounds(210, 160, 170, 35);
 
         lblSoLuong.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblSoLuong.setForeground(new java.awt.Color(35, 30, 48));
@@ -580,13 +594,13 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             cbNhanVien.setSelectedIndex(0);
         if (cbLoaiDichVu.getItemCount() > 0)
             cbLoaiDichVu.setSelectedIndex(0);
-        if (cbTenDichVu.getItemCount() > 0)
-            cbTenDichVu.setSelectedIndex(0);
+        txtTenDichVu.setText("");
         spnSoLuong.setValue(0);
         txtGiaNhap.setText("");
         txtNiemYet.setText("");
         txtSluongHienTai.setText("");
         currentMaDV = "";
+        selectedTenDichVu = "";
 
         currentSelectedFile = null;
         lblTrangThaiFile.setText("Chưa chọn file (Bắt buộc)");
@@ -598,18 +612,17 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private void btnLuuActionPerformed(java.awt.event.ActionEvent evt) {
         Object nvSelected = cbNhanVien.getSelectedItem();
         Object loaiSelected = cbLoaiDichVu.getSelectedItem();
-        Object tenSelected = cbTenDichVu.getSelectedItem();
 
         String nhanVien = (nvSelected != null) ? nvSelected.toString().trim() : "";
         String loaiDichVu = (loaiSelected != null) ? loaiSelected.toString().trim() : "";
-        String tenDichVu = (tenSelected != null) ? tenSelected.toString().trim() : "";
+        String tenDichVu = txtTenDichVu.getText().trim();
         int soLuong = (int) spnSoLuong.getValue();
 
         if (nhanVien.isEmpty() || nhanVien.startsWith("--") ||
                 loaiDichVu.isEmpty() || loaiDichVu.startsWith("--") ||
-                tenDichVu.isEmpty() || tenDichVu.startsWith("--")) {
+                tenDichVu.isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this,
-                    "Vui lòng chọn đầy đủ Nhân viên, Loại dịch vụ và Tên dịch vụ!", "Cảnh báo",
+                    "Vui lòng chọn nhân viên, loại dịch vụ và nhập tên dịch vụ!", "Cảnh báo",
                     javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -695,7 +708,6 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private javax.swing.JButton btnXemHoaDon;
     private javax.swing.JComboBox<String> cbLoaiDichVu;
     private javax.swing.JComboBox<String> cbNhanVien;
-    private javax.swing.JComboBox<String> cbTenDichVu;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblChungTuTitle;
     private javax.swing.JLabel lblDetailTitle;
@@ -719,6 +731,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtGiaNhap;
     private javax.swing.JTextField txtNiemYet;
     private javax.swing.JTextField txtSluongHienTai;
+    private javax.swing.JTextField txtTenDichVu;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
 }

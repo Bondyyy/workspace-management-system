@@ -110,55 +110,26 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                 if (gioHoatDong != null) {
                     String gioMoCua = gioHoatDong[0];
                     String gioDongCua = gioHoatDong[1];
+                    java.time.LocalTime openLocalTime = com.wms.util.BusinessHoursUtil.parseBranchTime(
+                            gioMoCua, java.time.LocalTime.of(7, 0));
+                    java.time.LocalTime closeLocalTime = com.wms.util.BusinessHoursUtil.parseBranchTime(
+                            gioDongCua, java.time.LocalTime.of(22, 0));
+                    java.time.LocalDateTime startLocal = nowHcm.toLocalDateTime();
 
-                    // Xu ly "24:00": Java LocalTime khong ho tro 24:00 nen phai xu ly rieng.
-                    // "24:00" = het ngay = nua dem ngay hom sau (00:00 sang hom sau)
-                    final boolean dongCuaLaNuaDemSauNgay = "24:00".equals(gioDongCua.trim());
-
-                    java.time.LocalTime openLocalTime = com.wms.util.DateInputUtil.parseTime(gioMoCua.trim(), "Giờ mở cửa");
-                    java.time.ZonedDateTime openDateTime = nowHcm.with(openLocalTime).withSecond(0).withNano(0);
-
-                    // closeDateTime: neu la "24:00" thi tinh la 00:00 cua ngay hom sau
-                    java.time.ZonedDateTime closeDateTime;
-                    if (dongCuaLaNuaDemSauNgay) {
-                        closeDateTime = nowHcm.toLocalDate().plusDays(1)
-                                .atStartOfDay(nowHcm.getZone());
-                    } else {
-                        java.time.LocalTime closeLocalTime = com.wms.util.DateInputUtil.parseTime(gioDongCua.trim(), "Giờ đóng cửa");
-                        closeDateTime = nowHcm.with(closeLocalTime).withSecond(0).withNano(0);
-                        // Neu gio dong cua < gio mo cua (vi du: dong cua 02:00, mo cua 08:00)
-                        // thi closeDateTime thuoc sang hom sau
-                        if (closeDateTime.isBefore(openDateTime)) {
-                            closeDateTime = closeDateTime.plusDays(1);
+                    if (!com.wms.util.BusinessHoursUtil.isStartWithinBusinessHours(
+                            startLocal, openLocalTime, closeLocalTime)) {
+                        boolean chuaMoCua = !com.wms.util.BusinessHoursUtil.isOpen24h(openLocalTime, closeLocalTime)
+                                && !com.wms.util.BusinessHoursUtil.isOvernight(openLocalTime, closeLocalTime)
+                                && startLocal.toLocalTime().isBefore(openLocalTime);
+                        if (chuaMoCua) {
+                            txtThoiGianKetThuc.setText("Chua den gio hoat dong (Mo: " + gioMoCua + ")");
+                        } else {
+                            txtThoiGianKetThuc.setText("Da qua gio hoat dong (Dong: " + gioDongCua + ")");
                         }
-                    }
-
-                    // Kiem tra: gio hien tai truoc gio mo cua?
-                    // (Neu mo cua la 00:00 va dong cua la 24:00 = hoat dong ca ngay, bo qua kiem tra nay)
-                    boolean hoatDongCaNgay = openLocalTime.equals(java.time.LocalTime.MIDNIGHT) && dongCuaLaNuaDemSauNgay;
-                    if (!hoatDongCaNgay && nowHcm.isBefore(openDateTime)) {
-                        txtThoiGianKetThuc.setText("Chua den gio hoat dong (Mo: " + gioMoCua + ")");
                         txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
                         btnMoPhien.setEnabled(false);
                         return;
                     }
-
-                    // Kiem tra: gio hien tai da qua gio dong cua?
-                    if (!nowHcm.isBefore(closeDateTime)) {
-                        txtThoiGianKetThuc.setText("Da qua gio hoat dong (Dong: " + gioDongCua + ")");
-                        txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
-                        btnMoPhien.setEnabled(false);
-                        return;
-                    }
-
-                    // Kiem tra: gio ket thuc du kien co vuot qua gio dong cua?
-                    if (expectedEnd.isAfter(closeDateTime)) {
-                        txtThoiGianKetThuc.setText("Vuot qua gio dong cua chi nhanh (" + gioDongCua + ")");
-                        txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
-                        btnMoPhien.setEnabled(false);
-                        return;
-                    }
-
                 }
             }
             
