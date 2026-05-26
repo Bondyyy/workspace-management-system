@@ -3,11 +3,12 @@ AFTER UPDATE OF TrangThaiThanhToan ON HOADON
 FOR EACH ROW
 DECLARE
     v_MaKH VARCHAR2(50);
+    v_TienThucTra NUMBER(18, 2);
 BEGIN
     IF NVL(:OLD.TrangThaiThanhToan, ' ') <> 'Đã thanh toán thành công'
        AND :NEW.TrangThaiThanhToan = 'Đã thanh toán thành công'
        AND :NEW.MaPhien IS NOT NULL
-       AND NVL(:NEW.ThanhTien, 0) + NVL(:NEW.DaTraTruoc, 0) > 0 THEN
+       AND NVL(:NEW.DaTraTruoc, 0) + NVL(:NEW.SoTienThanhToanTaiQuay, 0) > 0 THEN
 
         BEGIN
             SELECT MaKH
@@ -20,8 +21,10 @@ BEGIN
         END;
 
         IF v_MaKH IS NOT NULL THEN
+            v_TienThucTra := NVL(:NEW.DaTraTruoc, 0) + NVL(:NEW.SoTienThanhToanTaiQuay, 0);
             UPDATE KHACHHANG
-            SET TongChiTieu = NVL(TongChiTieu, 0) + NVL(:NEW.ThanhTien, 0) + NVL(:NEW.DaTraTruoc, 0)
+            SET TongChiTieu = NVL(TongChiTieu, 0) + v_TienThucTra,
+                CapNhatLanCuoi = CURRENT_TIMESTAMP
             WHERE MaKH = v_MaKH;
         END IF;
     END IF;

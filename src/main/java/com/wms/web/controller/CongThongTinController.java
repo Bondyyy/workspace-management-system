@@ -424,6 +424,8 @@ public class CongThongTinController {
         BigDecimal subtotal = congThongTinService.tinhTien(space, durationHours);
         String safeVoucherCode = voucherCode == null ? "" : voucherCode.trim();
         BigDecimal discount = BigDecimal.ZERO;
+        BigDecimal rankPercent = congThongTinService.layPhanTramGiamHangThanhVien(user);
+        BigDecimal rankDiscount = BigDecimal.ZERO;
         String voucherMessage = "";
         if (!safeVoucherCode.isBlank()) {
             PhieuGiamGiaView voucher = congThongTinService.layPhieuGiamGiaHieuLucTheoMa(safeVoucherCode);
@@ -443,9 +445,12 @@ public class CongThongTinController {
                 }
             }
         }
+        BigDecimal afterVoucher = subtotal.subtract(discount).max(BigDecimal.ZERO);
+        rankDiscount = congThongTinService.tinhGiamHangThanhVien(user, afterVoucher);
         model.addAttribute("user", user);
         model.addAttribute("profile", checkoutProfile);
         model.addAttribute("rankName", congThongTinService.layTenHangThanhVien(user));
+        model.addAttribute("rankPercent", rankPercent);
         model.addAttribute("activePage", "booking");
         model.addAttribute("space", space);
         model.addAttribute("arrivalTime", arrivalTime);
@@ -459,7 +464,9 @@ public class CongThongTinController {
         model.addAttribute("vouchers", congThongTinService.layPhieuGiamGiaHieuLuc());
         model.addAttribute("subtotal", subtotal);
         model.addAttribute("discount", discount);
-        model.addAttribute("totalAmount", subtotal.subtract(discount));
+        model.addAttribute("rankDiscount", rankDiscount);
+        model.addAttribute("totalDiscount", discount.add(rankDiscount));
+        model.addAttribute("totalAmount", afterVoucher.subtract(rankDiscount).max(BigDecimal.ZERO));
         return "web/xac-nhan-dat-cho";
     }
 

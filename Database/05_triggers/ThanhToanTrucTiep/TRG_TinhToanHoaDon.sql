@@ -23,6 +23,18 @@ BEGIN
                 NULL;
         END;
     END IF;
+
+    IF :NEW.DaTraTruoc IS NULL THEN
+        :NEW.DaTraTruoc := 0;
+    END IF;
+
+    IF :NEW.TongTien IS NULL THEN
+        :NEW.TongTien := 0;
+    END IF;
+
+    IF :NEW.ThanhTien IS NULL THEN
+        :NEW.ThanhTien := GREATEST(0, NVL(:NEW.TongTien, 0) - NVL(:NEW.DaTraTruoc, 0));
+    END IF;
 END;
 /
 

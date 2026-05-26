@@ -277,10 +277,14 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             boolean phienDaKetThuc = !"Đang hoạt động".equals(hd.getTrangThaiPhien());
             String trangThaiThanhToan = hd.getTrangThaiThanhToan() == null ? "" : hd.getTrangThaiThanhToan();
             boolean conPhaiThu = giaTriTien(hd.getThanhTien()) > 0;
+            boolean coTheHoanTatTraTruoc = hd.getSoTienDaTraTruoc() > 0
+                    && giaTriTien(hd.getThanhTien()) <= 0;
 
-            btnXacNhan.setEnabled(trangThaiHopLeDeThanhToan && phienDaKetThuc && conPhaiThu
+            btnXacNhan.setEnabled(trangThaiHopLeDeThanhToan && phienDaKetThuc && (conPhaiThu || coTheHoanTatTraTruoc)
                     && !"Đã thanh toán thành công".equals(trangThaiThanhToan));
-            if ("Đã trả trước".equals(trangThaiThanhToan)) {
+            if (coTheHoanTatTraTruoc && "Đã trả trước".equals(trangThaiThanhToan)) {
+                btnXacNhan.setText("Hoàn tất hóa đơn");
+            } else if ("Đã trả trước".equals(trangThaiThanhToan)) {
                 btnXacNhan.setText("Thanh toán phụ thu");
             } else if (trangThaiThanhToan.equals("Đang chờ thanh toán phụ thu")
                 || (trangThaiThanhToan.equals("Đang chờ thanh toán") && hd.getSoTienDaTraTruoc() > 0)) {
@@ -796,35 +800,66 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         sb.append("Thời gian: ").append(tt.getThoiGianSửDung()).append("\n");
         sb.append("Số giờ tính: ").append(tt.getTongSoGio()).append(" giờ\n");
         sb.append("--------------------------------\n");
-        sb.append(String.format("%-20s %3s %15s\n", "Dịch vụ", "SL", "Đơn giá"));
+        sb.append(String.format("%-28s %6s %18s %18s\n", "Dịch vụ/Không gian", "SL", "Đơn giá", "Thành tiền"));
         for (com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO dv : tt.getDanhSachDichVu()) {
-            sb.append(String.format("%-20s %3d %15s\n",
+            sb.append(String.format("%-28s %6d %18s %18s\n",
                     dv.getTenDichVu(),
                     dv.getSoLuong(),
-                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dv.getDonGia())));
+                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dv.getDonGia()),
+                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dv.getThanhTien())));
         }
         sb.append("--------------------------------\n");
         com.wms.util.HoaDonGiamGiaUtil.ThongTinGiamGia giamGia =
                 com.wms.util.HoaDonGiamGiaUtil.taoThongTinGiamGia(tt, 0);
-        sb.append("TỔNG CỘNG: ").append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getTongTien())).append("\n");
-        if (giamGia.coGiamVoucher()) {
-            sb.append(giamGia.getNhanVoucher()).append(": ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamVoucher()))
+        double tongTienGoc = tt.getTongTienGoc() > 0 ? tt.getTongTienGoc() : tt.getTongTien();
+        sb.append("TỔNG TIỀN GỐC: ").append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc)).append("\n\n");
+
+        if (tt.getTienGocDatTruoc() > 0 || tt.getSoTienDaTraTruoc() > 0) {
+            sb.append("GIẢM ĐẶT TRƯỚC:\n");
+            if (giamGia.getTienGiamVoucherDatTruoc() > 0) {
+                sb.append(giamGia.getNhanVoucherDatTruoc()).append(": ")
+                        .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherDatTruoc()))
+                        .append("\n");
+            }
+            if (giamGia.getTienGiamHangDatTruoc() > 0) {
+                sb.append(giamGia.getNhanHangDatTruoc()).append(": ")
+                        .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangDatTruoc()))
+                        .append("\n");
+            }
+            sb.append("Tổng giảm đặt trước: ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamDatTruoc()))
                     .append("\n");
+            sb.append("ĐÃ TRẢ TRƯỚC: ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienDaTraTruoc()))
+                    .append("\n\n");
         }
-        if (giamGia.coGiamHangThanhVien()) {
-            sb.append(giamGia.getNhanHangThanhVien()).append(": ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamHangThanhVien()))
-                    .append("\n");
-        }
-        if (giamGia.coTongGiam()) {
-            sb.append("TỔNG GIẢM: ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()))
-                    .append("\n");
-        }
-        sb.append("ĐÃ TRẢ TRƯỚC: ")
-                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienDaTraTruoc()))
+
+        sb.append("PHÁT SINH TẠI QUÁN:\n");
+        sb.append("Tổng phát sinh gốc: ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getTienGocPhatSinh()))
                 .append("\n");
+        if (giamGia.getTienGiamVoucherTaiQuay() > 0) {
+            sb.append(giamGia.getNhanVoucherTaiQuay()).append(": ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherTaiQuay()))
+                    .append("\n");
+        }
+        if (giamGia.getTienGiamHangTaiQuay() > 0) {
+            sb.append(giamGia.getNhanHangTaiQuay()).append(": ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangTaiQuay()))
+                    .append("\n");
+        }
+        sb.append("Tổng giảm tại quán: ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamTaiQuay()))
+                .append("\n\n");
+
+        sb.append("TỔNG GIẢM: ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()))
+                .append("\n");
+        if (tt.getSoTienThanhToanTaiQuay() > 0) {
+            sb.append("ĐÃ THANH TOÁN TẠI QUẦY: ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienThanhToanTaiQuay()))
+                    .append("\n");
+        }
         sb.append("CÒN PHẢI THANH TOÁN: ")
                 .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(
                         com.wms.util.HoaDonGiamGiaUtil.layConPhaiThanhToan(tt, giamGia, 0)))

@@ -9,8 +9,6 @@ import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 
 public class ThanhToanService {
 
-    public static final String THONG_BAO_DA_TRA_TRUOC = "Hóa đơn này đã được thanh toán trước qua đặt chỗ.";
-
     private final HoaDonDAO hoaDonDAO;
     private final NhanVienDAO nhanVienDAO;
 
@@ -26,10 +24,6 @@ public class ThanhToanService {
     public String thucHienThanhToan(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
         String maNV = layMaNhanVienDangNhap();
         ThongTinHoaDonDTO thongTin = hoaDonDAO.layThongTinChiTietHoaDon(maHoaDon);
-
-        if (thongTin != null && daTraTruocKhongConPhaiThu(thongTin)) {
-            return THONG_BAO_DA_TRA_TRUOC;
-        }
 
         if (thongTin != null && thongTin.getMaPhien() != null) {
             try {
@@ -52,10 +46,6 @@ public class ThanhToanService {
         ThongTinHoaDonDTO thongTin = hoaDonDAO.layThongTinChiTietHoaDon(maHoaDon);
 
         try {
-            if (thongTin != null && daTraTruocKhongConPhaiThu(thongTin)) {
-                return new KetQuaThanhToanDTO(false, THONG_BAO_DA_TRA_TRUOC);
-            }
-
             if (thongTin != null && thongTin.getMaPhien() != null) {
                 return hoaDonDAO.thanhToanVoiPhieuGiamGiaMoi(thongTin.getMaPhien(), maNV, maPGG, phuongThuc);
             }
@@ -65,13 +55,6 @@ public class ThanhToanService {
             System.out.println("[ThanhToanService] thanh toan hoa don " + maHoaDon + " mat "
                     + (System.currentTimeMillis() - start) + " ms");
         }
-    }
-
-    private boolean daTraTruocKhongConPhaiThu(ThongTinHoaDonDTO thongTin) {
-        if (thongTin.getSoTienDaTraTruoc() <= 0) {
-            return false;
-        }
-        return thongTin.getThanhTien() <= 0;
     }
 
     private String layMaNhanVienDangNhap() {

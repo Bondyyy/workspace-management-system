@@ -250,22 +250,57 @@ public class CongThongTinService {
             throw new IllegalArgumentException("Khung gio nay da co nguoi dat. Vui long chon gio khac.");
         }
 
-        BigDecimal beforeDiscount = tinhTien(space, form.getSoGioSuDung());
-        BigDecimal total = tinhThanhTienSauGiam(beforeDiscount, form.getMaGiamGia());
-        String note = form.getGhiChu();
-        if (form.getMaGiamGia() != null && !form.getMaGiamGia().isBlank()) {
-            note = (note == null || note.isBlank())
-                    ? "Ma giam gia: " + form.getMaGiamGia().trim()
-                    : note + " | Ma giam gia: " + form.getMaGiamGia().trim();
+        BigDecimal tongTienGocDatTruoc = lamTronTienVnd(tinhTien(space, form.getSoGioSuDung()));
+        PhieuGiamGiaView voucher = null;
+        BigDecimal tienGiamVoucher = BigDecimal.ZERO;
+        String voucherCode = form.getMaGiamGia() == null ? "" : form.getMaGiamGia().trim();
+        if (!voucherCode.isBlank()) {
+            voucher = layPhieuGiamGiaHieuLucTheoMa(voucherCode);
+            if (voucher == null) {
+                throw new IllegalArgumentException("Mã ưu đãi không hợp lệ, hết hạn hoặc đã hết lượt sử dụng.");
+            }
+            BigDecimal minimum = voucher.getGiaTriApDungToiThieu() == null
+                    ? BigDecimal.ZERO
+                    : voucher.getGiaTriApDungToiThieu();
+            if (tongTienGocDatTruoc.compareTo(minimum) < 0) {
+                throw new IllegalArgumentException("Đơn này chưa đạt mức tối thiểu "
+                        + dinhDangTien(minimum) + " để dùng mã ưu đãi.");
+            }
+            BigDecimal giaTriVoucher = voucher.getGiaTriGiamGia() == null
+                    ? BigDecimal.ZERO
+                    : voucher.getGiaTriGiamGia();
+            tienGiamVoucher = giaTriVoucher.min(tongTienGocDatTruoc).max(BigDecimal.ZERO);
         }
+
+        CongThongTinWebRepository.HangThanhVienSnapshot hangThanhVien =
+                khoDuLieu.layHangThanhVienCuaKhach(user.getMaKH());
+        BigDecimal phanTramGiamHangTV = hangThanhVien == null || hangThanhVien.phanTramTienGiam() == null
+                ? BigDecimal.ZERO
+                : hangThanhVien.phanTramTienGiam().max(BigDecimal.ZERO).min(BigDecimal.valueOf(100));
+        BigDecimal tienSauVoucher = tongTienGocDatTruoc.subtract(tienGiamVoucher).max(BigDecimal.ZERO);
+        BigDecimal tienGiamHangTV = tienSauVoucher
+                .multiply(phanTramGiamHangTV)
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP)
+                .max(BigDecimal.ZERO);
+        BigDecimal thanhTienSauGiam = tongTienGocDatTruoc
+                .subtract(tienGiamVoucher)
+                .subtract(tienGiamHangTV)
+                .max(BigDecimal.ZERO)
+                .setScale(0, RoundingMode.HALF_UP);
 
         return khoDuLieu.taoDatCho(
                 user,
                 form.getMaKG(),
                 form.getThoiGianDen(),
                 form.getSoGioSuDung(),
-                total,
-                note
+                tongTienGocDatTruoc,
+                voucher == null ? null : voucher.getMaPGG(),
+                voucher == null ? null : voucher.getMaChuSoPGG(),
+                tienGiamVoucher,
+                phanTramGiamHangTV,
+                tienGiamHangTV,
+                thanhTienSauGiam,
+                form.getGhiChu()
         );
     }
 
@@ -298,6 +333,24 @@ public class CongThongTinService {
     public BigDecimal tinhThanhTienSauGiam(BigDecimal subtotal, String voucherCode) {
         BigDecimal safeSubtotal = subtotal == null ? BigDecimal.ZERO : subtotal;
         return safeSubtotal.subtract(tinhGiamGia(safeSubtotal, voucherCode));
+    }
+
+    public BigDecimal layPhanTramGiamHangThanhVien(NguoiDungPhien user) {
+        if (user == null || user.getMaKH() == null || user.getMaKH().isBlank()) {
+            return BigDecimal.ZERO;
+        }
+        CongThongTinWebRepository.HangThanhVienSnapshot snapshot =
+                khoDuLieu.layHangThanhVienCuaKhach(user.getMaKH());
+        if (snapshot == null || snapshot.phanTramTienGiam() == null) {
+            return BigDecimal.ZERO;
+        }
+        return snapshot.phanTramTienGiam().max(BigDecimal.ZERO).min(BigDecimal.valueOf(100));
+    }
+
+    public BigDecimal tinhGiamHangThanhVien(NguoiDungPhien user, BigDecimal amountAfterVoucher) {
+        BigDecimal base = amountAfterVoucher == null ? BigDecimal.ZERO : amountAfterVoucher.max(BigDecimal.ZERO);
+        BigDecimal percent = layPhanTramGiamHangThanhVien(user);
+        return base.multiply(percent).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
     }
 
     public void kiemTraXacNhanDatCho(String maKG, LocalDateTime arrivalTime, Integer durationHours) {

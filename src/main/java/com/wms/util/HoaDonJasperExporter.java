@@ -84,7 +84,7 @@ public class HoaDonJasperExporter {
         params.put("TRANG_THAI_THANH_TOAN", giaTri(hoaDon.getTrangThaiThanhToan()));
         params.put("PHUONG_THUC_THANH_TOAN", giaTri(hoaDon.getPhuongThucThanhToan()));
 
-        double tongTienGoc = Math.max(0, hoaDon.getTongTien());
+        double tongTienGoc = Math.max(0, hoaDon.getTongTienGoc() > 0 ? hoaDon.getTongTienGoc() : hoaDon.getTongTien());
         double tienDaTraTruoc = Math.max(0, hoaDon.getSoTienDaTraTruoc());
         HoaDonGiamGiaUtil.ThongTinGiamGia giamGia =
                 HoaDonGiamGiaUtil.taoThongTinGiamGia(hoaDon, tienGiamGia);
@@ -92,15 +92,11 @@ public class HoaDonJasperExporter {
 
         params.put("TONG_CONG", HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc));
         params.put("DA_TRA_TRUOC", tienDaTraTruoc > 0 ? HoaDonGiamGiaUtil.formatTienVnd(tienDaTraTruoc) : "");
-        params.put("GIAM_GIA", giamGia.coTongGiam() ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()) : "");
-        params.put("GIAM_VOUCHER_LABEL", giamGia.coGiamVoucher() ? giamGia.getNhanVoucher() + ":" : "");
-        params.put("GIAM_VOUCHER", giamGia.coGiamVoucher()
-                ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamVoucher())
-                : "");
-        params.put("GIAM_HANG_TV_LABEL", giamGia.coGiamHangThanhVien() ? giamGia.getNhanHangThanhVien() + ":" : "");
-        params.put("GIAM_HANG_TV", giamGia.coGiamHangThanhVien()
-                ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamHangThanhVien())
-                : "");
+        params.put("GIAM_GIA", "");
+        params.put("GIAM_VOUCHER_LABEL", "");
+        params.put("GIAM_VOUCHER", "");
+        params.put("GIAM_HANG_TV_LABEL", "");
+        params.put("GIAM_HANG_TV", "");
         params.put("TONG_GIAM", giamGia.coTongGiam()
                 ? HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam())
                 : "");
@@ -134,6 +130,41 @@ public class HoaDonJasperExporter {
                         HoaDonGiamGiaUtil.formatTienVnd(dv.getThanhTien())
                 ));
             }
+        }
+
+        rows.add(new DongHoaDonJasperDTO("", "TỔNG TIỀN GỐC", "", "",
+                HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc)));
+        if (hoaDon.getTienGocDatTruoc() > 0 || hoaDon.getSoTienDaTraTruoc() > 0) {
+            rows.add(new DongHoaDonJasperDTO("", "GIẢM ĐẶT TRƯỚC", "", "", ""));
+            if (giamGia.getTienGiamVoucherDatTruoc() > 0) {
+                rows.add(new DongHoaDonJasperDTO("", giamGia.getNhanVoucherDatTruoc(), "", "",
+                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherDatTruoc())));
+            }
+            if (giamGia.getTienGiamHangDatTruoc() > 0) {
+                rows.add(new DongHoaDonJasperDTO("", giamGia.getNhanHangDatTruoc(), "", "",
+                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangDatTruoc())));
+            }
+            rows.add(new DongHoaDonJasperDTO("", "Tổng giảm đặt trước", "", "",
+                    HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamDatTruoc())));
+            rows.add(new DongHoaDonJasperDTO("", "ĐÃ TRẢ TRƯỚC", "", "",
+                    HoaDonGiamGiaUtil.formatTienVnd(tienDaTraTruoc)));
+        }
+        rows.add(new DongHoaDonJasperDTO("", "PHÁT SINH TẠI QUÁN", "", "", ""));
+        rows.add(new DongHoaDonJasperDTO("", "Tổng phát sinh gốc", "", "",
+                HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getTienGocPhatSinh())));
+        if (giamGia.getTienGiamVoucherTaiQuay() > 0) {
+            rows.add(new DongHoaDonJasperDTO("", giamGia.getNhanVoucherTaiQuay(), "", "",
+                    HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherTaiQuay())));
+        }
+        if (giamGia.getTienGiamHangTaiQuay() > 0) {
+            rows.add(new DongHoaDonJasperDTO("", giamGia.getNhanHangTaiQuay(), "", "",
+                    HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangTaiQuay())));
+        }
+        rows.add(new DongHoaDonJasperDTO("", "Tổng giảm tại quán", "", "",
+                HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamTaiQuay())));
+        if (hoaDon.getSoTienThanhToanTaiQuay() > 0) {
+            rows.add(new DongHoaDonJasperDTO("", "ĐÃ THANH TOÁN TẠI QUẦY", "", "",
+                    HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienThanhToanTaiQuay())));
         }
 
         JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(rows);

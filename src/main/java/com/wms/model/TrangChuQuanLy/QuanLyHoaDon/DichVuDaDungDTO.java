@@ -15,6 +15,13 @@ public class DichVuDaDungDTO {
         this.thanhTien = soLuong * donGia;
     }
 
+    public DichVuDaDungDTO(String tenDichVu, int soLuong, double donGia, double thanhTien) {
+        this.tenDichVu = tenDichVu;
+        this.soLuong = soLuong;
+        this.donGia = donGia;
+        this.thanhTien = thanhTien;
+    }
+
     public String getTenDichVu() { return tenDichVu; }
     public void setTenDichVu(String tenDichVu) { this.tenDichVu = tenDichVu; }
     public int getSoLuong() { return soLuong; }

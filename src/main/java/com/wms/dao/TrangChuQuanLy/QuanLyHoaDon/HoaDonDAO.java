@@ -214,27 +214,48 @@ public class HoaDonDAO {
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
         long start = System.currentTimeMillis();
         ThongTinHoaDonDTO thongTin = null;
-        String sqlChung = "SELECT h.MaHoaDon, h.NgayLapHoaDon, h.PhuongThucThanhToan, " +
-            "h.TongTien AS TongTienLuu, h.ThanhTien AS ThanhTienLuu, " +
-            "FN_TinhThanhTien(p.MaPhien, h.MaPGG) AS TongTienSauGiam, " +
-            "p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, " +
-            "nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho, dc.KhoangThoiGianSuDung, "
-            + "h.MaPGG, pgg.MaChuSoPGG, NVL(pgg.GiaTriGiamGia, 0) AS GiaTriGiamVoucher, "
-            + "htv.TenHangThanhVien, NVL(htv.PhanTramTienGiam, 0) AS PhanTramGiamHangThanhVien, "
-            + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc, "
-            + "NVL(h.DaTraTruoc, 0) AS DaTraTruoc, "
-            + "FN_TinhTienKhongGian(p.MaPhien) AS TienKhongGian, "
-            + "FN_TinhTongTien(p.MaPhien) AS TongTienGoc " +
-                "FROM HOADON h " +
-                "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien " +
-                "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH " +
-                "LEFT JOIN HANGTHANHVIEN htv ON kh.MaHangThanhVien = htv.MaHangThanhVien " +
-                "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND " +
-                "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG " +
-                "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN " +
-                "LEFT JOIN PHIEUGIAMGIA pgg ON h.MaPGG = pgg.MaPGG " +
-                "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho " +
-                "WHERE h.MaHoaDon = ?";
+        String sqlChung = "SELECT h.MaHoaDon, h.NgayLapHoaDon, h.PhuongThucThanhToan, "
+                + "h.TongTienGoc AS TongTienGocLuu, h.TongTien AS TongTienLuu, h.ThanhTien AS ThanhTienLuu, "
+                + "NVL(h.TienGocDatTruoc, 0) AS TienGocDatTruoc, "
+                + "NVL(h.TienGocPhatSinh, 0) AS TienGocPhatSinh, "
+                + "h.MaPGG, h.MaPGGDatTruoc, pggdt.MaChuSoPGG AS MaChuSoPGGDatTruoc, "
+                + "h.MaPGGTaiQuay, pggtq.MaChuSoPGG AS MaChuSoPGGTaiQuay, "
+                + "pgg.MaChuSoPGG, NVL(pgg.GiaTriGiamGia, 0) AS GiaTriGiamVoucher, "
+                + "NVL(pggtq.GiaTriGiamGia, 0) AS GiaTriGiamVoucherTaiQuay, "
+                + "NVL(h.TienGiamVoucherDatTruoc, 0) AS TienGiamVoucherDatTruoc, "
+                + "NVL(h.PhanTramGiamHangTVDatTruoc, 0) AS PhanTramGiamHangTVDatTruoc, "
+                + "NVL(h.TienGiamHangTVDatTruoc, 0) AS TienGiamHangTVDatTruoc, "
+                + "NVL(h.TienGiamVoucherTaiQuay, 0) AS TienGiamVoucherTaiQuay, "
+                + "NVL(h.PhanTramGiamHangTVTaiQuay, 0) AS PhanTramGiamHangTVTaiQuay, "
+                + "NVL(h.TienGiamHangTVTaiQuay, 0) AS TienGiamHangTVTaiQuay, "
+                + "NVL(h.TongTienGiam, 0) AS TongTienGiamLuu, "
+                + "NVL(h.SoTienThanhToanTaiQuay, 0) AS SoTienThanhToanTaiQuay, "
+                + "p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, "
+                + "nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho, dc.KhoangThoiGianSuDung, dc.GhiChu, "
+                + "NVL(dc.TongTienGoc, 0) AS DcTongTienGoc, "
+                + "NVL(dc.ThanhTienSauGiam, NVL(dc.ThanhTien, 0)) AS DcThanhTienSauGiam, "
+                + "dc.MaPGG AS DcMaPGG, dc.MaChuSoPGG AS DcMaChuSoPGG, "
+                + "NVL(dc.TienGiamVoucher, 0) AS DcTienGiamVoucher, "
+                + "NVL(dc.PhanTramGiamHangTV, 0) AS DcPhanTramGiamHangTV, "
+                + "NVL(dc.TienGiamHangTV, 0) AS DcTienGiamHangTV, "
+                + "NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio, "
+                + "htv.TenHangThanhVien, NVL(htv.PhanTramTienGiam, 0) AS PhanTramGiamHangThanhVien, "
+                + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc, "
+                + "FN_TinhTienDichVu(p.MaPhien) AS TienDichVuTinh, "
+                + "FN_TinhTongTien(p.MaPhien) AS TongTienTinh "
+                + "FROM HOADON h "
+                + "LEFT JOIN PHIENLAMVIEC p ON h.MaPhien = p.MaPhien "
+                + "LEFT JOIN KHACHHANG kh ON p.MaKH = kh.MaKH "
+                + "LEFT JOIN HANGTHANHVIEN htv ON kh.MaHangThanhVien = htv.MaHangThanhVien "
+                + "LEFT JOIN NGUOIDUNG nd ON kh.MaND = nd.MaND "
+                + "LEFT JOIN KHONGGIAN kg ON p.MaKG = kg.MaKG "
+                + "LEFT JOIN LOAIKHONGGIAN lkg ON kg.MaLoaiKG = lkg.MaLoaiKG "
+                + "LEFT JOIN CHINHANH cn ON kg.MaCN = cn.MaCN "
+                + "LEFT JOIN PHIEUGIAMGIA pgg ON h.MaPGG = pgg.MaPGG "
+                + "LEFT JOIN PHIEUGIAMGIA pggdt ON h.MaPGGDatTruoc = pggdt.MaPGG "
+                + "LEFT JOIN PHIEUGIAMGIA pggtq ON h.MaPGGTaiQuay = pggtq.MaPGG "
+                + "LEFT JOIN DATCHO dc ON p.MaDatCho = dc.MaDatCho "
+                + "WHERE h.MaHoaDon = ?";
 
         String sqlDichVu = "SELECT dv.TenDV, ct.SoLuong, dv.DonGia " +
                 "FROM CHITIETDICHVU ct " +
@@ -258,60 +279,122 @@ public class HoaDonDAO {
                         thongTin.setNgayLapHoaDon(new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ngayLap));
                     }
 
-                    Double tongTienLuu = getNullableDouble(rsChung, "TongTienLuu");
                     Double thanhTienLuu = getNullableDouble(rsChung, "ThanhTienLuu");
-                    double tongTienGoc = rsChung.getDouble("TongTienGoc");
-                    double tt = tongTienLuu != null && tongTienLuu > 0 ? tongTienLuu : tongTienGoc;
+                    String maDatCho = rsChung.getString("MaDatCho");
+                    boolean laDatTruoc = maDatCho != null && !maDatCho.trim().isEmpty();
+                    double soGioDatTruoc = rsChung.getDouble("KhoangThoiGianSuDung");
+                    double donGiaTheoGio = rsChung.getDouble("DonGiaTheoGio");
+                    double tienDichVuTinh = Math.max(0, rsChung.getDouble("TienDichVuTinh"));
+                    double tongTienTinh = Math.max(0, rsChung.getDouble("TongTienTinh"));
 
-                    double soTienDaTraTruoc = rsChung.getDouble("SoTienDaTraTruoc");
-                    String maPGG = rsChung.getString("MaPGG");
-                    String maChuSoPGG = rsChung.getString("MaChuSoPGG");
-                    double soTienGiamVoucher = 0;
-                    if (maPGG != null && !maPGG.isBlank()) {
-                        soTienGiamVoucher = Math.min(
-                                Math.max(0, rsChung.getDouble("GiaTriGiamVoucher")),
-                                Math.max(0, tt));
+                    double tienGocDatTruoc = Math.max(0, rsChung.getDouble("TienGocDatTruoc"));
+                    if (tienGocDatTruoc <= 0 && laDatTruoc) {
+                        tienGocDatTruoc = Math.max(0, rsChung.getDouble("DcTongTienGoc"));
                     }
-                    double phanTramGiamHangThanhVien = Math.min(100,
-                            Math.max(0, rsChung.getDouble("PhanTramGiamHangThanhVien")));
-                    double soTienSauVoucher = Math.max(0, tt - soTienGiamVoucher);
-                    double soTienGiamHangThanhVien = phanTramGiamHangThanhVien > 0
-                            ? Math.round(soTienSauVoucher * phanTramGiamHangThanhVien / 100.0)
-                            : 0;
-                    double tongTienGiam = Math.min(Math.max(0, tt),
-                            Math.max(0, soTienGiamVoucher + soTienGiamHangThanhVien));
+                    if (tienGocDatTruoc <= 0 && laDatTruoc) {
+                        tienGocDatTruoc = Math.max(0, donGiaTheoGio * soGioDatTruoc);
+                    }
+
+                    double tienGocPhatSinh = Math.max(0, rsChung.getDouble("TienGocPhatSinh"));
+                    if (tienGocPhatSinh <= 0) {
+                        tienGocPhatSinh = laDatTruoc ? tienDichVuTinh : tongTienTinh;
+                    }
+
+                    double tongTienGoc = Math.max(0, rsChung.getDouble("TongTienGocLuu"));
+                    if (tongTienGoc <= 0) {
+                        tongTienGoc = laDatTruoc ? tienGocDatTruoc + tienGocPhatSinh : tongTienTinh;
+                    }
+                    if (tongTienGoc <= 0) {
+                        tongTienGoc = Math.max(0, rsChung.getDouble("TongTienLuu"));
+                    }
+
+                    double soTienDaTraTruoc = Math.max(0, rsChung.getDouble("SoTienDaTraTruoc"));
+                    if (soTienDaTraTruoc <= 0 && laDatTruoc) {
+                        soTienDaTraTruoc = Math.max(0, rsChung.getDouble("DcThanhTienSauGiam"));
+                    }
+
+                    String maPGGDatTruoc = layGiaTriDauTien(rsChung.getString("MaPGGDatTruoc"), rsChung.getString("DcMaPGG"));
+                    String maChuSoPGGDatTruoc = layGiaTriDauTien(rsChung.getString("MaChuSoPGGDatTruoc"), rsChung.getString("DcMaChuSoPGG"));
+                    double tienGiamVoucherDatTruoc = Math.max(0, rsChung.getDouble("TienGiamVoucherDatTruoc"));
+                    if (tienGiamVoucherDatTruoc <= 0) {
+                        tienGiamVoucherDatTruoc = Math.max(0, rsChung.getDouble("DcTienGiamVoucher"));
+                    }
+                    double phanTramGiamHangTVDatTruoc = Math.max(0, rsChung.getDouble("PhanTramGiamHangTVDatTruoc"));
+                    if (phanTramGiamHangTVDatTruoc <= 0) {
+                        phanTramGiamHangTVDatTruoc = Math.max(0, rsChung.getDouble("DcPhanTramGiamHangTV"));
+                    }
+                    double tienGiamHangTVDatTruoc = Math.max(0, rsChung.getDouble("TienGiamHangTVDatTruoc"));
+                    if (tienGiamHangTVDatTruoc <= 0) {
+                        tienGiamHangTVDatTruoc = Math.max(0, rsChung.getDouble("DcTienGiamHangTV"));
+                    }
+
+                    String maPGGTaiQuay = layGiaTriDauTien(rsChung.getString("MaPGGTaiQuay"),
+                            laDatTruoc ? null : rsChung.getString("MaPGG"));
+                    String maChuSoPGGTaiQuay = layGiaTriDauTien(rsChung.getString("MaChuSoPGGTaiQuay"),
+                            laDatTruoc ? null : rsChung.getString("MaChuSoPGG"));
+                    double tienGiamVoucherTaiQuay = Math.max(0, rsChung.getDouble("TienGiamVoucherTaiQuay"));
+                    if (tienGiamVoucherTaiQuay <= 0 && maPGGTaiQuay != null && !maPGGTaiQuay.isBlank()) {
+                        double giaTriVoucherTaiQuay = Math.max(0, rsChung.getDouble("GiaTriGiamVoucherTaiQuay"));
+                        if (giaTriVoucherTaiQuay <= 0) {
+                            giaTriVoucherTaiQuay = Math.max(0, rsChung.getDouble("GiaTriGiamVoucher"));
+                        }
+                        tienGiamVoucherTaiQuay = Math.min(giaTriVoucherTaiQuay,
+                                Math.max(0, tienGocPhatSinh));
+                    }
+                    double phanTramGiamHangTVTaiQuay = Math.max(0, rsChung.getDouble("PhanTramGiamHangTVTaiQuay"));
+                    if (phanTramGiamHangTVTaiQuay <= 0) {
+                        phanTramGiamHangTVTaiQuay = Math.max(0, rsChung.getDouble("PhanTramGiamHangThanhVien"));
+                    }
+                    double tienGiamHangTVTaiQuay = Math.max(0, rsChung.getDouble("TienGiamHangTVTaiQuay"));
+                    if (tienGiamHangTVTaiQuay <= 0 && tienGocPhatSinh > 0 && phanTramGiamHangTVTaiQuay > 0) {
+                        tienGiamHangTVTaiQuay = Math.round(Math.max(0, tienGocPhatSinh - tienGiamVoucherTaiQuay)
+                                * Math.min(100, phanTramGiamHangTVTaiQuay) / 100.0);
+                    }
+                    double tongTienGiam = Math.max(0, rsChung.getDouble("TongTienGiamLuu"));
+                    if (tongTienGiam <= 0) {
+                        tongTienGiam = tienGiamVoucherDatTruoc + tienGiamHangTVDatTruoc
+                                + tienGiamVoucherTaiQuay + tienGiamHangTVTaiQuay;
+                    }
+                    double soTienThanhToanTaiQuay = Math.max(0, rsChung.getDouble("SoTienThanhToanTaiQuay"));
                     double thanh;
                     if (thanhTienLuu != null) {
                         thanh = Math.max(0, thanhTienLuu);
                     } else {
-                        double tongTienSauGiam = rsChung.getDouble("TongTienSauGiam");
-                        if (tongTienSauGiam <= 0 && tt > 0) {
-                            tongTienSauGiam = tt;
-                        }
-                        thanh = Math.max(0, tongTienSauGiam - soTienDaTraTruoc);
-                    }
-                    if ("Đã thanh toán thành công".equals(rsChung.getString("TrangThaiThanhToan"))
-                            && soTienDaTraTruoc >= tt) {
-                        thanh = 0;
+                        thanh = Math.max(0, tongTienGoc - tongTienGiam - soTienDaTraTruoc);
                     }
 
-                    thongTin.setTongTien(tt);
+                    thongTin.setTongTienGoc(tongTienGoc);
+                    thongTin.setTongTien(tongTienGoc);
                     thongTin.setThanhTien(thanh);
                     thongTin.setMaPhien(rsChung.getString("MaPhien"));
                     thongTin.setTrangThaiPhien(rsChung.getString("TrangThaiPhien"));
                     thongTin.setTrangThaiThanhToan(rsChung.getString("TrangThaiThanhToan"));
                     thongTin.setSoTienDaTraTruoc(soTienDaTraTruoc);
                     thongTin.setDaTraTruoc(soTienDaTraTruoc > 0);
-                    thongTin.setMaPGG(maPGG);
-                    thongTin.setMaChuSoPGG(maChuSoPGG);
-                    thongTin.setMaVoucher((maChuSoPGG != null && !maChuSoPGG.isBlank()) ? maChuSoPGG : maPGG);
+                    thongTin.setTienGocDatTruoc(tienGocDatTruoc);
+                    thongTin.setTienGocPhatSinh(tienGocPhatSinh);
+                    thongTin.setMaPGGDatTruoc(maPGGDatTruoc);
+                    thongTin.setMaChuSoPGGDatTruoc(maChuSoPGGDatTruoc);
+                    thongTin.setTienGiamVoucherDatTruoc(tienGiamVoucherDatTruoc);
+                    thongTin.setPhanTramGiamHangTVDatTruoc(phanTramGiamHangTVDatTruoc);
+                    thongTin.setTienGiamHangTVDatTruoc(tienGiamHangTVDatTruoc);
+                    thongTin.setMaPGGTaiQuay(maPGGTaiQuay);
+                    thongTin.setMaChuSoPGGTaiQuay(maChuSoPGGTaiQuay);
+                    thongTin.setTienGiamVoucherTaiQuay(tienGiamVoucherTaiQuay);
+                    thongTin.setPhanTramGiamHangTVTaiQuay(phanTramGiamHangTVTaiQuay);
+                    thongTin.setTienGiamHangTVTaiQuay(tienGiamHangTVTaiQuay);
+                    thongTin.setSoTienThanhToanTaiQuay(soTienThanhToanTaiQuay);
+                    thongTin.setMaPGG(layGiaTriDauTien(maPGGTaiQuay, maPGGDatTruoc, rsChung.getString("MaPGG")));
+                    thongTin.setMaChuSoPGG(layGiaTriDauTien(maChuSoPGGTaiQuay, maChuSoPGGDatTruoc, rsChung.getString("MaChuSoPGG")));
+                    thongTin.setMaVoucher(layGiaTriDauTien(maChuSoPGGTaiQuay, maPGGTaiQuay, maChuSoPGGDatTruoc, maPGGDatTruoc));
                     thongTin.setTenHangThanhVien(rsChung.getString("TenHangThanhVien"));
-                    thongTin.setPhanTramGiamHangThanhVien(phanTramGiamHangThanhVien);
-                    thongTin.setSoTienGiamVoucher(soTienGiamVoucher);
-                    thongTin.setSoTienGiamHangThanhVien(soTienGiamHangThanhVien);
+                    thongTin.setPhanTramGiamHangThanhVien(Math.max(phanTramGiamHangTVDatTruoc, phanTramGiamHangTVTaiQuay));
+                    thongTin.setSoTienGiamVoucher(tienGiamVoucherDatTruoc + tienGiamVoucherTaiQuay);
+                    thongTin.setSoTienGiamHangThanhVien(tienGiamHangTVDatTruoc + tienGiamHangTVTaiQuay);
                     thongTin.setTongTienGiam(tongTienGiam);
 
-                    double conPhaiThanhToanTinh = Math.max(0, tt - tongTienGiam - soTienDaTraTruoc);
+                    double conPhaiThanhToanTinh = Math.max(0, tongTienGoc - tongTienGiam
+                            - soTienDaTraTruoc - soTienThanhToanTaiQuay);
                     if (Math.abs(conPhaiThanhToanTinh - thanh) > 1) {
                         System.out.println("[HoaDonDAO] Chenh lech thanh tien hoa don " + maHoaDon
                                 + ": DB=" + thanh + ", tinhLai=" + conPhaiThanhToanTinh);
@@ -343,38 +426,33 @@ public class HoaDonDAO {
                                         rsDV.getString("TenDV"),
                                         rsDV.getInt("SoLuong"),
                                         rsDV.getDouble("DonGia")));
+                                thongTin.getDanhSachDichVuPhatSinh().add(new DichVuDaDungDTO(
+                                        rsDV.getString("TenDV"),
+                                        rsDV.getInt("SoLuong"),
+                                        rsDV.getDouble("DonGia")));
                             }
                         }
                     }
 
-                    double tienKhongGian = rsChung.getDouble("TienKhongGian");
-                    if (tienKhongGian <= 0) {
-                        double tongTienDichVu = 0;
-                        for (DichVuDaDungDTO dv : thongTin.getDanhSachDichVu()) {
-                            tongTienDichVu += dv.getThanhTien();
-                        }
-                        tienKhongGian = Math.max(0, thongTin.getTongTien() - tongTienDichVu);
-                    }
-                    
                     String tenKGDisplay = thongTin.getTenKhongGian();
                     double soGioDisplay = thongTin.getTongSoGio();
-                    String maDatCho = rsChung.getString("MaDatCho");
-                    
-                    if (maDatCho != null && !maDatCho.trim().isEmpty()) {
+                    double tienKhongGian = Math.max(0, tongTienGoc - tienDichVuTinh);
+
+                    if (laDatTruoc) {
                         tenKGDisplay = "Thuê " + tenKGDisplay + " (đã đặt trước)";
-                        soGioDisplay = rsChung.getDouble("KhoangThoiGianSuDung");
+                        soGioDisplay = soGioDatTruoc;
+                        tienKhongGian = tienGocDatTruoc;
                     } else {
                         tenKGDisplay = "Thuê " + tenKGDisplay;
                     }
 
-                    double donGiaKg = (soGioDisplay > 0)
-                            ? (tienKhongGian / soGioDisplay)
-                            : tienKhongGian;
+                    double donGiaKg = (soGioDisplay > 0) ? (tienKhongGian / soGioDisplay) : tienKhongGian;
                             
                     thongTin.getDanhSachDichVu().add(0, new DichVuDaDungDTO(
                             tenKGDisplay,
-                            (int) soGioDisplay,
-                            donGiaKg));
+                            (int) Math.max(0, Math.round(soGioDisplay)),
+                            donGiaKg,
+                            tienKhongGian));
                 }
             }
         } catch (Exception e) {
@@ -387,15 +465,20 @@ public class HoaDonDAO {
 
     public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG,
             double thanhTien) {
-        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, ThanhTien = ?, TrangThaiThanhToan = 'Đã thanh toán thành công', NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaHoaDon = ?";
+        String sql = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, MaPGGTaiQuay = ?, "
+                + "SoTienThanhToanTaiQuay = ?, ThanhTien = 0, "
+                + "TongTienGoc = NVL(NULLIF(TongTienGoc, 0), TongTien), "
+                + "TrangThaiThanhToan = 'Đã thanh toán thành công', NgayLapHoaDon = CURRENT_TIMESTAMP "
+                + "WHERE MaHoaDon = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, phuongThucThanhToan);
             pstmt.setString(2, maNV);
             pstmt.setString(3, maPGG);
-            pstmt.setDouble(4, thanhTien);
-            pstmt.setString(5, maHoaDon);
+            pstmt.setString(4, maPGG);
+            pstmt.setDouble(5, Math.max(0, thanhTien));
+            pstmt.setString(6, maHoaDon);
             return pstmt.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -420,12 +503,7 @@ public class HoaDonDAO {
 
             String message = cstmt.getString(5);
             System.out.println("[HoaDonDAO] " + message);
-            if (laThongBaoDaTraTruoc(message)) {
-                throw new IllegalStateException(message);
-            }
             return laThongBaoThanhCong(message);
-        } catch (IllegalStateException e) {
-            throw e;
         } catch (Exception e) {
             System.err.println("[HoaDonDAO] Lỗi gọi SP_ThanhToanVoiPhieuGiamGia: " + e.getMessage());
             return false;
@@ -552,5 +630,14 @@ public class HoaDonDAO {
     private Double getNullableDouble(ResultSet rs, String column) throws SQLException {
         double value = rs.getDouble(column);
         return rs.wasNull() ? null : value;
+    }
+
+    private String layGiaTriDauTien(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 }

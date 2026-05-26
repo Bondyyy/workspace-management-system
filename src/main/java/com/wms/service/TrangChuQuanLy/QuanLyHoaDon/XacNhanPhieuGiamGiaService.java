@@ -4,6 +4,7 @@ import com.wms.dao.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDAO;
 
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaDTO;
+import com.wms.util.HoaDonGiamGiaUtil;
 import java.util.Date;
 
 /**
@@ -25,7 +26,7 @@ public class XacNhanPhieuGiamGiaService {
      * Kiểm tra và xác thực phiếu giảm giá
      * 
      * @param maChuSoPGG Mã phiếu giảm giá cần kiểm tra
-     * @param tongTienGoc Tổng tiền gốc của hóa đơn
+     * @param tongTienGoc Số tiền gốc còn được phép áp voucher
      * @return XacNhanPhieuGiamGiaDTO chứa kết quả kiểm tra
      */
     public XacNhanPhieuGiamGiaDTO kiemTraPhieuGiamGia(String maChuSoPGG, double tongTienGoc) {
@@ -71,10 +72,9 @@ public class XacNhanPhieuGiamGiaService {
         
         // 6. Kiểm tra giá trị tối thiểu của hóa đơn
         if (voucher.getGiaTriApDungToiThieu() > 0 && tongTienGoc < voucher.getGiaTriApDungToiThieu()) {
-            String errorMsg = String.format(
-                "[Lỗi] Đơn hàng chưa đủ %,.0f ₫ để sử dụng mã này", 
-                voucher.getGiaTriApDungToiThieu()
-            );
+            String errorMsg = "[Lỗi] Phần thanh toán tại quầy chưa đủ "
+                    + HoaDonGiamGiaUtil.formatTienVnd(voucher.getGiaTriApDungToiThieu())
+                    + " để sử dụng mã này";
             return new XacNhanPhieuGiamGiaDTO(false, 
                 errorMsg, 
                 "MINIMUM_AMOUNT_NOT_MET");

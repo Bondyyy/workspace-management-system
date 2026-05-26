@@ -9,7 +9,6 @@ DECLARE
     v_TongTien NUMBER(18, 2) := 0;
     v_ThanhTien NUMBER(18, 2) := 0;
     v_TrangThaiDatTruoc DATCHO.TrangThaiDatTruoc%TYPE;
-    v_ThanhTienDatCho DATCHO.ThanhTien%TYPE;
     v_SoHoaDon NUMBER;
 BEGIN
     SELECT COUNT(*)
@@ -23,17 +22,21 @@ BEGIN
 
     IF :NEW.MaDatCho IS NOT NULL THEN
         BEGIN
-            SELECT TrangThaiDatTruoc, NVL(ThanhTien, 0)
-            INTO v_TrangThaiDatTruoc, v_ThanhTienDatCho
+            SELECT TrangThaiDatTruoc,
+                   NVL(ThanhTien, 0)
+            INTO v_TrangThaiDatTruoc,
+                 v_DaTraTruoc
             FROM DATCHO
             WHERE MaDatCho = :NEW.MaDatCho;
 
+            v_TongTien := v_DaTraTruoc;
+
             IF v_TrangThaiDatTruoc = 'Đã thanh toán thành công' THEN
-                v_DaTraTruoc := v_ThanhTienDatCho;
                 v_TrangThaiThanhToan := 'Đã trả trước';
                 v_PhuongThucThanhToan := 'Đặt trước';
-                v_TongTien := v_ThanhTienDatCho;
                 v_ThanhTien := 0;
+            ELSE
+                v_ThanhTien := v_DaTraTruoc;
             END IF;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN

@@ -10,6 +10,7 @@ public class ThongTinHoaDonDTO {
     private String tenKhongGian;
     private String thoiGianSửDung; // Chuỗi format "08:00 - 12:00 (27/04/2024)"
     private double tongSoGio;
+    private double tongTienGoc;
     private double tongTien;
     private double thanhTien;
     private String maPhien;
@@ -29,9 +30,24 @@ public class ThongTinHoaDonDTO {
     private double soTienGiamVoucher;
     private double soTienGiamHangThanhVien;
     private double tongTienGiam;
+    private double tienGocDatTruoc;
+    private double tienGocPhatSinh;
+    private String maPGGDatTruoc;
+    private String maChuSoPGGDatTruoc;
+    private double tienGiamVoucherDatTruoc;
+    private double phanTramGiamHangTVDatTruoc;
+    private double tienGiamHangTVDatTruoc;
+    private String maPGGTaiQuay;
+    private String maChuSoPGGTaiQuay;
+    private double tienGiamVoucherTaiQuay;
+    private double phanTramGiamHangTVTaiQuay;
+    private double tienGiamHangTVTaiQuay;
+    private double soTienThanhToanTaiQuay;
+    private List<DichVuDaDungDTO> danhSachDichVuPhatSinh;
 
     public ThongTinHoaDonDTO() {
         this.danhSachDichVu = new ArrayList<>();
+        this.danhSachDichVuPhatSinh = new ArrayList<>();
     }
 
     public String getMaHoaDon() { return maHoaDon; }
@@ -44,6 +60,8 @@ public class ThongTinHoaDonDTO {
     public void setThoiGianSửDung(String thoiGianSửDung) { this.thoiGianSửDung = thoiGianSửDung; }
     public double getTongSoGio() { return tongSoGio; }
     public void setTongSoGio(double tongSoGio) { this.tongSoGio = tongSoGio; }
+    public double getTongTienGoc() { return tongTienGoc; }
+    public void setTongTienGoc(double tongTienGoc) { this.tongTienGoc = tongTienGoc; }
     public double getTongTien() { return tongTien; }
     public void setTongTien(double tongTien) { this.tongTien = tongTien; }
     public double getThanhTien() { return thanhTien; }
@@ -82,4 +100,32 @@ public class ThongTinHoaDonDTO {
     public void setSoTienGiamHangThanhVien(double soTienGiamHangThanhVien) { this.soTienGiamHangThanhVien = soTienGiamHangThanhVien; }
     public double getTongTienGiam() { return tongTienGiam; }
     public void setTongTienGiam(double tongTienGiam) { this.tongTienGiam = tongTienGiam; }
+    public double getTienGocDatTruoc() { return tienGocDatTruoc; }
+    public void setTienGocDatTruoc(double tienGocDatTruoc) { this.tienGocDatTruoc = tienGocDatTruoc; }
+    public double getTienGocPhatSinh() { return tienGocPhatSinh; }
+    public void setTienGocPhatSinh(double tienGocPhatSinh) { this.tienGocPhatSinh = tienGocPhatSinh; }
+    public String getMaPGGDatTruoc() { return maPGGDatTruoc; }
+    public void setMaPGGDatTruoc(String maPGGDatTruoc) { this.maPGGDatTruoc = maPGGDatTruoc; }
+    public String getMaChuSoPGGDatTruoc() { return maChuSoPGGDatTruoc; }
+    public void setMaChuSoPGGDatTruoc(String maChuSoPGGDatTruoc) { this.maChuSoPGGDatTruoc = maChuSoPGGDatTruoc; }
+    public double getTienGiamVoucherDatTruoc() { return tienGiamVoucherDatTruoc; }
+    public void setTienGiamVoucherDatTruoc(double tienGiamVoucherDatTruoc) { this.tienGiamVoucherDatTruoc = tienGiamVoucherDatTruoc; }
+    public double getPhanTramGiamHangTVDatTruoc() { return phanTramGiamHangTVDatTruoc; }
+    public void setPhanTramGiamHangTVDatTruoc(double phanTramGiamHangTVDatTruoc) { this.phanTramGiamHangTVDatTruoc = phanTramGiamHangTVDatTruoc; }
+    public double getTienGiamHangTVDatTruoc() { return tienGiamHangTVDatTruoc; }
+    public void setTienGiamHangTVDatTruoc(double tienGiamHangTVDatTruoc) { this.tienGiamHangTVDatTruoc = tienGiamHangTVDatTruoc; }
+    public String getMaPGGTaiQuay() { return maPGGTaiQuay; }
+    public void setMaPGGTaiQuay(String maPGGTaiQuay) { this.maPGGTaiQuay = maPGGTaiQuay; }
+    public String getMaChuSoPGGTaiQuay() { return maChuSoPGGTaiQuay; }
+    public void setMaChuSoPGGTaiQuay(String maChuSoPGGTaiQuay) { this.maChuSoPGGTaiQuay = maChuSoPGGTaiQuay; }
+    public double getTienGiamVoucherTaiQuay() { return tienGiamVoucherTaiQuay; }
+    public void setTienGiamVoucherTaiQuay(double tienGiamVoucherTaiQuay) { this.tienGiamVoucherTaiQuay = tienGiamVoucherTaiQuay; }
+    public double getPhanTramGiamHangTVTaiQuay() { return phanTramGiamHangTVTaiQuay; }
+    public void setPhanTramGiamHangTVTaiQuay(double phanTramGiamHangTVTaiQuay) { this.phanTramGiamHangTVTaiQuay = phanTramGiamHangTVTaiQuay; }
+    public double getTienGiamHangTVTaiQuay() { return tienGiamHangTVTaiQuay; }
+    public void setTienGiamHangTVTaiQuay(double tienGiamHangTVTaiQuay) { this.tienGiamHangTVTaiQuay = tienGiamHangTVTaiQuay; }
+    public double getSoTienThanhToanTaiQuay() { return soTienThanhToanTaiQuay; }
+    public void setSoTienThanhToanTaiQuay(double soTienThanhToanTaiQuay) { this.soTienThanhToanTaiQuay = soTienThanhToanTaiQuay; }
+    public List<DichVuDaDungDTO> getDanhSachDichVuPhatSinh() { return danhSachDichVuPhatSinh; }
+    public void setDanhSachDichVuPhatSinh(List<DichVuDaDungDTO> danhSachDichVuPhatSinh) { this.danhSachDichVuPhatSinh = danhSachDichVuPhatSinh; }
 }

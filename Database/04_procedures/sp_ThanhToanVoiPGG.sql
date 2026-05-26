@@ -9,10 +9,12 @@ CREATE OR REPLACE PROCEDURE SP_ThanhToanVoiPhieuGiamGia(
     v_MaKG PHIENLAMVIEC.MaKG%TYPE;
     v_TrangThaiPhien PHIENLAMVIEC.TrangThaiPhien%TYPE;
     v_TrangThaiThanhToan HOADON.TrangThaiThanhToan%TYPE;
-    v_DaTraTruoc HOADON.DaTraTruoc%TYPE;
-    v_SoTienDaTraTruoc NUMBER(18, 2) := 0;
-    v_TongTien NUMBER(18, 2);
-    v_ThanhTien NUMBER(18, 2);
+    v_DaTraTruoc NUMBER(18, 2) := 0;
+    v_TongTienGoc NUMBER(18, 2) := 0;
+    v_TienGocDatTruoc NUMBER(18, 2) := 0;
+    v_TienGocPhatSinh NUMBER(18, 2) := 0;
+    v_ConPhaiThanhToan NUMBER(18, 2) := 0;
+    v_SoTienThanhToanTaiQuay NUMBER(18, 2) := 0;
     v_SoLuongDaDung NUMBER;
     v_SoLuongToiDa NUMBER;
     v_KetQuaPGG VARCHAR2(4000);
@@ -30,13 +32,23 @@ CREATE OR REPLACE PROCEDURE SP_ThanhToanVoiPhieuGiamGia(
     v_SoGioQua NUMBER;
     v_CountDV NUMBER;
     v_SoHoaDon NUMBER;
+    v_MaPGGDatTruoc VARCHAR2(50);
+    v_TienGiamVoucherDatTruoc NUMBER(18, 2) := 0;
+    v_PhanTramGiamHangTVDatTruoc NUMBER(5, 2) := 0;
+    v_TienGiamHangTVDatTruoc NUMBER(18, 2) := 0;
+    v_TienGiamVoucherTaiQuay NUMBER(18, 2) := 0;
+    v_PhanTramGiamHangTVTaiQuay NUMBER(5, 2) := 0;
+    v_TienGiamHangTVTaiQuay NUMBER(18, 2) := 0;
+    v_TongTienGiam NUMBER(18, 2) := 0;
+    v_PhuongThucThanhToan VARCHAR2(50);
 BEGIN
     IF p_MaPhien IS NULL OR LENGTH(TRIM(p_MaPhien)) = 0 THEN
         p_outMessage := 'Lỗi: Thiếu mã phiên cần thanh toán.';
         RETURN;
     END IF;
 
-    IF p_PhuongThucTT IS NULL OR p_PhuongThucTT NOT IN ('Tiền mặt', 'Chuyển khoản') THEN
+    IF p_PhuongThucTT IS NULL
+       OR p_PhuongThucTT NOT IN ('Tiền mặt', 'Chuyển khoản', 'Đặt trước') THEN
         p_outMessage := 'Lỗi: Phương thức thanh toán không hợp lệ.';
         RETURN;
     END IF;
@@ -62,33 +74,51 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT MaHoaDon, TrangThaiThanhToan, NVL(DaTraTruoc, 0)
-    INTO v_MaHoaDon, v_TrangThaiThanhToan, v_DaTraTruoc
+    SELECT MaHoaDon,
+           TrangThaiThanhToan,
+           NVL(DaTraTruoc, 0),
+           MaPGGDatTruoc,
+           NVL(TienGiamVoucherDatTruoc, 0),
+           NVL(PhanTramGiamHangTVDatTruoc, 0),
+           NVL(TienGiamHangTVDatTruoc, 0)
+    INTO v_MaHoaDon,
+         v_TrangThaiThanhToan,
+         v_DaTraTruoc,
+         v_MaPGGDatTruoc,
+         v_TienGiamVoucherDatTruoc,
+         v_PhanTramGiamHangTVDatTruoc,
+         v_TienGiamHangTVDatTruoc
     FROM HOADON
     WHERE MaPhien = TRIM(p_MaPhien)
     FOR UPDATE NOWAIT;
 
-    -- Nếu phiên chưa kết thúc, thực hiện chốt thời gian và tính phụ thu tự động
+    IF v_TrangThaiThanhToan = 'Đã thanh toán thành công' THEN
+        ROLLBACK;
+        p_outMessage := 'Lỗi: Hóa đơn đã được thanh toán trước đó.';
+        RETURN;
+    END IF;
+
     IF v_TrangThaiPhien <> 'Đã kết thúc' THEN
         v_ThoiGianKetThuc := CURRENT_TIMESTAMP;
-        
+
         UPDATE PHIENLAMVIEC
         SET ThoiGianKetThuc = v_ThoiGianKetThuc,
             TrangThaiPhien = 'Đã kết thúc',
             CapNhatLanCuoi = CURRENT_TIMESTAMP
         WHERE MaPhien = TRIM(p_MaPhien);
 
-        -- Xử lý gia hạn giờ tự động cho phiên đặt trước
         IF v_MaDatCho IS NOT NULL THEN
             BEGIN
-                SELECT KhoangThoiGianSuDung INTO v_KhoangThoiGianSuDung
-                FROM DATCHO WHERE MaDatCho = v_MaDatCho;
-                
+                SELECT KhoangThoiGianSuDung
+                INTO v_KhoangThoiGianSuDung
+                FROM DATCHO
+                WHERE MaDatCho = v_MaDatCho;
+
                 v_TongPhut := EXTRACT(DAY FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) * 24 * 60 +
                               EXTRACT(HOUR FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) * 60 +
                               EXTRACT(MINUTE FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) +
                               EXTRACT(SECOND FROM (v_ThoiGianKetThuc - v_ThoiGianBatDau)) / 60;
-                    
+
                 v_GioNguyen := TRUNC(v_TongPhut / 60);
                 v_PhutLe := MOD(v_TongPhut, 60);
 
@@ -100,14 +130,18 @@ BEGIN
 
                 IF v_SoGioThucTe > v_KhoangThoiGianSuDung THEN
                     v_SoGioQua := v_SoGioThucTe - v_KhoangThoiGianSuDung;
-                    
-                    SELECT COUNT(*) INTO v_CountDV FROM CHITIETDICHVU 
-                    WHERE MaPhien = TRIM(p_MaPhien) AND MaDV = 'DV0000';
-                    
+
+                    SELECT COUNT(*)
+                    INTO v_CountDV
+                    FROM CHITIETDICHVU
+                    WHERE MaPhien = TRIM(p_MaPhien)
+                      AND MaDV = 'DV0000';
+
                     IF v_CountDV > 0 THEN
                         UPDATE CHITIETDICHVU
                         SET SoLuong = GREATEST(SoLuong, v_SoGioQua)
-                        WHERE MaPhien = TRIM(p_MaPhien) AND MaDV = 'DV0000';
+                        WHERE MaPhien = TRIM(p_MaPhien)
+                          AND MaDV = 'DV0000';
                     ELSE
                         INSERT INTO CHITIETDICHVU (MaDV, MaPhien, SoLuong, GhiChu)
                         VALUES ('DV0000', TRIM(p_MaPhien), v_SoGioQua, 'Tự động thêm do dùng quá giờ');
@@ -120,30 +154,43 @@ BEGIN
         END IF;
     END IF;
 
-    v_TongTien := FN_TinhTongTien(TRIM(p_MaPhien));
-    v_ThanhTien := FN_TinhThanhTien(TRIM(p_MaPhien), NULL);
+    IF v_MaDatCho IS NOT NULL THEN
+        BEGIN
+            SELECT NVL(TongTienGoc, 0),
+                   NVL(ThanhTienSauGiam, NVL(ThanhTien, 0)),
+                   MaPGG,
+                   NVL(TienGiamVoucher, 0),
+                   NVL(PhanTramGiamHangTV, 0),
+                   NVL(TienGiamHangTV, 0)
+            INTO v_TienGocDatTruoc,
+                 v_DaTraTruoc,
+                 v_MaPGGDatTruoc,
+                 v_TienGiamVoucherDatTruoc,
+                 v_PhanTramGiamHangTVDatTruoc,
+                 v_TienGiamHangTVDatTruoc
+            FROM DATCHO
+            WHERE MaDatCho = v_MaDatCho;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                NULL;
+        END;
 
-    v_SoTienDaTraTruoc := NVL(v_DaTraTruoc, 0);
-
-    IF v_SoTienDaTraTruoc > 0 THEN
-        v_ThanhTien := GREATEST(0, v_ThanhTien - v_SoTienDaTraTruoc);
-    END IF;
-
-    IF v_ThanhTien <= 0 THEN
-        p_outMessage := 'Hóa đơn này không có số tiền cần thanh toán.';
-        ROLLBACK;
-        RETURN;
-    END IF;
-
-    IF v_TrangThaiThanhToan = 'Đã thanh toán thành công' THEN
-        IF v_SoTienDaTraTruoc > 0 AND v_ThanhTien <= 0 THEN
-            p_outMessage := 'Hóa đơn này đã được thanh toán trước qua đặt chỗ.';
-        ELSE
-            p_outMessage := 'Lỗi: Hóa đơn đã được thanh toán trước đó.';
+        IF v_TienGocDatTruoc <= 0 THEN
+            v_TienGocDatTruoc := FN_TinhTienKhongGian(TRIM(p_MaPhien));
         END IF;
-        ROLLBACK;
-        RETURN;
+        v_TienGocPhatSinh := FN_TinhTienDichVu(TRIM(p_MaPhien));
+    ELSE
+        v_TienGocDatTruoc := 0;
+        v_DaTraTruoc := 0;
+        v_TienGocPhatSinh := FN_TinhTongTien(TRIM(p_MaPhien));
     END IF;
+
+    SELECT NVL(MAX(HTV.PhanTramTienGiam), 0)
+    INTO v_PhanTramGiamHangTVTaiQuay
+    FROM PHIENLAMVIEC PLV
+    LEFT JOIN KHACHHANG KH ON PLV.MaKH = KH.MaKH
+    LEFT JOIN HANGTHANHVIEN HTV ON KH.MaHangThanhVien = HTV.MaHangThanhVien
+    WHERE PLV.MaPhien = TRIM(p_MaPhien);
 
     IF p_MaPGG IS NOT NULL AND LENGTH(TRIM(p_MaPGG)) > 0 THEN
         v_CoPGG := TRUE;
@@ -160,20 +207,40 @@ BEGIN
             RETURN;
         END IF;
 
-        v_KetQuaPGG := FN_KiemTraPhieuGiamGiaHopLe(TRIM(p_MaPGG), v_TongTien);
+        v_KetQuaPGG := FN_KiemTraPhieuGiamGiaHopLe(TRIM(p_MaPGG), v_TienGocPhatSinh);
         IF v_KetQuaPGG <> 'OK' THEN
             p_outMessage := 'Lỗi: Phiếu giảm giá không hợp lệ (' || v_KetQuaPGG || ').';
             ROLLBACK;
             RETURN;
         END IF;
 
-        v_ThanhTien := FN_TinhThanhTien(TRIM(p_MaPhien), TRIM(p_MaPGG));
-        IF v_SoTienDaTraTruoc > 0 THEN
-            v_ThanhTien := GREATEST(0, v_ThanhTien - v_SoTienDaTraTruoc);
-        END IF;
+        SELECT LEAST(NVL(GiaTriGiamGia, 0), GREATEST(0, v_TienGocPhatSinh))
+        INTO v_TienGiamVoucherTaiQuay
+        FROM PHIEUGIAMGIA
+        WHERE MaPGG = TRIM(p_MaPGG);
     END IF;
 
-    -- Removed duplicate UPDATE PHIENLAMVIEC here to avoid overwriting ThoiGianKetThuc.
+    v_PhanTramGiamHangTVTaiQuay := LEAST(100, GREATEST(0, NVL(v_PhanTramGiamHangTVTaiQuay, 0)));
+    v_TienGiamHangTVTaiQuay := ROUND(GREATEST(0, v_TienGocPhatSinh - v_TienGiamVoucherTaiQuay)
+        * v_PhanTramGiamHangTVTaiQuay / 100, 0);
+    v_ConPhaiThanhToan := GREATEST(0, v_TienGocPhatSinh - v_TienGiamVoucherTaiQuay - v_TienGiamHangTVTaiQuay);
+    v_SoTienThanhToanTaiQuay := v_ConPhaiThanhToan;
+    v_TongTienGoc := GREATEST(0, v_TienGocDatTruoc) + GREATEST(0, v_TienGocPhatSinh);
+    v_TongTienGiam := GREATEST(0, v_TienGiamVoucherDatTruoc)
+        + GREATEST(0, v_TienGiamHangTVDatTruoc)
+        + GREATEST(0, v_TienGiamVoucherTaiQuay)
+        + GREATEST(0, v_TienGiamHangTVTaiQuay);
+
+    IF v_ConPhaiThanhToan > 0 AND p_PhuongThucTT = 'Đặt trước' THEN
+        p_outMessage := 'Lỗi: Hóa đơn còn tiền cần thu tại quầy, vui lòng chọn Tiền mặt hoặc Chuyển khoản.';
+        ROLLBACK;
+        RETURN;
+    END IF;
+
+    v_PhuongThucThanhToan := CASE
+        WHEN v_ConPhaiThanhToan <= 0 AND NVL(v_DaTraTruoc, 0) > 0 THEN 'Đặt trước'
+        ELSE p_PhuongThucTT
+    END;
 
     UPDATE KHONGGIAN kg
     SET TrangThaiKG =
@@ -190,14 +257,31 @@ BEGIN
     WHERE kg.MaKG = v_MaKG;
 
     UPDATE HOADON
-    SET TongTien = v_TongTien,
-        ThanhTien = v_ThanhTien,
+    SET TongTienGoc = v_TongTienGoc,
+        TongTien = v_TongTienGoc,
+        TienGocDatTruoc = v_TienGocDatTruoc,
+        TienGocPhatSinh = v_TienGocPhatSinh,
+        DaTraTruoc = v_DaTraTruoc,
+        MaPGGDatTruoc = v_MaPGGDatTruoc,
+        TienGiamVoucherDatTruoc = v_TienGiamVoucherDatTruoc,
+        PhanTramGiamHangTVDatTruoc = v_PhanTramGiamHangTVDatTruoc,
+        TienGiamHangTVDatTruoc = v_TienGiamHangTVDatTruoc,
+        MaPGGTaiQuay = CASE
+            WHEN p_MaPGG IS NOT NULL AND LENGTH(TRIM(p_MaPGG)) > 0 THEN TRIM(p_MaPGG)
+            ELSE NULL
+        END,
         MaPGG = CASE
             WHEN p_MaPGG IS NOT NULL AND LENGTH(TRIM(p_MaPGG)) > 0 THEN TRIM(p_MaPGG)
             ELSE NULL
         END,
+        TienGiamVoucherTaiQuay = v_TienGiamVoucherTaiQuay,
+        PhanTramGiamHangTVTaiQuay = v_PhanTramGiamHangTVTaiQuay,
+        TienGiamHangTVTaiQuay = v_TienGiamHangTVTaiQuay,
+        TongTienGiam = v_TongTienGiam,
+        SoTienThanhToanTaiQuay = v_SoTienThanhToanTaiQuay,
+        ThanhTien = 0,
         TrangThaiThanhToan = 'Đã thanh toán thành công',
-        PhuongThucThanhToan = p_PhuongThucTT,
+        PhuongThucThanhToan = v_PhuongThucThanhToan,
         NgayLapHoaDon = CURRENT_TIMESTAMP,
         MaNV = p_MaNV
     WHERE MaHoaDon = v_MaHoaDon;
@@ -209,8 +293,13 @@ BEGIN
     END IF;
 
     COMMIT;
-    p_outMessage := 'Thanh toán thành công. Mã hóa đơn: ' || v_MaHoaDon
-        || '. Thành tiền: ' || TO_CHAR(v_ThanhTien, 'FM999G999G999G990') || ' VNĐ';
+
+    IF v_SoTienThanhToanTaiQuay <= 0 AND NVL(v_DaTraTruoc, 0) > 0 THEN
+        p_outMessage := 'Hóa đơn đã được trả trước toàn bộ. Đã chốt thanh toán thành công.';
+    ELSE
+        p_outMessage := 'Thanh toán thành công. Mã hóa đơn: ' || v_MaHoaDon
+            || '. Thành tiền tại quầy: ' || TO_CHAR(v_SoTienThanhToanTaiQuay, 'FM999G999G999G990') || ' VNĐ';
+    END IF;
 
 EXCEPTION
     WHEN NO_DATA_FOUND THEN

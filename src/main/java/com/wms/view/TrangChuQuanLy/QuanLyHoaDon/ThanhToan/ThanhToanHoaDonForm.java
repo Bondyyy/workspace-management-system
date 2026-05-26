@@ -7,11 +7,10 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaDTO;
+import com.wms.util.HoaDonGiamGiaUtil;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.NumberFormat;
-import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
@@ -33,7 +32,7 @@ public class ThanhToanHoaDonForm extends JPanel {
     private JLabel lblTongTien, lblThanhTien;
     private JPanel containerTienMat, containerChuyenKhoan;
     private JLabel checkTienMat, checkChuyenKhoan;
-    private JButton nutInHoaDon;
+    private JButton nutInHoaDon, nutHoanTatHoaDon;
     private JPanel panelTextTienMat, panelTextChuyenKhoan;
     private JLabel lblStatusTienMat, lblStatusChuyenKhoan;
 
@@ -53,7 +52,6 @@ public class ThanhToanHoaDonForm extends JPanel {
     private boolean daThanhToanThanhCong = false;
 
     private final ThanhToanController thanhToanController = new ThanhToanController();
-    private final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
     private final String maHoaDonHienTai;
 
     public ThanhToanHoaDonForm() {
@@ -162,7 +160,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         lblTextTong.setForeground(mauXamDam);
         panelTong.add(lblTextTong, BorderLayout.WEST);
 
-        lblTongTien = new JLabel("0 ₫");
+        lblTongTien = new JLabel("0 VNĐ");
         lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTongTien.setForeground(mauXamDam);
         lblTongTien.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -238,8 +236,8 @@ public class ThanhToanHoaDonForm extends JPanel {
         lblTextThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblTextThanhTien.setForeground(mauXamDam);
 
-        lblThanhTien = new JLabel("0 ₫");
-        lblThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 19));
+        lblThanhTien = new JLabel("0 VNĐ");
+        lblThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblThanhTien.setForeground(mauHongChinh);
         lblThanhTien.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -364,6 +362,13 @@ public class ThanhToanHoaDonForm extends JPanel {
         panel.add(sep);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
 
+        nutHoanTatHoaDon = taoNutHoanTatHoaDon();
+        nutHoanTatHoaDon.setVisible(false);
+        nutHoanTatHoaDon.setEnabled(false);
+        nutHoanTatHoaDon.addActionListener(e -> xuLyThanhToan("Đặt trước"));
+        panel.add(nutHoanTatHoaDon);
+        panel.add(Box.createRigidArea(new Dimension(0, 12)));
+
         nutInHoaDon = taoNutInHoaDon();
         nutInHoaDon.setEnabled(false);
         nutInHoaDon.addActionListener(e -> inHoaDon());
@@ -371,6 +376,12 @@ public class ThanhToanHoaDonForm extends JPanel {
         panel.add(Box.createVerticalGlue());
 
         return panel;
+    }
+
+    private JButton taoNutHoanTatHoaDon() {
+        JButton btn = taoNutInHoaDon();
+        btn.setText("HOÀN TẤT HÓA ĐƠN ĐÃ TRẢ TRƯỚC");
+        return btn;
     }
 
     private void kiemTraMaGiamGia() {
@@ -382,7 +393,8 @@ public class ThanhToanHoaDonForm extends JPanel {
             return;
         }
 
-        XacNhanPhieuGiamGiaDTO validationResult = thanhToanController.kiemTraPhieuGiamGia(maVoucher, tongTienGoc);
+        double tienCoTheApVoucher = layTienCoTheApVoucherTaiQuay();
+        XacNhanPhieuGiamGiaDTO validationResult = thanhToanController.kiemTraPhieuGiamGia(maVoucher, tienCoTheApVoucher);
         if (!validationResult.isValid()) {
             lblTrangThaiMaGG.setText(validationResult.getMessage());
             lblTrangThaiMaGG.setForeground(mauDo);
@@ -403,7 +415,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         tienGiamGia = validationResult.getDiscountAmount();
         JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
         if (lblGiaTriGG != null)
-            lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
+            lblGiaTriGG.setText(HoaDonGiamGiaUtil.formatTienGiamVnd(tienGiamGia));
 
         tinhLaiTongTien();
         panelHienThiGiamGia.setVisible(true);
@@ -420,22 +432,41 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void tinhLaiTongTien() {
-        double traTruoc = (hoaDonHienTai != null) ? hoaDonHienTai.getSoTienDaTraTruoc() : 0;
+        double tienCoTheApVoucher = layTienCoTheApVoucherTaiQuay();
         if (maGiamGiaDangAp != null) {
-            tienGiamGia = maGiamGiaDangAp.getGiaTriGiamGia();
-            thanhTien = Math.max(0, tongTienGoc - traTruoc - tienGiamGia);
+            tienGiamGia = Math.min(Math.max(0, maGiamGiaDangAp.getGiaTriGiamGia()), tienCoTheApVoucher);
+            double phanTramHang = hoaDonHienTai != null
+                    ? Math.max(0, hoaDonHienTai.getPhanTramGiamHangTVTaiQuay())
+                    : 0;
+            if (phanTramHang <= 0 && hoaDonHienTai != null) {
+                phanTramHang = Math.max(0, hoaDonHienTai.getPhanTramGiamHangThanhVien());
+            }
+            double tienGiamHang = Math.round(Math.max(0, tienCoTheApVoucher - tienGiamGia)
+                    * Math.min(100, phanTramHang) / 100.0);
+            thanhTien = Math.max(0, tienCoTheApVoucher - tienGiamGia - tienGiamHang);
             JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
             if (lblGiaTriGG != null)
-                lblGiaTriGG.setText("- " + formatTien.format(tienGiamGia));
+                lblGiaTriGG.setText(HoaDonGiamGiaUtil.formatTienGiamVnd(tienGiamGia));
         } else {
             tienGiamGia = 0;
             thanhTien = hoaDonHienTai != null
                     ? Math.max(0, hoaDonHienTai.getThanhTien())
-                    : Math.max(0, tongTienGoc - traTruoc);
+                    : Math.max(0, tongTienGoc);
         }
-        lblTongTien.setText(formatTien.format(tongTienGoc));
-        lblThanhTien.setText(formatTien.format(thanhTien));
+        lblTongTien.setText(formatTienVnd(tongTienGoc));
+        lblThanhTien.setText(formatTienVnd(thanhTien));
         capNhatKhaNangThanhToan();
+    }
+
+    private double layTienCoTheApVoucherTaiQuay() {
+        if (hoaDonHienTai == null) {
+            return Math.max(0, tongTienGoc);
+        }
+        double tienPhatSinh = Math.max(0, hoaDonHienTai.getTienGocPhatSinh());
+        if (hoaDonHienTai.getSoTienDaTraTruoc() > 0 || hoaDonHienTai.getTienGocDatTruoc() > 0) {
+            return tienPhatSinh;
+        }
+        return Math.max(0, tongTienGoc);
     }
 
     private JPanel taoContainerPhuongThuc(String type, String text, String moTa) {
@@ -546,7 +577,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         }
 
         this.hoaDonHienTai = hoaDon;
-        this.tongTienGoc = hoaDon.getTongTien();
+        this.tongTienGoc = hoaDon.getTongTienGoc() > 0 ? hoaDon.getTongTienGoc() : hoaDon.getTongTien();
         this.thanhTien = Math.max(0, hoaDon.getThanhTien());
         if (this.tongTienGoc <= 0 && this.thanhTien > 0)
             this.tongTienGoc = this.thanhTien;
@@ -593,24 +624,72 @@ public class ThanhToanHoaDonForm extends JPanel {
             panelChiTietHD.add(lblKhongCoDV);
         }
 
-        if (hoaDon.getSoTienDaTraTruoc() > 0) {
-            panelChiTietHD.add(taoKhoangCach(15));
-            panelChiTietHD.add(taoDuongPhanCach());
-            panelChiTietHD.add(taoKhoangCach(15));
-            JPanel pnlTraTruoc = taoThongTinRow("Đã trả trước (Online):", "- " + formatTien.format(hoaDon.getSoTienDaTraTruoc()), true);
-            JLabel lblTraTruoc = (JLabel) pnlTraTruoc.getComponent(1);
-            if (lblTraTruoc != null) lblTraTruoc.setForeground(mauXanhLa);
-            panelChiTietHD.add(pnlTraTruoc);
-        }
+        themDongTongKetHoaDon(hoaDon);
 
         tinhLaiTongTien();
         panelChiTietHD.revalidate();
         panelChiTietHD.repaint();
     }
 
+    private void themDongTongKetHoaDon(ThongTinHoaDonDTO hoaDon) {
+        HoaDonGiamGiaUtil.ThongTinGiamGia giamGia = HoaDonGiamGiaUtil.taoThongTinGiamGia(hoaDon, tienGiamGia);
+        panelChiTietHD.add(taoKhoangCach(15));
+        panelChiTietHD.add(taoDuongPhanCach());
+        panelChiTietHD.add(taoKhoangCach(15));
+        panelChiTietHD.add(taoThongTinRow("Tổng tiền gốc:", formatTienVnd(tongTienGoc), true));
+
+        if (hoaDon.getTienGocDatTruoc() > 0 || hoaDon.getSoTienDaTraTruoc() > 0) {
+            panelChiTietHD.add(taoKhoangCach(8));
+            panelChiTietHD.add(taoThongTinRow("Gốc đặt trước:", formatTienVnd(hoaDon.getTienGocDatTruoc()), false));
+            if (giamGia.getTienGiamVoucherDatTruoc() > 0) {
+                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanVoucherDatTruoc() + ":",
+                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherDatTruoc()), false));
+            }
+            if (giamGia.getTienGiamHangDatTruoc() > 0) {
+                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanHangDatTruoc() + ":",
+                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangDatTruoc()), false));
+            }
+            if (giamGia.getTongGiamDatTruoc() > 0) {
+                panelChiTietHD.add(taoThongTinRow("Tổng giảm đặt trước:",
+                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamDatTruoc()), true));
+            }
+            JPanel pnlTraTruoc = taoThongTinRow("Đã trả trước:", formatTienVnd(hoaDon.getSoTienDaTraTruoc()), true);
+            JLabel lblTraTruoc = (JLabel) pnlTraTruoc.getComponent(1);
+            if (lblTraTruoc != null) {
+                lblTraTruoc.setForeground(mauXanhLa);
+            }
+            panelChiTietHD.add(pnlTraTruoc);
+        }
+
+        if (hoaDon.getTienGocDatTruoc() > 0 || hoaDon.getTienGocPhatSinh() > 0) {
+            panelChiTietHD.add(taoKhoangCach(8));
+            panelChiTietHD.add(taoThongTinRow("Phát sinh tại quán:", formatTienVnd(hoaDon.getTienGocPhatSinh()), false));
+            if (giamGia.getTienGiamVoucherTaiQuay() > 0) {
+                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanVoucherTaiQuay() + ":",
+                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherTaiQuay()), false));
+            }
+            if (giamGia.getTienGiamHangTaiQuay() > 0) {
+                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanHangTaiQuay() + ":",
+                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangTaiQuay()), false));
+            }
+        }
+
+        if (giamGia.coTongGiam()) {
+            panelChiTietHD.add(taoThongTinRow("Tổng giảm:", HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()), true));
+        }
+        if (hoaDon.getSoTienThanhToanTaiQuay() > 0) {
+            panelChiTietHD.add(taoThongTinRow("Đã thanh toán tại quầy:",
+                    formatTienVnd(hoaDon.getSoTienThanhToanTaiQuay()), true));
+        }
+    }
+
     private void capNhatKhaNangThanhToan() {
         boolean coTheThuTien = hoaDonHienTai != null
                 && thanhTien > 0
+                && !"Đã thanh toán thành công".equals(hoaDonHienTai.getTrangThaiThanhToan());
+        boolean coTheHoanTatTraTruoc = hoaDonHienTai != null
+                && thanhTien <= 0
+                && hoaDonHienTai.getSoTienDaTraTruoc() > 0
                 && !"Đã thanh toán thành công".equals(hoaDonHienTai.getTrangThaiThanhToan());
         if (containerTienMat != null) {
             containerTienMat.setEnabled(coTheThuTien && !dangXuLyThanhToan);
@@ -624,11 +703,17 @@ public class ThanhToanHoaDonForm extends JPanel {
         if (btnXoaMaGG != null) {
             btnXoaMaGG.setEnabled(coTheThuTien && !dangXuLyThanhToan);
         }
+        if (nutHoanTatHoaDon != null) {
+            nutHoanTatHoaDon.setVisible(coTheHoanTatTraTruoc);
+            nutHoanTatHoaDon.setEnabled(coTheHoanTatTraTruoc && !dangXuLyThanhToan);
+        }
         if (nutInHoaDon != null) {
             nutInHoaDon.setEnabled(daThanhToanThanhCong);
         }
         if (!coTheThuTien && lblTrangThaiMaGG != null && !daThanhToanThanhCong) {
-            lblTrangThaiMaGG.setText("Không có số tiền cần thanh toán.");
+            lblTrangThaiMaGG.setText(coTheHoanTatTraTruoc
+                    ? "Hóa đơn đã trả trước đủ. Bấm hoàn tất để chốt hóa đơn."
+                    : "Không có số tiền cần thanh toán.");
             lblTrangThaiMaGG.setForeground(mauXamNhat);
         }
         capNhatTrangThaiThanhToan();
@@ -645,7 +730,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         lblLabel.setForeground(mauXamNhat);
         panel.add(lblLabel, BorderLayout.WEST);
 
-        JLabel lblValue = new JLabel(value);
+        JLabel lblValue = new JLabel(value == null || value.isBlank() ? "-" : value);
         lblValue.setFont(new Font("Segoe UI", bold ? Font.BOLD : Font.PLAIN, 14));
         lblValue.setForeground(mauXamDam);
         lblValue.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -673,7 +758,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelTrai.add(lblSL);
         panel.add(panelTrai, BorderLayout.WEST);
 
-        JLabel lblGia = new JLabel(formatTien.format(gia));
+        JLabel lblGia = new JLabel(formatTienVnd(gia));
         lblGia.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblGia.setForeground(mauXamDam);
         lblGia.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -737,6 +822,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         containerChuyenKhoan.setEnabled(false);
         if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(false);
         if (btnXoaMaGG != null) btnXoaMaGG.setEnabled(false);
+        if (nutHoanTatHoaDon != null) nutHoanTatHoaDon.setEnabled(false);
         if (nutInHoaDon != null) nutInHoaDon.setEnabled(false);
         lblTrangThaiMaGG.setText("Đang xử lý thanh toán...");
         lblTrangThaiMaGG.setForeground(mauXamNhat);
@@ -771,20 +857,12 @@ public class ThanhToanHoaDonForm extends JPanel {
 
                         JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                     } else {
-                        containerTienMat.setEnabled(true);
-                        containerChuyenKhoan.setEnabled(true);
-                        if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(true);
-                        if (btnXoaMaGG != null) btnXoaMaGG.setEnabled(true);
-                        nutInHoaDon.setEnabled(false);
+                        capNhatKhaNangThanhToan();
                         lblTrangThaiMaGG.setText("");
                         JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (Exception ex) {
-                    containerTienMat.setEnabled(true);
-                    containerChuyenKhoan.setEnabled(true);
-                    if (txtMaGiamGia != null) txtMaGiamGia.setEnabled(true);
-                    if (btnXoaMaGG != null) btnXoaMaGG.setEnabled(true);
-                    nutInHoaDon.setEnabled(false);
+                    capNhatKhaNangThanhToan();
                     lblTrangThaiMaGG.setText("");
                     com.wms.util.MessageUtil.showError(ThanhToanHoaDonForm.this, "Lỗi thanh toán.", ex);
                 }
@@ -803,7 +881,7 @@ public class ThanhToanHoaDonForm extends JPanel {
             disablePaymentMethod(containerChuyenKhoan, true);
             disablePaymentMethod(containerTienMat, false);
         }
-        if (daDongTienMat || daDongChuyenKhoan)
+        if (daThanhToanThanhCong || daDongTienMat || daDongChuyenKhoan)
             nutInHoaDon.setEnabled(true);
     }
 
@@ -907,5 +985,9 @@ public class ThanhToanHoaDonForm extends JPanel {
         lblTenPhong = new JLabel("-");
         lblThoiGian = new JLabel("-");
         lblTongGio = new JLabel("-");
+    }
+
+    private String formatTienVnd(double value) {
+        return HoaDonGiamGiaUtil.formatTienVnd(value);
     }
 }

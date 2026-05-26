@@ -32,7 +32,7 @@ public class QuanLyDatChoTruocDAO {
                 SELECT dc.MaDatCho, dc.MaKH, nd.HoTen, nd.Email, nd.SDT,
                        dc.MaKG, kg.TenKG, cn.TenCN, lkg.TenLoaiKG, dc.MaQR,
                        dc.ThoiGianDuKienToi, dc.KhoangThoiGianSuDung,
-                       dc.TrangThaiDatTruoc, dc.ThanhTien, dc.GhiChu,
+                       dc.TrangThaiDatTruoc, NVL(dc.ThanhTienSauGiam, dc.ThanhTien) AS ThanhTien, dc.GhiChu,
                        (SELECT COUNT(*) FROM PHIENLAMVIEC plv WHERE plv.MaDatCho = dc.MaDatCho) AS SoPhien
                 FROM DATCHO dc
                 JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
@@ -106,7 +106,7 @@ public class QuanLyDatChoTruocDAO {
                 SELECT dc.MaDatCho, dc.MaQR, dc.TrangThaiDatTruoc, dc.GhiChu,
                        dc.ThoiGianDuKienToi,
                        dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR') AS ThoiGianDuKienKetThuc,
-                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG,
+                       NVL(dc.ThanhTienSauGiam, NVL(dc.ThanhTien, 0)) AS ThanhTien, dc.MaKG,
                        nd.HoTen, nd.Email, kg.TenKG, cn.TenCN
                 FROM DATCHO dc
                 JOIN KHACHHANG kh ON kh.MaKH = dc.MaKH
@@ -205,7 +205,13 @@ public class QuanLyDatChoTruocDAO {
         String maDatCho = dto.getMaDatCho().trim();
         String bookingSql = """
                 SELECT dc.MaDatCho, dc.TrangThaiDatTruoc, dc.KhoangThoiGianSuDung,
-                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG, dc.MaKH,
+                       NVL(dc.ThanhTienSauGiam, NVL(dc.ThanhTien, 0)) AS ThanhTien,
+                       NVL(dc.TongTienGoc, 0) AS TongTienGoc,
+                       dc.MaPGG,
+                       NVL(dc.TienGiamVoucher, 0) AS TienGiamVoucher,
+                       NVL(dc.PhanTramGiamHangTV, 0) AS PhanTramGiamHangTV,
+                       NVL(dc.TienGiamHangTV, 0) AS TienGiamHangTV,
+                       dc.MaKG, dc.MaKH,
                        dc.ThoiGianDuKienToi
                 FROM DATCHO dc
                 WHERE dc.MaDatCho = ?
@@ -218,6 +224,11 @@ public class QuanLyDatChoTruocDAO {
                 String trangThai;
                 int soGio;
                 double thanhTien;
+                double tongTienGoc;
+                String maPGGDatTruoc;
+                double tienGiamVoucherDatTruoc;
+                double phanTramGiamHangTVDatTruoc;
+                double tienGiamHangTVDatTruoc;
                 String maKG;
                 String maKH;
                 java.sql.Timestamp thoiGianDuKienToi;
@@ -232,6 +243,11 @@ public class QuanLyDatChoTruocDAO {
                         trangThai = rs.getString("TrangThaiDatTruoc");
                         soGio = Math.max(1, rs.getInt("KhoangThoiGianSuDung"));
                         thanhTien = rs.getDouble("ThanhTien");
+                        tongTienGoc = Math.max(0, rs.getDouble("TongTienGoc"));
+                        maPGGDatTruoc = rs.getString("MaPGG");
+                        tienGiamVoucherDatTruoc = Math.max(0, rs.getDouble("TienGiamVoucher"));
+                        phanTramGiamHangTVDatTruoc = Math.max(0, rs.getDouble("PhanTramGiamHangTV"));
+                        tienGiamHangTVDatTruoc = Math.max(0, rs.getDouble("TienGiamHangTV"));
                         maKG = rs.getString("MaKG");
                         maKH = rs.getString("MaKH");
                         thoiGianDuKienToi = rs.getTimestamp("ThoiGianDuKienToi");
@@ -268,6 +284,9 @@ public class QuanLyDatChoTruocDAO {
                 java.sql.Timestamp thoiGianDuKienKetThuc = thoiGianDuKienToi != null
                         ? java.sql.Timestamp.from(thoiGianDuKienToi.toInstant().plus(soGio, ChronoUnit.HOURS))
                         : java.sql.Timestamp.from(java.time.Instant.now().plus(soGio, ChronoUnit.HOURS));
+                if (tongTienGoc <= 0) {
+                    tongTienGoc = thanhTien;
+                }
 
                 try (PreparedStatement ps = conn.prepareStatement("""
                         INSERT INTO PHIENLAMVIEC
@@ -287,7 +306,15 @@ public class QuanLyDatChoTruocDAO {
                 try (PreparedStatement ps = conn.prepareStatement("""
                         UPDATE HOADON
                         SET DaTraTruoc = ?,
+                            TongTienGoc = ?,
                             TongTien = ?,
+                            TienGocDatTruoc = ?,
+                            TienGocPhatSinh = 0,
+                            MaPGGDatTruoc = ?,
+                            TienGiamVoucherDatTruoc = ?,
+                            PhanTramGiamHangTVDatTruoc = ?,
+                            TienGiamHangTVDatTruoc = ?,
+                            TongTienGiam = ?,
                             ThanhTien = ?,
                             PhuongThucThanhToan = 'Đặt trước',
                             TrangThaiThanhToan = 'Đã trả trước',
@@ -295,9 +322,16 @@ public class QuanLyDatChoTruocDAO {
                         WHERE MaPhien = ?
                         """)) {
                     ps.setDouble(1, thanhTien);
-                    ps.setDouble(2, thanhTien);
-                    ps.setDouble(3, 0);
-                    ps.setString(4, maPhien);
+                    ps.setDouble(2, tongTienGoc);
+                    ps.setDouble(3, tongTienGoc);
+                    ps.setDouble(4, tongTienGoc);
+                    ps.setString(5, maPGGDatTruoc);
+                    ps.setDouble(6, tienGiamVoucherDatTruoc);
+                    ps.setDouble(7, phanTramGiamHangTVDatTruoc);
+                    ps.setDouble(8, tienGiamHangTVDatTruoc);
+                    ps.setDouble(9, tienGiamVoucherDatTruoc + tienGiamHangTVDatTruoc);
+                    ps.setDouble(10, 0);
+                    ps.setString(11, maPhien);
                     ps.executeUpdate();
                 }
 
@@ -374,7 +408,13 @@ public class QuanLyDatChoTruocDAO {
 
         String bookingSql = """
                 SELECT dc.MaDatCho, dc.MaQR, dc.TrangThaiDatTruoc, dc.KhoangThoiGianSuDung,
-                       NVL(dc.ThanhTien, 0) AS ThanhTien, dc.MaKG, dc.MaKH, dc.GhiChu, dc.ThoiGianDuKienToi,
+                       NVL(dc.ThanhTienSauGiam, NVL(dc.ThanhTien, 0)) AS ThanhTien,
+                       NVL(dc.TongTienGoc, 0) AS TongTienGoc,
+                       dc.MaPGG,
+                       NVL(dc.TienGiamVoucher, 0) AS TienGiamVoucher,
+                       NVL(dc.PhanTramGiamHangTV, 0) AS PhanTramGiamHangTV,
+                       NVL(dc.TienGiamHangTV, 0) AS TienGiamHangTV,
+                       dc.MaKG, dc.MaKH, dc.GhiChu, dc.ThoiGianDuKienToi,
                        kg.TenKG, kg.MaCN, cn.TenCN, nd.HoTen
                 FROM DATCHO dc
                 JOIN KHONGGIAN kg ON kg.MaKG = dc.MaKG
@@ -395,6 +435,11 @@ public class QuanLyDatChoTruocDAO {
                 String trangThai;
                 int soGio;
                 double thanhTien;
+                double tongTienGoc;
+                String maPGGDatTruoc;
+                double tienGiamVoucherDatTruoc;
+                double phanTramGiamHangTVDatTruoc;
+                double tienGiamHangTVDatTruoc;
                 String maKG;
                 String maKH;
                 String ghiChuHienTai;
@@ -417,6 +462,11 @@ public class QuanLyDatChoTruocDAO {
                         trangThai = rs.getString("TrangThaiDatTruoc");
                         soGio = Math.max(1, rs.getInt("KhoangThoiGianSuDung"));
                         thanhTien = rs.getDouble("ThanhTien");
+                        tongTienGoc = Math.max(0, rs.getDouble("TongTienGoc"));
+                        maPGGDatTruoc = rs.getString("MaPGG");
+                        tienGiamVoucherDatTruoc = Math.max(0, rs.getDouble("TienGiamVoucher"));
+                        phanTramGiamHangTVDatTruoc = Math.max(0, rs.getDouble("PhanTramGiamHangTV"));
+                        tienGiamHangTVDatTruoc = Math.max(0, rs.getDouble("TienGiamHangTV"));
                         maKG = rs.getString("MaKG");
                         maKH = rs.getString("MaKH");
                         ghiChuHienTai = rs.getString("GhiChu");
@@ -473,6 +523,9 @@ public class QuanLyDatChoTruocDAO {
                 Timestamp thoiGianDuKienKetThuc = thoiGianDuKienToi != null
                         ? Timestamp.from(thoiGianDuKienToi.toInstant().plus(soGio, ChronoUnit.HOURS))
                         : Timestamp.from(Instant.now().plus(soGio, ChronoUnit.HOURS));
+                if (tongTienGoc <= 0) {
+                    tongTienGoc = thanhTien;
+                }
 
                 try (PreparedStatement ps = conn.prepareStatement("""
                         INSERT INTO PHIENLAMVIEC
@@ -492,7 +545,15 @@ public class QuanLyDatChoTruocDAO {
                 try (PreparedStatement ps = conn.prepareStatement("""
                         UPDATE HOADON
                         SET DaTraTruoc = ?,
+                            TongTienGoc = ?,
                             TongTien = ?,
+                            TienGocDatTruoc = ?,
+                            TienGocPhatSinh = 0,
+                            MaPGGDatTruoc = ?,
+                            TienGiamVoucherDatTruoc = ?,
+                            PhanTramGiamHangTVDatTruoc = ?,
+                            TienGiamHangTVDatTruoc = ?,
+                            TongTienGiam = ?,
                             ThanhTien = ?,
                             PhuongThucThanhToan = 'Đặt trước',
                             TrangThaiThanhToan = 'Đã trả trước',
@@ -500,9 +561,16 @@ public class QuanLyDatChoTruocDAO {
                         WHERE MaPhien = ?
                         """)) {
                     ps.setDouble(1, thanhTien);
-                    ps.setDouble(2, thanhTien);
-                    ps.setDouble(3, 0);
-                    ps.setString(4, maPhien);
+                    ps.setDouble(2, tongTienGoc);
+                    ps.setDouble(3, tongTienGoc);
+                    ps.setDouble(4, tongTienGoc);
+                    ps.setString(5, maPGGDatTruoc);
+                    ps.setDouble(6, tienGiamVoucherDatTruoc);
+                    ps.setDouble(7, phanTramGiamHangTVDatTruoc);
+                    ps.setDouble(8, tienGiamHangTVDatTruoc);
+                    ps.setDouble(9, tienGiamVoucherDatTruoc + tienGiamHangTVDatTruoc);
+                    ps.setDouble(10, 0);
+                    ps.setString(11, maPhien);
                     ps.executeUpdate();
                 }
 

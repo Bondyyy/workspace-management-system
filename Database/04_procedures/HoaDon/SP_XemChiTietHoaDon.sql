@@ -8,34 +8,48 @@ CREATE OR REPLACE PROCEDURE SP_XemChiTietHoaDon(
     v_CountPhien NUMBER;
     v_TrangThaiPhien VARCHAR2(50);
 BEGIN
-    -- 1. Kiểm tra phiên tồn tại
     SELECT COUNT(*), MAX(TrangThaiPhien)
     INTO v_CountPhien, v_TrangThaiPhien
     FROM PHIENLAMVIEC
     WHERE MaPhien = p_MaPhien;
-    
+
     IF v_CountPhien = 0 THEN
         RAISE_APPLICATION_ERROR(-20310, 'Không tìm thấy phiên làm việc [' || p_MaPhien || ']!');
     END IF;
-    
+
     IF v_TrangThaiPhien != 'Đã kết thúc' THEN
-        RAISE_APPLICATION_ERROR(-20311, 
+        RAISE_APPLICATION_ERROR(-20311,
             'Phiên chưa kết thúc! Vui lòng kết thúc phiên trước khi thanh toán.');
     END IF;
-    
-    -- 2. Thông tin hóa đơn tổng quan
+
     OPEN p_RS_ThongTinHD FOR
-        SELECT 
+        SELECT
             HD.MaHoaDon,
             HD.SoHD,
+            NVL(NULLIF(HD.TongTienGoc, 0), NVL(HD.TongTien, FN_TinhTongTien(PLV.MaPhien))) AS TongTienGoc,
             NVL(HD.TongTien, FN_TinhTongTien(PLV.MaPhien)) AS TongTien,
-            NVL(HD.ThanhTien, GREATEST(0, FN_TinhTongTien(PLV.MaPhien) - NVL(HD.DaTraTruoc, 0))) AS ThanhTien,
+            NVL(HD.ThanhTien, FN_TinhThanhTien(PLV.MaPhien, HD.MaPGG)) AS ThanhTien,
             HD.NgayLapHoaDon,
             HD.TrangThaiThanhToan,
             HD.PhuongThucThanhToan,
             HD.MaPGG,
+            HD.MaPGGDatTruoc,
+            PGGDT.MaChuSoPGG AS MaChuSoPGGDatTruoc,
+            HD.MaPGGTaiQuay,
+            PGGTQ.MaChuSoPGG AS MaChuSoPGGTaiQuay,
             PGG.MaChuSoPGG,
             PGG.GiaTriGiamGia AS GiaTriGiamGiaPGG,
+            NVL(HD.DaTraTruoc, 0) AS DaTraTruoc,
+            NVL(HD.TienGocDatTruoc, 0) AS TienGocDatTruoc,
+            NVL(HD.TienGocPhatSinh, 0) AS TienGocPhatSinh,
+            NVL(HD.TienGiamVoucherDatTruoc, 0) AS TienGiamVoucherDatTruoc,
+            NVL(HD.PhanTramGiamHangTVDatTruoc, 0) AS PhanTramGiamHangTVDatTruoc,
+            NVL(HD.TienGiamHangTVDatTruoc, 0) AS TienGiamHangTVDatTruoc,
+            NVL(HD.TienGiamVoucherTaiQuay, 0) AS TienGiamVoucherTaiQuay,
+            NVL(HD.PhanTramGiamHangTVTaiQuay, 0) AS PhanTramGiamHangTVTaiQuay,
+            NVL(HD.TienGiamHangTVTaiQuay, 0) AS TienGiamHangTVTaiQuay,
+            NVL(HD.TongTienGiam, 0) AS TongTienGiam,
+            NVL(HD.SoTienThanhToanTaiQuay, 0) AS SoTienThanhToanTaiQuay,
             NVL(ND.HoTen, 'Khách vãng lai') AS TenKhachHang,
             HTV.TenHangThanhVien,
             HTV.PhanTramTienGiam AS PhanTramGiamHangTV,
@@ -49,23 +63,21 @@ BEGIN
         LEFT JOIN NGUOIDUNG ND ON KH.MaND = ND.MaND
         LEFT JOIN HANGTHANHVIEN HTV ON KH.MaHangThanhVien = HTV.MaHangThanhVien
         LEFT JOIN PHIEUGIAMGIA PGG ON HD.MaPGG = PGG.MaPGG
+        LEFT JOIN PHIEUGIAMGIA PGGDT ON HD.MaPGGDatTruoc = PGGDT.MaPGG
+        LEFT JOIN PHIEUGIAMGIA PGGTQ ON HD.MaPGGTaiQuay = PGGTQ.MaPGG
         LEFT JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
         LEFT JOIN CHINHANH CN ON KG.MaCN = CN.MaCN
         WHERE HD.MaPhien = p_MaPhien;
-    
-    -- 3. Chi tiết tiền không gian
+
     OPEN p_RS_ChiTietKhongGian FOR
-        SELECT 
-            CASE 
+        SELECT
+            CASE
                 WHEN PLV.MaDatCho IS NOT NULL THEN 'Thuê ' || KG.TenKG || ' (đã đặt trước)'
-                ELSE KG.TenKG 
+                ELSE KG.TenKG
             END AS TenKG,
             LKG.TenLoaiKG,
-            CASE 
-                WHEN PLV.MaDatCho IS NOT NULL AND DC.KhoangThoiGianSuDung > 0 THEN ROUND(DC.ThanhTien / DC.KhoangThoiGianSuDung, 2)
-                ELSE LKG.DonGiaTheoGio 
-            END AS DonGiaTheoGio,
-            CASE 
+            LKG.DonGiaTheoGio AS DonGiaTheoGio,
+            CASE
                 WHEN PLV.MaDatCho IS NOT NULL THEN DC.KhoangThoiGianSuDung
                 ELSE ROUND(
                     EXTRACT(DAY FROM (PLV.ThoiGianKetThuc - PLV.ThoiGianBatDau)) * 24 +
@@ -74,16 +86,22 @@ BEGIN
                     2
                 )
             END AS SoGioSuDung,
-            FN_TinhTienKhongGian(p_MaPhien) AS ThanhTien
+            CASE
+                WHEN PLV.MaDatCho IS NOT NULL THEN
+                    CASE
+                        WHEN NVL(DC.TongTienGoc, 0) > 0 THEN ROUND(DC.TongTienGoc, 2)
+                        ELSE ROUND(NVL(LKG.DonGiaTheoGio, 0) * NVL(DC.KhoangThoiGianSuDung, 0), 2)
+                    END
+                ELSE FN_TinhTienKhongGian(p_MaPhien)
+            END AS ThanhTien
         FROM PHIENLAMVIEC PLV
         JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
         JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG
         LEFT JOIN DATCHO DC ON PLV.MaDatCho = DC.MaDatCho
         WHERE PLV.MaPhien = p_MaPhien;
-    
-    -- 4. Chi tiết dịch vụ đã gọi
+
     OPEN p_RS_ChiTietDichVu FOR
-        SELECT 
+        SELECT
             DV.TenDV,
             DV.DonGia,
             CTDV.SoLuong,
@@ -93,7 +111,7 @@ BEGIN
         JOIN DICHVU DV ON CTDV.MaDV = DV.MaDV
         WHERE CTDV.MaPhien = p_MaPhien
         ORDER BY DV.TenDV;
-    
+
     p_outMessage := 'Truy xuất chi tiết hóa đơn thành công!';
 
 EXCEPTION

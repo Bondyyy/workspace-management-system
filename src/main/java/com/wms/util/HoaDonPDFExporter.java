@@ -109,21 +109,45 @@ public class HoaDonPDFExporter {
                 HoaDonGiamGiaUtil.taoThongTinGiamGia(hoaDon, tienGiamGia);
         double conPhaiThanhToan = HoaDonGiamGiaUtil.layConPhaiThanhToan(hoaDon, giamGia, tienGiamGia);
 
-        document.add(new Paragraph(pdfText("TỔNG CỘNG: " + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getTongTien())), boldFont));
-        if (giamGia.coGiamVoucher()) {
-            document.add(new Paragraph(pdfText(giamGia.getNhanVoucher() + ": "
-                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamVoucher())), normalFont));
+        double tongTienGoc = hoaDon.getTongTienGoc() > 0 ? hoaDon.getTongTienGoc() : hoaDon.getTongTien();
+        document.add(new Paragraph(pdfText("TỔNG TIỀN GỐC: " + HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc)), boldFont));
+
+        if (hoaDon.getTienGocDatTruoc() > 0 || hoaDon.getSoTienDaTraTruoc() > 0) {
+            document.add(new Paragraph(pdfText("GIẢM ĐẶT TRƯỚC:"), boldFont));
+            if (giamGia.getTienGiamVoucherDatTruoc() > 0) {
+                document.add(new Paragraph(pdfText(giamGia.getNhanVoucherDatTruoc() + ": "
+                        + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherDatTruoc())), normalFont));
+            }
+            if (giamGia.getTienGiamHangDatTruoc() > 0) {
+                document.add(new Paragraph(pdfText(giamGia.getNhanHangDatTruoc() + ": "
+                        + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangDatTruoc())), normalFont));
+            }
+            document.add(new Paragraph(pdfText("Tổng giảm đặt trước: "
+                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamDatTruoc())), normalFont));
+            document.add(new Paragraph(pdfText("ĐÃ TRẢ TRƯỚC: "
+                    + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienDaTraTruoc())), boldFont));
         }
-        if (giamGia.coGiamHangThanhVien()) {
-            document.add(new Paragraph(pdfText(giamGia.getNhanHangThanhVien() + ": "
-                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getSoTienGiamHangThanhVien())), normalFont));
+
+        document.add(new Paragraph(pdfText("PHÁT SINH TẠI QUÁN:"), boldFont));
+        document.add(new Paragraph(pdfText("Tổng phát sinh gốc: "
+                + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getTienGocPhatSinh())), normalFont));
+        if (giamGia.getTienGiamVoucherTaiQuay() > 0) {
+            document.add(new Paragraph(pdfText(giamGia.getNhanVoucherTaiQuay() + ": "
+                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherTaiQuay())), normalFont));
         }
-        if (giamGia.coTongGiam()) {
-            document.add(new Paragraph(pdfText("TỔNG GIẢM: "
-                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam())), normalFont));
+        if (giamGia.getTienGiamHangTaiQuay() > 0) {
+            document.add(new Paragraph(pdfText(giamGia.getNhanHangTaiQuay() + ": "
+                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangTaiQuay())), normalFont));
         }
-        document.add(new Paragraph(pdfText("ĐÃ TRẢ TRƯỚC: "
-                + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienDaTraTruoc())), normalFont));
+        document.add(new Paragraph(pdfText("Tổng giảm tại quán: "
+                + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamTaiQuay())), normalFont));
+
+        document.add(new Paragraph(pdfText("TỔNG GIẢM: "
+                + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam())), normalFont));
+        if (hoaDon.getSoTienThanhToanTaiQuay() > 0) {
+            document.add(new Paragraph(pdfText("ĐÃ THANH TOÁN TẠI QUẦY: "
+                    + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienThanhToanTaiQuay())), boldFont));
+        }
         document.add(new Paragraph(pdfText("CÒN PHẢI THANH TOÁN: "
                 + HoaDonGiamGiaUtil.formatTienVnd(conPhaiThanhToan)), boldFont));
         Paragraph end = new Paragraph(pdfText("\n      --- CẢM ƠN QUÝ KHÁCH ---"), normalFont);

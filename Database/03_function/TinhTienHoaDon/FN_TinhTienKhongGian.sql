@@ -11,7 +11,8 @@ AS
     v_SoGioSuDung NUMBER;
     v_TienKhongGian NUMBER(18, 2);
     v_MaDatCho VARCHAR2(50);
-    v_TienDatCho NUMBER(18, 2);
+    v_TienGocDatCho NUMBER(18, 2);
+    v_SoGioDatCho NUMBER;
 BEGIN
     BEGIN
         SELECT 
@@ -19,13 +20,15 @@ BEGIN
             PLV.ThoiGianBatDau,
             NVL(PLV.ThoiGianKetThuc, SYSTIMESTAMP),
             PLV.MaDatCho,
-            DC.ThanhTien
+            NVL(DC.TongTienGoc, 0),
+            NVL(DC.KhoangThoiGianSuDung, 0)
         INTO 
             v_DonGiaTheoGio,
             v_ThoiGianBatDau,
             v_ThoiGianKetThuc,
             v_MaDatCho,
-            v_TienDatCho
+            v_TienGocDatCho,
+            v_SoGioDatCho
         FROM PHIENLAMVIEC PLV
         JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
         JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG
@@ -36,9 +39,12 @@ BEGIN
             RETURN 0;
     END;
 
-    -- Nếu là phiên đặt trước, chỉ trả về tiền thuê không gian đã thanh toán trước (phần quá giờ sẽ được tính như dịch vụ trong SP_KetThucPhien)
+    -- Phiên đặt trước phải trả về tiền gốc thuê không gian, không dùng số đã giảm/đã trả trước.
     IF v_MaDatCho IS NOT NULL THEN
-        RETURN ROUND(NVL(v_TienDatCho, 0), 2);
+        IF NVL(v_TienGocDatCho, 0) > 0 THEN
+            RETURN ROUND(v_TienGocDatCho, 2);
+        END IF;
+        RETURN ROUND(NVL(v_DonGiaTheoGio, 0) * NVL(v_SoGioDatCho, 0), 2);
     END IF;
 
     -- Nếu là phiên trực tiếp, tính theo thời gian thực tế

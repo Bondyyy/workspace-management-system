@@ -112,8 +112,16 @@
                 Mã ưu đãi chưa được áp dụng.
             </p>
             <div class="payment-line muted">
-                <span>Khuyến mãi</span>
+                <span>Giảm voucher</span>
                 <strong th:text="'- ' + ${#numbers.formatDecimal(discount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">- 0 VNĐ</strong>
+            </div>
+            <div class="payment-line muted" th:if="${rankPercent != null and rankPercent > 0}">
+                <span th:text="|Giảm hạng TV (${rankName} - ${#numbers.formatDecimal(rankPercent, 0, 'POINT', 2, 'COMMA')}%)|">Giảm hạng TV</span>
+                <strong th:text="'- ' + ${#numbers.formatDecimal(rankDiscount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">- 0 VNĐ</strong>
+            </div>
+            <div class="payment-line muted">
+                <span>Tổng giảm</span>
+                <strong th:text="'- ' + ${#numbers.formatDecimal(totalDiscount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">- 0 VNĐ</strong>
             </div>
             <div class="payment-total">
                 <span>Thành tiền</span>
