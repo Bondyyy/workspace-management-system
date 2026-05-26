@@ -43,6 +43,10 @@ public class LoaiDichVuController {
         }
     }
 
+    public void refreshCurrentView() {
+        search(view.getTxtTimKiem().getText().trim());
+    }
+
     private void fillTable(List<LoaiDichVuDTO> list) {
         DefaultTableModel model = (DefaultTableModel) view.getTblLoaiDichVu().getModel();
         model.setRowCount(0);
@@ -53,6 +57,9 @@ public class LoaiDichVuController {
                     loai.getTrangThaiLDV()
             });
         }
+        view.getTblLoaiDichVu().clearSelection();
+        view.getTblLoaiDichVu().revalidate();
+        view.getTblLoaiDichVu().repaint();
     }
 
     public void displaySelected() {
@@ -79,8 +86,8 @@ public class LoaiDichVuController {
             
             service.addLoaiDichVu(loai);
             com.wms.util.MessageUtil.showInfo(view, "Thêm loại dịch vụ mới thành công!");
-            loadData();
             clearForm();
+            refreshCurrentView();
         } catch (Exception e) {
             showError(e.getMessage(), e);
         }
@@ -100,7 +107,8 @@ public class LoaiDichVuController {
             
             service.updateLoaiDichVu(loai);
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật loại dịch vụ thành công!");
-            loadData();
+            clearForm();
+            refreshCurrentView();
         } catch (Exception e) {
             showError(e.getMessage(), e);
         }

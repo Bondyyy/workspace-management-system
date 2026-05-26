@@ -362,18 +362,8 @@ public class CongThongTinWebRepository {
                                     WHERE p.MaKG = kg.MaKG
                                       AND p.TrangThaiPhien = ?
                                       AND p.ThoiGianBatDau < ?
-                                      AND p.ThoiGianDuKienKetThuc > ?
-                                      AND (p.ThoiGianKetThuc IS NULL OR p.ThoiGianKetThuc > ?)
+                                      AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > ?
                                 ) THEN ?
-                           WHEN EXISTS (
-                               SELECT 1
-                               FROM DATCHO dc
-                               WHERE dc.MaKG = kg.MaKG
-                                 AND dc.TrangThaiDatTruoc = ?
-                                 AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
-                                 AND dc.ThoiGianDuKienToi < ?
-                                 AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
-                           ) THEN ?
                            WHEN EXISTS (
                                SELECT 1
                                FROM DATCHO dc
@@ -389,25 +379,18 @@ public class CongThongTinWebRepository {
                        NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong,
-                       (SELECT MAX(p.ThoiGianDuKienKetThuc)
+                       (SELECT MAX(NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR'))
                         FROM PHIENLAMVIEC p
                         WHERE p.MaKG = kg.MaKG
                           AND p.TrangThaiPhien = ?
                           AND p.ThoiGianBatDau < ?
-                          AND p.ThoiGianDuKienKetThuc > ?
-                          AND (p.ThoiGianKetThuc IS NULL OR p.ThoiGianKetThuc > ?)) AS PhienBusyUntil,
+                          AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > ?) AS PhienBusyUntil,
                        (SELECT MAX(dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR'))
                         FROM DATCHO dc
                         WHERE dc.MaKG = kg.MaKG
                           AND dc.ThoiGianDuKienToi < ?
                           AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
-                          AND (
-                              dc.TrangThaiDatTruoc IN (?, ?)
-                              OR (
-                                  dc.TrangThaiDatTruoc = ?
-                                  AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
-                              )
-                          )) AS DatChoBusyUntil
+                          AND dc.TrangThaiDatTruoc IN (?, ?)) AS DatChoBusyUntil
                 FROM KHONGGIAN kg
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
@@ -431,14 +414,9 @@ public class CongThongTinWebRepository {
                 giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
-                Timestamp.valueOf(selectedStart),
                 "Đang hoạt động",
-                trangThaiDatChoDb("Dang cho thanh toan"),
-                Timestamp.valueOf(selectedEnd),
-                Timestamp.valueOf(selectedStart),
-                "Tạm khóa",
                 trangThaiDatChoDb("Da thanh toan thanh cong"),
-                "Đã đặt trước",
+                trangThaiDatChoDb("Dang cho thanh toan"),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
                 "Đã đặt trước",
@@ -446,11 +424,9 @@ public class CongThongTinWebRepository {
                 giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
-                Timestamp.valueOf(selectedStart),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
                 trangThaiDatChoDb("Da thanh toan thanh cong"),
-                "Đã đặt trước",
                 trangThaiDatChoDb("Dang cho thanh toan"),
                 branchId
         };
@@ -473,14 +449,9 @@ public class CongThongTinWebRepository {
                     giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                     Timestamp.valueOf(selectedEnd),
                     Timestamp.valueOf(selectedStart),
-                    Timestamp.valueOf(selectedStart),
                     "Đang hoạt động",
-                    trangThaiDatChoDb("Dang cho thanh toan"),
-                    Timestamp.valueOf(selectedEnd),
-                    Timestamp.valueOf(selectedStart),
-                    "Tạm khóa",
                     trangThaiDatChoDb("Da thanh toan thanh cong"),
-                    "Đã đặt trước",
+                    trangThaiDatChoDb("Dang cho thanh toan"),
                     Timestamp.valueOf(selectedEnd),
                     Timestamp.valueOf(selectedStart),
                     "Đã đặt trước",
@@ -488,11 +459,9 @@ public class CongThongTinWebRepository {
                     giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                     Timestamp.valueOf(selectedEnd),
                     Timestamp.valueOf(selectedStart),
-                    Timestamp.valueOf(selectedStart),
                     Timestamp.valueOf(selectedEnd),
                     Timestamp.valueOf(selectedStart),
                     trangThaiDatChoDb("Da thanh toan thanh cong"),
-                    "Đã đặt trước",
                     trangThaiDatChoDb("Dang cho thanh toan")
             };
         }
@@ -577,24 +546,14 @@ public class CongThongTinWebRepository {
                      WHERE MaKG = ?
                        AND TrangThaiPhien = ?
                        AND ThoiGianBatDau < ?
-                       AND ThoiGianDuKienKetThuc > ?
-                       AND (
-                           ThoiGianKetThuc IS NULL
-                           OR ThoiGianKetThuc > ?
-                       ))
+                       AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + INTERVAL '1' HOUR') > ?)
                     +
                     (SELECT COUNT(*)
                      FROM DATCHO
                      WHERE MaKG = ?
                        AND ThoiGianDuKienToi < ?
                        AND (ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')) > ?
-                       AND (
-                           TrangThaiDatTruoc IN (?, ?)
-                           OR (
-                               TrangThaiDatTruoc = ?
-                               AND ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '10' MINUTE
-                           )
-                       ))
+                       AND TrangThaiDatTruoc IN (?, ?))
                 FROM DUAL
                 """,
                 Integer.class,
@@ -602,12 +561,10 @@ public class CongThongTinWebRepository {
                 giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
-                Timestamp.valueOf(selectedStart),
                 maKG,
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
                 trangThaiDatChoDb("Da thanh toan thanh cong"),
-                "Đã đặt trước",
                 trangThaiDatChoDb("Dang cho thanh toan")
         );
         return count != null && count > 0;
@@ -860,6 +817,50 @@ public class CongThongTinWebRepository {
                               BigDecimal tienGiamHangTV, BigDecimal thanhTienSauGiam,
                               String note) {
         String maDatCho = mauJdbc.execute((ConnectionCallback<String>) conn -> {
+            try (var lockStmt = conn.prepareStatement("SELECT MaKG FROM KHONGGIAN WHERE MaKG = ? FOR UPDATE")) {
+                lockStmt.setString(1, maKG);
+                try (var rs = lockStmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new IllegalArgumentException("Khong tim thay khong gian da chon.");
+                    }
+                }
+            }
+
+            LocalDateTime ketThucDuKien = arrivalTime.plusHours(durationHours);
+            try (var overlapStmt = conn.prepareStatement(
+                    """
+                    SELECT
+                        (SELECT COUNT(*)
+                         FROM PHIENLAMVIEC
+                         WHERE MaKG = ?
+                           AND TrangThaiPhien = ?
+                           AND ThoiGianBatDau < ?
+                           AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + INTERVAL '1' HOUR') > ?)
+                        +
+                        (SELECT COUNT(*)
+                         FROM DATCHO
+                         WHERE MaKG = ?
+                           AND TrangThaiDatTruoc IN (?, ?)
+                           AND ThoiGianDuKienToi < ?
+                           AND (ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')) > ?)
+                    FROM DUAL
+                    """)) {
+                overlapStmt.setString(1, maKG);
+                overlapStmt.setString(2, giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"));
+                overlapStmt.setTimestamp(3, Timestamp.valueOf(ketThucDuKien));
+                overlapStmt.setTimestamp(4, Timestamp.valueOf(arrivalTime));
+                overlapStmt.setString(5, maKG);
+                overlapStmt.setString(6, trangThaiDatChoDb("Da thanh toan thanh cong"));
+                overlapStmt.setString(7, trangThaiDatChoDb("Dang cho thanh toan"));
+                overlapStmt.setTimestamp(8, Timestamp.valueOf(ketThucDuKien));
+                overlapStmt.setTimestamp(9, Timestamp.valueOf(arrivalTime));
+                try (var rs = overlapStmt.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        throw new IllegalArgumentException("Khung gio nay da co nguoi dat. Vui long chon gio khac.");
+                    }
+                }
+            }
+
             String sql = """
                     BEGIN
                         INSERT INTO DATCHO (
@@ -1060,20 +1061,6 @@ public class CongThongTinWebRepository {
                 maDatCho,
                 trangThaiDatChoDb("Dang cho thanh toan")
         );
-        if (updated > 0) {
-            mauJdbc.update(
-                    """
-                    UPDATE PHIEUGIAMGIA
-                    SET SLDaDung = NVL(SLDaDung, 0) + 1
-                    WHERE MaPGG = (
-                        SELECT MaPGG
-                        FROM DATCHO
-                        WHERE MaDatCho = ?
-                    )
-                    """,
-                    maDatCho
-            );
-        }
         return updated > 0;
     }
 
@@ -1382,7 +1369,7 @@ public class CongThongTinWebRepository {
                     rs.getBigDecimal("TongTien"),
                     rs.getBigDecimal("ThanhTien"),
                     invoiceDate == null ? null : invoiceDate.toLocalDateTime(),
-                    maPhien == null ? List.of() : timDichVuTrongPhienHoiVien(maKH, maPhien)
+                    maPhien == null ? List.of() : layDichVuTheoMaPhien(maPhien)
             );
         }, maKH);
     }
@@ -1441,17 +1428,32 @@ public class CongThongTinWebRepository {
     }
 
     public List<DichVuTrongPhienView> timDichVuTrongPhienHoiVien(String maKH, String maPhien) {
+        Integer count = mauJdbc.queryForObject(
+                "SELECT COUNT(*) FROM PHIENLAMVIEC WHERE MaKH = ? AND MaPhien = ?",
+                Integer.class,
+                maKH,
+                maPhien
+        );
+        if (count == null || count == 0) {
+            return List.of();
+        }
+        return layDichVuTheoMaPhien(maPhien);
+    }
+
+    public List<DichVuTrongPhienView> layDichVuTheoMaPhien(String maPhien) {
+        if (maPhien == null || maPhien.isBlank()) {
+            return List.of();
+        }
         String sql = """
-                SELECT ct.MaDV, dv.TenDV, ldv.TenLoaiDV, ct.SoLuong,
+                SELECT ct.MaPhien, ct.MaDV, dv.TenDV, ldv.TenLoaiDV, ct.SoLuong,
                        NVL(dv.DonGia, 0) AS DonGia,
                        NVL(ct.SoLuong, 0) * NVL(dv.DonGia, 0) AS ThanhTien,
                        ct.GhiChu
                 FROM CHITIETDICHVU ct
                 JOIN DICHVU dv ON dv.MaDV = ct.MaDV
                 LEFT JOIN LOAIDICHVU ldv ON ldv.MaLoaiDV = dv.MaLoaiDV
-                JOIN PHIENLAMVIEC p ON p.MaPhien = ct.MaPhien
-                WHERE p.MaKH = ? AND ct.MaPhien = ?
-                ORDER BY ldv.TenLoaiDV, dv.TenDV
+                WHERE ct.MaPhien = ?
+                ORDER BY dv.TenDV
                 """;
         return mauJdbc.query(sql, (rs, rowNum) -> new DichVuTrongPhienView(
                 rs.getString("MaDV"),
@@ -1461,7 +1463,7 @@ public class CongThongTinWebRepository {
                 rs.getBigDecimal("DonGia"),
                 rs.getBigDecimal("ThanhTien"),
                 rs.getString("GhiChu")
-        ), maKH, maPhien);
+        ), maPhien);
     }
 
     public void themDichVuDaThanhToanVaoPhien(String maPhien, TuyChonDichVuView service,

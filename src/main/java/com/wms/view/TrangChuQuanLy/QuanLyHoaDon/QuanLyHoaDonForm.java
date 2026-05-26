@@ -155,6 +155,13 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                     hienThiHinhThuc(hd)
             });
         }
+        tblHoaDon.clearSelection();
+        tblHoaDon.revalidate();
+        tblHoaDon.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadDataToTable();
     }
 
     private void chonHoaDonSauKhiTai(String maHD) {
@@ -699,10 +706,8 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     }
 
     private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        txtTimKiem.setText("");
-        cbxLocTrangThai.setSelectedIndex(0);
-        loadDataToTable();
         resetForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

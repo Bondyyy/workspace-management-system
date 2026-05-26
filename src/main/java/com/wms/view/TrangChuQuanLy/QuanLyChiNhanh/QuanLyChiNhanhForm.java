@@ -22,7 +22,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
         tableModel = (DefaultTableModel) tblChiNhanh.getModel();
         com.wms.util.DateInputUtil.attachTimeFormatter(txtGioMoCua);
         com.wms.util.DateInputUtil.attachTimeFormatter(txtGioDongCua);
-        loadTableData(controller.layDanhSach());
+        refreshTableTheoDieuKienHienTai();
         clearForm();
         com.wms.util.TienIchFormQuanLy.apDung(this);
     }
@@ -51,6 +51,13 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
                     cn.getDuongDayNong(), cn.getTrangThai()
             });
         }
+        tblChiNhanh.clearSelection();
+        tblChiNhanh.revalidate();
+        tblChiNhanh.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadTableData(controller.timKiem(txtTimKiem.getText().trim()));
     }
 
     private void fillForm(int row) {
@@ -102,8 +109,8 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
             String loi = controller.themMoi(cn);
             if (loi == null) {
                 JOptionPane.showMessageDialog(this, "Thêm mới chi nhánh thành công!");
-                loadTableData(controller.layDanhSach());
                 clearForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -123,7 +130,8 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
             String loi = controller.capNhat(cn);
             if (loi == null) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadTableData(controller.layDanhSach());
+                clearForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -134,6 +142,7 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         clearForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

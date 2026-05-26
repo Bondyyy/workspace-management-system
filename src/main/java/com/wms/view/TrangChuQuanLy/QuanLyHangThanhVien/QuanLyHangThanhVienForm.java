@@ -38,7 +38,6 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
     private void setupListeners() {
         btnCapNhat.addActionListener(this::btnCapNhatActionPerformed);
         btnTimKiem.addActionListener(this::btnTimKiemActionPerformed);
-        btnLamMoi.addActionListener(e -> lamMoiForm());
     }
 
     private void loadDataToTable() {
@@ -64,6 +63,14 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
                 }
             }
         }
+        tblHangTV.clearSelection();
+        tblHangTV.revalidate();
+        tblHangTV.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        hangList = controller.layDanhSachHang();
+        fillTable(txtTimKiem.getText().trim());
     }
 
     private void lamMoiForm() {
@@ -104,7 +111,7 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
             controller.capNhatHangThanhVien(dto);
             JOptionPane.showMessageDialog(this, "Cập nhật hạng thành viên thành công!");
             String currentMaHang = selectedHang.getMaHangThanhVien();
-            loadDataToTable();
+            refreshTableTheoDieuKienHienTai();
             selectTier(currentMaHang);
         } catch (Exception e) {
             com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
@@ -327,6 +334,7 @@ public class QuanLyHangThanhVienForm extends javax.swing.JPanel {
 
     private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
         lamMoiForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void tblHangTVMouseClicked(java.awt.event.MouseEvent evt) {

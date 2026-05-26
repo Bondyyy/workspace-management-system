@@ -50,6 +50,14 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
                     dto.getTrangThai()
             });
         }
+        tblHoiVien.clearSelection();
+        tblHoiVien.revalidate();
+        tblHoiVien.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        hoiVienList = controller.timKiemHoiVien(txtTimKiem.getText().trim());
+        fillTable();
     }
 
     private void laMoiForm() {
@@ -358,8 +366,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             HoiVienDTO dto = getFormData();
             controller.themMoiHoiVien(dto);
             JOptionPane.showMessageDialog(this, "Thêm mới thành công!\nTài khoản: SĐT hoặc Email\nMật khẩu: 123456");
-            loadDataToTable();
             laMoiForm();
+            refreshTableTheoDieuKienHienTai();
         } catch (Exception ex) {
             com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
@@ -374,7 +382,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             HoiVienDTO dto = getFormData();
             controller.capNhatHoiVien(dto);
             JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-            loadDataToTable();
+            laMoiForm();
+            refreshTableTheoDieuKienHienTai();
         } catch (Exception ex) {
             com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
         }
@@ -391,8 +400,8 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
             try {
                 controller.xoaHoiVien(selectedHoiVien.getMaKH(), selectedHoiVien.getMaND());
                 JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                loadDataToTable();
                 laMoiForm();
+                refreshTableTheoDieuKienHienTai();
             } catch (Exception ex) {
                 com.wms.util.MessageUtil.showError(this, ex.getMessage(), ex);
             }
@@ -406,6 +415,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         laMoiForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void tblHoiVienMouseClicked(java.awt.event.MouseEvent evt) {

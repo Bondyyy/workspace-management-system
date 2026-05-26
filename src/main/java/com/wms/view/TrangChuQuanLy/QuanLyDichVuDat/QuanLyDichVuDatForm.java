@@ -73,6 +73,9 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
                     row[5] // Trạng Thái
             });
         }
+        tablePhienDangHoatDong.clearSelection();
+        tablePhienDangHoatDong.revalidate();
+        tablePhienDangHoatDong.repaint();
     }
 
     private void hienThiDanhSachDichVu(String maPhien) {
@@ -86,6 +89,13 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
                     dto.getMaPhien(), dto.getTenDichVu(), dto.getSoLuong(), dto.getGhiChu()
             });
         }
+        tableDichVu.clearSelection();
+        tableDichVu.revalidate();
+        tableDichVu.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadData(txtTimKiem.getText().trim());
     }
 
     /**
@@ -370,7 +380,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
             if (loi == null) {
                 JOptionPane.showMessageDialog(this, "Xóa dịch vụ thành công!");
                 hienThiDanhSachDichVu(maPhien);
-                btnHuyActionPerformed(null);
+                clearDetailForm();
             } else {
                 JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -393,7 +403,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         if (loi == null) {
             JOptionPane.showMessageDialog(this, "Cập nhật dịch vụ thành công!");
             hienThiDanhSachDichVu(maPhien);
-            btnHuyActionPerformed(null);
+            clearDetailForm();
         } else {
             JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -419,8 +429,7 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
     }
 
     private void btnTaiLaiActionPerformed(java.awt.event.ActionEvent evt) {
-        txtTimKiem.setText("");
-        loadData("");
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnLuuActionPerformed(java.awt.event.ActionEvent evt) {
@@ -450,13 +459,13 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Thêm dịch vụ thành công!", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
             hienThiDanhSachDichVu(maPhien);
-            btnHuyActionPerformed(null);
+            clearDetailForm();
         } else {
             JOptionPane.showMessageDialog(this, com.wms.util.ErrorMessageUtil.toUserMessage(loi), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
+    private void clearDetailForm() {
         txtMaPhien.setText("");
         if (cboLoaiDichVu.getItemCount() > 0)
             cboLoaiDichVu.setSelectedIndex(0);
@@ -465,6 +474,11 @@ public class QuanLyDichVuDatForm extends javax.swing.JPanel {
         spinSoLuong.setValue(1);
         txtGhiChu.setText("");
         tableDichVu.clearSelection();
+    }
+
+    private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
+        clearDetailForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void tableDichVuMouseClicked(java.awt.event.MouseEvent evt) {

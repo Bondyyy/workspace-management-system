@@ -63,6 +63,10 @@ public class NguoiDungController {
         }
     }
 
+    public void refreshCurrentView() {
+        search(view.getTxtTimKiem().getText().trim());
+    }
+
     private void fillTable(List<NguoiDungDTO> list) {
         DefaultTableModel model = (DefaultTableModel) view.getTblNguoiDung().getModel();
         model.setRowCount(0);
@@ -77,6 +81,9 @@ public class NguoiDungController {
                     user.getTrangThaiND()
             });
         }
+        view.getTblNguoiDung().clearSelection();
+        view.getTblNguoiDung().revalidate();
+        view.getTblNguoiDung().repaint();
     }
 
     public void displaySelectedUser() {
@@ -157,8 +164,8 @@ public class NguoiDungController {
             service.addUser(user);
             com.wms.util.MessageUtil.showInfo(view, "Thêm người dùng mới thành công!");
             invalidateNhanVienCache();
-            loadData();
             clearForm();
+            refreshCurrentView();
         } catch (Exception e) {
             showError(e.getMessage(), e);
         }
@@ -180,7 +187,8 @@ public class NguoiDungController {
             service.updateUser(user);
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật thông tin người dùng thành công!");
             invalidateNhanVienCache();
-            loadData();
+            clearForm();
+            refreshCurrentView();
         } catch (Exception e) {
             showError(e.getMessage(), e);
         }

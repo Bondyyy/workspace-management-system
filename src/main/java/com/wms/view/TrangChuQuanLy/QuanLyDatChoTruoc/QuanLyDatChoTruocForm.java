@@ -331,13 +331,12 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             }
         });
 
-        btnTimKiem.addActionListener(evt -> loadData(txtTimKiem.getText()));
+        btnTimKiem.addActionListener(evt -> refreshTableTheoDieuKienHienTai());
         btnLamMoi.addActionListener(evt -> {
-            txtTimKiem.setText("");
-            loadData("");
             clearDetail();
+            refreshTableTheoDieuKienHienTai();
         });
-        txtTimKiem.addActionListener(evt -> loadData(txtTimKiem.getText()));
+        txtTimKiem.addActionListener(evt -> refreshTableTheoDieuKienHienTai());
         tblDatCho.getSelectionModel().addListSelectionListener(evt -> {
             if (!evt.getValueIsAdjusting()) {
                 int row = tblDatCho.getSelectedRow();
@@ -350,6 +349,10 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             }
         });
         loadData("");
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadData(txtTimKiem.getText());
     }
 
     private void loadData(String keyword) {
@@ -369,6 +372,9 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
                 dto.getThanhTien() == null ? "0" : moneyFormat.format(dto.getThanhTien())
             });
         }
+        tblDatCho.clearSelection();
+        tblDatCho.revalidate();
+        tblDatCho.repaint();
     }
 
     private void fillDetail(DatChoTruocDTO dto) {

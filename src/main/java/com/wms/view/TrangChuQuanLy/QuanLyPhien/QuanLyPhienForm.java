@@ -230,6 +230,13 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                     p.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp"
             });
         }
+        tblPhienLamViec.clearSelection();
+        tblPhienLamViec.revalidate();
+        tblPhienLamViec.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadData(txtTimKiem.getText().trim());
     }
 
     public void hienThiDichVuTrongPhien(
@@ -667,8 +674,8 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     }
 
     private void btnTaiLaiActionPerformed(java.awt.event.ActionEvent evt) {
-        txtTimKiem.setText("");
-        loadData("");
+        btnHuyActionPerformed();
+        refreshTableTheoDieuKienHienTai();
     }
 
     // removed btnCapNhatActionPerformed
@@ -721,8 +728,8 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                         if (get()) {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Đã kết thúc phiên thành công!");
                             if (!chuyenSangHoaDonTheoPhien(maPhien)) {
-                                loadData("");
                                 btnHuyActionPerformed();
+                                refreshTableTheoDieuKienHienTai();
                             }
                         } else {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên!");
@@ -735,8 +742,8 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
                                     "Phiên " + maPhien + " đã được kết thúc trước đó.\nDanh sách sẽ được tải lại.",
                                     "Phiên đã kết thúc", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-                            loadData("");
                             btnHuyActionPerformed();
+                            refreshTableTheoDieuKienHienTai();
                         } else {
                             // Hiển thị message thực từ SP/exception, không dùng chuỗi cứng
                             String userMsg = (msg != null && !msg.isBlank()) ? msg : "Không thể kết thúc phiên, vui lòng thử lại.";
@@ -777,7 +784,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-        loadData("");
+        refreshTableTheoDieuKienHienTai();
     }
 
     private boolean chuyenSangHoaDonTheoPhien(String maPhien) {

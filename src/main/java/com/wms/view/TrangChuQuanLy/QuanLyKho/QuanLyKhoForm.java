@@ -324,6 +324,36 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
                 });
             }
         }
+        tblKho.clearSelection();
+        tblKho.revalidate();
+        tblKho.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        if (controller != null) {
+            controller.loadData(txtTimKiem.getText().trim());
+        }
+    }
+
+    private void clearForm() {
+        if (cbNhanVien.getItemCount() > 0)
+            cbNhanVien.setSelectedIndex(0);
+        if (cbLoaiDichVu.getItemCount() > 0)
+            cbLoaiDichVu.setSelectedIndex(0);
+        txtTenDichVu.setText("");
+        spnSoLuong.setValue(0);
+        txtGiaNhap.setText("");
+        txtNiemYet.setText("");
+        txtSluongHienTai.setText("");
+        currentMaDV = "";
+        selectedTenDichVu = "";
+
+        currentSelectedFile = null;
+        lblTrangThaiFile.setText("Chưa chọn file (Bắt buộc)");
+        lblTrangThaiFile.setForeground(java.awt.Color.RED);
+        lblTrangThaiFile.setToolTipText(null);
+        btnXemHoaDon.setEnabled(false);
+        tblKho.clearSelection();
     }
 
     public void hienThiThongBaoLoi(String thongBao) {
@@ -585,28 +615,8 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     }
 
     private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
-        txtTimKiem.setText("");
-        if (controller != null) {
-            controller.loadData("");
-        }
-
-        if (cbNhanVien.getItemCount() > 0)
-            cbNhanVien.setSelectedIndex(0);
-        if (cbLoaiDichVu.getItemCount() > 0)
-            cbLoaiDichVu.setSelectedIndex(0);
-        txtTenDichVu.setText("");
-        spnSoLuong.setValue(0);
-        txtGiaNhap.setText("");
-        txtNiemYet.setText("");
-        txtSluongHienTai.setText("");
-        currentMaDV = "";
-        selectedTenDichVu = "";
-
-        currentSelectedFile = null;
-        lblTrangThaiFile.setText("Chưa chọn file (Bắt buộc)");
-        lblTrangThaiFile.setForeground(java.awt.Color.RED);
-        lblTrangThaiFile.setToolTipText(null);
-        btnXemHoaDon.setEnabled(false);
+        clearForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnLuuActionPerformed(java.awt.event.ActionEvent evt) {

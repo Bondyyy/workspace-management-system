@@ -46,9 +46,12 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
     }
 
     private void loadDataToTable() {
+        fillTable(controller.layDanhSach());
+    }
+
+    private void fillTable(List<PhieuGiamGiaDTO> list) {
         DefaultTableModel model = (DefaultTableModel) tblPhieuGiamGia.getModel();
         model.setRowCount(0);
-        List<PhieuGiamGiaDTO> list = controller.layDanhSach();
         for (PhieuGiamGiaDTO dto : list) {
             model.addRow(new Object[]{
                 dto.getMaPGG(),
@@ -62,6 +65,13 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
                 dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực"
             });
         }
+        tblPhieuGiamGia.clearSelection();
+        tblPhieuGiamGia.revalidate();
+        tblPhieuGiamGia.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        fillTable(controller.timKiem(txtTimKiem.getText().trim()));
     }
 
     private void laMoiForm() {
@@ -384,8 +394,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
             PhieuGiamGiaDTO dto = getFormData();
             if (controller.themMoi(dto)) {
                 JOptionPane.showMessageDialog(this, "Thêm phiếu giảm giá thành công!");
-                loadDataToTable();
                 laMoiForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, "Thêm thất bại! Vui lòng kiểm tra lại thông tin.", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -399,7 +409,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
             PhieuGiamGiaDTO dto = getFormData();
             if (controller.capNhat(dto)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadDataToTable();
+                laMoiForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -416,8 +427,8 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
         if (xacNhan == JOptionPane.YES_OPTION) {
             if (controller.xoa(ma)) {
                 JOptionPane.showMessageDialog(this, "Đã ngưng chương trình thành công!");
-                loadDataToTable();
                 laMoiForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, "Ngừng chương trình thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -426,26 +437,12 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
 
     private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
         laMoiForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         String keyword = txtTimKiem.getText().trim();
-        DefaultTableModel model = (DefaultTableModel) tblPhieuGiamGia.getModel();
-        model.setRowCount(0);
-        List<PhieuGiamGiaDTO> list = controller.timKiem(keyword);
-        for (PhieuGiamGiaDTO dto : list) {
-            model.addRow(new Object[]{
-                dto.getMaPGG(),
-                dto.getMaChuSoPGG(),
-                com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriGiamGia()),
-                com.wms.util.InputFormatUtil.formatThousands(dto.getGiaTriApDungToiThieu()),
-                com.wms.util.DateInputUtil.formatDateTime(dto.getNgayBatDauApDung()),
-                com.wms.util.DateInputUtil.formatDateTime(dto.getNgayKetThucApDung()),
-                dto.getSlDaDung(),
-                dto.getSlToiDa(),
-                dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực"
-            });
-        }
+        fillTable(controller.timKiem(keyword));
     }
 
     private void tblPhieuGiamGiaMouseClicked(java.awt.event.MouseEvent evt) {
