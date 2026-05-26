@@ -71,7 +71,21 @@ public class PhienLamViecDAO {
             cstmt.setString(6, phien.getMaDatCho());
             cstmt.registerOutParameter(7, java.sql.Types.VARCHAR);
 
-            cstmt.execute();
+            try {
+                cstmt.execute();
+            } catch (SQLException e) {
+                String outMessage = null;
+                try {
+                    outMessage = cstmt.getString(7);
+                } catch (SQLException ignored) {
+                    // Oracle may fail before the OUT parameter is available.
+                }
+                logSqlException(e);
+                if (outMessage != null && !outMessage.isBlank()) {
+                    throw new IllegalArgumentException(boDau(outMessage), e);
+                }
+                throw new IllegalArgumentException(chuyenLoiSqlMoPhien(e), e);
+            }
 
             String message = cstmt.getString(7);
             if (laThongBaoThanhCong(message)) {
@@ -82,10 +96,51 @@ public class PhienLamViecDAO {
             }
         } catch (IllegalArgumentException e) {
             throw e;
+        } catch (SQLException e) {
+            logSqlException(e);
+            throw new IllegalArgumentException(chuyenLoiSqlMoPhien(e), e);
         } catch (Exception e) {
             System.err.println("[PhienLamViecDAO] Loi khi goi SP tao phien: " + boDau(e.getMessage()));
-            throw new IllegalArgumentException("[DATABASE/SYSTEM ERROR]: Loi khi mo phien lam viec! Vui long kiem tra lai ket noi hoac du lieu.");
+            throw new IllegalArgumentException("Khong the mo phien lam viec: " + boDau(e.getMessage()), e);
         }
+    }
+
+    private void logSqlException(SQLException e) {
+        int index = 1;
+        SQLException current = e;
+        while (current != null) {
+            System.err.println("[PhienLamViecDAO][SQLException #" + index + "] errorCode="
+                    + current.getErrorCode()
+                    + ", SQLState=" + current.getSQLState()
+                    + ", message=" + current.getMessage());
+            current = current.getNextException();
+            index++;
+        }
+        e.printStackTrace(System.err);
+    }
+
+    private String chuyenLoiSqlMoPhien(SQLException e) {
+        StringBuilder details = new StringBuilder();
+        SQLException current = e;
+        while (current != null) {
+            if (current.getMessage() != null) {
+                if (details.length() > 0) {
+                    details.append(" | ");
+                }
+                details.append(current.getMessage());
+            }
+            current = current.getNextException();
+        }
+        String rawMessage = details.length() == 0 ? e.getMessage() : details.toString();
+        String normalized = rawMessage == null ? "" : rawMessage.toUpperCase(Locale.ROOT);
+        if (normalized.contains("ORA-06550")
+                || normalized.contains("PLS-00905")
+                || normalized.contains("ORA-04098")) {
+            return "Procedure/trigger trong database đang bị lỗi hoặc chưa được compile lại. "
+                    + "Vui lòng chạy lại script SQL và xem SHOW ERRORS."
+                    + "\nChi tiet Oracle: " + boDau(rawMessage);
+        }
+        return "Loi database khi mo phien lam viec: " + boDau(rawMessage);
     }
 
     public KetQuaNhanChoDTO moPhienTuQrDatCho(String maDatCho, String noiDungQr) {
@@ -251,7 +306,7 @@ public class PhienLamViecDAO {
                         """)) {
                     ps.setDouble(1, thanhTien);
                     ps.setDouble(2, thanhTien);
-                    ps.setDouble(3, thanhTien);
+                    ps.setDouble(3, 0);
                     ps.setString(4, maPhien);
                     ps.executeUpdate();
                 }
@@ -374,126 +429,32 @@ public class PhienLamViecDAO {
 
 
     public boolean ketThucPhien(String maPhien) {
-        String sqlPhien = "UPDATE PHIENLAMVIEC SET ThoiGianKetThuc = CURRENT_TIMESTAMP, TrangThaiPhien = 'Đã kết thúc', CapNhatLanCuoi = CURRENT_TIMESTAMP WHERE MaPhien = ?";
-
-        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                // Cập nhật trạng thái phiên - kết thúc
-                try (PreparedStatement pstmtPhien = conn.prepareStatement(sqlPhien)) {
-                    pstmtPhien.setString(1, maPhien);
-                    if (pstmtPhien.executeUpdate() == 0) {
-                        conn.rollback();
-                        return false;
-                    }
-                }
-
-                // Lấy tiền đã đặt trước (DaTraTruoc)
-                double soTienDaTraTruoc = 0;
-                String maPGG = null;
-                String sqlTraTruoc = "SELECT NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc "
-                                     + ", h.MaPGG AS MaPGG "
-                                     + "FROM HOADON h "
-                                     + "WHERE h.MaPhien = ?";
-                try (PreparedStatement psTraTruoc = conn.prepareStatement(sqlTraTruoc)) {
-                    psTraTruoc.setString(1, maPhien);
-                    try (ResultSet rsTraTruoc = psTraTruoc.executeQuery()) {
-                        if (rsTraTruoc.next()) {
-                            soTienDaTraTruoc = rsTraTruoc.getDouble("SoTienDaTraTruoc");
-                            maPGG = rsTraTruoc.getString("MaPGG");
-                        }
-                    }
-                }
-
-                double tongTien = tinhTongTienPhien(conn, maPhien);
-                double tongTienSauGiam = tongTien;
-                if (maPGG != null && !maPGG.trim().isEmpty()) {
-                    String sqlTongTienSauGiam = "SELECT FN_TinhThanhTien(?, ?) AS TONGTIENSAUGIAM FROM DUAL";
-                    try (PreparedStatement psTongTienSauGiam = conn.prepareStatement(sqlTongTienSauGiam)) {
-                        psTongTienSauGiam.setString(1, maPhien);
-                        psTongTienSauGiam.setString(2, maPGG.trim());
-                        try (ResultSet rsTongTienSauGiam = psTongTienSauGiam.executeQuery()) {
-                            if (rsTongTienSauGiam.next()) {
-                                tongTienSauGiam = rsTongTienSauGiam.getDouble("TONGTIENSAUGIAM");
-                            }
-                        }
-                    }
-                }
-
-                double thanhTien = Math.max(0, tongTienSauGiam - soTienDaTraTruoc);
-                String trangThaiThanhToan = thanhTien <= 0 ? "Đã thanh toán thành công" : "Đã trả trước";
-
-                // Cập nhật hóa đơn
-                String sqlHoaDon = "UPDATE HOADON SET TongTien = ?, ThanhTien = ?, TrangThaiThanhToan = ?, NgayLapHoaDon = CURRENT_TIMESTAMP WHERE MaPhien = ?";
-                try (PreparedStatement pstmtHoaDon = conn.prepareStatement(sqlHoaDon)) {
-                    pstmtHoaDon.setDouble(1, tongTien);
-                    pstmtHoaDon.setDouble(2, thanhTien);
-                    pstmtHoaDon.setString(3, trangThaiThanhToan);
-                    pstmtHoaDon.setString(4, maPhien);
-                    pstmtHoaDon.executeUpdate();
-                }
-
-                conn.commit();
-                return true;
-            } catch (SQLException e) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ignored) {}
-                System.err.println("[PhienLamViecDAO] Lỗi kết thúc phiên: " + e.getMessage());
-                return false;
-            }
-        } catch (Exception e) {
-            System.err.println("[PhienLamViecDAO] Lỗi kết thúc phiên (connection): " + e.getMessage());
-            return false;
-        }
+        return ketThucPhien(maPhien, null);
     }
 
-    private double tinhTongTienPhien(Connection conn, String maPhien) throws SQLException {
-        double tienKhongGian = 0;
-        double tienDichVu = 0;
-
-        String sqlKg = "SELECT LKG.DonGiaTheoGio, PLV.ThoiGianBatDau, PLV.ThoiGianKetThuc " +
-                "FROM PHIENLAMVIEC PLV " +
-                "JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG " +
-                "JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG " +
-                "WHERE PLV.MaPhien = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sqlKg)) {
-            ps.setString(1, maPhien);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    double donGia = rs.getDouble("DonGiaTheoGio");
-                    Timestamp batDau = rs.getTimestamp("ThoiGianBatDau");
-                    Timestamp ketThuc = rs.getTimestamp("ThoiGianKetThuc");
-                    if (ketThuc == null)
-                        ketThuc = new Timestamp(System.currentTimeMillis());
-
-                    if (batDau != null) {
-                        long diffMillis = ketThuc.getTime() - batDau.getTime();
-                        long totalMinutes = diffMillis / 60000;
-                        long hours = totalMinutes / 60;
-                        long minutes = totalMinutes % 60;
-                        long roundedHours = (minutes < 15) ? hours : hours + 1;
-
-                        tienKhongGian = donGia * roundedHours;
-                    }
-                }
+    public boolean ketThucPhien(String maPhien, String maNV) {
+        String callSql = "{call SP_KetThucPhien(?, ?, ?)}";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             CallableStatement cstmt = conn.prepareCall(callSql)) {
+            cstmt.setString(1, maPhien);
+            if (maNV == null || maNV.isBlank()) {
+                cstmt.setNull(2, Types.VARCHAR);
+            } else {
+                cstmt.setString(2, maNV.trim());
             }
-        }
+            cstmt.registerOutParameter(3, Types.VARCHAR);
+            cstmt.execute();
 
-        String sqlDv = "SELECT SUM(CT.SoLuong * DV.DonGia) AS TienDV " +
-                "FROM CHITIETDICHVU CT " +
-                "JOIN DICHVU DV ON CT.MaDV = DV.MaDV " +
-                "WHERE CT.MaPhien = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sqlDv)) {
-            ps.setString(1, maPhien);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    tienDichVu = rs.getDouble("TienDV");
-                }
+            String message = cstmt.getString(3);
+            if (laThongBaoThanhCong(message)) {
+                return true;
             }
+            System.err.println("[PhienLamViecDAO] Lỗi từ SP_KetThucPhien: " + boDau(message));
+            return false;
+        } catch (Exception e) {
+            System.err.println("[PhienLamViecDAO] Lỗi gọi SP_KetThucPhien: " + boDau(e.getMessage()));
+            return false;
         }
-
-        return Math.round((tienKhongGian + tienDichVu) * 100.0) / 100.0;
     }
 
     public List<DichVuTrongPhienDTO> layDichVuCuaPhien(String maPhien) {

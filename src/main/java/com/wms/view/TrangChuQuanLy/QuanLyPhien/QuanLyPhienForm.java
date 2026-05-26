@@ -17,6 +17,10 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     private static final String LABEL_DANG_HOAT_DONG = "\u0110ang ho\u1ea1t \u0111\u1ed9ng";
     private static final String LABEL_DA_KET_THUC = "\u0110\u00e3 k\u1ebft th\u00fac";
     private static final String LABEL_TAM_NGUNG = "T\u1ea1m ng\u1eebng";
+    private final java.util.Map<Integer, String> maCNTheoIndex = new java.util.HashMap<>();
+    private final java.util.Map<String, Integer> indexTheoMaCN = new java.util.HashMap<>();
+    private String maCNNguoiDungHienTai;
+    private boolean thieuChiNhanhHoatDong;
 
     public QuanLyPhienForm() {
         initComponents();
@@ -88,10 +92,19 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
 
     private void loadChiNhanhData() {
         cbxChiNhanh.removeAllItems();
+        maCNTheoIndex.clear();
+        indexTheoMaCN.clear();
         cbxChiNhanh.addItem("--- Tất cả chi nhánh ---");
         for (String[] cn : controller.layDanhSachChiNhanh()) {
-            cbxChiNhanh.addItem(cn[1]);
-            cbxChiNhanh.putClientProperty("maCN_" + cn[1], cn[0]);
+            if (cn == null || cn.length < 2 || cn[0] == null || cn[0].isBlank()) {
+                continue;
+            }
+            String maCN = cn[0].trim();
+            String tenCN = cn[1] == null || cn[1].isBlank() ? maCN : cn[1].trim();
+            int index = cbxChiNhanh.getItemCount();
+            cbxChiNhanh.addItem(maCN + " - " + tenCN);
+            maCNTheoIndex.put(index, maCN);
+            indexTheoMaCN.put(maCN.toUpperCase(java.util.Locale.ROOT), index);
         }
         cbxChiNhanh.addActionListener(e -> loadData(txtTimKiem.getText().trim()));
     }
@@ -109,33 +122,57 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         if (!isAdmin) {
             cbxChiNhanh.setEnabled(false);
             String maCN = controller.layMaCNNguoiDung(user);
-            if (maCN != null)
-                setComboByMaCN(maCN);
+            maCNNguoiDungHienTai = maCN == null ? null : maCN.trim();
+            if (maCNNguoiDungHienTai == null || maCNNguoiDungHienTai.isBlank()
+                    || !setComboByMaCN(maCNNguoiDungHienTai)) {
+                maCNNguoiDungHienTai = null;
+                thieuChiNhanhHoatDong = true;
+                btnMoPhien.setEnabled(false);
+                javax.swing.JOptionPane.showMessageDialog(this,
+                        "Tài khoản của bạn chưa được gán chi nhánh hoạt động, vui lòng liên hệ quản trị viên.",
+                        "Thiếu chi nhánh hoạt động", javax.swing.JOptionPane.WARNING_MESSAGE);
+            } else {
+                thieuChiNhanhHoatDong = false;
+                btnMoPhien.setEnabled(true);
+            }
         } else {
+            maCNNguoiDungHienTai = null;
+            thieuChiNhanhHoatDong = false;
             cbxChiNhanh.setEnabled(true); // Đảm bảo Admin luôn được chọn
         }
     }
 
-    private void setComboByMaCN(String maCN) {
-        for (int i = 1; i < cbxChiNhanh.getItemCount(); i++) {
-            String ten = cbxChiNhanh.getItemAt(i);
-            if (maCN.equals(cbxChiNhanh.getClientProperty("maCN_" + ten))) {
-                cbxChiNhanh.setSelectedIndex(i);
-                break;
-            }
+    private boolean setComboByMaCN(String maCN) {
+        if (maCN == null || maCN.isBlank()) {
+            return false;
         }
+        Integer index = indexTheoMaCN.get(maCN.trim().toUpperCase(java.util.Locale.ROOT));
+        if (index == null) {
+            return false;
+        }
+        cbxChiNhanh.setSelectedIndex(index);
+        return true;
     }
 
     private String getMaCNDangChon() {
-        if (cbxChiNhanh.getSelectedIndex() <= 0)
+        if (!cbxChiNhanh.isEnabled() && maCNNguoiDungHienTai != null && !maCNNguoiDungHienTai.isBlank()) {
+            return maCNNguoiDungHienTai;
+        }
+        int selectedIndex = cbxChiNhanh.getSelectedIndex();
+        if (selectedIndex <= 0) {
             return null;
-        String ten = (String) cbxChiNhanh.getSelectedItem();
-        return (String) cbxChiNhanh.getClientProperty("maCN_" + ten);
+        }
+        return maCNTheoIndex.get(selectedIndex);
     }
 
     private void loadData(String keyword) {
         if (loadPhienWorker != null && !loadPhienWorker.isDone()) {
             loadPhienWorker.cancel(true);
+        }
+        if (thieuChiNhanhHoatDong) {
+            hienThiDanhSachPhien(java.util.List.of());
+            setDangTaiDanhSach(false);
+            return;
         }
         String maCN = getMaCNDangChon();
         long start = System.currentTimeMillis();
@@ -683,8 +720,10 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                     try {
                         if (get()) {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Đã kết thúc phiên thành công!");
-                            loadData("");
-                            btnHuyActionPerformed();
+                            if (!chuyenSangHoaDonTheoPhien(maPhien)) {
+                                loadData("");
+                                btnHuyActionPerformed();
+                            }
                         } else {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên!");
                             btnKetThucPhien.setEnabled(true);
@@ -699,6 +738,12 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
     }
 
     private void btnMoPhienActionPerformed(java.awt.event.ActionEvent evt) {
+        if (thieuChiNhanhHoatDong) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Tài khoản của bạn chưa được gán chi nhánh hoạt động, vui lòng liên hệ quản trị viên.",
+                    "Thiếu chi nhánh hoạt động", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         String maCN = getMaCNDangChon();
         if (maCN == null) {
             javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng chọn một chi nhánh cụ thể để mở phiên làm việc!",
@@ -714,6 +759,19 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
         loadData("");
+    }
+
+    private boolean chuyenSangHoaDonTheoPhien(String maPhien) {
+        try {
+            java.awt.Window parent = javax.swing.SwingUtilities.getWindowAncestor(this);
+            if (parent instanceof com.wms.view.TrangChuQuanLy.TrangChuQuanLyForm mainFrame) {
+                mainFrame.moHoaDonTheoPhien(maPhien);
+                return true;
+            }
+        } catch (Exception ex) {
+            System.err.println("[QuanLyPhienForm] Không thể mở hóa đơn theo phiên: " + ex.getMessage());
+        }
+        return false;
     }
 
     private void tblPhienLamViecMouseClicked(java.awt.event.MouseEvent evt) {

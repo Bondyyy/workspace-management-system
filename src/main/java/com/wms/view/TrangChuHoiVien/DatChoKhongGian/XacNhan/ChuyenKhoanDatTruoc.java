@@ -2,19 +2,16 @@ package com.wms.view.TrangChuHoiVien.DatChoKhongGian.XacNhan;
 
 import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 
-import com.wms.dao.TrangChuQuanLy.QuanLyPhien.PhienLamViecDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
-
-import com.wms.dao.TrangChuQuanLy.QuanLyHoaDon.HoaDonDAO;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyHoiVien.KhachHangDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyPhien.DatChoDAO;
-import com.wms.model.TrangChuQuanLy.QuanLyPhien.PhienLamViecDTO;
 import com.wms.model.TrangChuHoiVien.DatChoDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
+import com.wms.util.MaQRUtil;
 
 import java.text.DecimalFormat;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import javax.swing.JOptionPane;
 
@@ -393,21 +390,6 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
                     "Vui lòng nhập thời gian bắt đầu đặt chỗ.");
             dc.setThoiGianDuKienToi(Timestamp.valueOf(batDau));
 
-            DatChoDAO dcDAO = new DatChoDAO();
-            if (!dcDAO.taoDatChoMoi(dc)) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi lưu đơn đặt chỗ!");
-                return;
-            }
-            String maDatCho = dc.getMaDatCho();
-
-            // 2. Tạo Phiên làm việc (Liên kết với MaDatCho)
-            PhienLamViecDTO phien = new PhienLamViecDTO();
-            phien.setMaKH(maKH);
-            phien.setMaKG(maKG_Booking);
-            phien.setMaDatCho(maDatCho); // QUAN TRỌNG: Gán mã đặt chỗ vào đây
-            phien.setTrangThaiPhien("Đã đặt trước");
-            
-            phien.setThoiGianBatDau(Timestamp.valueOf(batDau));
             LocalDateTime ketThuc = com.wms.util.DateInputUtil.requireDateTime(
                     txtNgay.getText() + " " + txtKetThuc.getText(),
                     "Thời gian kết thúc đặt chỗ",
@@ -415,44 +397,42 @@ public class ChuyenKhoanDatTruoc extends javax.swing.JPanel {
             if (!ketThuc.isAfter(batDau)) {
                 throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu.");
             }
-            phien.setThoiGianDuKienKetThuc(Timestamp.valueOf(ketThuc));
 
-            PhienLamViecDAO pDAO = new PhienLamViecDAO();
-            if (pDAO.taoPhienLamViecMoi(phien)) {
-                String maPhien = phien.getMaPhien();
-                // 3. Tạo Hóa đơn
-                HoaDonDTO hd = new HoaDonDTO();
-                hd.setMaPhien(maPhien);
-                hd.setTongTien(tongTienBanDau);
-                hd.setThanhTien(thanhTien);
-                hd.setTrangThaiThanhToan("Đang chờ thanh toán");
+            long soGio = Duration.between(batDau, ketThuc).toHours();
+            if (soGio < 1 || soGio > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("Thời lượng sử dụng phải tối thiểu 1 giờ.");
+            }
+            dc.setKhoangThoiGianSuDung((int) soGio);
 
-                HoaDonDAO hDAO = new HoaDonDAO();
-                HoaDonDTO hoaDonDaTao = hDAO.capNhatHoaDonDatTruocTheoPhien(maPhien, tongTienBanDau, thanhTien);
-                if (hoaDonDaTao == null && hDAO.taoHoaDonMoi(hd)) {
-                    hoaDonDaTao = hd;
-                }
-                if (hoaDonDaTao != null) {
-                    hd = hoaDonDaTao;
-                    String maHD = hd.getMaHoaDon();
-                    // 3. Chuyển sang màn hình thành công
-                    String htmlDetails = String.format("<html>" +
-                        "<b>Mã hóa đơn:</b> %s<br/>" +
-                        "<b>Không gian:</b> %s<br/>" +
-                        "<b>Thời gian:</b> %s - %s<br/>" +
-                        "<b>Ngày:</b> %s<br/>" +
-                        "<b>Tổng tiền:</b> %s</html>",
-                        maHD, txtKhongGian.getText(), txtBatDau.getText(), txtKetThuc.getText(), txtNgay.getText(), df.format(thanhTien));
-                    
-                    java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
-                    if (window instanceof com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) {
-                        ((com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) window).showPanel(
-                            new ThongTinSauThanhToan(htmlDetails, hd)
-                        );
-                    }
-                }
+            DatChoDAO dcDAO = new DatChoDAO();
+            if (!dcDAO.taoDatChoMoi(dc)) {
+                JOptionPane.showMessageDialog(this, "Lỗi khi lưu đơn đặt chỗ!");
+                return;
+            }
+            String maDatCho = dc.getMaDatCho();
+            String maQR = MaQRUtil.taoMaQRDatCho(maDatCho);
+            if (!dcDAO.xacNhanThanhToan(maDatCho) || !dcDAO.capNhatMaQR(maDatCho, maQR)) {
+                JOptionPane.showMessageDialog(this, "Đã tạo đặt chỗ nhưng chưa thể xác nhận thanh toán/QR. Vui lòng thử lại.");
+                return;
+            }
+
+            String htmlDetails = String.format("<html>" +
+                            "<b>Mã đặt chỗ:</b> %s<br/>" +
+                            "<b>Không gian:</b> %s<br/>" +
+                            "<b>Thời gian:</b> %s - %s<br/>" +
+                            "<b>Ngày:</b> %s<br/>" +
+                            "<b>Thời lượng:</b> %d giờ<br/>" +
+                            "<b>Tổng tiền:</b> %s</html>",
+                    maDatCho, txtKhongGian.getText(), txtBatDau.getText(), txtKetThuc.getText(),
+                    txtNgay.getText(), soGio, df.format(thanhTien));
+
+            java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+            if (window instanceof com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) {
+                ((com.wms.view.TrangChuHoiVien.TrangChuHoiVienForm) window).showPanel(
+                        new ThongTinSauThanhToan(htmlDetails, null)
+                );
             } else {
-                JOptionPane.showMessageDialog(this, "Lỗi khi tạo phiên đặt chỗ!");
+                JOptionPane.showMessageDialog(this, "Đặt chỗ thành công. Vui lòng dùng mã QR khi đến nhận chỗ.");
             }
         } catch (Exception e) {
             com.wms.util.MessageUtil.showError(this, e.getMessage(), e);

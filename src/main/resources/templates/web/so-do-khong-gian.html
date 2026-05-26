@@ -121,16 +121,17 @@
                             <input th:if="${guestMode == true}" type="hidden" name="maCN" th:value="${chiNhanhDangChon.maCN}">
                             <input type="hidden" name="canhBao" id="canhBaoThoiGian">
                             <label>
-                                Ngày
+                                Ngày sử dụng
                                 <input type="date" name="date" id="bookingDate" th:value="${selectedDate}" required>
                             </label>
                             <label>
-                                Từ
+                                Giờ bắt đầu
                                 <input type="time" name="start" id="startHour" th:value="${selectedStart}" step="60" required>
                             </label>
                             <label>
-                                Đến
-                                <input type="time" name="end" id="endHour" th:value="${selectedEnd}" step="60" required>
+                                Thời gian sử dụng
+                                <input type="number" name="durationHours" id="durationHoursPicker"
+                                       th:value="${selectedDuration}" min="1" max="8" step="1" required>
                             </label>
                         </form>
                     </div>
@@ -139,38 +140,14 @@
                         <strong>Chi nhánh này chưa có không gian để hiển thị.</strong>
                     </div>
 
-                    <div th:if="${danhSachKhongGian != null and !danhSachKhongGian.isEmpty() and !dungGridFallback}"
-                         class="space-map-canvas"
+                    <div th:if="${danhSachKhongGian != null and !danhSachKhongGian.isEmpty()}"
+                         th:class="'space-map-grid space-map-unified ' + (${dungGridFallback} ? 'space-map-auto' : 'space-map-coordinate')"
                          th:style="|--map-cols:${mapColumns}; --map-rows:${mapRows};|">
+                        <div th:if="${!dungGridFallback}" class="space-map-fixture fixture-reception">RECEPTION</div>
+                        <div th:if="${!dungGridFallback}" class="space-map-fixture fixture-entrance">ENTRANCE</div>
                         <article th:each="khongGian : ${danhSachKhongGian}"
                                  th:class="'space-node space-node-' + ${khongGian.statusClass}"
-                                 th:style="|--x:${khongGian.toaDoX}; --y:${khongGian.toaDoY}; --w:${khongGian.chieuDai}; --h:${khongGian.chieuRong};|"
-                                 th:data-id="${khongGian.maKG}"
-                                 th:data-name="${khongGian.tenKG}"
-                                 th:data-price="${khongGian.donGiaTheoGio != null ? khongGian.donGiaTheoGio : 0}"
-                                 th:data-available="${khongGian.coTheDat}"
-                                 data-space-node>
-                            <strong class="space-node-title" th:title="${khongGian.tenKG}" th:text="${khongGian.tenKG}">Không gian</strong>
-                            <span class="space-node-meta" th:title="${khongGian.tenLoaiKG}" th:text="${khongGian.tenLoaiKG != null ? khongGian.tenLoaiKG : 'Chưa phân loại'}">Loại</span>
-                            <small class="space-node-meta" th:text="${khongGian.sucChua != null ? 'Sức chứa ' + khongGian.sucChua : 'Sức chứa chưa cập nhật'}">
-                                Sức chứa
-                            </small>
-                            <small class="space-node-price" th:text="${khongGian.donGiaTheoGio != null ? #numbers.formatDecimal(khongGian.donGiaTheoGio, 0, 'POINT', 0, 'COMMA') + ' VNĐ/giờ' : '0 VNĐ/giờ'}">
-                                Giá
-                            </small>
-                            <em class="space-node-status" th:text="${khongGian.trangThaiHienThi}">Trạng thái</em>
-                            <button type="button"
-                                    th:disabled="${!khongGian.coTheDat}"
-                                    th:text="${khongGian.coTheDat ? (daDangNhap ? 'Đặt chỗ' : 'Đăng nhập để đặt chỗ') : 'Không thể đặt'}">
-                                Đặt chỗ
-                            </button>
-                        </article>
-                    </div>
-
-                    <div th:if="${danhSachKhongGian != null and !danhSachKhongGian.isEmpty() and dungGridFallback}"
-                         class="space-map-grid">
-                        <article th:each="khongGian : ${danhSachKhongGian}"
-                                 th:class="'space-node space-node-' + ${khongGian.statusClass}"
+                                 th:style="|--grid-x:${khongGian.toaDoX + 1}; --grid-y:${khongGian.toaDoY + 1}; --grid-w:${khongGian.chieuDai}; --grid-h:${khongGian.chieuRong};|"
                                  th:data-id="${khongGian.maKG}"
                                  th:data-name="${khongGian.tenKG}"
                                  th:data-price="${khongGian.donGiaTheoGio != null ? khongGian.donGiaTheoGio : 0}"

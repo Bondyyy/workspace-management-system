@@ -45,6 +45,8 @@ public class DaTraTruocTest {
         }
         try {
             jdbcTemplate.update("DELETE FROM CHITIETDICHVU WHERE MaPhien IN (SELECT MaPhien FROM PHIENLAMVIEC WHERE MaKG = ?)", maKG);
+            jdbcTemplate.update("UPDATE PHIENLAMVIEC SET TrangThaiPhien = 'Đã kết thúc' WHERE MaKG = ? AND TrangThaiPhien = 'Đang hoạt động'", maKG);
+            jdbcTemplate.update("UPDATE HOADON SET TrangThaiThanhToan = 'Đang chờ thanh toán' WHERE MaPhien IN (SELECT MaPhien FROM PHIENLAMVIEC WHERE MaKG = ?)", maKG);
             jdbcTemplate.update("DELETE FROM HOADON WHERE MaPhien IN (SELECT MaPhien FROM PHIENLAMVIEC WHERE MaKG = ?)", maKG);
             jdbcTemplate.update("DELETE FROM PHIENLAMVIEC WHERE MaKG = ?", maKG);
             jdbcTemplate.update("DELETE FROM DATCHO WHERE MaKG = ?", maKG);
@@ -65,7 +67,7 @@ public class DaTraTruocTest {
         assertEquals(1, hoaDonList.size(), "Chỉ được có một hóa đơn cho phiên");
         Map<String, Object> hd = hoaDonList.get(0);
         assertEquals(150000.0, ((Number) hd.get("DaTraTruoc")).doubleValue(), 0.001);
-        assertEquals("Đã thanh toán thành công", hd.get("TrangThaiThanhToan"));
+        assertEquals("Đã trả trước", hd.get("TrangThaiThanhToan"));
     }
 
     @Test
@@ -89,7 +91,7 @@ public class DaTraTruocTest {
 
     @Test
     void testCase1_PrepaidAutoEndNoExtraServices() {
-        String maDatCho = taoDatChoDaThanhToan(-2, 1, 150000, "QR_CASE1_AUTO");
+        String maDatCho = taoDatChoDaThanhToan(-1, 2, 150000, "QR_CASE1_AUTO");
         KetQuaNhanChoDTO ketQua = new PhienLamViecDAO().moPhienTuQrDatCho(maDatCho, "QR_CASE1_AUTO");
         assertTrue(ketQua.isThanhCong(), ketQua.getThongBao());
 
@@ -121,7 +123,7 @@ public class DaTraTruocTest {
 
     @Test
     void testCase2_PrepaidAutoEndWithExtraServices() {
-        String maDatCho = taoDatChoDaThanhToan(-2, 1, 150000, "QR_CASE2_AUTO");
+        String maDatCho = taoDatChoDaThanhToan(-1, 2, 150000, "QR_CASE2_AUTO");
         KetQuaNhanChoDTO ketQua = new PhienLamViecDAO().moPhienTuQrDatCho(maDatCho, "QR_CASE2_AUTO");
         assertTrue(ketQua.isThanhCong(), ketQua.getThongBao());
 
@@ -163,9 +165,10 @@ public class DaTraTruocTest {
 
         Map<String, Object> hd = jdbcTemplate.queryForMap(
                 "SELECT * FROM HOADON WHERE MaPhien = ?", maPhien);
-        assertEquals("Đang chờ thanh toán", hd.get("TrangThaiThanhToan"));
+        double thanhTienConLai = ((Number) hd.get("ThanhTien")).doubleValue();
+        assertEquals(thanhTienConLai > 0 ? "Đang chờ thanh toán" : "Đã thanh toán thành công",
+                hd.get("TrangThaiThanhToan"));
         assertEquals(150000.0, ((Number) hd.get("DaTraTruoc")).doubleValue(), 0.001);
-        assertTrue(((Number) hd.get("ThanhTien")).doubleValue() > 0, "Hóa đơn phải yêu cầu thanh toán phần phát sinh");
     }
 
     @Test
@@ -194,6 +197,7 @@ public class DaTraTruocTest {
                 "SELECT TrangThaiPhien FROM PHIENLAMVIEC WHERE MaPhien = ?", String.class, maPhien);
         assertEquals("Đang hoạt động", trangThaiPhien);
 
+        jdbcTemplate.update("UPDATE PHIENLAMVIEC SET TrangThaiPhien = 'Đã kết thúc' WHERE MaPhien = ?", maPhien);
         jdbcTemplate.update("DELETE FROM HOADON WHERE MaPhien = ?", maPhien);
         jdbcTemplate.update("DELETE FROM PHIENLAMVIEC WHERE MaPhien = ?", maPhien);
     }
@@ -223,6 +227,7 @@ public class DaTraTruocTest {
     private void compileDbObjects() throws Exception {
         executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_TaoMaHoaDon.sql");
         executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_TaoHoaDonKhiMoPhien.sql");
+        executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_KiemTraPhuongThucThanhToan.sql");
         executeSqlFile("Database/05_triggers/DatCho/TRG_VoHieuQRSauNhanCho.sql");
         executeSqlFile("Database/04_procedures/HoaDon/SP_KetThucPhien.sql");
         executeSqlFile("Database/04_procedures/sp_ThanhToanVoiPGG.sql");

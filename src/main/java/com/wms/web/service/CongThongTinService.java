@@ -527,11 +527,7 @@ public class CongThongTinService {
             if (maPhienRetry != null && !maPhienRetry.isBlank()) {
                 System.out.println("[QR CheckIn] Retry sau khi phien da mo MaDatCho="
                         + thongTin.getMaDatCho() + ", MaPhien=" + maPhienRetry);
-                return KetQuaNhanChoBangQRView.thanhCong(
-                        "Phiên đã được mở trước đó. Mã phiên: " + maPhienRetry,
-                        thongTin,
-                        maPhienRetry
-                );
+                return KetQuaNhanChoBangQRView.thatBai("Mã QR này đã được sử dụng.");
             }
             System.err.println("[QR CheckIn] Mo phien that bai MaDatCho=" + thongTin.getMaDatCho()
                     + ", MaKG=" + thongTin.getMaKG() + ", loi=" + ex.getMessage());
@@ -741,7 +737,7 @@ public class CongThongTinService {
 
     private void kiemTraThoiGianDatCho(LocalDateTime arrivalTime, Integer durationHours) {
         if (arrivalTime == null || durationHours == null || durationHours < 1) {
-            throw new IllegalArgumentException("Vui lòng chọn thời gian đến và thời gian rời hợp lệ.");
+            throw new IllegalArgumentException("Vui lòng chọn thời gian bắt đầu và số giờ sử dụng hợp lệ.");
         }
         if (!laThoiGianDatChoTrongTuongLai(arrivalTime)) {
             throw new IllegalArgumentException("Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.");

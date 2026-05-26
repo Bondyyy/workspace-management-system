@@ -792,6 +792,15 @@ public class TrangChuQuanLyForm extends javax.swing.JFrame {
         panelCache.remove(key);
     }
 
+    public void moHoaDonTheoPhien(String maPhien) {
+        if (maPhien == null || maPhien.isBlank()) {
+            return;
+        }
+        panelCache.remove("hoaDon");
+        showPanelAsync("hoaDon", () -> new com.wms.view.TrangChuQuanLy.QuanLyHoaDon.QuanLyHoaDonForm(maPhien));
+        setActiveMenu(btnMenuHoaDon);
+    }
+
     private void refreshPanelIfSupported(javax.swing.JPanel panel) {
         if (panel instanceof com.wms.view.TrangChuQuanLy.QuanLyNhanVien.QuanLyNhanVienForm nhanVienForm) {
             nhanVienForm.refreshData();

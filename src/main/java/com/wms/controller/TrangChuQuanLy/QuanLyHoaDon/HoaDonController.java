@@ -41,6 +41,10 @@ public class HoaDonController {
         if (maHoaDon == null) return false;
         return hoaDonDAO.xoaHoaDon(maHoaDon);
     }
+
+    public String timMaHoaDonTheoMaPhien(String maPhien) {
+        return hoaDonDAO.timMaHoaDonTheoMaPhien(maPhien);
+    }
 }
 
 

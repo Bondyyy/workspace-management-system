@@ -71,9 +71,7 @@ public class ThanhToanService {
         if (thongTin.getSoTienDaTraTruoc() <= 0) {
             return false;
         }
-        return thongTin.getThanhTien() <= 0
-                && ("Đã thanh toán thành công".equals(thongTin.getTrangThaiThanhToan())
-                || "Đã trả trước".equals(thongTin.getTrangThaiThanhToan()));
+        return thongTin.getThanhTien() <= 0;
     }
 
     private String layMaNhanVienDangNhap() {

@@ -66,11 +66,15 @@
                     <input type="text" th:value="${#temporals.format(arrivalTime, 'dd/MM/yyyy')}" readonly>
                 </label>
                 <label>
-                    Từ khung giờ
+                    Giờ bắt đầu
                     <input type="text" th:value="${#temporals.format(arrivalTime, 'HH:mm')}" readonly>
                 </label>
                 <label>
-                    Đến khung giờ
+                    Thời gian sử dụng
+                    <input type="text" th:value="${durationHours + ' giờ'}" readonly>
+                </label>
+                <label>
+                    Dự kiến kết thúc
                     <input type="text" th:value="${#temporals.format(endTime, 'HH:mm')}" readonly>
                 </label>
                 <label class="span-2">

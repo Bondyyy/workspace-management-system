@@ -159,14 +159,6 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                         return;
                     }
 
-                    // Kiem tra: con du thoi gian de mo phien moi (toi thieu 1 gio)?
-                    long remainingSeconds = java.time.Duration.between(nowHcm, closeDateTime).getSeconds();
-                    if (remainingSeconds < 3600) {
-                        txtThoiGianKetThuc.setText("Thoi gian con lai den gio dong cua khong du de mo phien moi.");
-                        txtThoiGianKetThuc.setForeground(java.awt.Color.RED);
-                        btnMoPhien.setEnabled(false);
-                        return;
-                    }
                 }
             }
             
@@ -654,7 +646,7 @@ public class MoPhienMoiForm extends javax.swing.JPanel {
                 initMap();
                 btnLamMoiActionPerformed(evt);
             } else {
-                com.wms.util.MessageUtil.showError(this, "[DATABASE/SYSTEM ERROR]: Loi khi mo phien lam viec! Vui long kiem tra lai ket noi hoac du lieu.");
+                com.wms.util.MessageUtil.showError(this, "Không thể mở phiên. Procedure không trả về trạng thái thành công.");
             }
         } catch (IllegalArgumentException e) {
             com.wms.util.MessageUtil.showError(this, e.getMessage(), e);

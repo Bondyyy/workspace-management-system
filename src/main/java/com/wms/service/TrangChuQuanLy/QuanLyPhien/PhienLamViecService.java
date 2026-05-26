@@ -2,6 +2,7 @@ package com.wms.service.TrangChuQuanLy.QuanLyPhien;
 
 import com.wms.dao.TrangChuQuanLy.QuanLyPhien.DatChoDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyHoaDon.HoaDonDAO;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.dao.TrangChuQuanLy.QuanLyHoiVien.KhachHangDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyKhongGian.KhongGianDAO;
 import com.wms.dao.TrangChuQuanLy.QuanLyNhanVien.NhanVienDAO;
@@ -52,7 +53,15 @@ public class PhienLamViecService {
     }
 
     public boolean ketThucPhien(String maPhien) {
-        return phienDAO.ketThucPhien(maPhien);
+        NguoiDungDTO user = DangNhapController.getCurrentUser();
+        String maNV = null;
+        if (user != null) {
+            maNV = user.getMaNV();
+            if ((maNV == null || maNV.isBlank()) && user.getMaND() != null) {
+                maNV = nhanVienDAO.layMaNVTuMaND(user.getMaND());
+            }
+        }
+        return phienDAO.ketThucPhien(maPhien, maNV);
     }
 
     public boolean xacNhanThanhToanDatTruoc(String maDatCho, String maPhien) {
@@ -72,6 +81,9 @@ public class PhienLamViecService {
 
     public String layMaCNTheNguoiDung(NguoiDungDTO user) {
         if (user == null) return null;
+        if (user.getMaCN() != null && !user.getMaCN().trim().isEmpty()) {
+            return user.getMaCN().trim();
+        }
         return nhanVienDAO.layMaCNTuMaND(user.getMaND());
     }
 
@@ -169,7 +181,7 @@ public class PhienLamViecService {
 
         boolean res = phienDAO.taoPhienLamViecMoi(phien);
         if (!res) {
-            throw new IllegalArgumentException("Loi khi mo phien lam viec! Vui long kiem tra lai ket noi hoac du lieu.");
+            throw new IllegalArgumentException("Khong the mo phien lam viec: procedure khong tra ve trang thai thanh cong.");
         }
         return true;
     }

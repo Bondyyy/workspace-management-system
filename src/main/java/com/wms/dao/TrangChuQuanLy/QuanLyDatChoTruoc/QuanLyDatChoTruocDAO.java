@@ -296,7 +296,7 @@ public class QuanLyDatChoTruocDAO {
                         """)) {
                     ps.setDouble(1, thanhTien);
                     ps.setDouble(2, thanhTien);
-                    ps.setDouble(3, thanhTien);
+                    ps.setDouble(3, 0);
                     ps.setString(4, maPhien);
                     ps.executeUpdate();
                 }
@@ -501,7 +501,7 @@ public class QuanLyDatChoTruocDAO {
                         """)) {
                     ps.setDouble(1, thanhTien);
                     ps.setDouble(2, thanhTien);
-                    ps.setDouble(3, thanhTien);
+                    ps.setDouble(3, 0);
                     ps.setString(4, maPhien);
                     ps.executeUpdate();
                 }

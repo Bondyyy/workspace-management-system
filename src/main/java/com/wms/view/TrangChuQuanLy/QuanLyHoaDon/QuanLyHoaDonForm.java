@@ -34,10 +34,41 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     private boolean dangExportHoaDon = false;
 
     public QuanLyHoaDonForm() {
+        this(null);
+    }
+
+    public QuanLyHoaDonForm(String maPhienCanChon) {
         initComponents();
         tableModel = (DefaultTableModel) tblHoaDon.getModel();
-        loadDataToTable();
+        setupHoaDonTable();
+        if (maPhienCanChon == null || maPhienCanChon.isBlank()) {
+            loadDataToTable();
+        } else {
+            loadDataAndSelectByMaPhien(maPhienCanChon);
+        }
         initRealTimeTimer();
+    }
+
+    private void setupHoaDonTable() {
+        int[] widths = {80, 90, 120, 150, 105, 145, 110};
+        for (int i = 0; i < widths.length && i < tblHoaDon.getColumnModel().getColumnCount(); i++) {
+            tblHoaDon.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+        tblHoaDon.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        javax.swing.table.DefaultTableCellRenderer tooltipRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                java.awt.Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (component instanceof javax.swing.JComponent jComponent) {
+                    jComponent.setToolTipText(value == null ? "" : value.toString());
+                }
+                return component;
+            }
+        };
+        for (int i = 0; i < tblHoaDon.getColumnModel().getColumnCount(); i++) {
+            tblHoaDon.getColumnModel().getColumn(i).setCellRenderer(tooltipRenderer);
+        }
     }
 
     private void initRealTimeTimer() {
@@ -65,6 +96,10 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     }
 
     private void loadDataAsync(String maHoaDonCanChon) {
+        loadDataAsync(maHoaDonCanChon, null);
+    }
+
+    private void loadDataAsync(String maHoaDonCanChon, String maPhienCanChon) {
         if (loadHoaDonWorker != null && !loadHoaDonWorker.isDone()) {
             loadHoaDonWorker.cancel(true);
         }
@@ -88,7 +123,9 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                     }
                     dsHoaDon = get();
                     renderHoaDonTable();
-                    if (maHoaDonCanChon != null) {
+                    if (maPhienCanChon != null) {
+                        chonHoaDonTheoMaPhienSauKhiTai(maPhienCanChon);
+                    } else if (maHoaDonCanChon != null) {
                         chonHoaDonSauKhiTai(maHoaDonCanChon);
                     }
                     System.out.println("[QuanLyHoaDonForm] load bang hoa don mat "
@@ -110,11 +147,12 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         for (HoaDonDTO hd : dsHoaDon) {
             tableModel.addRow(new Object[] {
                     hd.getMaHoaDon(),
+                    hd.getMaPhien() != null ? hd.getMaPhien() : "",
                     hd.getNgayLapHoaDon() != null ? sdf.format(hd.getNgayLapHoaDon()) : "N/A",
                     hd.getHoTenKH(),
-                    df.format(hd.getTongTien()),
-                    hd.getTrangThaiThanhToan(),
-                    hd.isDaTraTruoc() ? "Đặt trước (Đã trả trước)" : (hd.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp")
+                    df.format(giaTriTien(hd.getTongTien())),
+                    hienThiTrangThaiThanhToan(hd),
+                    hienThiHinhThuc(hd)
             });
         }
     }
@@ -130,6 +168,30 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         resetForm();
     }
 
+    private void chonHoaDonTheoMaPhienSauKhiTai(String maPhien) {
+        if (maPhien == null || maPhien.isBlank()) {
+            resetForm();
+            return;
+        }
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Object value = tableModel.getValueAt(i, 1);
+            if (value != null && maPhien.trim().equalsIgnoreCase(value.toString())) {
+                tblHoaDon.setRowSelectionInterval(i, i);
+                Object maHD = tableModel.getValueAt(i, 0);
+                showChiTietHoaDon(maHD == null ? "" : maHD.toString());
+                return;
+            }
+        }
+        resetForm();
+    }
+
+    public void loadDataAndSelectByMaPhien(String maPhien) {
+        String value = maPhien == null ? "" : maPhien.trim();
+        txtTimKiem.setText(value);
+        cbxLocTrangThai.setSelectedIndex(0);
+        loadDataAsync(null, value);
+    }
+
     private void setLoadingTable(boolean loading) {
         btnTimKiem.setEnabled(!loading);
         btnLamMoi.setEnabled(!loading);
@@ -138,7 +200,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         tblHoaDon.setEnabled(!loading);
         if (loading) {
             tableModel.setRowCount(0);
-            tableModel.addRow(new Object[]{"Đang tải...", "", "", "", "", ""});
+            tableModel.addRow(new Object[]{"Đang tải...", "", "", "", "", "", ""});
         }
     }
 
@@ -147,11 +209,11 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         if (row == -1) return;
 
         txtMaHD.setText(maHD);
-        txtKhachHang.setText(tableModel.getValueAt(row, 2).toString());
         
         for (HoaDonDTO hd : dsHoaDon) {
             if (!hd.getMaHoaDon().equals(maHD)) continue;
             this.currentHD = hd;
+            txtKhachHang.setText(hd.getHoTenKH() != null ? hd.getHoTenKH() : "");
             
             txtNgayTao.setText(sdf.format(hd.getNgayLapHoaDon()));
             txtNgayTao.setCaretPosition(0);
@@ -160,22 +222,18 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             
             // Xử lý tiền trả trước và hiển thị
             double soTienDaTraTruoc = hd.getSoTienDaTraTruoc();
-            if (soTienDaTraTruoc > 0) {
-                txtTruocGiamGia.setText("Tổng cộng: " + df.format(hd.getTongTien())
-                        + "  |  Đã trả trước: " + df.format(soTienDaTraTruoc)
-                        + "  |  Còn phải thanh toán: " + df.format(Math.max(0, hd.getThanhTien())));
-            } else {
-                txtTruocGiamGia.setText("Tổng cộng: " + df.format(hd.getTongTien())
-                        + "  |  Còn phải thanh toán: " + df.format(Math.max(0, hd.getThanhTien())));
-            }
+            double conPhaiThuValue = Math.max(0, giaTriTien(hd.getThanhTien()));
+            txtTruocGiamGia.setText(df.format(conPhaiThuValue));
+            txtTruocGiamGia.setToolTipText("Tổng cộng: " + df.format(giaTriTien(hd.getTongTien()))
+                    + " | Đã trả trước: " + df.format(soTienDaTraTruoc)
+                    + " | Còn phải thu: " + df.format(conPhaiThuValue));
 
-            txtTrangThai.setText(hd.getTrangThaiThanhToan());
+            txtTrangThai.setText(hienThiTrangThaiThanhToan(hd));
             if (txtHinhThuc != null) {
-                if (hd.isDaTraTruoc()) {
-                    txtHinhThuc.setText("Đặt trước (Đã trả trước)");
-                } else {
-                    txtHinhThuc.setText(hd.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp");
-                }
+                txtHinhThuc.setText(hienThiHinhThuc(hd));
+                txtHinhThuc.setToolTipText(hd.isDaTraTruoc()
+                        ? "Đặt trước (Đã trả trước)"
+                        : hienThiHinhThuc(hd));
             }
             if (txtTrangThaiPhien != null) txtTrangThaiPhien.setText(hd.getTrangThaiPhien() != null ? hd.getTrangThaiPhien() : "N/A");
             if (txtThoiGianBatDau != null) {
@@ -215,24 +273,52 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
             boolean trangThaiHopLeDeThanhToan = "Đang chờ thanh toán".equals(hd.getTrangThaiThanhToan())
                                 || "Đã trả trước".equals(hd.getTrangThaiThanhToan())
-                                || "Đang chờ thanh toán phụ thu".equals(hd.getTrangThaiThanhToan());
+                                || "Đang chờ thanh toán phụ thu".equals(hienThiTrangThaiThanhToan(hd));
             boolean phienDaKetThuc = !"Đang hoạt động".equals(hd.getTrangThaiPhien());
-            boolean conPhaiThu = hd.getThanhTien() > 0;
+            String trangThaiThanhToan = hd.getTrangThaiThanhToan() == null ? "" : hd.getTrangThaiThanhToan();
+            boolean conPhaiThu = giaTriTien(hd.getThanhTien()) > 0;
 
             btnXacNhan.setEnabled(trangThaiHopLeDeThanhToan && phienDaKetThuc && conPhaiThu
-                    && !"Đã thanh toán thành công".equals(hd.getTrangThaiThanhToan()));
-            if ("Đã trả trước".equals(hd.getTrangThaiThanhToan())) {
-                btnXacNhan.setText("Thanh toán phát sinh");
-            } else if (hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán phụ thu")
-                || (hd.getTrangThaiThanhToan().equals("Đang chờ thanh toán") && hd.getSoTienDaTraTruoc() > 0)) {
+                    && !"Đã thanh toán thành công".equals(trangThaiThanhToan));
+            if ("Đã trả trước".equals(trangThaiThanhToan)) {
+                btnXacNhan.setText("Thanh toán phụ thu");
+            } else if (trangThaiThanhToan.equals("Đang chờ thanh toán phụ thu")
+                || (trangThaiThanhToan.equals("Đang chờ thanh toán") && hd.getSoTienDaTraTruoc() > 0)) {
                 btnXacNhan.setText("Thanh toán phụ thu");
             } else {
                 btnXacNhan.setText("Xác nhận Thanh toán");
             }
-            btnHuy.setEnabled("Đang chờ thanh toán".equals(hd.getTrangThaiThanhToan())
-                    || "Đang chờ thanh toán phụ thu".equals(hd.getTrangThaiThanhToan()));
+            btnHuy.setEnabled("Đang chờ thanh toán".equals(trangThaiThanhToan)
+                    || "Đang chờ thanh toán phụ thu".equals(trangThaiThanhToan));
             break;
         }
+    }
+
+    private String hienThiHinhThuc(HoaDonDTO hd) {
+        if (hd == null) {
+            return "";
+        }
+        if (hd.isDaTraTruoc()) {
+            return "Đặt trước - đã trả";
+        }
+        return hd.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp";
+    }
+
+    private String hienThiTrangThaiThanhToan(HoaDonDTO hd) {
+        if (hd == null) {
+            return "";
+        }
+        if (hd.getSoTienDaTraTruoc() > 0
+                && hd.getThanhTien() != null
+                && hd.getThanhTien() > 0
+                && !"Đã thanh toán thành công".equals(hd.getTrangThaiThanhToan())) {
+            return "Đang chờ thanh toán phụ thu";
+        }
+        return hd.getTrangThaiThanhToan() == null ? "Chưa thanh toán" : hd.getTrangThaiThanhToan();
+    }
+
+    private double giaTriTien(Double value) {
+        return value == null ? 0 : value;
     }
 
     /**
@@ -315,7 +401,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         lblListTitle.setBounds(20, 15, 200, 30);
 
         txtTimKiem.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        txtTimKiem.setToolTipText("Tìm theo mã hóa đơn hoặc khách hàng...");
+        txtTimKiem.setToolTipText("Tìm theo mã hóa đơn, mã phiên làm việc hoặc khách hàng...");
         pnLeft.add(txtTimKiem);
         txtTimKiem.setBounds(20, 55, 280, 35);
 
@@ -329,11 +415,11 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
             },
             new String [] {
-                "Mã HĐ", "Ngày tạo", "Khách hàng", "Tổng tiền", "Trạng thái", "Hình thức"
+                "Mã HĐ", "Mã PLV", "Ngày tạo", "Khách hàng", "Tổng tiền", "Trạng thái", "Hình thức"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false
+                false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -423,7 +509,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
         lblTongTien.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTongTien.setForeground(new java.awt.Color(136, 136, 136));
-        lblTongTien.setText("Tổng cộng (Trước giảm giá)");
+        lblTongTien.setText("Còn phải thu");
         pnRight.add(lblTongTien);
         lblTongTien.setBounds(10, 300, 200, 18);
 
@@ -472,7 +558,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         btnHuy.setBounds(10, 490, 200, 40);
 
         txtHinhThuc.setEditable(false);
-        txtHinhThuc.setFont(new java.awt.Font("Segoe UI", 3, 16)); // NOI18N
+        txtHinhThuc.setFont(new java.awt.Font("Segoe UI", 3, 13)); // NOI18N
         txtHinhThuc.setBorder(null);
         txtHinhThuc.addActionListener(this::txtHinhThucActionPerformed);
         pnRight.add(txtHinhThuc);
@@ -622,7 +708,8 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     private void tblHoaDonMouseClicked(java.awt.event.MouseEvent evt) {
         int row = tblHoaDon.getSelectedRow();
         if (row != -1) {
-            String maHD = tableModel.getValueAt(row, 0).toString();
+            int modelRow = tblHoaDon.convertRowIndexToModel(row);
+            String maHD = tableModel.getValueAt(modelRow, 0).toString();
             showChiTietHoaDon(maHD);
         }
     }
@@ -813,6 +900,10 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         txtThanhToan.setText("");
         txtTruocGiamGia.setText("");
         txtTrangThai.setText("");
+        txtHinhThuc.setText("");
+        txtTrangThaiPhien.setText("");
+        txtThoiGianBatDau.setText("");
+        txtThoiGianDaDung.setText("");
         txtThoiGianKetThuc.setText("");
         txtThoiGianLamTron.setText("");
         btnXacNhan.setEnabled(false);

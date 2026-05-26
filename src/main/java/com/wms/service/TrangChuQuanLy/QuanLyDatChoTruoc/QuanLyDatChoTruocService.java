@@ -68,6 +68,9 @@ public class QuanLyDatChoTruocService {
         if (maCN == null || maCN.isBlank()) {
             maCN = nhanVienDAO.layMaCNTuMaND(nhanVienDangNhap.getMaND());
         }
+        if (maCN == null || maCN.isBlank()) {
+            return new KetQuaNhanChoDTO(false, "Tài khoản nhân viên chưa được gán chi nhánh để nhận chỗ.");
+        }
         return dao.xacNhanNhanChoBangQr(qrRaw, maNV, maCN);
     }
 

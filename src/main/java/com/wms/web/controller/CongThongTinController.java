@@ -112,6 +112,7 @@ public class CongThongTinController {
                                       @RequestParam(name = "date", required = false) String bookingDateText,
                                       @RequestParam(name = "start", required = false) String startTimeText,
                                       @RequestParam(name = "end", required = false) String endTimeText,
+                                      @RequestParam(name = "durationHours", required = false) Integer durationHours,
                                       HttpSession session,
                                       Model model,
                                       RedirectAttributes redirectAttributes) {
@@ -131,11 +132,13 @@ public class CongThongTinController {
         LocalDate bookingDate = null;
         LocalTime startTime = null;
         LocalTime endTime = null;
+        Integer selectedDuration = durationHours;
         String loiNgayGio = null;
         try {
             bookingDate = parseWebDate(bookingDateText, "Ngày đặt chỗ");
             startTime = parseWebTime(startTimeText, "Từ giờ");
             endTime = parseWebTime(endTimeText, "Đến giờ");
+            selectedDuration = tinhSoGioSuDung(bookingDate, startTime, endTime, durationHours);
         } catch (IllegalArgumentException ex) {
             loiNgayGio = ex.getMessage();
         }
@@ -143,7 +146,7 @@ public class CongThongTinController {
         ThongTinTaiKhoanView profile = user == null || user.laNhanVien()
                 ? null
                 : congThongTinService.layThongTinTaiKhoan(user);
-        return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, endTime,
+        return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, selectedDuration,
                 loiNgayGio, null, danhSachChiNhanh, model);
     }
 
@@ -152,6 +155,7 @@ public class CongThongTinController {
                                @RequestParam(name = "date", required = false) String bookingDateText,
                                @RequestParam(name = "start", required = false) String startTimeText,
                                @RequestParam(name = "end", required = false) String endTimeText,
+                               @RequestParam(name = "durationHours", required = false) Integer durationHours,
                                @RequestParam(name = "canhBao", required = false) String canhBao,
                               HttpSession session,
                               Model model,
@@ -173,16 +177,18 @@ public class CongThongTinController {
         LocalDate bookingDate = null;
         LocalTime startTime = null;
         LocalTime endTime = null;
+        Integer selectedDuration = durationHours;
         String loiNgayGio = null;
         try {
             bookingDate = parseWebDate(bookingDateText, "Ngày đặt chỗ");
             startTime = parseWebTime(startTimeText, "Từ giờ");
             endTime = parseWebTime(endTimeText, "Đến giờ");
+            selectedDuration = tinhSoGioSuDung(bookingDate, startTime, endTime, durationHours);
         } catch (IllegalArgumentException ex) {
             loiNgayGio = ex.getMessage();
         }
 
-        return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, endTime,
+        return napModelSoDoKhongGian(user, profile, branch, bookingDate, startTime, selectedDuration,
                 loiNgayGio, doiMaCanhBaoDatCho(canhBao), layChiNhanhAnToan(model), model);
     }
 
@@ -275,7 +281,7 @@ public class CongThongTinController {
                                          ChiNhanhView branch,
                                          LocalDate bookingDate,
                                          LocalTime startTime,
-                                         LocalTime endTime,
+                                         Integer durationHours,
                                          String thongBaoLoi,
                                          String canhBao,
                                          List<ChiNhanhView> danhSachChiNhanh,
@@ -287,20 +293,31 @@ public class CongThongTinController {
 
         LocalDate selectedDate = bookingDate == null ? defaultWindow.date() : bookingDate;
         LocalTime selectedStart = startTime == null ? defaultWindow.startTime() : startTime;
-        LocalTime selectedEnd = endTime == null ? defaultWindow.endTime() : endTime;
+        int defaultDuration = Math.max(1, (int) Math.ceil(
+                java.time.Duration.between(
+                        LocalDateTime.of(defaultWindow.date(), defaultWindow.startTime()),
+                        BusinessHoursUtil.resolveEnd(defaultWindow.date(), defaultWindow.startTime(), defaultWindow.endTime())
+                ).toMinutes() / 60.0));
+        int selectedDuration = durationHours == null ? defaultDuration : durationHours;
+        if (selectedDuration < 1) {
+            thongBaoLoi = "Vui lòng chọn thời gian bắt đầu và số giờ sử dụng hợp lệ.";
+            selectedDuration = defaultDuration;
+        }
 
         LocalDateTime selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
-        LocalDateTime selectedEndDateTime = BusinessHoursUtil.resolveEnd(selectedDate, selectedStart, selectedEnd);
+        LocalDateTime selectedEndDateTime = selectedStartDateTime.plusHours(selectedDuration);
+        LocalTime selectedEnd = selectedEndDateTime.toLocalTime();
 
         String openStr = BusinessHoursUtil.format(openTime);
         String closeStr = BusinessHoursUtil.format(closeTime);
         if (!BusinessHoursUtil.fitsInBranchHours(selectedStartDateTime, selectedEndDateTime, openTime, closeTime)) {
             thongBaoLoi = "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
             selectedStart = defaultWindow.startTime();
-            selectedEnd = defaultWindow.endTime();
             selectedDate = defaultWindow.date();
+            selectedDuration = defaultDuration;
             selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
-            selectedEndDateTime = BusinessHoursUtil.resolveEnd(selectedDate, selectedStart, selectedEnd);
+            selectedEndDateTime = selectedStartDateTime.plusHours(selectedDuration);
+            selectedEnd = selectedEndDateTime.toLocalTime();
         }
         if (thongBaoLoi == null && !congThongTinService.laThoiGianDatChoTrongTuongLai(selectedStartDateTime)) {
             thongBaoLoi = "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
@@ -318,16 +335,8 @@ public class CongThongTinController {
         }
         boolean dungGridFallback = !spaces.isEmpty()
                 && spaces.stream().allMatch(space -> space.getToaDoX() == 0 && space.getToaDoY() == 0);
-        int maxSpaceColumn = spaces.stream()
-                .mapToInt(space -> space.getToaDoX() + space.getChieuDai())
-                .max()
-                .orElse(3);
-        int maxSpaceRow = spaces.stream()
-                .mapToInt(space -> space.getToaDoY() + space.getChieuRong())
-                .max()
-                .orElse(2);
-        int mapColumns = Math.min(12, Math.max(6, Math.max(3, maxSpaceColumn) + 3));
-        int mapRows = Math.min(8, Math.max(4, maxSpaceRow + 1));
+        int mapColumns = 12;
+        int mapRows = 8;
 
         model.addAttribute("user", user);
         model.addAttribute("daDangNhap", user != null && !user.laNhanVien());
@@ -350,7 +359,7 @@ public class CongThongTinController {
         model.addAttribute("selectedDate", selectedDate);
         model.addAttribute("selectedStart", selectedStart);
         model.addAttribute("selectedEnd", selectedEnd);
-        model.addAttribute("selectedDuration", Math.max(1, java.time.Duration.between(selectedStartDateTime, selectedEndDateTime).toHours()));
+        model.addAttribute("selectedDuration", selectedDuration);
         model.addAttribute("overnightBranch", BusinessHoursUtil.isOvernight(openTime, closeTime));
         model.addAttribute("twentyFourHoursBranch", BusinessHoursUtil.isTwentyFourHours(openTime, closeTime));
         model.addAttribute("mapColumns", mapColumns);
@@ -394,7 +403,7 @@ public class CongThongTinController {
         }
         if (durationHours == null || durationHours < 1) {
             return traVeSoDoKhongGianVoiLoi(user, checkoutProfile, space, arrivalTime, durationHours,
-                    "Vui lòng chọn khung giờ hợp lệ.", model, redirectAttributes);
+                    "Vui lòng chọn thời gian bắt đầu và số giờ sử dụng hợp lệ.", model, redirectAttributes);
         }
         if (space.getTrangThaiKG() != null
                 && java.text.Normalizer.normalize(space.getTrangThaiKG(), java.text.Normalizer.Form.NFD)
@@ -750,10 +759,7 @@ public class CongThongTinController {
         }
         LocalDate ngayDat = arrivalTime == null ? null : arrivalTime.toLocalDate();
         LocalTime gioBatDau = arrivalTime == null ? null : arrivalTime.toLocalTime();
-        LocalTime gioKetThuc = arrivalTime == null || durationHours == null || durationHours < 1
-                ? null
-                : arrivalTime.plusHours(durationHours).toLocalTime();
-        return napModelSoDoKhongGian(user, profile, branch, ngayDat, gioBatDau, gioKetThuc,
+        return napModelSoDoKhongGian(user, profile, branch, ngayDat, gioBatDau, durationHours,
                 thongBaoLoi, null, layChiNhanhAnToan(model), model);
     }
 
@@ -782,6 +788,29 @@ public class CongThongTinController {
         return com.wms.util.DateInputUtil.parseTime(value.trim(), fieldName);
     }
 
+    private Integer tinhSoGioSuDung(LocalDate bookingDate,
+                                    LocalTime startTime,
+                                    LocalTime endTime,
+                                    Integer durationHours) {
+        if (bookingDate != null && startTime != null && endTime != null) {
+            long minutes = java.time.Duration.between(
+                    LocalDateTime.of(bookingDate, startTime),
+                    BusinessHoursUtil.resolveEnd(bookingDate, startTime, endTime)
+            ).toMinutes();
+            if (minutes <= 0) {
+                throw new IllegalArgumentException("Vui lòng chọn thời gian bắt đầu và số giờ sử dụng hợp lệ.");
+            }
+            return Math.max(1, (int) Math.ceil(minutes / 60.0));
+        }
+        if (durationHours == null) {
+            return null;
+        }
+        if (durationHours < 1) {
+            throw new IllegalArgumentException("Vui lòng chọn thời gian bắt đầu và số giờ sử dụng hợp lệ.");
+        }
+        return durationHours;
+    }
+
     private LocalDateTime parseWebDateTimeRequired(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Vui lòng chọn thời gian đặt chỗ.");
@@ -798,7 +827,7 @@ public class CongThongTinController {
             return "Thời gian đặt chỗ không đúng định dạng. Vui lòng chọn lại ngày giờ.";
         }
         if (bindingResult.getFieldError("durationHours") != null) {
-            return "Vui lòng chọn khung giờ hợp lệ.";
+            return "Vui lòng chọn thời gian bắt đầu và số giờ sử dụng hợp lệ.";
         }
         return "Vui lòng kiểm tra lại thông tin đặt chỗ.";
     }

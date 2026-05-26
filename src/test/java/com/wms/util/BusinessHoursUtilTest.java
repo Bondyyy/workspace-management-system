@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -67,5 +68,42 @@ class BusinessHoursUtilTest {
                 LocalTime.of(23, 0),
                 LocalTime.of(2, 0))
                 .equals(LocalDateTime.of(2026, 5, 26, 2, 0)));
+    }
+
+    @Test
+    void durationHoursCheckoutComputesExpectedEndInsideNormalBranchHours() {
+        LocalDateTime start = LocalDateTime.of(2026, 5, 26, 14, 0);
+        LocalDateTime end = start.plusHours(2);
+
+        assertEquals(LocalDateTime.of(2026, 5, 26, 16, 0), end);
+        assertTrue(BusinessHoursUtil.fitsInBranchHours(
+                start,
+                end,
+                LocalTime.of(7, 0),
+                LocalTime.of(22, 0)));
+    }
+
+    @Test
+    void durationHoursCheckoutBlocksWhenComputedEndPassesNormalClose() {
+        LocalDateTime start = LocalDateTime.of(2026, 5, 26, 21, 0);
+        LocalDateTime end = start.plusHours(2);
+
+        assertFalse(BusinessHoursUtil.fitsInBranchHours(
+                start,
+                end,
+                LocalTime.of(7, 0),
+                LocalTime.of(22, 0)));
+    }
+
+    @Test
+    void durationHoursCheckoutAcceptsOvernightBranch() {
+        LocalDateTime start = LocalDateTime.of(2026, 5, 26, 23, 0);
+        LocalDateTime end = start.plusHours(2);
+
+        assertTrue(BusinessHoursUtil.fitsInBranchHours(
+                start,
+                end,
+                LocalTime.of(22, 0),
+                LocalTime.of(6, 0)));
     }
 }

@@ -17,7 +17,7 @@
     const durationInput = document.getElementById("durationHours");
     const dateInput = document.getElementById("bookingDate");
     const startInput = document.getElementById("startHour");
-    const endInput = document.getElementById("endHour");
+    const durationPicker = document.getElementById("durationHoursPicker");
     const timeFilterForm = document.getElementById("timeFilterForm");
     const bookingForm = document.getElementById("mapBookingForm");
     const canhBaoThoiGianInput = document.getElementById("canhBaoThoiGian");
@@ -39,24 +39,18 @@
     }
 
     function syncHiddenTime() {
-        if (!dateInput || !startInput || !endInput || !arrivalInput || !durationInput || !totalLabel) {
+        if (!dateInput || !startInput || !durationPicker || !arrivalInput || !durationInput || !totalLabel) {
             return;
         }
-        const startMinutes = minutes(startInput.value);
-        const endMinutes = minutes(endInput.value);
-        let delta = endMinutes - startMinutes;
-        if (delta <= 0) {
-            delta += 24 * 60;
-        }
-        const duration = Math.max(1, Math.round(delta / 60));
-        durationInput.value = duration;
+        const duration = parseInt(durationPicker.value, 10);
+        durationInput.value = Number.isInteger(duration) && duration >= 1 ? duration : "";
         arrivalInput.value = dateInput.value && startInput.value ? dateInput.value + "T" + startInput.value : "";
-        totalLabel.textContent = formatMoney(selectedPrice * duration);
+        totalLabel.textContent = formatMoney(selectedPrice * (Number.isInteger(duration) && duration >= 1 ? duration : 0));
     }
 
     function updateSubmitState() {
         if (continueButton && maKGInput) {
-            continueButton.disabled = !maKGInput.value;
+            continueButton.disabled = !maKGInput.value || Boolean(validateTime());
         }
     }
 
@@ -84,40 +78,37 @@
 
     function validateTime() {
         syncHiddenTime();
-        if (!dateInput || !startInput || !endInput) {
+        if (!dateInput || !startInput || !durationPicker) {
             return "";
         }
-        if (!dateInput.value || !startInput.value || !endInput.value) {
+        if (!dateInput.value || !startInput.value) {
             return "Vui lòng chọn đầy đủ ngày giờ đặt chỗ.";
+        }
+        const duration = parseInt(durationPicker.value, 10);
+        if (!Number.isInteger(duration) || duration < 1) {
+            return "Vui lòng chọn thời gian sử dụng hợp lệ.";
         }
 
         const openValue = page.dataset.open || "07:00";
         const closeValue = page.dataset.close || "22:00";
         const startMin = minutes(startInput.value);
-        const endMin = minutes(endInput.value);
         const openMin = minutes(openValue);
         const closeMin = minutes(closeValue);
-        const overnight = openMin > closeMin;
-        const allDay = openMin === closeMin;
+        const allDay = openMin === closeMin || (openMin === 0 && closeMin === 24 * 60);
+        const overnight = !allDay && openMin > closeMin;
 
         const startInHours = allDay
             || (!overnight && startMin >= openMin && startMin < closeMin)
             || (overnight && (startMin >= openMin || startMin < closeMin));
-        let normalizedEndMin = endMin;
-        if (overnight && endMin <= startMin) {
-            normalizedEndMin += 24 * 60;
-        }
         const normalizedCloseMin = allDay ? openMin + 24 * 60 : (overnight ? closeMin + 24 * 60 : closeMin);
         const normalizedStartMin = overnight && startMin < closeMin ? startMin + 24 * 60 : startMin;
+        const computedEndMin = normalizedStartMin + duration * 60;
 
         if (!startInHours) {
             return "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openValue + " - " + closeValue + ".";
         }
-        if (!allDay && normalizedEndMin > normalizedCloseMin) {
+        if (!allDay && computedEndMin > normalizedCloseMin) {
             return "Thời gian đặt chỗ không được vượt quá giờ đóng cửa của chi nhánh.";
-        }
-        if (normalizedEndMin <= normalizedStartMin) {
-            return "Giờ kết thúc phải sau giờ bắt đầu.";
         }
 
         const startDate = new Date(dateInput.value + "T" + startInput.value + ":00");
@@ -166,9 +157,13 @@
         });
     });
 
-    [dateInput, startInput, endInput].forEach((input) => {
+    [dateInput, startInput, durationPicker].forEach((input) => {
         if (input) {
             input.addEventListener("change", onTimeChanged);
+            input.addEventListener("input", () => {
+                syncHiddenTime();
+                updateSubmitState();
+            });
         }
     });
 

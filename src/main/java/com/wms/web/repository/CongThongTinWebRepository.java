@@ -554,6 +554,7 @@ public class CongThongTinWebRepository {
                     (SELECT COUNT(*)
                      FROM PHIENLAMVIEC
                      WHERE MaKG = ?
+                       AND TrangThaiPhien = ?
                        AND ThoiGianBatDau < ?
                        AND ThoiGianDuKienKetThuc > ?
                        AND (
@@ -577,6 +578,7 @@ public class CongThongTinWebRepository {
                 """,
                 Integer.class,
                 maKG,
+                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
                 Timestamp.valueOf(selectedEnd),
                 Timestamp.valueOf(selectedStart),
                 Timestamp.valueOf(selectedStart),
@@ -779,13 +781,12 @@ public class CongThongTinWebRepository {
                 UPDATE HOADON
                 SET DaTraTruoc = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
                     TongTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
-                    ThanhTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    ThanhTien = 0,
                     NgayLapHoaDon = CURRENT_TIMESTAMP,
                     PhuongThucThanhToan = ?,
                     TrangThaiThanhToan = ?
                 WHERE MaPhien = ?
                 """,
-                thongTin.getMaDatCho(),
                 thongTin.getMaDatCho(),
                 thongTin.getMaDatCho(),
                 giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
@@ -1106,13 +1107,12 @@ public class CongThongTinWebRepository {
                 UPDATE HOADON
                 SET DaTraTruoc = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
                     TongTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
-                    ThanhTien = (SELECT NVL(ThanhTien, 0) FROM DATCHO WHERE MaDatCho = ?),
+                    ThanhTien = 0,
                     NgayLapHoaDon = CURRENT_TIMESTAMP,
                     PhuongThucThanhToan = ?,
                     TrangThaiThanhToan = ?
                 WHERE MaPhien = ?
                 """,
-                maDatCho,
                 maDatCho,
                 maDatCho,
                 giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),

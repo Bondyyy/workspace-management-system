@@ -31,7 +31,7 @@ public class HoaDonDAO {
                         "WHERE 1=1 ");
 
         if (searchText != null && !searchText.trim().isEmpty()) {
-            sql.append("AND (h.MaHoaDon LIKE ? OR nd.HoTen LIKE ? OR h.SoHD LIKE ?) ");
+            sql.append("AND (h.MaHoaDon LIKE ? OR h.SoHD LIKE ? OR h.MaPhien LIKE ? OR nd.HoTen LIKE ?) ");
         }
         if (statusFilter != null && !statusFilter.equals("Tất cả")) {
             if (statusFilter.equals("Chưa thanh toán")) {
@@ -41,7 +41,7 @@ public class HoaDonDAO {
             } else if (statusFilter.equals("Đã thanh toán")) {
                 sql.append("AND h.TrangThaiThanhToan = 'Đã thanh toán thành công' ");
             } else if (statusFilter.equals("Đang chờ thanh toán phụ thu")) {
-                sql.append("AND h.TrangThaiThanhToan = 'Đang chờ thanh toán' AND NVL(dc.ThanhTien, 0) > 0 ");
+                sql.append("AND NVL(h.DaTraTruoc, 0) > 0 AND NVL(h.ThanhTien, 0) > 0 AND h.TrangThaiThanhToan <> 'Đã thanh toán thành công' ");
             } else if (statusFilter.equals("Đã hủy")) {
                 sql.append("AND h.TrangThaiThanhToan = 'Thanh toán không thành công' ");
             } else {
@@ -55,6 +55,7 @@ public class HoaDonDAO {
             int idx = 1;
             if (searchText != null && !searchText.trim().isEmpty()) {
                 String q = "%" + searchText.trim() + "%";
+                ps.setString(idx++, q);
                 ps.setString(idx++, q);
                 ps.setString(idx++, q);
                 ps.setString(idx++, q);
@@ -214,8 +215,8 @@ public class HoaDonDAO {
         long start = System.currentTimeMillis();
         ThongTinHoaDonDTO thongTin = null;
         String sqlChung = "SELECT h.MaHoaDon, h.NgayLapHoaDon, h.PhuongThucThanhToan, " +
-            "NVL(h.TongTien, FN_TinhTongTien(p.MaPhien)) AS TongTien, " +
-            "NVL(h.ThanhTien, GREATEST(0, NVL(h.TongTien, FN_TinhTongTien(p.MaPhien)) - NVL(h.DaTraTruoc, 0))) AS ThanhTien, " +
+            "h.TongTien AS TongTienLuu, h.ThanhTien AS ThanhTienLuu, " +
+            "FN_TinhThanhTien(p.MaPhien, h.MaPGG) AS TongTienSauGiam, " +
             "p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan, " +
             "nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho, dc.KhoangThoiGianSuDung, "
             + "NVL(h.DaTraTruoc, 0) AS SoTienDaTraTruoc, "
@@ -253,18 +254,25 @@ public class HoaDonDAO {
                         thongTin.setNgayLapHoaDon(new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ngayLap));
                     }
 
-                    double tt = rsChung.getDouble("TongTienGoc");
-                    if (tt <= 0) {
-                        tt = rsChung.getDouble("TongTien");
-                    }
+                    Double tongTienLuu = getNullableDouble(rsChung, "TongTienLuu");
+                    Double thanhTienLuu = getNullableDouble(rsChung, "ThanhTienLuu");
+                    double tongTienGoc = rsChung.getDouble("TongTienGoc");
+                    double tt = tongTienLuu != null && tongTienLuu > 0 ? tongTienLuu : tongTienGoc;
 
-                    double thanh = rsChung.getDouble("ThanhTien");
                     double soTienDaTraTruoc = rsChung.getDouble("SoTienDaTraTruoc");
-                    if (thanh < 0) {
-                        thanh = 0;
+                    double thanh;
+                    if (thanhTienLuu != null) {
+                        thanh = Math.max(0, thanhTienLuu);
+                    } else {
+                        double tongTienSauGiam = rsChung.getDouble("TongTienSauGiam");
+                        if (tongTienSauGiam <= 0 && tt > 0) {
+                            tongTienSauGiam = tt;
+                        }
+                        thanh = Math.max(0, tongTienSauGiam - soTienDaTraTruoc);
                     }
-                    if (thanh == 0 && tt > 0 && soTienDaTraTruoc >= 0) {
-                        thanh = Math.max(0, tt - soTienDaTraTruoc);
+                    if ("Đã thanh toán thành công".equals(rsChung.getString("TrangThaiThanhToan"))
+                            && soTienDaTraTruoc >= tt) {
+                        thanh = 0;
                     }
 
                     thongTin.setTongTien(tt);
@@ -488,5 +496,27 @@ public class HoaDonDAO {
 
     private void logElapsed(String action, long start) {
         System.out.println("[HoaDonDAO] " + action + " mat " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    public String timMaHoaDonTheoMaPhien(String maPhien) {
+        if (maPhien == null || maPhien.isBlank()) {
+            return null;
+        }
+        String sql = "SELECT MaHoaDon FROM HOADON WHERE MaPhien = ? FETCH FIRST 1 ROWS ONLY";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maPhien.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString("MaHoaDon") : null;
+            }
+        } catch (Exception e) {
+            System.err.println("[HoaDonDAO] Lỗi tìm hóa đơn theo phiên: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private Double getNullableDouble(ResultSet rs, String column) throws SQLException {
+        double value = rs.getDouble(column);
+        return rs.wasNull() ? null : value;
     }
 }

@@ -41,7 +41,7 @@ BEGIN
     END;
 
     -- 2. Tinh thoi diem mo/dong cua hom nay dua tren p_ThoiGianBatDau
-    v_RefTime := COALESCE(p_ThoiGianBatDau, CURRENT_TIMESTAMP);
+    v_RefTime := COALESCE(p_ThoiGianBatDau, CAST(CURRENT_TIMESTAMP AS TIMESTAMP));
     
     -- Xu ly truong hop gio dong cua <= gio mo cua (hoat dong qua dem hoac 24/24)
     v_GioMoCua := TRIM(v_GioMoCua);
