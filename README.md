@@ -1,50 +1,116 @@
-# 🏢 Hệ thống Quản lý Không gian Làm việc & Học tập (Workspace Management System)
-
-## 📖 Giới thiệu 
-Dự án này cung cấp giải pháp phần mềm toàn diện cho việc quản lý và vận hành chuỗi không gian làm việc/học tập. Hệ thống giải quyết trọn vẹn bài toán vận hành Online to Offline, từ khâu khách hàng đặt chỗ trực tuyến/tại quầy, quản lý thời gian sử dụng thực tế, gọi món F&B, cho đến thanh toán tổng hợp, áp dụng khuyến mãi thành viên và giải phóng không gian.
-
----
-
-## 🗄 Sơ đồ Thực thể Liên kết (ERD)
-Sơ đồ dưới đây mô tả kiến trúc cơ sở dữ liệu cốt lõi của toàn bộ hệ thống. 
-
-<div align="center">
-  <a href="ERD.png" target="_blank">
-    <img src="ERD.png" alt="Database Entity Relationship Diagram" width="100%" style="cursor: zoom-in;">
+<p align="center">
+  <a href="https://www.uit.edu.vn/" title="Trường Đại học Công nghệ Thông tin" style="border: 5;">
+    <img src="https://i.imgur.com/WmMnSRt.png" alt="Trường Đại học Công nghệ Thông tin | University of Information Technology">
   </a>
-  <br>
-  <i>(Click trực tiếp vào ảnh để mở chế độ toàn màn hình và phóng to chi tiết)</i>
-</div>
+</p>
 
----
+<!-- Title -->
+<h1 align="center"><b>IS216 - LẬP TRÌNH JAVA</b></h1>
 
-## ⚙️ Kiến trúc Cơ sở Dữ liệu & Quy trình Vận hành
-Hệ thống xoay quanh 6 phân hệ cốt lõi được ánh xạ chặt chẽ vào cơ sở dữ liệu, kết hợp với các luồng tự động hóa (Database Automation) để tối ưu vận hành:
 
-### 1. Phân hệ Quản lý Đặt chỗ (Booking Management)
-* **Luồng Đặt chỗ Đa kênh:** Hỗ trợ lưu trữ thông tin cho cả luồng `ONLINE` (Khách tự đặt qua App) và `OFFLINE` (Lễ tân thao tác tại quầy). Hỗ trợ lưu thông tin cho Khách thành viên lẫn Khách vãng lai.
-* **Snapshot Giá:** Giá trị thuê tại thời điểm đặt luôn được snapshot vào `price_at_booking` trong `BookingDetails` để tránh rủi ro biến động giá trong tương lai.
-* **Tự động hóa Giữ chỗ:** Khi đơn đặt chỗ chuyển sang trạng thái `BOOKED`, hệ thống tự động khóa trạng thái vật lý của không gian (`Spaces`) sang `BOOKED` để ngăn trùng lịch. Nếu đơn bị `CANCELLED`, hệ thống lập tức nhả không gian về `AVAILABLE`.
 
-### 2. Phân hệ Phiên làm việc & Trạng thái Không gian (Sessions & Spaces)
-Đây là phân hệ tách bạch hoàn toàn dữ liệu giao dịch tĩnh (Booking) và vòng đời sử dụng thực tế (Session).
-* **Check-in:** Lễ tân tạo `Sessions` mới. Ngay lập tức, không gian chuyển sang `OCCUPIED` (Có người ngồi). Đồng thời, đơn Booking gốc sẽ được đồng bộ ngược thành `ACTIVE` và ghi nhận `check_in_time`.
-* **Check-out:** Khi ghi nhận `checkout_time`, không gian tự động chuyển sang trạng thái trống (`AVAILABLE`). Đơn đặt chỗ hoàn tất với trạng thái `COMPLETED`, và trạng thái của chính Session đó cũng tự động được đóng lại (`COMPLETED`).
+## BẢNG MỤC LỤC
+* [ Giới thiệu môn học](#gioithieumonhoc)
+* [ Giảng viên hướng dẫn](#giangvien)
+* [ Thành viên nhóm](#thanhvien)
+* [ Đồ án môn học](#doan)
+* [ Công nghệ sử dụng](#congnghe)
+* [ Hướng dẫn cài đặt](#caidat)
 
-### 3. Phân hệ F&B và Gia hạn (Services & Extensions)
-* **Tính toán Order Tự động:** Khi khách hàng gọi thêm món, thay đổi số lượng hoặc hủy món trong `SessionOrderDetails`, hệ thống tự động tính thành tiền (`subtotal = quantity * unit_price`) và tự động dùng thuật toán delta (cộng/trừ chênh lệch) để cập nhật tổng hóa đơn (`total_price`) vào `SessionOrders` mà không làm nghẽn hệ thống.
-* **Quản lý Gia hạn:** Mọi chi phí phát sinh khi khách ngồi lố giờ được ghi log chi tiết trong `SessionExtensions`.
 
-### 4. Phân hệ Thanh toán & Khuyến mãi (Payment, Loyalty & Vouchers)
-* **Tính toán Chiết khấu Đa tầng:** Hàm `fn_CalculateDiscountAmount` xử lý logic phức tạp để tổng hợp mức giảm giá từ cả Hạng Thành Viên (`MembershipTiers`) lẫn Mã giảm giá (`Vouchers` - dạng `%` hoặc tiền cố định), có tính toán chặn trần `max_discount`.
-* **Cập nhật Điểm & Thăng hạng Tự động:** Ngay khi một giao dịch trong `Payments` chuyển trạng thái `SUCCESS`:
-  * Hệ thống tự động tính toán và cộng dồn điểm thưởng (`loyalty_points`) dựa trên số tiền chi tiêu.
-  * Quét bảng `MembershipTiers` để tự động nâng hạng thành viên nếu đủ điều kiện.
-  * Tự động quét các InvoiceLines thuộc giao dịch để truy xuất và cộng dồn lượt sử dụng (`used_count`) vào đúng mã Voucher đã dùng nhằm ngăn chặn vượt quá `usage_limit`.
+## GIỚI THIỆU MÔN HỌC
+<a name="gioithieumonhoc"></a>
+* **Tên môn học**: Lập trình Java - Java Programming
+* **Mã môn học**: IS216
+* **Lớp học**: IS216.Q23
+* **Năm học**: 2025-2026
 
-### 5. Phân hệ Danh tính & Phân quyền (Identities & Roles)
-* Thiết kế theo cấu trúc phân quyền Role-Based Access Control (RBAC) với các bảng `Roles`, `Permissions`, `RolePermissions`.
-* Tách biệt dữ liệu `Users` cốt lõi với thông tin mở rộng của `Employees` và `Customers` theo mô hình Table-Per-Type.
 
-### 6. Khả năng Audit & Data Pipeline Ready
-* Toàn bộ các bảng dữ liệu có tính chất giao dịch (Bookings, Sessions, Invoices,...) đều được gắn Trigger tự động cập nhật `updated_at = CURRENT_TIMESTAMP` trước mỗi lệnh UPDATE. Kiến trúc này giúp cơ sở dữ liệu luôn sẵn sàng cho các tiến trình trích xuất dữ liệu gia tăng (Incremental ETL) trong các bài toán Data Warehouse và Big Data.
+## GIẢNG VIÊN HƯỚNG DẪN
+<a name="giangvien"></a>
+* ThS. **Tạ Việt Phương** - *phuongtv@uit.edu.vn*
+
+
+## THÀNH VIÊN NHÓM
+<a name="thanhvien"></a>
+| STT    | MSSV          | Họ và Tên              | Email                   |
+| ------ |:-------------:| ----------------------:|-------------------------:
+| 1      | 24520322      | Nguyễn Thành Đức       |24520322@gm.uit.edu.vn   |
+| 2      | 24520409      | Sơn Nguyễn Kỳ Duyên    |24520409@gm.uit.edu.vn   |
+| 3      | 24520336      | Huỳnh Đức Dũng         |24520336@gm.uit.edu.vn   |
+| 4      | 24520663      | Lai Mộc Huy            |laimochuy@gmail.com      |
+
+
+## ĐỒ ÁN MÔN HỌC
+<a name="doan"></a>
+Đồ án nhóm: Hệ thống quản lý không gian học tập và làm việc.
+
+
+## CÔNG NGHỆ SỬ DỤNG
+<a name="congnghe"></a>
+* **Ngôn ngữ**: Java 17
+* **Framework**: Spring Boot, Spring MVC, Thymeleaf
+* **Giao diện**: Java Swing, HTML/CSS/JavaScript
+* **Cơ sở dữ liệu**: Oracle Database, JDBC
+* **Build tool**: Maven
+* **Thư viện hỗ trợ**: JasperReports, iTextPDF, ZXing, BCrypt
+
+
+## HƯỚNG DẪN CÀI ĐẶT
+<a name="caidat"></a>
+1. Clone project về máy và đi vào thư mục gốc của project:
+```bash
+git clone <repository-url>
+cd Sem4
+```
+
+2. Tạo user/schema Oracle Database riêng cho project WMS, sau đó mở SQLcl hoặc SQL*Plus và kết nối tới schema đó:
+```bash
+sql /nolog
+CONNECT <username>/<password>@<host>:<port>/<service_name>
+```
+
+Hoặc:
+```bash
+sqlplus <username>/<password>@<host>:<port>/<service_name>
+```
+
+3. Từ thư mục gốc `Sem4`, chạy các file SQL trong thư mục `Database` theo đúng thứ tự thư mục:
+```text
+Database/01_table
+Database/02_constraint
+Database/03_function
+Database/04_procedures
+Database/05_triggers
+Database/06_migrations
+```
+
+Trong đó:
+* `01_table`: tạo bảng và mã tự động.
+* `02_constraint`: tạo ràng buộc dữ liệu.
+* `03_function`: tạo các function tính toán.
+* `04_procedures`: tạo stored procedure.
+* `05_triggers`: tạo trigger xử lý nghiệp vụ tự động.
+
+4. Quay lại thư mục gốc project `Sem4`, cấu hình kết nối Oracle Database trong file `db.properties`:
+```properties
+db.url=jdbc:oracle:thin:@<host>:<port>/<service_name>
+db.username=<username>
+db.password=<password>
+```
+
+5. Build project bằng Maven:
+```bash
+mvn clean package
+```
+
+6. Chạy ứng dụng từ thư mục gốc `Sem4`:
+```bash
+mvn spring-boot:run
+```
+
+7. Truy cập cổng thông tin web tại:
+```text
+http://localhost:8080
+```
+
