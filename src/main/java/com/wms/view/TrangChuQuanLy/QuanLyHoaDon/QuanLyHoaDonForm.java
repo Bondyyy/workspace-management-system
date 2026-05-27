@@ -809,67 +809,30 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         sb.append("Số giờ tính: ").append(tt.getTongSoGio()).append(" giờ\n");
         sb.append("--------------------------------\n");
         sb.append(String.format("%-28s %6s %18s %18s\n", "Dịch vụ/Không gian", "SL", "Đơn giá", "Thành tiền"));
-        for (com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO dv : tt.getDanhSachDichVu()) {
+        for (com.wms.model.TrangChuQuanLy.QuanLyHoaDon.InvoiceLine dong : tt.getDongChiPhi()) {
             sb.append(String.format("%-28s %6d %18s %18s\n",
-                    dv.getTenDichVu(),
-                    dv.getSoLuong(),
-                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dv.getDonGia()),
-                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dv.getThanhTien())));
+                    dong.getNoiDung(),
+                    dong.getSoLuong(),
+                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dong.getDonGia()),
+                    com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(dong.getThanhTien())));
         }
         sb.append("--------------------------------\n");
-        com.wms.util.HoaDonGiamGiaUtil.ThongTinGiamGia giamGia =
-                com.wms.util.HoaDonGiamGiaUtil.taoThongTinGiamGia(tt, 0);
-        double tongTienGoc = tt.getTongTienGoc() > 0 ? tt.getTongTienGoc() : tt.getTongTien();
-        sb.append("TỔNG TIỀN GỐC: ").append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc)).append("\n\n");
-
-        if (tt.getTienGocDatTruoc() > 0 || tt.getSoTienDaTraTruoc() > 0) {
-            sb.append("GIẢM ĐẶT TRƯỚC:\n");
-            if (giamGia.getTienGiamVoucherDatTruoc() > 0) {
-                sb.append(giamGia.getNhanVoucherDatTruoc()).append(": ")
-                        .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherDatTruoc()))
-                        .append("\n");
-            }
-            if (giamGia.getTienGiamHangDatTruoc() > 0) {
-                sb.append(giamGia.getNhanHangDatTruoc()).append(": ")
-                        .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangDatTruoc()))
-                        .append("\n");
-            }
-            sb.append("Tổng giảm đặt trước: ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamDatTruoc()))
+        for (com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DiscountLine dong : tt.getDongVoucher()) {
+            sb.append(dong.getNoiDung()).append(": ")
+                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(dong.getSoTienGiam()))
                     .append("\n");
-            sb.append("ĐÃ TRẢ TRƯỚC: ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienDaTraTruoc()))
-                    .append("\n\n");
         }
-
-        sb.append("PHÁT SINH TẠI QUÁN:\n");
-        sb.append("Tổng phát sinh gốc: ")
-                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getTienGocPhatSinh()))
+        sb.append("Số tiền còn lại: ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienConLai()))
                 .append("\n");
-        if (giamGia.getTienGiamVoucherTaiQuay() > 0) {
-            sb.append(giamGia.getNhanVoucherTaiQuay()).append(": ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherTaiQuay()))
-                    .append("\n");
-        }
-        if (giamGia.getTienGiamHangTaiQuay() > 0) {
-            sb.append(giamGia.getNhanHangTaiQuay()).append(": ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangTaiQuay()))
-                    .append("\n");
-        }
-        sb.append("Tổng giảm tại quán: ")
-                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamTaiQuay()))
-                .append("\n\n");
-
-        sb.append("TỔNG GIẢM: ")
-                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()))
+        sb.append("Hạng thành viên (").append(tt.getTenHangThanhVien() == null ? "" : tt.getTenHangThanhVien()).append("): ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienGiamVnd(tt.getTienGiamHang()))
                 .append("\n");
-        if (tt.getSoTienThanhToanTaiQuay() > 0) {
-            sb.append("ĐÃ THANH TOÁN TẠI QUẦY: ")
-                    .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienThanhToanTaiQuay()))
-                    .append("\n");
-        }
-        sb.append("TỔNG TIỀN: ")
-                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc))
+        sb.append("Thành tiền: ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getThanhTien()))
+                .append("\n");
+        sb.append("Phương thức thanh toán: ")
+                .append(tt.getPhuongThucThanhToan() == null ? "" : tt.getPhuongThucThanhToan())
                 .append("\n\n");
         sb.append("      --- CẢM ƠN QUÝ KHÁCH ---");
 

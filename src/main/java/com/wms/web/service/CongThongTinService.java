@@ -150,7 +150,8 @@ public class CongThongTinService {
         try {
             return sapXepKhongGian(khoDuLieu.timKhongGian(chuanHoaMaCN(branchId)));
         } catch (DataAccessException ex) {
-            System.err.println("[CongThongTinService] Loi tai khong gian maCN=" + branchId + ": " + ex.getMessage());
+            System.err.println("[CongThongTinService] Lỗi tải không gian maCN=" + branchId
+                    + ", requestStart=<none>, requestEnd=<none>, params=0, lỗi=" + ex.getMessage());
             throw new IllegalStateException("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.");
         }
     }
@@ -160,7 +161,10 @@ public class CongThongTinService {
             hetHanDatChoChoThanhToan();
             return sapXepKhongGian(khoDuLieu.timKhongGian(chuanHoaMaCN(branchId), selectedStart, selectedEnd));
         } catch (DataAccessException ex) {
-            System.err.println("[CongThongTinService] Loi tai khong gian maCN=" + branchId + ": " + ex.getMessage());
+            System.err.println("[CongThongTinService] Lỗi tải không gian maCN=" + branchId
+                    + ", requestStart=" + selectedStart
+                    + ", requestEnd=" + selectedEnd
+                    + ", params=named, lỗi=" + ex.getMessage());
             throw new IllegalStateException("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.");
         }
     }
@@ -225,17 +229,17 @@ public class CongThongTinService {
     @Transactional
     public String taoDatCho(NguoiDungPhien user, DatChoForm form) {
         if (user.getMaKH() == null || user.getMaKH().isBlank()) {
-            throw new IllegalArgumentException("Tai khoan nay khong co ho so hoi vien de dat cho.");
+            throw new IllegalArgumentException("Tài khoản này không có hồ sơ hội viên để đặt chỗ.");
         }
 
         KhongGianView space = khoDuLieu.timKhongGianTheoMa(form.getMaKG());
         if (space == null) {
-            throw new IllegalArgumentException("Khong tim thay khong gian da chon.");
+            throw new IllegalArgumentException("Không tìm thấy không gian đã chọn.");
         }
 
         String normalizedStatus = chuanHoa(space.getTrangThaiKG());
         if (normalizedStatus.contains("bao tri")) {
-            throw new IllegalArgumentException("Khong gian nay dang bao tri.");
+            throw new IllegalArgumentException("Không gian này đang bảo trì.");
         }
         kiemTraThoiGianDatCho(form.getThoiGianDen(), form.getSoGioSuDung());
         kiemTraKhungGioChiNhanh(space, form.getThoiGianDen(), form.getSoGioSuDung());
@@ -244,7 +248,7 @@ public class CongThongTinService {
                 form.getMaKG(),
                 form.getThoiGianDen(),
                 form.getThoiGianDen().plusHours(form.getSoGioSuDung()))) {
-            throw new IllegalArgumentException("Khung gio nay da co nguoi dat. Vui long chon gio khac.");
+            throw new IllegalArgumentException("Khung giờ này đã có người đặt. Vui lòng chọn giờ khác.");
         }
 
         BigDecimal tongTienGocDatTruoc = lamTronTienVnd(tinhTien(space, form.getSoGioSuDung()));
@@ -355,7 +359,7 @@ public class CongThongTinService {
         KhongGianView space = khoDuLieu.timKhongGianTheoMa(maKG);
         kiemTraKhungGioChiNhanh(space, arrivalTime, durationHours);
         if (khoDuLieu.coTrungLich(maKG, arrivalTime, arrivalTime.plusHours(durationHours))) {
-            throw new IllegalArgumentException("Khong gian nay da duoc dat trong khung gio ban chon.");
+            throw new IllegalArgumentException("Không gian này đã được đặt trong khung giờ bạn chọn.");
         }
     }
 

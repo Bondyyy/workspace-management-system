@@ -151,13 +151,6 @@ CREATE TABLE DATCHO (
     KhoangThoiGianSuDung NUMBER,
     TrangThaiDatTruoc VARCHAR2(50),
     ThanhTien NUMBER(18, 2),
-    TongTienGoc NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    MaPGG VARCHAR2(50),
-    MaChuSoPGG VARCHAR2(100),
-    TienGiamVoucher NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    PhanTramGiamHangTV NUMBER(5, 2) DEFAULT 0 NOT NULL,
-    TienGiamHangTV NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    ThanhTienSauGiam NUMBER(18, 2) DEFAULT 0 NOT NULL,
     GhiChu VARCHAR2(255),
     MaQR VARCHAR2(255),
     CapNhatLanCuoi TIMESTAMP,
@@ -184,27 +177,24 @@ CREATE TABLE HOADON (
     SoHD VARCHAR2(50),
     TongTien NUMBER(18, 2),
     ThanhTien NUMBER(18, 2),
-    TongTienGoc NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    TienGocDatTruoc NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    TienGocPhatSinh NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    MaPGGDatTruoc VARCHAR2(50),
-    MaPGGTaiQuay VARCHAR2(50),
-    TienGiamVoucherDatTruoc NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    TienGiamHangTVDatTruoc NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    PhanTramGiamHangTVDatTruoc NUMBER(5, 2) DEFAULT 0 NOT NULL,
-    TienGiamVoucherTaiQuay NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    TienGiamHangTVTaiQuay NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    PhanTramGiamHangTVTaiQuay NUMBER(5, 2) DEFAULT 0 NOT NULL,
-    TongTienGiam NUMBER(18, 2) DEFAULT 0 NOT NULL,
-    SoTienThanhToanTaiQuay NUMBER(18, 2) DEFAULT 0 NOT NULL,
     NgayLapHoaDon TIMESTAMP,
     PhuongThucThanhToan VARCHAR2(50),
     TrangThaiThanhToan VARCHAR2(50),
-    DaTraTruoc NUMBER(18, 2) DEFAULT 0 NOT NULL,
     MaPhien VARCHAR2(50),
     MaPGG VARCHAR2(50),
     MaNV VARCHAR2(50),
     CONSTRAINT PK_HOADON PRIMARY KEY (MaHoaDon)
+);
+
+CREATE TABLE CHITIETAPDUNGPGG (
+    MaApDung VARCHAR2(50),
+    MaPGG VARCHAR2(50),
+    MaDatCho VARCHAR2(50),
+    MaHoaDon VARCHAR2(50),
+    NguonApDung VARCHAR2(50),
+    SoTienGiam NUMBER(18, 2),
+    ThoiGianApDung TIMESTAMP,
+    CONSTRAINT PK_CHITIETAPDUNGPGG PRIMARY KEY (MaApDung)
 );
 
 CREATE TABLE LOAIDICHVU (

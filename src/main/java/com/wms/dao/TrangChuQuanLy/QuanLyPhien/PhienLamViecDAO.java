@@ -277,48 +277,43 @@ public class PhienLamViecDAO {
                 }
 
                 String maPhien = MaTuDongUtil.sinhMaTiepTheo(conn, MaTuDongUtil.MaDoiTuong.PHIEN_LAM_VIEC);
-                java.sql.Timestamp thoiGianDuKienKetThuc = thoiGianDuKienToi != null
-                        ? java.sql.Timestamp.from(thoiGianDuKienToi.toInstant().plus(soGio, java.time.temporal.ChronoUnit.HOURS))
-                        : java.sql.Timestamp.from(java.time.Instant.now().plus(soGio, java.time.temporal.ChronoUnit.HOURS));
+                java.time.Instant now = java.time.Instant.now();
+                java.time.Instant scheduledEnd = thoiGianDuKienToi != null
+                        ? thoiGianDuKienToi.toInstant().plus(soGio, java.time.temporal.ChronoUnit.HOURS)
+                        : now.plus(soGio, java.time.temporal.ChronoUnit.HOURS);
+                java.time.Instant minimumEnd = now.plus(1, java.time.temporal.ChronoUnit.HOURS);
+                java.sql.Timestamp thoiGianBatDau = java.sql.Timestamp.from(now);
+                java.sql.Timestamp thoiGianDuKienKetThuc = java.sql.Timestamp.from(
+                        scheduledEnd.isBefore(minimumEnd) ? minimumEnd : scheduledEnd);
 
                 try (PreparedStatement ps = conn.prepareStatement("""
                         INSERT INTO PHIENLAMVIEC
                             (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien,
                              CapNhatLanCuoi, MaKG, MaKH, MaDatCho)
-                        VALUES (?, CURRENT_TIMESTAMP, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, ?, ?, ?)
+                        VALUES (?, ?, ?, 'Đang hoạt động', CURRENT_TIMESTAMP, ?, ?, ?)
                         """)) {
                     ps.setString(1, maPhien);
-                    ps.setTimestamp(2, thoiGianDuKienKetThuc);
-                    ps.setString(3, maKG);
-                    ps.setString(4, maKH);
-                    ps.setString(5, maDatCho.trim());
+                    ps.setTimestamp(2, thoiGianBatDau);
+                    ps.setTimestamp(3, thoiGianDuKienKetThuc);
+                    ps.setString(4, maKG);
+                    ps.setString(5, maKH);
+                    ps.setString(6, maDatCho.trim());
                     ps.executeUpdate();
                 }
 
                 try (PreparedStatement ps = conn.prepareStatement("""
                         UPDATE HOADON h
-                        SET (DaTraTruoc, TongTien, TongTienGoc, TienGocDatTruoc,
-                             TienGocPhatSinh, MaPGGDatTruoc, TienGiamVoucherDatTruoc,
-                             PhanTramGiamHangTVDatTruoc, TienGiamHangTVDatTruoc,
-                             TongTienGiam, ThanhTien, PhuongThucThanhToan,
-                             TrangThaiThanhToan, NgayLapHoaDon) = (
-                            SELECT NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)),
-                                   NVL(dc.TongTienGoc, 0),
-                                   NVL(dc.TongTienGoc, 0),
-                                   NVL(dc.TongTienGoc, 0),
-                                   0,
-                                   dc.MaPGG,
-                                   NVL(dc.TienGiamVoucher, 0),
-                                   NVL(dc.PhanTramGiamHangTV, 0),
-                                   NVL(dc.TienGiamHangTV, 0),
-                                   NVL(dc.TienGiamVoucher, 0) + NVL(dc.TienGiamHangTV, 0),
-                                   0,
-                                   'Đặt trước',
-                                   'Đã trả trước',
-                                   CURRENT_TIMESTAMP
-                            FROM DATCHO dc
-                            WHERE dc.MaDatCho = ?
-                        )
+                        SET TongTien = NVL(FN_TinhTongTien(h.MaPhien), NVL(TongTien, 0)),
+                            ThanhTien = 0,
+                            MaPGG = NVL(MaPGG, (
+                                SELECT MAX(ct.MaPGG)
+                                FROM CHITIETAPDUNGPGG ct
+                                WHERE ct.MaDatCho = ?
+                                  AND ct.NguonApDung = 'DAT_TRUOC'
+                            )),
+                            PhuongThucThanhToan = 'Đặt trước',
+                            TrangThaiThanhToan = 'Đã trả trước',
+                            NgayLapHoaDon = CURRENT_TIMESTAMP
                         WHERE h.MaPhien = ?
                         """)) {
                     ps.setString(1, maDatCho.trim());
@@ -356,6 +351,9 @@ public class PhienLamViecDAO {
             }
         } catch (Exception e) {
             System.err.println("[PhienLamViecDAO] Lỗi mở phiên từ QR đặt chỗ: " + e.getClass().getSimpleName());
+            if (e instanceof SQLException sqlException) {
+                logSqlException(sqlException);
+            }
             return new KetQuaNhanChoDTO(false, com.wms.util.ErrorMessageUtil.toUserMessage(e));
         }
     }

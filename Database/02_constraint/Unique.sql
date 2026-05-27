@@ -1,8 +1,2 @@
 ALTER TABLE HOADON ADD CONSTRAINT UQ_HOADON_MAPHIEN
     UNIQUE (MaPhien);
-
-
-select * from NGUOIDUNG
-where HOTEN = 'lmh'
-
-s

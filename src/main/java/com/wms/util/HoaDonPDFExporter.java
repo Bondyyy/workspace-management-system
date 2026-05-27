@@ -1,7 +1,8 @@
 package com.wms.util;
 
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DiscountLine;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.InvoiceLine;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
@@ -90,66 +91,34 @@ public class HoaDonPDFExporter {
         table.addCell(new Phrase(pdfText("Đơn giá"), boldFont));
         table.addCell(new Phrase(pdfText("Thành tiền"), boldFont));
 
-        // Danh sách dịch vụ, trong đó dòng đầu tiên là tiền thuê không gian thực tế
-        if (hoaDon.getDanhSachDichVu() != null) {
-            for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
-                table.addCell(new Phrase(pdfText(giaTri(dv.getTenDichVu())), normalFont));
-                String slStr = dv.getTenDichVu().startsWith("Thuê")
-                        ? String.format(java.util.Locale.US, "%.1f giờ", (double) dv.getSoLuong())
-                        : String.valueOf(dv.getSoLuong());
+        if (hoaDon.getDongChiPhi() != null) {
+            for (InvoiceLine line : hoaDon.getDongChiPhi()) {
+                table.addCell(new Phrase(pdfText(giaTri(line.getNoiDung())), normalFont));
+                String slStr = line.getNoiDung() != null && line.getNoiDung().startsWith("Thuê")
+                        ? String.format(java.util.Locale.US, "%d giờ", line.getSoLuong())
+                        : String.valueOf(line.getSoLuong());
                 table.addCell(new Phrase(pdfText(slStr), normalFont));
-                table.addCell(new Phrase(pdfText(HoaDonGiamGiaUtil.formatTienVnd(dv.getDonGia())), normalFont));
-                table.addCell(new Phrase(pdfText(HoaDonGiamGiaUtil.formatTienVnd(dv.getThanhTien())), normalFont));
+                table.addCell(new Phrase(pdfText(HoaDonGiamGiaUtil.formatTienVnd(line.getDonGia())), normalFont));
+                table.addCell(new Phrase(pdfText(HoaDonGiamGiaUtil.formatTienVnd(line.getThanhTien())), normalFont));
             }
         }
         document.add(table);
         document.add(new Paragraph(" "));
 
-        HoaDonGiamGiaUtil.ThongTinGiamGia giamGia =
-                HoaDonGiamGiaUtil.taoThongTinGiamGia(hoaDon, tienGiamGia);
-        double conPhaiThanhToan = HoaDonGiamGiaUtil.layConPhaiThanhToan(hoaDon, giamGia, tienGiamGia);
-
-        double tongTienGoc = hoaDon.getTongTienGoc() > 0 ? hoaDon.getTongTienGoc() : hoaDon.getTongTien();
-        document.add(new Paragraph(pdfText("TỔNG TIỀN GỐC: " + HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc)), boldFont));
-
-        if (hoaDon.getTienGocDatTruoc() > 0 || hoaDon.getSoTienDaTraTruoc() > 0) {
-            document.add(new Paragraph(pdfText("GIẢM ĐẶT TRƯỚC:"), boldFont));
-            if (giamGia.getTienGiamVoucherDatTruoc() > 0) {
-                document.add(new Paragraph(pdfText(giamGia.getNhanVoucherDatTruoc() + ": "
-                        + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherDatTruoc())), normalFont));
+        if (hoaDon.getDongVoucher() != null && !hoaDon.getDongVoucher().isEmpty()) {
+            for (DiscountLine line : hoaDon.getDongVoucher()) {
+                document.add(new Paragraph(pdfText(line.getNoiDung() + ": "
+                        + HoaDonGiamGiaUtil.formatTienGiamVnd(line.getSoTienGiam())), normalFont));
             }
-            if (giamGia.getTienGiamHangDatTruoc() > 0) {
-                document.add(new Paragraph(pdfText(giamGia.getNhanHangDatTruoc() + ": "
-                        + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangDatTruoc())), normalFont));
-            }
-            document.add(new Paragraph(pdfText("Tổng giảm đặt trước: "
-                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamDatTruoc())), normalFont));
-            document.add(new Paragraph(pdfText("ĐÃ TRẢ TRƯỚC: "
-                    + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienDaTraTruoc())), boldFont));
         }
-
-        document.add(new Paragraph(pdfText("PHÁT SINH TẠI QUÁN:"), boldFont));
-        document.add(new Paragraph(pdfText("Tổng phát sinh gốc: "
-                + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getTienGocPhatSinh())), normalFont));
-        if (giamGia.getTienGiamVoucherTaiQuay() > 0) {
-            document.add(new Paragraph(pdfText(giamGia.getNhanVoucherTaiQuay() + ": "
-                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherTaiQuay())), normalFont));
-        }
-        if (giamGia.getTienGiamHangTaiQuay() > 0) {
-            document.add(new Paragraph(pdfText(giamGia.getNhanHangTaiQuay() + ": "
-                    + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangTaiQuay())), normalFont));
-        }
-        document.add(new Paragraph(pdfText("Tổng giảm tại quán: "
-                + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamTaiQuay())), normalFont));
-
-        document.add(new Paragraph(pdfText("TỔNG GIẢM: "
-                + HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam())), normalFont));
-        if (hoaDon.getSoTienThanhToanTaiQuay() > 0) {
-            document.add(new Paragraph(pdfText("ĐÃ THANH TOÁN TẠI QUẦY: "
-                    + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienThanhToanTaiQuay())), boldFont));
-        }
-        document.add(new Paragraph(pdfText("CÒN PHẢI THANH TOÁN: "
-                + HoaDonGiamGiaUtil.formatTienVnd(conPhaiThanhToan)), boldFont));
+        document.add(new Paragraph(pdfText("Số tiền còn lại: "
+                + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienConLai())), normalFont));
+        document.add(new Paragraph(pdfText("Hạng thành viên (" + giaTri(hoaDon.getTenHangThanhVien()) + "): "
+                + HoaDonGiamGiaUtil.formatTienGiamVnd(hoaDon.getTienGiamHang())), normalFont));
+        document.add(new Paragraph(pdfText("Thành tiền: "
+                + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getThanhTien())), boldFont));
+        document.add(new Paragraph(pdfText("Phương thức thanh toán: "
+                + giaTri(hoaDon.getPhuongThucThanhToan())), normalFont));
         Paragraph end = new Paragraph(pdfText("\n      --- CẢM ƠN QUÝ KHÁCH ---"), normalFont);
         end.setAlignment(Element.ALIGN_CENTER);
         document.add(end);

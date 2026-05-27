@@ -319,9 +319,6 @@ public class CongThongTinController {
             if (!BusinessHoursUtil.isStartWithinBusinessHours(selectedStartDateTime, openTime, closeTime)) {
                 thongBaoLoi = "Thời điểm bắt đầu đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
                 daChonDuThoiGian = false;
-            } else if (!congThongTinService.laThoiGianDatChoTrongTuongLai(selectedStartDateTime)) {
-                thongBaoLoi = "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
-                daChonDuThoiGian = false;
             }
         }
 

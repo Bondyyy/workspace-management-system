@@ -18,6 +18,8 @@ import com.wms.util.ChuyenKhoanQrUtil;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -40,9 +42,11 @@ public class CongThongTinWebRepository {
     private static final ZoneId MUI_GIO_VIET_NAM = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final JdbcTemplate mauJdbc;
+    private final NamedParameterJdbcTemplate namedJdbc;
 
     public CongThongTinWebRepository(JdbcTemplate mauJdbc) {
         this.mauJdbc = mauJdbc;
+        this.namedJdbc = new NamedParameterJdbcTemplate(mauJdbc);
     }
 
     public BanGhiXacThuc timThongTinXacThuc(String identifier) {
@@ -320,7 +324,7 @@ public class CongThongTinWebRepository {
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
                 """;
         String sql = baseSql + """
-                WHERE kg.MaCN = ?
+                WHERE kg.MaCN = :maCN
                 ORDER BY
                     CASE
                         WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
@@ -379,25 +383,25 @@ public class CongThongTinWebRepository {
         String baseSql = """
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri,
                        CASE
-                           WHEN kg.TrangThaiKG = ? THEN ?
-                           WHEN kg.TrangThaiKG = ?
+                           WHEN kg.TrangThaiKG = :maintenanceStatus THEN :maintenanceDisplay
+                           WHEN kg.TrangThaiKG = :busySpaceStatus
                                 OR EXISTS (
                                     SELECT 1
                                     FROM PHIENLAMVIEC p
                                     WHERE p.MaKG = kg.MaKG
-                                      AND p.TrangThaiPhien = ?
-                                      AND p.ThoiGianBatDau < ?
-                                      AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > ?
-                                ) THEN ?
+                                      AND p.TrangThaiPhien = :activeSessionStatus
+                                      AND p.ThoiGianBatDau < :requestEnd
+                                      AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > :requestStart
+                                ) THEN :busyDisplay
                            WHEN EXISTS (
                                SELECT 1
                                FROM DATCHO dc
                                WHERE dc.MaKG = kg.MaKG
-                                 AND dc.TrangThaiDatTruoc IN (?, ?)
-                                 AND dc.ThoiGianDuKienToi < ?
-                                 AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
-                           ) THEN ?
-                           ELSE ?
+                                 AND dc.TrangThaiDatTruoc IN (:busyBookingStatuses)
+                                 AND dc.ThoiGianDuKienToi < :requestEnd
+                                 AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > :requestStart
+                           ) THEN :bookedDisplay
+                           ELSE :emptyDisplay
                        END AS TrangThaiKG,
                        kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                        lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua,
@@ -407,15 +411,15 @@ public class CongThongTinWebRepository {
                        (SELECT MAX(NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR'))
                         FROM PHIENLAMVIEC p
                         WHERE p.MaKG = kg.MaKG
-                          AND p.TrangThaiPhien = ?
-                          AND p.ThoiGianBatDau < ?
-                          AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > ?) AS PhienBusyUntil,
+                          AND p.TrangThaiPhien = :activeSessionStatus
+                          AND p.ThoiGianBatDau < :requestEnd
+                          AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > :requestStart) AS PhienBusyUntil,
                        (SELECT MAX(dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR'))
                         FROM DATCHO dc
                         WHERE dc.MaKG = kg.MaKG
-                          AND dc.ThoiGianDuKienToi < ?
-                          AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > ?
-                          AND dc.TrangThaiDatTruoc IN (?, ?)) AS DatChoBusyUntil
+                          AND dc.ThoiGianDuKienToi < :requestEnd
+                          AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > :requestStart
+                          AND dc.TrangThaiDatTruoc IN (:busyBookingStatuses)) AS DatChoBusyUntil
                 FROM KHONGGIAN kg
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
@@ -432,29 +436,8 @@ public class CongThongTinWebRepository {
                     kg.TenKG,
                     kg.MaKG
                 """;
-        Object[] params = {
-                trangThaiKhongGianDb("Bao tri"),
-                "Bảo trì",
-                trangThaiKhongGianDb("Dang hoat dong"),
-                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
-                Timestamp.valueOf(selectedEnd),
-                Timestamp.valueOf(selectedStart),
-                "Đang hoạt động",
-                trangThaiDatChoDb("Da thanh toan thanh cong"),
-                trangThaiDatChoDb("Dang cho thanh toan"),
-                Timestamp.valueOf(selectedEnd),
-                Timestamp.valueOf(selectedStart),
-                "Đã đặt trước",
-                "Trống",
-                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
-                Timestamp.valueOf(selectedEnd),
-                Timestamp.valueOf(selectedStart),
-                Timestamp.valueOf(selectedEnd),
-                Timestamp.valueOf(selectedStart),
-                trangThaiDatChoDb("Da thanh toan thanh cong"),
-                trangThaiDatChoDb("Dang cho thanh toan"),
-                branchId
-        };
+        MapSqlParameterSource params = taoThamSoTaiKhongGian(selectedStart, selectedEnd);
+        params.addValue("maCN", branchId);
         if (branchId == null || branchId.isBlank()) {
             sql = baseSql + """
                     ORDER BY
@@ -467,31 +450,15 @@ public class CongThongTinWebRepository {
                         kg.TenKG,
                         kg.MaKG
                     """;
-            params = new Object[] {
-                    trangThaiKhongGianDb("Bao tri"),
-                    "Bảo trì",
-                    trangThaiKhongGianDb("Dang hoat dong"),
-                    giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
-                    Timestamp.valueOf(selectedEnd),
-                    Timestamp.valueOf(selectedStart),
-                    "Đang hoạt động",
-                    trangThaiDatChoDb("Da thanh toan thanh cong"),
-                    trangThaiDatChoDb("Dang cho thanh toan"),
-                    Timestamp.valueOf(selectedEnd),
-                    Timestamp.valueOf(selectedStart),
-                    "Đã đặt trước",
-                    "Trống",
-                    giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
-                    Timestamp.valueOf(selectedEnd),
-                    Timestamp.valueOf(selectedStart),
-                    Timestamp.valueOf(selectedEnd),
-                    Timestamp.valueOf(selectedStart),
-                    trangThaiDatChoDb("Da thanh toan thanh cong"),
-                    trangThaiDatChoDb("Dang cho thanh toan")
-            };
         }
 
-        return mauJdbc.query(sql, (rs, rowNum) -> {
+        System.out.println("[CongThongTinWebRepository] tai khong gian maCN="
+                + (branchId == null ? "<all>" : branchId)
+                + ", requestStart=" + selectedStart
+                + ", requestEnd=" + selectedEnd
+                + ", namedParams=" + params.getValues().size());
+
+        return namedJdbc.query(sql, params, (rs, rowNum) -> {
             Timestamp busyUntil = thoiGianBanRonLonHon(rs.getTimestamp("PhienBusyUntil"), rs.getTimestamp("DatChoBusyUntil"));
             int sucChua = rs.getInt("SucChua");
             boolean sucChuaNull = rs.wasNull();
@@ -514,7 +481,7 @@ public class CongThongTinWebRepository {
                     busyUntil == null,
                     busyUntil == null ? null : busyUntil.toLocalDateTime()
             );
-        }, params);
+        });
     }
 
     public KhongGianView timKhongGianTheoMa(String maKG) {
@@ -563,34 +530,32 @@ public class CongThongTinWebRepository {
         if (maKG == null || selectedStart == null || selectedEnd == null || !selectedEnd.isAfter(selectedStart)) {
             return true;
         }
-        Integer count = mauJdbc.queryForObject(
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("maKG", maKG)
+                .addValue("activeSessionStatus", giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"))
+                .addValue("requestStart", Timestamp.valueOf(selectedStart))
+                .addValue("requestEnd", Timestamp.valueOf(selectedEnd))
+                .addValue("busyBookingStatuses", trangThaiDatChoDangGiuCho());
+        Integer count = namedJdbc.queryForObject(
                 """
                 SELECT
                     (SELECT COUNT(*)
                      FROM PHIENLAMVIEC
-                     WHERE MaKG = ?
-                       AND TrangThaiPhien = ?
-                       AND ThoiGianBatDau < ?
-                       AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + INTERVAL '1' HOUR') > ?)
+                     WHERE MaKG = :maKG
+                       AND TrangThaiPhien = :activeSessionStatus
+                       AND ThoiGianBatDau < :requestEnd
+                       AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + INTERVAL '1' HOUR') > :requestStart)
                     +
                     (SELECT COUNT(*)
                      FROM DATCHO
-                     WHERE MaKG = ?
-                       AND ThoiGianDuKienToi < ?
-                       AND (ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')) > ?
-                       AND TrangThaiDatTruoc IN (?, ?))
+                     WHERE MaKG = :maKG
+                       AND ThoiGianDuKienToi < :requestEnd
+                       AND (ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')) > :requestStart
+                       AND TrangThaiDatTruoc IN (:busyBookingStatuses))
                 FROM DUAL
                 """,
-                Integer.class,
-                maKG,
-                giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"),
-                Timestamp.valueOf(selectedEnd),
-                Timestamp.valueOf(selectedStart),
-                maKG,
-                Timestamp.valueOf(selectedEnd),
-                Timestamp.valueOf(selectedStart),
-                trangThaiDatChoDb("Da thanh toan thanh cong"),
-                trangThaiDatChoDb("Dang cho thanh toan")
+                params,
+                Integer.class
         );
         return count != null && count > 0;
     }
@@ -779,38 +744,7 @@ public class CongThongTinWebRepository {
             }
         });
 
-        mauJdbc.update(
-                """
-                UPDATE HOADON h
-                SET (DaTraTruoc, TongTien, TongTienGoc, TienGocDatTruoc,
-                     TienGocPhatSinh, MaPGGDatTruoc, TienGiamVoucherDatTruoc,
-                     PhanTramGiamHangTVDatTruoc, TienGiamHangTVDatTruoc,
-                     TongTienGiam, ThanhTien, NgayLapHoaDon, PhuongThucThanhToan,
-                     TrangThaiThanhToan) = (
-                    SELECT NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)),
-                           NVL(dc.TongTienGoc, 0),
-                           NVL(dc.TongTienGoc, 0),
-                           NVL(dc.TongTienGoc, 0),
-                           0,
-                           dc.MaPGG,
-                           NVL(dc.TienGiamVoucher, 0),
-                           NVL(dc.PhanTramGiamHangTV, 0),
-                           NVL(dc.TienGiamHangTV, 0),
-                           NVL(dc.TienGiamVoucher, 0) + NVL(dc.TienGiamHangTV, 0),
-                           0,
-                           CURRENT_TIMESTAMP,
-                           ?,
-                           ?
-                    FROM DATCHO dc
-                    WHERE dc.MaDatCho = ?
-                )
-                WHERE h.MaPhien = ?
-                """,
-                giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
-                trangThaiHoaDonDb("Da tra truoc"),
-                thongTin.getMaDatCho(),
-                maPhien
-        );
+        capNhatHoaDonKhiNhanDatCho(thongTin.getMaDatCho(), maPhien);
 
         mauJdbc.update(
                 """
@@ -846,7 +780,7 @@ public class CongThongTinWebRepository {
                 lockStmt.setString(1, maKG);
                 try (var rs = lockStmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new IllegalArgumentException("Khong tim thay khong gian da chon.");
+                        throw new IllegalArgumentException("Không tìm thấy không gian đã chọn.");
                     }
                 }
             }
@@ -881,7 +815,7 @@ public class CongThongTinWebRepository {
                 overlapStmt.setTimestamp(9, Timestamp.valueOf(arrivalTime));
                 try (var rs = overlapStmt.executeQuery()) {
                     if (rs.next() && rs.getInt(1) > 0) {
-                        throw new IllegalArgumentException("Khung gio nay da co nguoi dat. Vui long chon gio khac.");
+                        throw new IllegalArgumentException("Khung giờ này đã có người đặt. Vui lòng chọn giờ khác.");
                     }
                 }
             }
@@ -890,15 +824,11 @@ public class CongThongTinWebRepository {
                     BEGIN
                         INSERT INTO DATCHO (
                             ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung,
-                            TrangThaiDatTruoc, ThanhTien, TongTienGoc,
-                            MaPGG, MaChuSoPGG, TienGiamVoucher,
-                            PhanTramGiamHangTV, TienGiamHangTV, ThanhTienSauGiam,
-                            GhiChu, CapNhatLanCuoi, MaKH, MaKG
+                            TrangThaiDatTruoc, ThanhTien, GhiChu,
+                            CapNhatLanCuoi, MaKH, MaKG
                         ) VALUES (
                             ?, ?, ?, ?, ?, ?,
-                            ?, ?, ?,
-                            ?, ?, ?,
-                            ?, CURRENT_TIMESTAMP, ?, ?
+                            CURRENT_TIMESTAMP, ?, ?
                         )
                         RETURNING MaDatCho INTO ?;
                     END;
@@ -909,23 +839,73 @@ public class CongThongTinWebRepository {
                 cs.setObject(3, durationHours);
                 cs.setString(4, giaTriDb("CHK_DC_TRANGTHAI", "dang cho thanh toan", 0, "Đang chờ thanh toán"));
                 cs.setBigDecimal(5, thanhTienSauGiam == null ? BigDecimal.ZERO : thanhTienSauGiam);
-                cs.setBigDecimal(6, tongTienGoc == null ? BigDecimal.ZERO : tongTienGoc);
-                cs.setString(7, maPGG);
-                cs.setString(8, maChuSoPGG);
-                cs.setBigDecimal(9, tienGiamVoucher == null ? BigDecimal.ZERO : tienGiamVoucher);
-                cs.setBigDecimal(10, phanTramGiamHangTV == null ? BigDecimal.ZERO : phanTramGiamHangTV);
-                cs.setBigDecimal(11, tienGiamHangTV == null ? BigDecimal.ZERO : tienGiamHangTV);
-                cs.setBigDecimal(12, thanhTienSauGiam == null ? BigDecimal.ZERO : thanhTienSauGiam);
-                cs.setString(13, note);
-                cs.setString(14, user.getMaKH());
-                cs.setString(15, maKG);
-                cs.registerOutParameter(16, Types.VARCHAR);
+                cs.setString(6, note);
+                cs.setString(7, user.getMaKH());
+                cs.setString(8, maKG);
+                cs.registerOutParameter(9, Types.VARCHAR);
                 cs.execute();
-                return cs.getString(16);
+                String createdMaDatCho = cs.getString(9);
+                luuVoucherDatCho(conn, createdMaDatCho, maPGG, tienGiamVoucher);
+                return createdMaDatCho;
             }
         });
 
         return maDatCho;
+    }
+
+    private void luuVoucherDatCho(java.sql.Connection conn, String maDatCho, String maPGG,
+                                   BigDecimal tienGiamVoucher) throws java.sql.SQLException {
+        if (maDatCho == null || maDatCho.isBlank()
+                || maPGG == null || maPGG.isBlank()
+                || tienGiamVoucher == null || tienGiamVoucher.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        try (var ps = conn.prepareStatement(
+                """
+                INSERT INTO CHITIETAPDUNGPGG (
+                    MaApDung, MaPGG, MaDatCho, MaHoaDon, NguonApDung, SoTienGiam, ThoiGianApDung
+                )
+                SELECT RAWTOHEX(SYS_GUID()), ?, ?, NULL, 'DAT_TRUOC', ?, CURRENT_TIMESTAMP
+                FROM DUAL
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM CHITIETAPDUNGPGG
+                    WHERE MaDatCho = ?
+                      AND MaPGG = ?
+                      AND NguonApDung = 'DAT_TRUOC'
+                )
+                """)) {
+            ps.setString(1, maPGG.trim());
+            ps.setString(2, maDatCho);
+            ps.setBigDecimal(3, tienGiamVoucher);
+            ps.setString(4, maDatCho);
+            ps.setString(5, maPGG.trim());
+            ps.executeUpdate();
+        }
+    }
+
+    private void capNhatHoaDonKhiNhanDatCho(String maDatCho, String maPhien) {
+        mauJdbc.update(
+                """
+                UPDATE HOADON h
+                SET TongTien = NVL(FN_TinhTongTien(h.MaPhien), NVL(TongTien, 0)),
+                    ThanhTien = 0,
+                    MaPGG = NVL(MaPGG, (
+                        SELECT MAX(ct.MaPGG)
+                        FROM CHITIETAPDUNGPGG ct
+                        WHERE ct.MaDatCho = ?
+                          AND ct.NguonApDung = 'DAT_TRUOC'
+                    )),
+                    NgayLapHoaDon = CURRENT_TIMESTAMP,
+                    PhuongThucThanhToan = ?,
+                    TrangThaiThanhToan = ?
+                WHERE h.MaPhien = ?
+                """,
+                maDatCho,
+                giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
+                trangThaiHoaDonDb("Da tra truoc"),
+                maPhien
+        );
     }
 
     private LocalDateTime layThoiGianHienTaiVietNam() {
@@ -1183,38 +1163,7 @@ public class CongThongTinWebRepository {
             }
         });
 
-        mauJdbc.update(
-                """
-                UPDATE HOADON h
-                SET (DaTraTruoc, TongTien, TongTienGoc, TienGocDatTruoc,
-                     TienGocPhatSinh, MaPGGDatTruoc, TienGiamVoucherDatTruoc,
-                     PhanTramGiamHangTVDatTruoc, TienGiamHangTVDatTruoc,
-                     TongTienGiam, ThanhTien, NgayLapHoaDon, PhuongThucThanhToan,
-                     TrangThaiThanhToan) = (
-                    SELECT NVL(NULLIF(dc.ThanhTienSauGiam, 0), NVL(dc.ThanhTien, 0)),
-                           NVL(dc.TongTienGoc, 0),
-                           NVL(dc.TongTienGoc, 0),
-                           NVL(dc.TongTienGoc, 0),
-                           0,
-                           dc.MaPGG,
-                           NVL(dc.TienGiamVoucher, 0),
-                           NVL(dc.PhanTramGiamHangTV, 0),
-                           NVL(dc.TienGiamHangTV, 0),
-                           NVL(dc.TienGiamVoucher, 0) + NVL(dc.TienGiamHangTV, 0),
-                           0,
-                           CURRENT_TIMESTAMP,
-                           ?,
-                           ?
-                    FROM DATCHO dc
-                    WHERE dc.MaDatCho = ?
-                )
-                WHERE h.MaPhien = ?
-                """,
-                giaTriDb("CHK_HD_PTTT", "dat truoc", 2, "Đặt trước"),
-                trangThaiHoaDonDb("Da tra truoc"),
-                maDatCho,
-                maPhien
-        );
+        capNhatHoaDonKhiNhanDatCho(maDatCho, maPhien);
 
         mauJdbc.update(
                 """
@@ -1583,6 +1532,27 @@ public class CongThongTinWebRepository {
             return first;
         }
         return first.after(second) ? first : second;
+    }
+
+    private MapSqlParameterSource taoThamSoTaiKhongGian(LocalDateTime requestStart, LocalDateTime requestEnd) {
+        return new MapSqlParameterSource()
+                .addValue("maintenanceStatus", trangThaiKhongGianDb("Bao tri"))
+                .addValue("maintenanceDisplay", "Bảo trì")
+                .addValue("busySpaceStatus", trangThaiKhongGianDb("Dang hoat dong"))
+                .addValue("activeSessionStatus", giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"))
+                .addValue("requestStart", Timestamp.valueOf(requestStart))
+                .addValue("requestEnd", Timestamp.valueOf(requestEnd))
+                .addValue("busyDisplay", "Đang hoạt động")
+                .addValue("busyBookingStatuses", trangThaiDatChoDangGiuCho())
+                .addValue("bookedDisplay", "Đã đặt trước")
+                .addValue("emptyDisplay", "Trống");
+    }
+
+    private List<String> trangThaiDatChoDangGiuCho() {
+        return List.of(
+                trangThaiDatChoDb("Da thanh toan thanh cong"),
+                trangThaiDatChoDb("Dang cho thanh toan")
+        );
     }
 
     private ThongTinNhanChoBangQR anhXaThongTinNhanChoBangQR(java.sql.ResultSet rs) throws java.sql.SQLException {

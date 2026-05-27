@@ -44,10 +44,17 @@ public class ThongTinHoaDonDTO {
     private double tienGiamHangTVTaiQuay;
     private double soTienThanhToanTaiQuay;
     private List<DichVuDaDungDTO> danhSachDichVuPhatSinh;
+    private List<InvoiceLine> dongChiPhi;
+    private List<DiscountLine> dongVoucher;
+    private double soTienConLai;
+    private double tienGiamHang;
+    private double soTienCanThanhToan;
 
     public ThongTinHoaDonDTO() {
         this.danhSachDichVu = new ArrayList<>();
         this.danhSachDichVuPhatSinh = new ArrayList<>();
+        this.dongChiPhi = new ArrayList<>();
+        this.dongVoucher = new ArrayList<>();
     }
 
     public String getMaHoaDon() { return maHoaDon; }
@@ -97,7 +104,10 @@ public class ThongTinHoaDonDTO {
     public double getSoTienGiamVoucher() { return soTienGiamVoucher; }
     public void setSoTienGiamVoucher(double soTienGiamVoucher) { this.soTienGiamVoucher = soTienGiamVoucher; }
     public double getSoTienGiamHangThanhVien() { return soTienGiamHangThanhVien; }
-    public void setSoTienGiamHangThanhVien(double soTienGiamHangThanhVien) { this.soTienGiamHangThanhVien = soTienGiamHangThanhVien; }
+    public void setSoTienGiamHangThanhVien(double soTienGiamHangThanhVien) {
+        this.soTienGiamHangThanhVien = soTienGiamHangThanhVien;
+        this.tienGiamHang = soTienGiamHangThanhVien;
+    }
     public double getTongTienGiam() { return tongTienGiam; }
     public void setTongTienGiam(double tongTienGiam) { this.tongTienGiam = tongTienGiam; }
     public double getTienGocDatTruoc() { return tienGocDatTruoc; }
@@ -128,4 +138,19 @@ public class ThongTinHoaDonDTO {
     public void setSoTienThanhToanTaiQuay(double soTienThanhToanTaiQuay) { this.soTienThanhToanTaiQuay = soTienThanhToanTaiQuay; }
     public List<DichVuDaDungDTO> getDanhSachDichVuPhatSinh() { return danhSachDichVuPhatSinh; }
     public void setDanhSachDichVuPhatSinh(List<DichVuDaDungDTO> danhSachDichVuPhatSinh) { this.danhSachDichVuPhatSinh = danhSachDichVuPhatSinh; }
+    public List<InvoiceLine> getDongChiPhi() { return dongChiPhi; }
+    public void setDongChiPhi(List<InvoiceLine> dongChiPhi) { this.dongChiPhi = dongChiPhi; }
+    public List<DiscountLine> getDongVoucher() { return dongVoucher; }
+    public void setDongVoucher(List<DiscountLine> dongVoucher) { this.dongVoucher = dongVoucher; }
+    public double getSoTienConLai() { return soTienConLai; }
+    public void setSoTienConLai(double soTienConLai) { this.soTienConLai = soTienConLai; }
+    public double getTienGiamHang() { return tienGiamHang; }
+    public void setTienGiamHang(double tienGiamHang) {
+        this.tienGiamHang = tienGiamHang;
+        this.soTienGiamHangThanhVien = tienGiamHang;
+    }
+    public double getPhanTramGiamHang() { return phanTramGiamHangThanhVien; }
+    public void setPhanTramGiamHang(double phanTramGiamHang) { this.phanTramGiamHangThanhVien = phanTramGiamHang; }
+    public double getSoTienCanThanhToan() { return soTienCanThanhToan; }
+    public void setSoTienCanThanhToan(double soTienCanThanhToan) { this.soTienCanThanhToan = soTienCanThanhToan; }
 }

@@ -14,10 +14,10 @@ public class DatChoDAO {
                 BEGIN
                     INSERT INTO DATCHO (
                         ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung,
-                        TrangThaiDatTruoc, ThanhTien, TongTienGoc, ThanhTienSauGiam,
+                        TrangThaiDatTruoc, ThanhTien,
                         GhiChu, MaKH, MaKG, CapNhatLanCuoi
                     ) VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+                        ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
                     )
                     RETURNING MaDatCho INTO ?;
                 END;
@@ -33,15 +33,13 @@ public class DatChoDAO {
                 pstmt.setNull(3, java.sql.Types.INTEGER);
             pstmt.setString(4, dc.getTrangThaiDatTruoc());
             pstmt.setDouble(5, dc.getThanhTien());
-            pstmt.setDouble(6, dc.getThanhTien());
-            pstmt.setDouble(7, dc.getThanhTien());
-            pstmt.setString(8, dc.getGhiChu());
-            pstmt.setString(9, dc.getMaKH());
-            pstmt.setString(10, dc.getMaKG());
-            pstmt.registerOutParameter(11, Types.VARCHAR);
+            pstmt.setString(6, dc.getGhiChu());
+            pstmt.setString(7, dc.getMaKH());
+            pstmt.setString(8, dc.getMaKG());
+            pstmt.registerOutParameter(9, Types.VARCHAR);
 
             pstmt.execute();
-            dc.setMaDatCho(pstmt.getString(11));
+            dc.setMaDatCho(pstmt.getString(9));
             return true;
         } catch (SQLException e) {
             System.err.println("[DatChoDAO] Lỗi khi tạo đơn đặt chỗ: " + e.getMessage());

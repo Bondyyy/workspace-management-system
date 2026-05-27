@@ -11,7 +11,6 @@ AS
     v_SoGioSuDung NUMBER;
     v_TienKhongGian NUMBER(18, 2);
     v_MaDatCho VARCHAR2(50);
-    v_TienGocDatCho NUMBER(18, 2);
     v_SoGioDatCho NUMBER;
 BEGIN
     BEGIN
@@ -20,14 +19,12 @@ BEGIN
             PLV.ThoiGianBatDau,
             NVL(PLV.ThoiGianKetThuc, SYSTIMESTAMP),
             PLV.MaDatCho,
-            NVL(DC.TongTienGoc, 0),
             NVL(DC.KhoangThoiGianSuDung, 0)
         INTO 
             v_DonGiaTheoGio,
             v_ThoiGianBatDau,
             v_ThoiGianKetThuc,
             v_MaDatCho,
-            v_TienGocDatCho,
             v_SoGioDatCho
         FROM PHIENLAMVIEC PLV
         JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
@@ -39,11 +36,8 @@ BEGIN
             RETURN 0;
     END;
 
-    -- Phiên đặt trước phải trả về tiền gốc thuê không gian, không dùng số đã giảm/đã trả trước.
+    -- Phiên đặt trước tính lại tiền thuê từ DATCHO + LOAIKHONGGIAN, không đọc snapshot tiền cũ.
     IF v_MaDatCho IS NOT NULL THEN
-        IF NVL(v_TienGocDatCho, 0) > 0 THEN
-            RETURN ROUND(v_TienGocDatCho, 2);
-        END IF;
         RETURN ROUND(NVL(v_DonGiaTheoGio, 0) * NVL(v_SoGioDatCho, 0), 2);
     END IF;
 

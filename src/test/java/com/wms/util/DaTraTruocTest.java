@@ -62,11 +62,17 @@ public class DaTraTruocTest {
         assertTrue(ketQua.isThanhCong(), ketQua.getThongBao());
 
         List<Map<String, Object>> hoaDonList = jdbcTemplate.queryForList(
-                "SELECT h.* FROM HOADON h JOIN PHIENLAMVIEC p ON p.MaPhien = h.MaPhien WHERE p.MaDatCho = ?",
+                """
+                SELECT h.*, dc.ThanhTien AS TienDatCho
+                FROM HOADON h
+                JOIN PHIENLAMVIEC p ON p.MaPhien = h.MaPhien
+                JOIN DATCHO dc ON dc.MaDatCho = p.MaDatCho
+                WHERE p.MaDatCho = ?
+                """,
                 maDatCho);
         assertEquals(1, hoaDonList.size(), "Chỉ được có một hóa đơn cho phiên");
         Map<String, Object> hd = hoaDonList.get(0);
-        assertEquals(150000.0, ((Number) hd.get("DaTraTruoc")).doubleValue(), 0.001);
+        assertEquals(150000.0, ((Number) hd.get("TienDatCho")).doubleValue(), 0.001);
         assertEquals("Đã trả trước", hd.get("TrangThaiThanhToan"));
     }
 
@@ -99,7 +105,12 @@ public class DaTraTruocTest {
                 "SELECT MaPhien FROM PHIENLAMVIEC WHERE MaDatCho = ?", String.class, maDatCho);
 
         jdbcTemplate.update(
-                "UPDATE PHIENLAMVIEC SET ThoiGianDuKienKetThuc = CURRENT_TIMESTAMP - NUMTODSINTERVAL(10, 'MINUTE') WHERE MaPhien = ?",
+                """
+                UPDATE PHIENLAMVIEC
+                SET ThoiGianBatDau = CURRENT_TIMESTAMP - NUMTODSINTERVAL(2, 'HOUR'),
+                    ThoiGianDuKienKetThuc = CURRENT_TIMESTAMP - NUMTODSINTERVAL(10, 'MINUTE')
+                WHERE MaPhien = ?
+                """,
                 maPhien);
 
         CongThongTinService service = new CongThongTinService(new CongThongTinWebRepository(jdbcTemplate));
@@ -113,7 +124,6 @@ public class DaTraTruocTest {
         Map<String, Object> hd = jdbcTemplate.queryForMap(
                 "SELECT * FROM HOADON WHERE MaPhien = ?", maPhien);
         assertEquals("Đã thanh toán thành công", hd.get("TrangThaiThanhToan"));
-        assertEquals(150000.0, ((Number) hd.get("DaTraTruoc")).doubleValue(), 0.001);
         assertEquals(0.0, ((Number) hd.get("ThanhTien")).doubleValue(), 0.001);
 
         String trangThaiKG = jdbcTemplate.queryForObject(
@@ -153,7 +163,12 @@ public class DaTraTruocTest {
                 maDV, maPhien, 1, "Khách dùng thêm");
 
         jdbcTemplate.update(
-                "UPDATE PHIENLAMVIEC SET ThoiGianDuKienKetThuc = CURRENT_TIMESTAMP - NUMTODSINTERVAL(10, 'MINUTE') WHERE MaPhien = ?",
+                """
+                UPDATE PHIENLAMVIEC
+                SET ThoiGianBatDau = CURRENT_TIMESTAMP - NUMTODSINTERVAL(2, 'HOUR'),
+                    ThoiGianDuKienKetThuc = CURRENT_TIMESTAMP - NUMTODSINTERVAL(10, 'MINUTE')
+                WHERE MaPhien = ?
+                """,
                 maPhien);
 
         CongThongTinService service = new CongThongTinService(new CongThongTinWebRepository(jdbcTemplate));
@@ -168,7 +183,8 @@ public class DaTraTruocTest {
         double thanhTienConLai = ((Number) hd.get("ThanhTien")).doubleValue();
         assertEquals(thanhTienConLai > 0 ? "Đang chờ thanh toán" : "Đã thanh toán thành công",
                 hd.get("TrangThaiThanhToan"));
-        assertEquals(150000.0, ((Number) hd.get("DaTraTruoc")).doubleValue(), 0.001);
+        assertEquals(150000.0, jdbcTemplate.queryForObject(
+                "SELECT ThanhTien FROM DATCHO WHERE MaDatCho = ?", Number.class, maDatCho).doubleValue(), 0.001);
     }
 
     @Test
@@ -176,7 +192,9 @@ public class DaTraTruocTest {
         String maPhien = "P_WALK_" + System.currentTimeMillis() % 10000;
         jdbcTemplate.update("""
                 INSERT INTO PHIENLAMVIEC (MaPhien, ThoiGianBatDau, ThoiGianDuKienKetThuc, TrangThaiPhien, MaKG, MaKH, MaDatCho)
-                VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - NUMTODSINTERVAL(10, 'MINUTE'), 'Đang hoạt động', ?, ?, NULL)
+                VALUES (?, CURRENT_TIMESTAMP - NUMTODSINTERVAL(2, 'HOUR'),
+                        CURRENT_TIMESTAMP - NUMTODSINTERVAL(10, 'MINUTE'),
+                        'Đang hoạt động', ?, ?, NULL)
                 """,
                 maPhien, maKG, maKH);
 
@@ -184,8 +202,8 @@ public class DaTraTruocTest {
         String maHD = "HD_WALK_" + System.currentTimeMillis() % 10000;
         if (dsHd.isEmpty()) {
             jdbcTemplate.update("""
-                    INSERT INTO HOADON (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, PhuongThucThanhToan, TrangThaiThanhToan, DaTraTruoc, MaPhien)
-                    VALUES (?, ?, 0, 0, CURRENT_TIMESTAMP, 'Tiền mặt', 'Đang chờ thanh toán', 0, ?)
+                    INSERT INTO HOADON (MaHoaDon, SoHD, TongTien, ThanhTien, NgayLapHoaDon, PhuongThucThanhToan, TrangThaiThanhToan, MaPhien)
+                    VALUES (?, ?, 0, 0, CURRENT_TIMESTAMP, 'Tiền mặt', 'Đang chờ thanh toán', ?)
                     """,
                     maHD, maHD, maPhien);
         }
@@ -215,22 +233,61 @@ public class DaTraTruocTest {
                 """
                 INSERT INTO DATCHO (ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung, TrangThaiDatTruoc,
                                     ThanhTien, GhiChu, CapNhatLanCuoi, MaKH, MaKG, MaQR)
-                VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'), ?, 'Đã thanh toán thành công',
+                VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + NUMTODSINTERVAL(1, 'HOUR'), ?, 'Đã thanh toán thành công',
                         ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
                 """,
-                hoursOffset, duration, tien, "Test " + testPrefix, maKH, maKG, qr);
+                duration, tien, "Test " + testPrefix, maKH, maKG, qr);
+        String maDatCho = jdbcTemplate.queryForObject(
+                "SELECT MaDatCho FROM DATCHO WHERE MaQR = ?",
+                String.class, qr);
+        jdbcTemplate.update(
+                """
+                UPDATE DATCHO
+                SET ThoiGianDat = CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR'),
+                    ThoiGianDuKienToi = CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'HOUR')
+                WHERE MaDatCho = ?
+                """,
+                hoursOffset - 1, hoursOffset, maDatCho);
         return jdbcTemplate.queryForObject(
-                "SELECT MaDatCho FROM (SELECT MaDatCho FROM DATCHO WHERE MaKG = ? ORDER BY ThoiGianDat DESC) WHERE ROWNUM = 1",
-                String.class, maKG);
+                "SELECT MaDatCho FROM DATCHO WHERE MaDatCho = ?",
+                String.class, maDatCho);
     }
 
     private void compileDbObjects() throws Exception {
+        ensureVoucherRelationTable();
+        executeSqlFile("Database/03_function/FN_TinhTienKhongGian.sql");
+        executeSqlFile("Database/03_function/FN_TinhTienDichVu.sql");
+        executeSqlFile("Database/03_function/FN_TinhTongTien.sql");
+        executeSqlFile("Database/03_function/FN_TinhThanhTien.sql");
         executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_TaoMaHoaDon.sql");
         executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_TaoHoaDonKhiMoPhien.sql");
+        executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_TinhToanHoaDon.sql");
         executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_KiemTraPhuongThucThanhToan.sql");
         executeSqlFile("Database/05_triggers/DatCho/TRG_VoHieuQRSauNhanCho.sql");
         executeSqlFile("Database/04_procedures/HoaDon/SP_KetThucPhien.sql");
         executeSqlFile("Database/04_procedures/sp_ThanhToanVoiPGG.sql");
+    }
+
+    private void ensureVoucherRelationTable() {
+        jdbcTemplate.execute("""
+                BEGIN
+                    EXECUTE IMMEDIATE '
+                        CREATE TABLE CHITIETAPDUNGPGG (
+                            MaApDung VARCHAR2(50) PRIMARY KEY,
+                            MaPGG VARCHAR2(50),
+                            MaDatCho VARCHAR2(50),
+                            MaHoaDon VARCHAR2(50),
+                            NguonApDung VARCHAR2(50),
+                            SoTienGiam NUMBER(18, 2) DEFAULT 0,
+                            ThoiGianApDung TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )';
+                EXCEPTION
+                    WHEN OTHERS THEN
+                        IF SQLCODE != -955 THEN
+                            RAISE;
+                        END IF;
+                END;
+                """);
     }
 
     private void executeSqlFile(String path) throws Exception {

@@ -83,9 +83,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
         cbNhanVien.setEditable(false);
         cbLoaiDichVu.setEditable(false);
-        txtTenDichVu.setEditable(false);
-        txtTenDichVu.setFocusable(false);
-        txtTenDichVu.setBackground(new java.awt.Color(240, 240, 240));
+        cbTenDichVu.setEditable(false);
         txtNiemYet.setEditable(false);
         txtNiemYet.setBackground(new java.awt.Color(240, 240, 240));
 
@@ -99,27 +97,18 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             loaiModel.addElement(loai);
         cbLoaiDichVu.setModel(loaiModel);
 
-        txtTenDichVu.setText("");
+        cbTenDichVu.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"-- Chọn dịch vụ --"}));
         txtGiaNhap.setText("");
         txtNiemYet.setText("");
     }
 
     private void setupDynamicBehavior() {
         cbLoaiDichVu.addActionListener(e -> updateTheoLoaiDichVu());
-        txtTenDichVu.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                danhDauNhapTenMoi();
-            }
-
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                danhDauNhapTenMoi();
-            }
-
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                danhDauNhapTenMoi();
+        cbTenDichVu.addActionListener(e -> {
+            if (fillingFormData) return;
+            Object sel = cbTenDichVu.getSelectedItem();
+            if (sel != null && !sel.toString().startsWith("--")) {
+                onChonTenDichVu(sel.toString());
             }
         });
 
@@ -132,6 +121,40 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
                 }
             }
         });
+    }
+
+    private void onChonTenDichVu(String tenDV) {
+        if (tenDV == null || tenDV.isEmpty()) return;
+        // Tìm trong bảng dịch vụ theo tên để lấy mã DV, giá, số lượng tồn
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tblKho.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            String tenTrongBang = model.getValueAt(i, 2).toString();
+            if (tenDV.equalsIgnoreCase(tenTrongBang)) {
+                currentMaDV = model.getValueAt(i, 1).toString();
+                selectedTenDichVu = tenDV;
+                txtNiemYet.setText(model.getValueAt(i, 4).toString());
+                txtSluongHienTai.setText(model.getValueAt(i, 6).toString());
+                String giaNhap = model.getValueAt(i, 5).toString();
+                txtGiaNhap.setText(giaNhap.equals("0") ? "" : giaNhap);
+                btnXemHoaDon.setEnabled(true);
+                tblKho.setRowSelectionInterval(i, i);
+                tblKho.scrollRectToVisible(tblKho.getCellRect(i, 0, true));
+
+                // Kiểm tra hóa đơn
+                Object[] hoaDon = controller.xemHoaDon(currentMaDV);
+                if (hoaDon != null) {
+                    String tenFile = (String) hoaDon[1];
+                    lblTrangThaiFile.setText("Hiện có: " + shortenString(tenFile, 20));
+                    lblTrangThaiFile.setForeground(new java.awt.Color(0, 102, 0));
+                } else {
+                    lblTrangThaiFile.setText("Chưa chọn file (Bắt buộc)");
+                    lblTrangThaiFile.setForeground(java.awt.Color.RED);
+                }
+                return;
+            }
+        }
+        // Nếu không tìm thấy trong bảng, cập nhật đơn giá từ DB
+        updateDonGia();
     }
 
     private void xemHoaDonAction() {
@@ -191,7 +214,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             updateTheoLoaiDichVu();
 
             // Điền tên dịch vụ
-            txtTenDichVu.setText(ten);
+            cbTenDichVu.setSelectedItem(ten);
             txtNiemYet.setText(giaNiemYet);
 
             // Hiển thị số lượng tồn hiện tại vào ô mới
@@ -227,23 +250,10 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         }
     }
 
-    private void danhDauNhapTenMoi() {
-        if (fillingFormData) {
-            return;
-        }
-        String tenDangNhap = txtTenDichVu.getText().trim();
-        if (!currentMaDV.isBlank() && !tenDangNhap.equalsIgnoreCase(selectedTenDichVu)) {
-            currentMaDV = "";
-            selectedTenDichVu = "";
-            txtSluongHienTai.setText("");
-            txtNiemYet.setText("");
-            btnXemHoaDon.setEnabled(false);
-        }
-    }
-
     private void updateDonGia() {
-        String tenDV = txtTenDichVu.getText().trim();
-        if (tenDV.isEmpty()) {
+        Object sel = cbTenDichVu.getSelectedItem();
+        String tenDV = (sel != null) ? sel.toString().trim() : "";
+        if (tenDV.isEmpty() || tenDV.startsWith("--")) {
             txtNiemYet.setText("");
             return;
         }
@@ -260,10 +270,25 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         btnChonFile.setVisible(!isTienIch);
         lblTrangThaiFile.setVisible(!isTienIch);
 
+        // Cập nhật danh sách tên dịch vụ theo loại
+        javax.swing.DefaultComboBoxModel<String> tenModel = new javax.swing.DefaultComboBoxModel<>();
+        tenModel.addElement("-- Chọn dịch vụ --");
         if (!loaiDV.isEmpty() && !loaiDV.startsWith("--")) {
-            updateDonGia();
-        } else {
+            java.util.List<String> dsTen = controller.getDSTenDichVuTheoLoai(loaiDV);
+            for (String ten : dsTen) {
+                tenModel.addElement(ten);
+            }
+        }
+        cbTenDichVu.setModel(tenModel);
+
+        // Reset các trường liên quan
+        if (!fillingFormData) {
+            currentMaDV = "";
+            selectedTenDichVu = "";
             txtNiemYet.setText("");
+            txtSluongHienTai.setText("");
+            txtGiaNhap.setText("");
+            btnXemHoaDon.setEnabled(false);
         }
     }
 
@@ -343,7 +368,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
             cbNhanVien.setSelectedIndex(0);
         if (cbLoaiDichVu.getItemCount() > 0)
             cbLoaiDichVu.setSelectedIndex(0);
-        txtTenDichVu.setText("");
+        cbTenDichVu.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{"-- Chọn dịch vụ --"}));
         spnSoLuong.setValue(0);
         txtGiaNhap.setText("");
         txtNiemYet.setText("");
@@ -387,7 +412,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         lblLoaiDichVu = new javax.swing.JLabel();
         cbLoaiDichVu = new javax.swing.JComboBox<>();
         lblTenDichVu = new javax.swing.JLabel();
-        txtTenDichVu = new javax.swing.JTextField();
+        cbTenDichVu = new javax.swing.JComboBox<>();
         lblSoLuong = new javax.swing.JLabel();
         spnSoLuong = new javax.swing.JSpinner();
         lblChungTuTitle = new javax.swing.JLabel();
@@ -499,9 +524,9 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
         pnRight.add(lblTenDichVu);
         lblTenDichVu.setBounds(210, 130, 180, 20);
 
-        txtTenDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(txtTenDichVu);
-        txtTenDichVu.setBounds(210, 160, 170, 35);
+        cbTenDichVu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        pnRight.add(cbTenDichVu);
+        cbTenDichVu.setBounds(210, 160, 170, 35);
 
         lblSoLuong.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblSoLuong.setForeground(new java.awt.Color(35, 30, 48));
@@ -628,12 +653,13 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
         String nhanVien = (nvSelected != null) ? nvSelected.toString().trim() : "";
         String loaiDichVu = (loaiSelected != null) ? loaiSelected.toString().trim() : "";
-        String tenDichVu = txtTenDichVu.getText().trim();
+        Object tenDVSelected = cbTenDichVu.getSelectedItem();
+        String tenDichVu = (tenDVSelected != null) ? tenDVSelected.toString().trim() : "";
         int soLuong = (int) spnSoLuong.getValue();
 
         if (nhanVien.isEmpty() || nhanVien.startsWith("--") ||
                 loaiDichVu.isEmpty() || loaiDichVu.startsWith("--") ||
-                tenDichVu.isEmpty()) {
+                tenDichVu.isEmpty() || tenDichVu.startsWith("--")) {
             javax.swing.JOptionPane.showMessageDialog(this,
                     "Vui lòng chọn nhân viên, loại dịch vụ và chọn dịch vụ có sẵn trong bảng!", "Cảnh báo",
                     javax.swing.JOptionPane.WARNING_MESSAGE);
@@ -751,7 +777,7 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
     private javax.swing.JTextField txtGiaNhap;
     private javax.swing.JTextField txtNiemYet;
     private javax.swing.JTextField txtSluongHienTai;
-    private javax.swing.JTextField txtTenDichVu;
+    private javax.swing.JComboBox<String> cbTenDichVu;
     private javax.swing.JTextField txtTimKiem;
     // End of variables declaration//GEN-END:variables
 }

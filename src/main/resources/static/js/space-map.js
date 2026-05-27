@@ -7,7 +7,26 @@
     const branchForm = document.querySelector("[data-branch-form]");
     const branchSelect = document.querySelector("[data-branch-select]");
     if (branchForm && branchSelect) {
-        branchSelect.addEventListener("change", () => branchForm.submit());
+        branchSelect.addEventListener("change", () => {
+            [
+                ["date", document.getElementById("bookingDate")],
+                ["start", document.getElementById("startHour")],
+                ["durationHours", document.getElementById("durationHoursPicker")]
+            ].forEach(([name, source]) => {
+                if (!source || !source.value) {
+                    return;
+                }
+                let hidden = branchForm.querySelector('input[type="hidden"][name="' + name + '"]');
+                if (!hidden) {
+                    hidden = document.createElement("input");
+                    hidden.type = "hidden";
+                    hidden.name = name;
+                    branchForm.appendChild(hidden);
+                }
+                hidden.value = source.value;
+            });
+            branchForm.submit();
+        });
     }
 
     const nodes = Array.from(document.querySelectorAll("[data-space-node]"));
@@ -113,8 +132,8 @@
         }
 
         const startDate = new Date(dateInput.value + "T" + startInput.value + ":00");
-        if (Number.isNaN(startDate.getTime()) || startDate <= new Date()) {
-            return "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
+        if (Number.isNaN(startDate.getTime())) {
+            return "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn lại ngày và giờ bắt đầu.";
         }
         return "";
     }
