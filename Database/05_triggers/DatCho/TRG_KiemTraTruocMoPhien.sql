@@ -7,6 +7,7 @@ BEGIN
     SELECT TrangThaiKG INTO v_TrangThaiKG
     FROM KHONGGIAN
     WHERE MaKG = :NEW.MaKG;
+    FOR UPDATE; -- Tránh race condition;
 
     IF v_TrangThaiKG = 'Bảo trì' THEN
         RAISE_APPLICATION_ERROR(-20001, 'Lỗi: Không gian này đang được bảo trì, không thể đặt chỗ!');
