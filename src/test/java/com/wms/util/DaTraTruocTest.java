@@ -264,8 +264,8 @@ public class DaTraTruocTest {
         executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_TinhToanHoaDon.sql");
         executeSqlFile("Database/05_triggers/ThanhToanTrucTiep/TRG_KiemTraPhuongThucThanhToan.sql");
         executeSqlFile("Database/05_triggers/DatCho/TRG_VoHieuQRSauNhanCho.sql");
-        executeSqlFile("Database/04_procedures/HoaDon/SP_KetThucPhien.sql");
-        executeSqlFile("Database/04_procedures/sp_ThanhToanVoiPGG.sql");
+        executeSqlFile("Database/04_procedures/QuanLyPhien/SP_KetThucPhien.sql");
+        executeSqlFile("Database/04_procedures/QuanLyPGG/sp_ThanhToanVoiPGG.sql");
     }
 
     private void ensureVoucherRelationTable() {

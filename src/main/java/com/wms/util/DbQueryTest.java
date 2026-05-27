@@ -12,7 +12,7 @@ public class DbQueryTest {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              Statement stmt = conn.createStatement()) {
             
-            Path sqlPath = Path.of("Database/04_procedures/sp_ThanhToanVoiPGG.sql");
+            Path sqlPath = Path.of("Database/04_procedures/QuanLyPGG/sp_ThanhToanVoiPGG.sql");
             String sqlContent = Files.readString(sqlPath);
             
             // Tách phần ký tự '/' ở cuối file SQL của Oracle nếu có

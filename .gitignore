@@ -33,6 +33,7 @@ src/main/resources/config.properties
 docs/*
 !docs/procedure-deprecation-plan.md
 !docs/procedure-adoption-plan.md
+!docs/database-cleanup-report.md
 
 _archive
 _maintenancebackup/
