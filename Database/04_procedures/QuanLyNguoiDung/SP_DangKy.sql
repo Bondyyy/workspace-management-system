@@ -10,6 +10,7 @@ CREATE OR REPLACE PROCEDURE SP_DangKy(
 ) AS
     v_Count NUMBER;
     v_MaND NGUOIDUNG.MaND%TYPE;
+    v_MaHangDong HANGTHANHVIEN.MaHangThanhVien%TYPE;
 BEGIN
     IF p_GioiTinh NOT IN ('Nam', 'Nữ', 'Khác') THEN
         RAISE_APPLICATION_ERROR(-20023, 'Giới tính phải là Nam, Nữ hoặc Khác!');
@@ -38,6 +39,23 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20022, 'Số điện thoại đã được sử dụng!');
     END IF;
 
+    BEGIN
+        SELECT MaHangThanhVien INTO v_MaHangDong
+        FROM HANGTHANHVIEN
+        WHERE TenHangThanhVien = 'Đồng'
+          AND ROWNUM = 1;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            SELECT MaHangThanhVien INTO v_MaHangDong
+            FROM (
+                SELECT MaHangThanhVien
+                FROM HANGTHANHVIEN
+                WHERE TenHangThanhVien <> 'Không có'
+                ORDER BY NVL(TongChiTieuToiThieu, 0), MaHangThanhVien
+            )
+            WHERE ROWNUM = 1;
+    END;
+
     INSERT INTO NGUOIDUNG (
         MaND, TenTaiKhoan, MatKhauMaHoa,
         Email, SDT, GioiTinh, NgaySinh,
@@ -52,7 +70,7 @@ BEGIN
     INSERT INTO KHACHHANG (
         MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH
     ) VALUES (
-        'HTV01', 0, CURRENT_TIMESTAMP, v_MaND, 'Hội viên'
+        v_MaHangDong, 0, CURRENT_TIMESTAMP, v_MaND, 'Hội viên'
     );
 
     MERGE INTO VAITRO v

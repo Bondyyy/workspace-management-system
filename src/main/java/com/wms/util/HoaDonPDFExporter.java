@@ -111,7 +111,7 @@ public class HoaDonPDFExporter {
                         + HoaDonGiamGiaUtil.formatTienGiamVnd(line.getSoTienGiam())), normalFont));
             }
         }
-        document.add(new Paragraph(pdfText("Số tiền còn lại: "
+        document.add(new Paragraph(pdfText("Số tiền tổng: "
                 + HoaDonGiamGiaUtil.formatTienVnd(hoaDon.getSoTienConLai())), normalFont));
         document.add(new Paragraph(pdfText("Hạng thành viên (" + giaTri(hoaDon.getTenHangThanhVien()) + "): "
                 + HoaDonGiamGiaUtil.formatTienGiamVnd(hoaDon.getTienGiamHang())), normalFont));

@@ -7,6 +7,8 @@ import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.HoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.InvoiceLine;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
+import com.wms.util.HangThanhVienUtil;
+import com.wms.util.HangThanhVienUtil.HangThanhVienSnapshot;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -185,7 +187,7 @@ public class HoaDonDAO {
                        h.TongTien AS TongTienLuu, h.ThanhTien AS SoTienCanThuTaiQuay,
                        h.MaPGG, p.MaPhien, p.ThoiGianBatDau, p.ThoiGianKetThuc,
                        p.ThoiGianDuKienKetThuc, p.TrangThaiPhien, h.TrangThaiThanhToan,
-                       nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho,
+                       kh.MaKH, nd.HoTen AS HoTenKH, kg.TenKG, cn.TenCN, p.MaDatCho,
                        dc.KhoangThoiGianSuDung, NVL(dc.ThanhTien, 0) AS TienDatChoDaTra,
                        NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        htv.TenHangThanhVien,
@@ -323,7 +325,18 @@ public class HoaDonDAO {
                     }
                 }
 
+                String maKH = rsChung.getString("MaKH");
+                String tenHangThanhVien = rsChung.getString("TenHangThanhVien");
                 double phanTramHang = Math.max(0, rsChung.getDouble("PhanTramGiamHangThanhVien"));
+                if (maKH != null && HangThanhVienUtil.laHangKhongCo(tenHangThanhVien)) {
+                    HangThanhVienSnapshot hangMacDinh = HangThanhVienUtil.layHangKhachHangMacDinh(conn);
+                    tenHangThanhVien = hangMacDinh.tenHangThanhVien();
+                    phanTramHang = Math.max(0,
+                            hangMacDinh.phanTramTienGiam() == null ? 0 : hangMacDinh.phanTramTienGiam().doubleValue());
+                } else if (maKH == null) {
+                    tenHangThanhVien = HangThanhVienUtil.TEN_HANG_KHONG_CO;
+                    phanTramHang = 0;
+                }
                 double soTienConLai = Math.max(0, tongChiPhi - tongVoucher);
                 double tienGiamHang = lamTronTien(soTienConLai * Math.min(100, phanTramHang) / 100.0);
                 double thanhTienSauGiam = Math.max(0, soTienConLai - tienGiamHang);
@@ -337,7 +350,7 @@ public class HoaDonDAO {
                 thongTin.setSoTienCanThanhToan(soTienCanThuTaiQuay);
                 thongTin.setSoTienDaTraTruoc(tienDatChoDaTra);
                 thongTin.setDaTraTruoc(tienDatChoDaTra > 0);
-                thongTin.setTenHangThanhVien(rsChung.getString("TenHangThanhVien"));
+                thongTin.setTenHangThanhVien(tenHangThanhVien);
                 thongTin.setPhanTramGiamHangThanhVien(phanTramHang);
                 thongTin.setSoTienGiamVoucher(tongVoucher);
                 thongTin.setTienGiamHang(tienGiamHang);

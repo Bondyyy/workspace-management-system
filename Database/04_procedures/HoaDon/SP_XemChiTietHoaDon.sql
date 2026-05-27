@@ -61,8 +61,42 @@ BEGIN
             HD.MaPGG,
             PGG.MaChuSoPGG,
             NVL(ND.HoTen, 'Khách vãng lai') AS TenKhachHang,
-            HTV.TenHangThanhVien,
-            NVL(HTV.PhanTramTienGiam, 0) AS PhanTramGiamHangTV,
+            CASE
+                WHEN KH.MaKH IS NULL THEN 'Không có'
+                WHEN HTV.TenHangThanhVien IS NULL OR HTV.TenHangThanhVien = 'Không có' THEN
+                    NVL((
+                        SELECT TenHangThanhVien
+                        FROM HANGTHANHVIEN
+                        WHERE MaHangThanhVien = COALESCE(
+                            (SELECT MaHangThanhVien FROM HANGTHANHVIEN WHERE TenHangThanhVien = 'Đồng' AND ROWNUM = 1),
+                            (SELECT MaHangThanhVien FROM (
+                                SELECT MaHangThanhVien
+                                FROM HANGTHANHVIEN
+                                WHERE TenHangThanhVien <> 'Không có'
+                                ORDER BY NVL(TongChiTieuToiThieu, 0), MaHangThanhVien
+                            ) WHERE ROWNUM = 1)
+                        )
+                    ), 'Đồng')
+                ELSE HTV.TenHangThanhVien
+            END AS TenHangThanhVien,
+            CASE
+                WHEN KH.MaKH IS NULL THEN 0
+                WHEN HTV.TenHangThanhVien IS NULL OR HTV.TenHangThanhVien = 'Không có' THEN
+                    NVL((
+                        SELECT PhanTramTienGiam
+                        FROM HANGTHANHVIEN
+                        WHERE MaHangThanhVien = COALESCE(
+                            (SELECT MaHangThanhVien FROM HANGTHANHVIEN WHERE TenHangThanhVien = 'Đồng' AND ROWNUM = 1),
+                            (SELECT MaHangThanhVien FROM (
+                                SELECT MaHangThanhVien
+                                FROM HANGTHANHVIEN
+                                WHERE TenHangThanhVien <> 'Không có'
+                                ORDER BY NVL(TongChiTieuToiThieu, 0), MaHangThanhVien
+                            ) WHERE ROWNUM = 1)
+                        )
+                    ), 0)
+                ELSE NVL(HTV.PhanTramTienGiam, 0)
+            END AS PhanTramGiamHangTV,
             PLV.ThoiGianBatDau,
             PLV.ThoiGianKetThuc,
             KG.TenKG AS TenKhongGian,

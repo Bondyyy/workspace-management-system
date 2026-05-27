@@ -34,3 +34,5 @@ BEGIN
     END IF;
 END TRG_KiemTraPhienTruocThanhToan;
 /
+
+select * from NGUOIDUNG

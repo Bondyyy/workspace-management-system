@@ -15,6 +15,7 @@ import com.wms.web.model.PhieuGiamGiaView;
 import com.wms.web.model.ThongTinNhanChoBangQR;
 import com.wms.model.TrangChuQuanLy.QuanLyPhien.ThongTinXacNhanDatChoDTO;
 import com.wms.util.ChuyenKhoanQrUtil;
+import com.wms.util.HangThanhVienUtil;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -122,7 +123,8 @@ public class CongThongTinWebRepository {
         });
 
         mauJdbc.update(
-                "INSERT INTO KHACHHANG (MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES ('HTV01', 0, CURRENT_TIMESTAMP, ?)",
+                "INSERT INTO KHACHHANG (MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES (?, 0, CURRENT_TIMESTAMP, ?)",
+                layMaHangKhachHangMacDinh(),
                 maND
         );
         mauJdbc.update(
@@ -165,7 +167,8 @@ public class CongThongTinWebRepository {
         String sql = """
                 SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.Email, n.SDT, n.NgaySinh, n.GioiTinh,
                        CASE WHEN n.AnhDaiDien IS NULL THEN 0 ELSE 1 END AS CoAnhDaiDien,
-                       NVL(htv.TenHangThanhVien, 'Không có') AS TenHangThanhVien
+                       kh.MaKH,
+                       htv.TenHangThanhVien
                 FROM NGUOIDUNG n
                 LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND
                 LEFT JOIN HANGTHANHVIEN htv ON htv.MaHangThanhVien = kh.MaHangThanhVien
@@ -174,6 +177,13 @@ public class CongThongTinWebRepository {
         try {
             return mauJdbc.queryForObject(sql, (rs, rowNum) -> {
                 java.sql.Date birthDate = rs.getDate("NgaySinh");
+                String maKH = rs.getString("MaKH");
+                String tenHang = rs.getString("TenHangThanhVien");
+                if (maKH != null && HangThanhVienUtil.laHangKhongCo(tenHang)) {
+                    tenHang = layHangThanhVienMacDinh().tenHangThanhVien();
+                } else if (tenHang == null || tenHang.isBlank()) {
+                    tenHang = "Không có";
+                }
                 return new ThongTinTaiKhoanView(
                         rs.getString("MaND"),
                         rs.getString("HoTen"),
@@ -182,7 +192,7 @@ public class CongThongTinWebRepository {
                         rs.getString("SDT"),
                         birthDate == null ? null : birthDate.toLocalDate(),
                         rs.getString("GioiTinh"),
-                        rs.getString("TenHangThanhVien"),
+                        tenHang,
                         rs.getInt("CoAnhDaiDien") == 1
                 );
             }, maND);
@@ -196,17 +206,27 @@ public class CongThongTinWebRepository {
             return new HangThanhVienSnapshot("Không có", BigDecimal.ZERO);
         }
         String sql = """
-                SELECT NVL(htv.TenHangThanhVien, 'Không có') AS TenHangThanhVien,
-                       NVL(htv.PhanTramTienGiam, 0) AS PhanTramTienGiam
+                SELECT kh.MaKH,
+                       htv.TenHangThanhVien,
+                       htv.PhanTramTienGiam
                 FROM KHACHHANG kh
                 LEFT JOIN HANGTHANHVIEN htv ON htv.MaHangThanhVien = kh.MaHangThanhVien
                 WHERE kh.MaKH = ?
                 """;
         try {
-            return mauJdbc.queryForObject(sql, (rs, rowNum) -> new HangThanhVienSnapshot(
-                    rs.getString("TenHangThanhVien"),
-                    rs.getBigDecimal("PhanTramTienGiam")
-            ), maKH);
+            return mauJdbc.queryForObject(sql, (rs, rowNum) -> {
+                String tenHang = rs.getString("TenHangThanhVien");
+                BigDecimal phanTram = rs.getBigDecimal("PhanTramTienGiam");
+                if (HangThanhVienUtil.laHangKhongCo(tenHang)) {
+                    HangThanhVienUtil.HangThanhVienSnapshot macDinh = layHangThanhVienMacDinh();
+                    tenHang = macDinh.tenHangThanhVien();
+                    phanTram = macDinh.phanTramTienGiam();
+                }
+                return new HangThanhVienSnapshot(
+                        tenHang,
+                        phanTram == null ? BigDecimal.ZERO : phanTram
+                );
+            }, maKH);
         } catch (EmptyResultDataAccessException ex) {
             return new HangThanhVienSnapshot("Không có", BigDecimal.ZERO);
         }
@@ -1761,6 +1781,34 @@ public class CongThongTinWebRepository {
 
     private String rongThanhNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private String layMaHangKhachHangMacDinh() {
+        String sql = "SELECT " + HangThanhVienUtil.SQL_MA_HANG_KHACH_HANG_MAC_DINH + " FROM DUAL";
+        String maHang = mauJdbc.queryForObject(sql, String.class);
+        if (maHang == null || maHang.isBlank()) {
+            throw new IllegalStateException("Không tìm thấy hạng thành viên mặc định Đồng.");
+        }
+        return maHang;
+    }
+
+    private HangThanhVienUtil.HangThanhVienSnapshot layHangThanhVienMacDinh() {
+        String sql = """
+                SELECT TenHangThanhVien, NVL(PhanTramTienGiam, 0) AS PhanTramTienGiam
+                FROM HANGTHANHVIEN
+                WHERE MaHangThanhVien = (
+                    SELECT %s
+                    FROM DUAL
+                )
+                """.formatted(HangThanhVienUtil.SQL_MA_HANG_KHACH_HANG_MAC_DINH);
+        try {
+            return mauJdbc.queryForObject(sql, (rs, rowNum) -> new HangThanhVienUtil.HangThanhVienSnapshot(
+                    rs.getString("TenHangThanhVien"),
+                    rs.getBigDecimal("PhanTramTienGiam")
+            ));
+        } catch (EmptyResultDataAccessException ex) {
+            return new HangThanhVienUtil.HangThanhVienSnapshot(HangThanhVienUtil.TEN_HANG_DONG, BigDecimal.ZERO);
+        }
     }
 
     private String transferContent(String maDatCho) {

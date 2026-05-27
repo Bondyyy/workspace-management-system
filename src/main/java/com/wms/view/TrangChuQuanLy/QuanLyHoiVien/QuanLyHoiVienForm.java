@@ -26,7 +26,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
 
     private void setupTierComboBox() {
         cbxHangTV.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[] { "Không có", "Đồng", "Bạc", "Vàng", "Kim cương" }));
+                new String[] { "Đồng", "Bạc", "Vàng", "Kim cương" }));
         cbxHangTV.setEnabled(false); // Khóa ô hạng thành viên theo yêu cầu
         cbxHangTV.setSelectedItem("Đồng");
     }
@@ -247,7 +247,7 @@ public class QuanLyHoiVienForm extends javax.swing.JPanel {
         lblHangTV.setBounds(20, 320, 180, 18);
 
         cbxHangTV.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        cbxHangTV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Không có", "Đồng", "Bạc", "Vàng", "Kim cương" }));
+        cbxHangTV.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Đồng", "Bạc", "Vàng", "Kim cương" }));
         cbxHangTV.addActionListener(this::cbxHangTVActionPerformed);
         pnMain.add(cbxHangTV);
         cbxHangTV.setBounds(20, 340, 170, 30);

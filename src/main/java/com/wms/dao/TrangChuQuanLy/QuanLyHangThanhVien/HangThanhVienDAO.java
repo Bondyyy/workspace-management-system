@@ -2,6 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyHangThanhVien;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyHangThanhVien.HangThanhVienDTO;
+import com.wms.util.HangThanhVienUtil;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -66,6 +67,15 @@ public class HangThanhVienDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getString("MaHangThanhVien");
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getMaHangKhachHangMacDinh() {
+        try (Connection conn = getConn()) {
+            return HangThanhVienUtil.layMaHangKhachHangMacDinh(conn);
         } catch (SQLException e) {
             e.printStackTrace();
         }

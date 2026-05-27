@@ -13,7 +13,23 @@ BEGIN
                KH.TongChiTieu,
                KH.CapNhatLanCuoi,
                KH.MaHangThanhVien,
-               HTV.TenHangThanhVien,
+               CASE
+                   WHEN HTV.TenHangThanhVien IS NULL OR HTV.TenHangThanhVien = 'Không có' THEN
+                       NVL((
+                           SELECT TenHangThanhVien
+                           FROM HANGTHANHVIEN
+                           WHERE MaHangThanhVien = COALESCE(
+                               (SELECT MaHangThanhVien FROM HANGTHANHVIEN WHERE TenHangThanhVien = 'Đồng' AND ROWNUM = 1),
+                               (SELECT MaHangThanhVien FROM (
+                                   SELECT MaHangThanhVien
+                                   FROM HANGTHANHVIEN
+                                   WHERE TenHangThanhVien <> 'Không có'
+                                   ORDER BY NVL(TongChiTieuToiThieu, 0), MaHangThanhVien
+                               ) WHERE ROWNUM = 1)
+                           )
+                       ), 'Đồng')
+                   ELSE HTV.TenHangThanhVien
+               END AS TenHangThanhVien,
                HTV.PhanTramTienGiam,
                ND.TenTaiKhoan,
                ND.Email,
@@ -21,7 +37,7 @@ BEGIN
                ND.TrangThaiND
         FROM KHACHHANG KH
         JOIN NGUOIDUNG ND ON KH.MaND = ND.MaND
-        JOIN HANGTHANHVIEN HTV ON KH.MaHangThanhVien = HTV.MaHangThanhVien
+        LEFT JOIN HANGTHANHVIEN HTV ON KH.MaHangThanhVien = HTV.MaHangThanhVien
         WHERE (p_TuKhoa IS NULL
                OR UPPER(KH.MaKH)    LIKE '%' || UPPER(p_TuKhoa) || '%'
                OR UPPER(ND.HoTen)   LIKE '%' || UPPER(p_TuKhoa) || '%'

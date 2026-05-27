@@ -3,6 +3,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyHoiVien;
 import com.wms.config.DatabaseConnection;
 import com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoiVien.HoiVienDTO;
+import com.wms.util.HangThanhVienUtil;
 import com.wms.util.PasswordUtil;
 import java.sql.*;
 import java.util.ArrayList;
@@ -191,7 +192,7 @@ public class KhachHangDAO {
                     INSERT INTO KHACHHANG (
                         MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH
                     ) VALUES (
-                        'HTV01', 0, CURRENT_TIMESTAMP, ?, ?
+                        ?, 0, CURRENT_TIMESTAMP, ?, ?
                     )
                     RETURNING MaKH INTO ?;
                 END;
@@ -218,11 +219,16 @@ public class KhachHangDAO {
                 dto.setMaND(maND);
             }
             try (CallableStatement csKH = conn.prepareCall(sqlKH)) {
-                csKH.setString(1, maND);
-                csKH.setString(2, dto.getLoaiKH() != null ? dto.getLoaiKH() : "Hội viên");
-                csKH.registerOutParameter(3, Types.VARCHAR);
+                String maHangMacDinh = HangThanhVienUtil.layMaHangKhachHangMacDinh(conn);
+                if (maHangMacDinh == null || maHangMacDinh.isBlank()) {
+                    throw new SQLException("Không tìm thấy hạng thành viên mặc định Đồng.");
+                }
+                csKH.setString(1, maHangMacDinh);
+                csKH.setString(2, maND);
+                csKH.setString(3, dto.getLoaiKH() != null ? dto.getLoaiKH() : "Hội viên");
+                csKH.registerOutParameter(4, Types.VARCHAR);
                 csKH.execute();
-                dto.setMaKH(csKH.getString(3));
+                dto.setMaKH(csKH.getString(4));
             }
             conn.commit();
         } catch (SQLException e) {

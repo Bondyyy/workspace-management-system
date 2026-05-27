@@ -150,7 +150,7 @@ public class DataInitializer {
     public static void khoiTaoHangThanhVien(Connection conn) {
         Object[][] data = {
                 { "HTV00", "Không có", 0, 0 },
-                { "HTV01", "Đồng", 0, 2 },
+                { "HTV01", "Đồng", 0, 0 },
                 { "HTV02", "Bạc", 5000000, 5 },
                 { "HTV03", "Vàng", 15000000, 10 },
                 { "HTV04", "Kim cương", 50000000, 15 }

@@ -10,17 +10,30 @@ BEGIN
             FROM (
                 SELECT MaHangThanhVien
                 FROM HANGTHANHVIEN
-                WHERE TongChiTieuToiThieu <= :NEW.TongChiTieu
-                ORDER BY TongChiTieuToiThieu DESC
+                WHERE TenHangThanhVien <> 'Không có'
+                  AND TongChiTieuToiThieu <= NVL(:NEW.TongChiTieu, 0)
+                ORDER BY TongChiTieuToiThieu DESC, MaHangThanhVien DESC
             )
             WHERE ROWNUM = 1;
 
-            IF v_MaHangMoi IS NOT NULL AND NVL(:OLD.MaHangThanhVien, ' ') != v_MaHangMoi THEN
+            IF v_MaHangMoi IS NOT NULL AND NVL(:NEW.MaHangThanhVien, ' ') != v_MaHangMoi THEN
                 :NEW.MaHangThanhVien := v_MaHangMoi;
             END IF;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                NULL;
+                BEGIN
+                    SELECT MaHangThanhVien INTO v_MaHangMoi
+                    FROM HANGTHANHVIEN
+                    WHERE TenHangThanhVien = 'Đồng'
+                      AND ROWNUM = 1;
+
+                    IF v_MaHangMoi IS NOT NULL AND NVL(:NEW.MaHangThanhVien, ' ') != v_MaHangMoi THEN
+                        :NEW.MaHangThanhVien := v_MaHangMoi;
+                    END IF;
+                EXCEPTION
+                    WHEN NO_DATA_FOUND THEN
+                        NULL;
+                END;
         END;
     END IF;
 END;

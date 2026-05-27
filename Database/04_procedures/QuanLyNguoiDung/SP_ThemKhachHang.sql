@@ -7,6 +7,8 @@ CREATE OR REPLACE PROCEDURE SP_ThemKhachHang(
 ) AS
     v_Count NUMBER;
     v_MaKH KHACHHANG.MaKH%TYPE;
+    v_MaHangMacDinh HANGTHANHVIEN.MaHangThanhVien%TYPE;
+    v_MaHangCanDung HANGTHANHVIEN.MaHangThanhVien%TYPE;
 BEGIN
     SELECT COUNT(*) INTO v_Count FROM NGUOIDUNG WHERE MaND = p_MaND;
     IF v_Count = 0 THEN
@@ -18,9 +20,34 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20031, 'Tài khoản này đã được liên kết với một hội viên khác!');
     END IF;
 
-    SELECT COUNT(*) INTO v_Count FROM HANGTHANHVIEN WHERE MaHangThanhVien = p_MaHangThanhVien;
+    BEGIN
+        SELECT MaHangThanhVien INTO v_MaHangMacDinh
+        FROM HANGTHANHVIEN
+        WHERE TenHangThanhVien = 'Đồng'
+          AND ROWNUM = 1;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            SELECT MaHangThanhVien INTO v_MaHangMacDinh
+            FROM (
+                SELECT MaHangThanhVien
+                FROM HANGTHANHVIEN
+                WHERE TenHangThanhVien <> 'Không có'
+                ORDER BY NVL(TongChiTieuToiThieu, 0), MaHangThanhVien
+            )
+            WHERE ROWNUM = 1;
+    END;
+
+    v_MaHangCanDung := NULLIF(TRIM(p_MaHangThanhVien), '');
+    IF v_MaHangCanDung IS NULL THEN
+        v_MaHangCanDung := v_MaHangMacDinh;
+    END IF;
+
+    SELECT COUNT(*) INTO v_Count
+    FROM HANGTHANHVIEN
+    WHERE MaHangThanhVien = v_MaHangCanDung
+      AND TenHangThanhVien <> 'Không có';
     IF v_Count = 0 THEN
-        RAISE_APPLICATION_ERROR(-20032, 'Hạng thành viên [' || p_MaHangThanhVien || '] không hợp lệ!');
+        v_MaHangCanDung := v_MaHangMacDinh;
     END IF;
 
     IF p_MaKH IS NOT NULL AND LENGTH(TRIM(p_MaKH)) > 0 THEN
@@ -37,7 +64,7 @@ BEGIN
     ) VALUES (
         NULLIF(TRIM(p_MaKH), ''), 'Hội viên',
         0, CURRENT_TIMESTAMP,
-        p_MaHangThanhVien, p_MaND
+        v_MaHangCanDung, p_MaND
     )
     RETURNING MaKH INTO v_MaKH;
 

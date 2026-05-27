@@ -2,6 +2,7 @@ package com.wms.dao.TrangChuQuanLy.QuanLyNguoiDung;
 
 import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
+import com.wms.util.HangThanhVienUtil;
 
 import java.sql.*;
 import java.text.Normalizer;
@@ -136,7 +137,7 @@ public class NguoiDungDAO {
                     INSERT INTO KHACHHANG (
                         MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH
                     ) VALUES (
-                        'HTV01', 0, CURRENT_TIMESTAMP, ?, 'Hội viên'
+                        ?, 0, CURRENT_TIMESTAMP, ?, 'Hội viên'
                     )
                     RETURNING MaKH INTO ?;
                 END;
@@ -172,8 +173,13 @@ public class NguoiDungDAO {
                 }
 
                 try (CallableStatement csKH = conn.prepareCall(sqlKH)) {
-                    csKH.setString(1, maND);
-                    csKH.registerOutParameter(2, Types.VARCHAR);
+                    String maHangMacDinh = HangThanhVienUtil.layMaHangKhachHangMacDinh(conn);
+                    if (maHangMacDinh == null || maHangMacDinh.isBlank()) {
+                        throw new SQLException("Không tìm thấy hạng thành viên mặc định Đồng.");
+                    }
+                    csKH.setString(1, maHangMacDinh);
+                    csKH.setString(2, maND);
+                    csKH.registerOutParameter(3, Types.VARCHAR);
                     csKH.execute();
                 }
 
