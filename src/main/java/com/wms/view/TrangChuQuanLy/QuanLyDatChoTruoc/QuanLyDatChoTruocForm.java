@@ -24,6 +24,7 @@ import javax.swing.table.DefaultTableModel;
 public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private final QuanLyDatChoTruocController controller = new QuanLyDatChoTruocController();
     private List<DatChoTruocDTO> currentList = new ArrayList<>();
+    private String selectedMaKH = "";
     private final DecimalFormat moneyFormat = new DecimalFormat("#,###",
             java.text.DecimalFormatSymbols.getInstance(new java.util.Locale("vi", "VN")));
 
@@ -56,13 +57,21 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         tblDatCho = new javax.swing.JTable();
         btnLamMoi = new javax.swing.JButton();
         pnRight = new javax.swing.JPanel();
+        scrChiTiet = new javax.swing.JScrollPane();
+        pnChiTietNoiDung = new javax.swing.JPanel();
         lblDetailTitle = new javax.swing.JLabel();
         lblMaDatCho = new javax.swing.JLabel();
         txtMaDatCho = new javax.swing.JTextField();
-        lblMaKH = new javax.swing.JLabel();
-        txtMaKH = new javax.swing.JTextField();
+        lblTenKhachHang = new javax.swing.JLabel();
+        txtTenKhachHang = new javax.swing.JTextField();
+        lblSoDienThoaiKH = new javax.swing.JLabel();
+        txtSoDienThoaiKH = new javax.swing.JTextField();
         lblMaKG = new javax.swing.JLabel();
         txtMaKG = new javax.swing.JTextField();
+        lblTenKhongGian = new javax.swing.JLabel();
+        txtTenKhongGian = new javax.swing.JTextField();
+        lblTenChiNhanh = new javax.swing.JLabel();
+        txtTenChiNhanh = new javax.swing.JTextField();
         lblDuKienToi = new javax.swing.JLabel();
         txtDuKienToi = new javax.swing.JTextField();
         lblThoiGianSuDung = new javax.swing.JLabel();
@@ -162,95 +171,147 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         pnRight.setBorder(javax.swing.BorderFactory.createMatteBorder(4, 0, 0, 0, new java.awt.Color(235, 94, 141)));
         pnRight.setLayout(null);
 
+        pnChiTietNoiDung.setBackground(new java.awt.Color(255, 255, 255));
+        pnChiTietNoiDung.setPreferredSize(new java.awt.Dimension(380, 680));
+        pnChiTietNoiDung.setLayout(null);
+        scrChiTiet.setBorder(null);
+        scrChiTiet.getVerticalScrollBar().setUnitIncrement(16);
+        scrChiTiet.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrChiTiet.setViewportView(pnChiTietNoiDung);
+        pnRight.add(scrChiTiet);
+        scrChiTiet.setBounds(0, 0, 400, 450);
+
         lblDetailTitle.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         lblDetailTitle.setForeground(new java.awt.Color(48, 30, 35));
         lblDetailTitle.setText("THÔNG TIN CHI TIẾT");
-        pnRight.add(lblDetailTitle);
+        pnChiTietNoiDung.add(lblDetailTitle);
         lblDetailTitle.setBounds(20, 15, 200, 30);
 
         lblMaDatCho.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaDatCho.setForeground(new java.awt.Color(35, 30, 48));
         lblMaDatCho.setText("Mã đặt chỗ");
-        pnRight.add(lblMaDatCho);
+        pnChiTietNoiDung.add(lblMaDatCho);
         lblMaDatCho.setBounds(20, 55, 360, 20);
 
         txtMaDatCho.setEditable(false);
         txtMaDatCho.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtMaDatCho.setBackground(new java.awt.Color(240, 240, 240));
-        pnRight.add(txtMaDatCho);
+        pnChiTietNoiDung.add(txtMaDatCho);
         txtMaDatCho.setBounds(20, 75, 360, 35);
 
-        lblMaKH.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblMaKH.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaKH.setText("Mã Khách Hàng (*)");
-        pnRight.add(lblMaKH);
-        lblMaKH.setBounds(20, 120, 170, 20);
+        lblTenKhachHang.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblTenKhachHang.setForeground(new java.awt.Color(35, 30, 48));
+        lblTenKhachHang.setText("Tên khách hàng");
+        pnChiTietNoiDung.add(lblTenKhachHang);
+        lblTenKhachHang.setBounds(20, 120, 360, 20);
 
-        txtMaKH.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(txtMaKH);
-        txtMaKH.setBounds(20, 140, 170, 35);
+        txtTenKhachHang.setEditable(false);
+        txtTenKhachHang.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtTenKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+        pnChiTietNoiDung.add(txtTenKhachHang);
+        txtTenKhachHang.setBounds(20, 140, 360, 35);
+
+        lblSoDienThoaiKH.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblSoDienThoaiKH.setForeground(new java.awt.Color(35, 30, 48));
+        lblSoDienThoaiKH.setText("Số điện thoại khách hàng");
+        pnChiTietNoiDung.add(lblSoDienThoaiKH);
+        lblSoDienThoaiKH.setBounds(20, 185, 360, 20);
+
+        txtSoDienThoaiKH.setEditable(false);
+        txtSoDienThoaiKH.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtSoDienThoaiKH.setBackground(new java.awt.Color(240, 240, 240));
+        pnChiTietNoiDung.add(txtSoDienThoaiKH);
+        txtSoDienThoaiKH.setBounds(20, 205, 360, 35);
 
         lblMaKG.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMaKG.setForeground(new java.awt.Color(35, 30, 48));
-        lblMaKG.setText("Mã Không Gian (*)");
-        pnRight.add(lblMaKG);
-        lblMaKG.setBounds(210, 120, 170, 20);
+        lblMaKG.setText("Mã không gian");
+        pnChiTietNoiDung.add(lblMaKG);
+        lblMaKG.setBounds(20, 250, 170, 20);
 
+        txtMaKG.setEditable(false);
         txtMaKG.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(txtMaKG);
-        txtMaKG.setBounds(210, 140, 170, 35);
+        txtMaKG.setBackground(new java.awt.Color(240, 240, 240));
+        pnChiTietNoiDung.add(txtMaKG);
+        txtMaKG.setBounds(20, 270, 170, 35);
+
+        lblTenKhongGian.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblTenKhongGian.setForeground(new java.awt.Color(35, 30, 48));
+        lblTenKhongGian.setText("Tên không gian");
+        pnChiTietNoiDung.add(lblTenKhongGian);
+        lblTenKhongGian.setBounds(210, 250, 170, 20);
+
+        txtTenKhongGian.setEditable(false);
+        txtTenKhongGian.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtTenKhongGian.setBackground(new java.awt.Color(240, 240, 240));
+        pnChiTietNoiDung.add(txtTenKhongGian);
+        txtTenKhongGian.setBounds(210, 270, 170, 35);
+
+        lblTenChiNhanh.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
+        lblTenChiNhanh.setForeground(new java.awt.Color(35, 30, 48));
+        lblTenChiNhanh.setText("Tên chi nhánh");
+        pnChiTietNoiDung.add(lblTenChiNhanh);
+        lblTenChiNhanh.setBounds(20, 315, 360, 20);
+
+        txtTenChiNhanh.setEditable(false);
+        txtTenChiNhanh.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtTenChiNhanh.setBackground(new java.awt.Color(240, 240, 240));
+        pnChiTietNoiDung.add(txtTenChiNhanh);
+        txtTenChiNhanh.setBounds(20, 335, 360, 35);
 
         lblDuKienToi.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblDuKienToi.setForeground(new java.awt.Color(35, 30, 48));
         lblDuKienToi.setText("Dự kiến tới (dd/MM/yyyy HH:mm)");
-        pnRight.add(lblDuKienToi);
-        lblDuKienToi.setBounds(20, 185, 220, 20);
+        pnChiTietNoiDung.add(lblDuKienToi);
+        lblDuKienToi.setBounds(20, 380, 220, 20);
 
         txtDuKienToi.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        pnRight.add(txtDuKienToi);
-        txtDuKienToi.setBounds(20, 205, 220, 35);
+        pnChiTietNoiDung.add(txtDuKienToi);
+        txtDuKienToi.setBounds(20, 400, 220, 35);
 
         lblThoiGianSuDung.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThoiGianSuDung.setForeground(new java.awt.Color(35, 30, 48));
-        lblThoiGianSuDung.setText("Số giờ SD (*)");
-        pnRight.add(lblThoiGianSuDung);
-        lblThoiGianSuDung.setBounds(260, 185, 120, 20);
+        lblThoiGianSuDung.setText("Số giờ sử dụng");
+        pnChiTietNoiDung.add(lblThoiGianSuDung);
+        lblThoiGianSuDung.setBounds(260, 380, 120, 20);
 
         spnThoiGianSuDung.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         spnThoiGianSuDung.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
-        pnRight.add(spnThoiGianSuDung);
-        spnThoiGianSuDung.setBounds(260, 205, 120, 35);
+        pnChiTietNoiDung.add(spnThoiGianSuDung);
+        spnThoiGianSuDung.setBounds(260, 400, 120, 35);
 
         lblThanhTien.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblThanhTien.setForeground(new java.awt.Color(35, 30, 48));
         lblThanhTien.setText("Thành tiền (VNĐ)");
-        pnRight.add(lblThanhTien);
-        lblThanhTien.setBounds(20, 250, 360, 20);
+        pnChiTietNoiDung.add(lblThanhTien);
+        lblThanhTien.setBounds(20, 445, 360, 20);
 
+        txtTrangThai.setEditable(false);
         txtTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtTrangThai.setForeground(new java.awt.Color(51, 153, 0));
-        pnRight.add(txtTrangThai);
-        txtTrangThai.setBounds(20, 340, 360, 35);
+        txtTrangThai.setBackground(new java.awt.Color(240, 240, 240));
+        pnChiTietNoiDung.add(txtTrangThai);
+        txtTrangThai.setBounds(20, 530, 360, 35);
 
         lblTrangThai.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTrangThai.setForeground(new java.awt.Color(35, 30, 48));
         lblTrangThai.setText("Trạng thái đặt chỗ");
-        pnRight.add(lblTrangThai);
-        lblTrangThai.setBounds(20, 315, 360, 20);
+        pnChiTietNoiDung.add(lblTrangThai);
+        lblTrangThai.setBounds(20, 510, 360, 20);
 
         lblGhiChu.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblGhiChu.setForeground(new java.awt.Color(35, 30, 48));
         lblGhiChu.setText("Ghi chú / Yêu cầu thêm");
-        pnRight.add(lblGhiChu);
-        lblGhiChu.setBounds(20, 380, 360, 20);
+        pnChiTietNoiDung.add(lblGhiChu);
+        lblGhiChu.setBounds(20, 575, 360, 20);
 
         txtGhiChu.setColumns(20);
         txtGhiChu.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         txtGhiChu.setRows(2);
         jScrollPane2.setViewportView(txtGhiChu);
 
-        pnRight.add(jScrollPane2);
-        jScrollPane2.setBounds(20, 400, 360, 45);
+        pnChiTietNoiDung.add(jScrollPane2);
+        jScrollPane2.setBounds(20, 595, 360, 60);
 
         btnCapNhat.setBackground(new java.awt.Color(235, 94, 141));
         btnCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -280,8 +341,10 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
 
         txtThanhTien.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         txtThanhTien.setForeground(new java.awt.Color(51, 153, 0));
-        pnRight.add(txtThanhTien);
-        txtThanhTien.setBounds(20, 270, 360, 35);
+        txtThanhTien.setEditable(false);
+        txtThanhTien.setBackground(new java.awt.Color(240, 240, 240));
+        pnChiTietNoiDung.add(txtThanhTien);
+        txtThanhTien.setBounds(20, 465, 360, 35);
 
         pnMain.add(pnRight);
         pnRight.setBounds(20, 70, 400, 540);
@@ -299,8 +362,11 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
 
     private void initLogic() {
         txtMaDatCho.setEditable(false);
-        txtMaKH.setEditable(false);
+        txtTenKhachHang.setEditable(false);
+        txtSoDienThoaiKH.setEditable(false);
         txtMaKG.setEditable(false);
+        txtTenKhongGian.setEditable(false);
+        txtTenChiNhanh.setEditable(false);
         txtDuKienToi.setEditable(false);
         spnThoiGianSuDung.setEnabled(false);
         txtThanhTien.setEditable(false);
@@ -309,15 +375,19 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
         txtThanhTien.setBackground(new java.awt.Color(240, 240, 240));
         txtTrangThai.setBackground(new java.awt.Color(240, 240, 240));
         txtMaKG.setBackground(new java.awt.Color(240, 240, 240));
+        txtTenKhongGian.setBackground(new java.awt.Color(240, 240, 240));
+        txtTenChiNhanh.setBackground(new java.awt.Color(240, 240, 240));
         txtDuKienToi.setBackground(new java.awt.Color(240, 240, 240));
-        txtMaKH.setBackground(new java.awt.Color(240, 240, 240));
+        txtTenKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+        txtSoDienThoaiKH.setBackground(new java.awt.Color(240, 240, 240));
         txtGhiChu.setBackground(new java.awt.Color(250, 250, 250));
-        lblMaKH.setText("Khách hàng");
-        lblMaKG.setText("Không gian / Chi nhánh");
+        lblTenKhachHang.setText("Tên khách hàng");
+        lblMaKG.setText("Mã không gian");
         lblGhiChu.setText("Yêu cầu thêm của khách hàng");
         btnNhanCho.setText("Quét mã QR để nhận chỗ");
         btnNhanCho.setBounds(20, 460, 360, 35);
         btnCapNhat.setVisible(false);
+        com.wms.util.TienIchFormQuanLy.apDung(this);
 
         tblDatCho.setModel(new DefaultTableModel(
                 new Object[][] {},
@@ -331,13 +401,12 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             }
         });
 
-        btnTimKiem.addActionListener(evt -> loadData(txtTimKiem.getText()));
+        btnTimKiem.addActionListener(evt -> refreshTableTheoDieuKienHienTai());
         btnLamMoi.addActionListener(evt -> {
-            txtTimKiem.setText("");
-            loadData("");
             clearDetail();
+            refreshTableTheoDieuKienHienTai();
         });
-        txtTimKiem.addActionListener(evt -> loadData(txtTimKiem.getText()));
+        txtTimKiem.addActionListener(evt -> refreshTableTheoDieuKienHienTai());
         tblDatCho.getSelectionModel().addListSelectionListener(evt -> {
             if (!evt.getValueIsAdjusting()) {
                 int row = tblDatCho.getSelectedRow();
@@ -350,6 +419,10 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             }
         });
         loadData("");
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadData(txtTimKiem.getText());
     }
 
     private void loadData(String keyword) {
@@ -369,16 +442,19 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
                 dto.getThanhTien() == null ? "0" : moneyFormat.format(dto.getThanhTien())
             });
         }
+        tblDatCho.clearSelection();
+        tblDatCho.revalidate();
+        tblDatCho.repaint();
     }
 
     private void fillDetail(DatChoTruocDTO dto) {
+        selectedMaKH = dto.getMaKH() == null ? "" : dto.getMaKH();
         txtMaDatCho.setText(dto.getMaDatCho());
-        txtMaKH.setText((dto.getHoTenKhachHang() == null ? "" : dto.getHoTenKhachHang())
-                + (dto.getSoDienThoaiKhachHang() == null || dto.getSoDienThoaiKhachHang().isBlank()
-                ? "" : " · " + dto.getSoDienThoaiKhachHang()));
-        txtMaKG.setText((dto.getMaKG() == null ? "" : dto.getMaKG())
-                + (dto.getTenKhongGian() == null ? "" : " - " + dto.getTenKhongGian())
-                + (dto.getTenChiNhanh() == null ? "" : " · " + dto.getTenChiNhanh()));
+        txtTenKhachHang.setText(dto.getHoTenKhachHang() == null ? "" : dto.getHoTenKhachHang());
+        txtSoDienThoaiKH.setText(dto.getSoDienThoaiKhachHang() == null ? "" : dto.getSoDienThoaiKhachHang());
+        txtMaKG.setText(dto.getMaKG() == null ? "" : dto.getMaKG());
+        txtTenKhongGian.setText(dto.getTenKhongGian() == null ? "" : dto.getTenKhongGian());
+        txtTenChiNhanh.setText(dto.getTenChiNhanh() == null ? "" : dto.getTenChiNhanh());
         txtDuKienToi.setText(formatDateTime(dto.getThoiGianDuKienToi()));
         spnThoiGianSuDung.setValue(dto.getKhoangThoiGianSuDung() == null ? 1 : dto.getKhoangThoiGianSuDung());
         txtThanhTien.setText(dto.getThanhTien() == null ? "0" : moneyFormat.format(dto.getThanhTien()));
@@ -388,9 +464,13 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     }
 
     private void clearDetail() {
+        selectedMaKH = "";
         txtMaDatCho.setText("");
-        txtMaKH.setText("");
+        txtTenKhachHang.setText("");
+        txtSoDienThoaiKH.setText("");
         txtMaKG.setText("");
+        txtTenKhongGian.setText("");
+        txtTenChiNhanh.setText("");
         txtDuKienToi.setText("");
         spnThoiGianSuDung.setValue(1);
         txtThanhTien.setText("");
@@ -502,13 +582,13 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
             if (txtMaDatCho.getText().isBlank()) {
                 throw new IllegalArgumentException("Vui lòng chọn một đặt chỗ từ danh sách.");
             }
-            if (txtMaKH.getText().isBlank()) {
+            if (selectedMaKH.isBlank()) {
                 throw new IllegalArgumentException("Mã khách hàng không được để trống.");
             }
 
             DatChoTruocDTO dto = new DatChoTruocDTO();
             dto.setMaDatCho(txtMaDatCho.getText().trim());
-            dto.setMaKH(txtMaKH.getText().trim());
+            dto.setMaKH(selectedMaKH);
             dto.setGhiChu(txtGhiChu.getText().trim());
 
             if (controller.capNhatThongTinKhach(dto)) {
@@ -547,6 +627,7 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private javax.swing.JButton btnTimKiem;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane scrChiTiet;
     private javax.swing.JLabel lblDetailTitle;
     private javax.swing.JLabel lblDuKienToi;
     private javax.swing.JLabel lblGhiChu;
@@ -554,11 +635,15 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private javax.swing.JLabel lblListTitle;
     private javax.swing.JLabel lblMaDatCho;
     private javax.swing.JLabel lblMaKG;
-    private javax.swing.JLabel lblMaKH;
+    private javax.swing.JLabel lblSoDienThoaiKH;
     private javax.swing.JLabel lblThanhTien;
     private javax.swing.JLabel lblThoiGianSuDung;
     private javax.swing.JLabel lblTimKiem;
+    private javax.swing.JLabel lblTenChiNhanh;
+    private javax.swing.JLabel lblTenKhachHang;
+    private javax.swing.JLabel lblTenKhongGian;
     private javax.swing.JLabel lblTrangThai;
+    private javax.swing.JPanel pnChiTietNoiDung;
     private javax.swing.JPanel pnHeader;
     private javax.swing.JPanel pnLeft;
     private javax.swing.JPanel pnMain;
@@ -569,8 +654,11 @@ public class QuanLyDatChoTruocForm extends javax.swing.JPanel {
     private javax.swing.JTextArea txtGhiChu;
     private javax.swing.JTextField txtMaDatCho;
     private javax.swing.JTextField txtMaKG;
-    private javax.swing.JTextField txtMaKH;
+    private javax.swing.JTextField txtSoDienThoaiKH;
     private javax.swing.JTextField txtThanhTien;
+    private javax.swing.JTextField txtTenChiNhanh;
+    private javax.swing.JTextField txtTenKhachHang;
+    private javax.swing.JTextField txtTenKhongGian;
     private javax.swing.JTextField txtTimKiem;
     private javax.swing.JTextField txtTrangThai;
     // End of variables declaration//GEN-END:variables

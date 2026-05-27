@@ -29,6 +29,10 @@ import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import javax.swing.text.JTextComponent;
 
 public final class TienIchFormQuanLy {
@@ -38,6 +42,7 @@ public final class TienIchFormQuanLy {
     private static final String KHOA_MAU_NEN_GOC = "wms.tienIchFormQuanLy.mauNenGoc";
     private static final String KHOA_MAU_CHU_GOC = "wms.tienIchFormQuanLy.mauChuGoc";
     private static final String KHOA_ENTER = "wms.tienIchFormQuanLy.enter";
+    private static final String KHOA_VIET_HOA = "wms.tienIchFormQuanLy.vietHoaChuCaiDau";
 
     private static final Map<String, CauHinh> CAU_HINH = taoCauHinh();
 
@@ -94,6 +99,7 @@ public final class TienIchFormQuanLy {
             });
         }
 
+        apDungVietHoaChuCaiDau(form);
         ganEnter(trangThai);
         ganThuTuTab(form, goc, cauHinh.tenThuTuTab, nutThem, nutCapNhat);
         henChupTrangThaiDong(trangThai);
@@ -121,7 +127,7 @@ public final class TienIchFormQuanLy {
                 "btnThemMoi", "btnCapNhat", "tblKhongGian",
                 ten("txtTenKhongGian", "cbxChiNhanh", "cbxLoaiKhongGian", "cbxTrangThai"),
                 ten("txtTenKhongGian", "cbxChiNhanh", "cbxLoaiKhongGian", "cbxTrangThai"),
-                ten("txtTenKhongGian", "cbxChiNhanh", "cbxLoaiKhongGian", "cbxTrangThai")));
+                ten("cbxTrangThai", "txtTenKhongGian", "cbxChiNhanh", "cbxLoaiKhongGian")));
         cauHinh.put("QuanLyLoaiKhongGianForm", cauHinh(
                 "btnThemMoi", "btnCapNhat", "tblLoaiKhongGian",
                 ten("txtTenLoaiKG", "txtDonGia", "cbxTrangThai"),
@@ -141,7 +147,7 @@ public final class TienIchFormQuanLy {
                 "btnThemMoi", "btnCapNhat", "tblDichVu",
                 ten("txtTenDV", "txtDonGia", "cbxLoaiDV", "cbxTrangThai"),
                 ten("txtTenDV", "txtDonGia", "cbxLoaiDV", "cbxTrangThai"),
-                ten("txtTenDV", "cbxLoaiDV", "txtDonGia", "cbxTrangThai")));
+                ten("cbxTrangThai", "cbxLoaiDV", "txtDonGia", "txtTenDV")));
         cauHinh.put("QuanLyPhieuGiamGiaForm", cauHinh(
                 "btnThemMoi", "btnCapNhat", "tblPhieuGiamGia",
                 ten("txtMaChuSoPGG", "txtGiaTriGiamGia", "txtGiaTriApDungToiThieu", "txtNgayBatDauApDung", "txtNgayKetThucApDung", "txtSLToiDa"),
@@ -151,7 +157,7 @@ public final class TienIchFormQuanLy {
                 "btnThem", "btnCapNhat", "tblNguoiDung",
                 ten("txtHoTen", "txtSDT", "txtEmail", "txtTaiKhoan", "txtMatKhau", "cbxNhomQuyen"),
                 ten("txtHoTen", "txtSDT", "txtEmail", "txtTaiKhoan", "txtMatKhau", "txtNgaySinh", "cbxGioiTinh", "cbxTrangThai", "cbxNhomQuyen"),
-                ten("txtHoTen", "txtSDT", "txtEmail", "txtTaiKhoan", "txtMatKhau", "txtNgaySinh", "cbxGioiTinh", "cbxTrangThai", "cbxNhomQuyen")));
+                ten("cbxGioiTinh", "txtHoTen", "txtSDT", "txtEmail", "txtTaiKhoan", "txtMatKhau", "cbxTrangThai", "txtNgaySinh", "cbxNhomQuyen")));
         cauHinh.put("QuanLyNhanVienForm", cauHinh(
                 "btnThemMoi", "btnCapNhat", "tblNhanVien",
                 ten("txtHoTen", "txtSDT", "txtEmail", "txtTenTaiKhoan", "txtMatKhau", "cbxChiNhanh", "cbxTrangThai", "cbxNhomQuyen"),
@@ -186,12 +192,22 @@ public final class TienIchFormQuanLy {
                 "btnLuu", "btnSua", "tableDichVu",
                 ten("txtMaPhien", "cboLoaiDichVu", "cboTenDichVu", "spinSoLuong"),
                 ten("txtMaPhien", "cboLoaiDichVu", "cboTenDichVu", "spinSoLuong", "txtGhiChu"),
-                ten("cboLoaiDichVu", "cboTenDichVu", "spinSoLuong", "txtGhiChu")));
+                ten("txtMaPhien", "cboLoaiDichVu", "cboTenDichVu", "txtGhiChu", "spinSoLuong")));
         cauHinh.put("QuanLyKhoForm", cauHinh(
                 "btnLuu", null, null,
-                ten("cbNhanVien", "cbLoaiDichVu", "cbTenDichVu", "txtGiaNhap", "spnSoLuong"),
-                ten("cbNhanVien", "cbLoaiDichVu", "cbTenDichVu", "txtGiaNhap", "spnSoLuong"),
-                ten("cbNhanVien", "cbLoaiDichVu", "cbTenDichVu", "txtGiaNhap", "spnSoLuong")));
+                ten("cbNhanVien", "cbLoaiDichVu", "txtTenDichVu", "txtGiaNhap", "spnSoLuong"),
+                ten("cbNhanVien", "cbLoaiDichVu", "txtTenDichVu", "txtGiaNhap", "spnSoLuong"),
+                ten("cbNhanVien", "cbLoaiDichVu", "txtTenDichVu", "spnSoLuong", "txtGiaNhap")));
+        cauHinh.put("QuanLyDatChoTruocForm", cauHinh(
+                null, null, "tblDatCho",
+                ten(),
+                ten("txtTimKiem"),
+                ten("txtTimKiem", "btnTimKiem", "btnLamMoi")));
+        cauHinh.put("QuanLyHoaDonForm", cauHinh(
+                null, null, "tblHoaDon",
+                ten(),
+                ten("txtTimKiem", "cbxLocTrangThai"),
+                ten("txtTimKiem", "cbxLocTrangThai", "btnTimKiem", "btnLamMoi")));
         return Collections.unmodifiableMap(cauHinh);
     }
 
@@ -487,6 +503,96 @@ public final class TienIchFormQuanLy {
         return component;
     }
 
+    public static void apDungVietHoaChuCaiDau(JTextComponent textComponent) {
+        if (textComponent == null || Boolean.TRUE.equals(textComponent.getClientProperty(KHOA_VIET_HOA))) {
+            return;
+        }
+        if (textComponent.getDocument() instanceof AbstractDocument document
+                && !(document.getDocumentFilter() instanceof VietHoaChuCaiDauFilter)
+                && document.getDocumentFilter() == null) {
+            document.setDocumentFilter(new VietHoaChuCaiDauFilter());
+            textComponent.putClientProperty(KHOA_VIET_HOA, Boolean.TRUE);
+            if (!textComponent.getText().isBlank()) {
+                textComponent.setText(vietHoaChuCaiDau(textComponent.getText()));
+            }
+        }
+    }
+
+    private static void apDungVietHoaChuCaiDau(Object form) {
+        Class<?> loai = form.getClass();
+        while (loai != null && loai.getName().startsWith("com.wms.")) {
+            for (Field field : loai.getDeclaredFields()) {
+                try {
+                    field.setAccessible(true);
+                    Object giaTri = field.get(form);
+                    if (giaTri instanceof JTextComponent textComponent
+                            && textComponent.isEditable()
+                            && nenVietHoaChuCaiDau(field.getName())) {
+                        apDungVietHoaChuCaiDau(textComponent);
+                    }
+                } catch (IllegalAccessException | SecurityException ignored) {
+                    // Bỏ qua field không đọc được; các field khác vẫn được xử lý bình thường.
+                }
+            }
+            loai = loai.getSuperclass();
+        }
+    }
+
+    private static boolean nenVietHoaChuCaiDau(String tenTruong) {
+        if (tenTruong == null) {
+            return false;
+        }
+        String ten = tenTruong.toLowerCase();
+        if (ten.contains("timkiem")
+                || ten.contains("ma")
+                || ten.contains("taikhoan")
+                || ten.contains("matkhau")
+                || ten.contains("email")
+                || ten.contains("sdt")
+                || ten.contains("dienthoai")
+                || ten.contains("hotline")
+                || ten.contains("ngay")
+                || ten.contains("gio")
+                || ten.contains("thoigian")
+                || ten.contains("tien")
+                || ten.contains("gia")
+                || ten.contains("don")
+                || ten.contains("luong")
+                || ten.contains("qr")
+                || ten.contains("giam")
+                || ten.contains("so")
+                || ten.contains("sl")
+                || ten.contains("succhua")
+                || ten.contains("toado")) {
+            return false;
+        }
+        return ten.contains("hoten")
+                || ten.contains("ten")
+                || ten.contains("diachi")
+                || ten.contains("ghichu")
+                || ten.contains("mota");
+    }
+
+    private static String vietHoaChuCaiDau(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (Character.isLetter(ch)) {
+                char upper = Character.toUpperCase(ch);
+                if (upper == ch) {
+                    return value;
+                }
+                return value.substring(0, i) + upper + value.substring(i + 1);
+            }
+            if (!Character.isWhitespace(ch)) {
+                return value;
+            }
+        }
+        return value;
+    }
+
     private static void kichHoatNutSanSang(TrangThai trangThai) {
         if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() instanceof javax.swing.JTextArea) {
             return;
@@ -588,6 +694,49 @@ public final class TienIchFormQuanLy {
                 }
             }
             return hopLe;
+        }
+    }
+
+    private static final class VietHoaChuCaiDauFilter extends DocumentFilter {
+        private boolean dangXuLy;
+
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+                throws BadLocationException {
+            replace(fb, offset, 0, string, attr);
+        }
+
+        @Override
+        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+            replace(fb, offset, length, "", null);
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                throws BadLocationException {
+            if (dangXuLy) {
+                fb.replace(offset, length, text, attrs);
+                return;
+            }
+
+            javax.swing.text.Document document = fb.getDocument();
+            String current = document.getText(0, document.getLength());
+            String replacement = text == null ? "" : text;
+            String candidate = current.substring(0, offset)
+                    + replacement
+                    + current.substring(offset + length);
+            String formatted = vietHoaChuCaiDau(candidate);
+            if (formatted.equals(candidate)) {
+                fb.replace(offset, length, text, attrs);
+                return;
+            }
+
+            dangXuLy = true;
+            try {
+                fb.replace(0, document.getLength(), formatted, attrs);
+            } finally {
+                dangXuLy = false;
+            }
         }
     }
 

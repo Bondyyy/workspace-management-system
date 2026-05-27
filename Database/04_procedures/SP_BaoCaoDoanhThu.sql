@@ -18,17 +18,43 @@ BEGIN
     END IF;
 
     SELECT
-        NVL(SUM(HD.ThanhTien + NVL(HD.DaTraTruoc, 0)), 0),
+        NVL(SUM(GREATEST(0,
+            NVL(HD.TongTien, 0)
+            - NVL((SELECT SUM(NVL(CT.SoTienGiam, 0))
+                   FROM CHITIETAPDUNGPGG CT
+                   WHERE CT.MaHoaDon = HD.MaHoaDon
+                      OR (PLV.MaDatCho IS NOT NULL AND CT.MaDatCho = PLV.MaDatCho)), 0)
+            - ROUND(GREATEST(0,
+                NVL(HD.TongTien, 0)
+                - NVL((SELECT SUM(NVL(CT.SoTienGiam, 0))
+                       FROM CHITIETAPDUNGPGG CT
+                       WHERE CT.MaHoaDon = HD.MaHoaDon
+                          OR (PLV.MaDatCho IS NOT NULL AND CT.MaDatCho = PLV.MaDatCho)), 0)
+              ) * NVL(HTV.PhanTramTienGiam, 0) / 100, 0)
+        )), 0),
         NVL(SUM(HD.TongTien), 0),
-        NVL(SUM(HD.TongTien - (HD.ThanhTien + NVL(HD.DaTraTruoc, 0))), 0),
+        NVL(SUM(HD.TongTien - GREATEST(0,
+            NVL(HD.TongTien, 0)
+            - NVL((SELECT SUM(NVL(CT.SoTienGiam, 0))
+                   FROM CHITIETAPDUNGPGG CT
+                   WHERE CT.MaHoaDon = HD.MaHoaDon
+                      OR (PLV.MaDatCho IS NOT NULL AND CT.MaDatCho = PLV.MaDatCho)), 0)
+            - ROUND(GREATEST(0,
+                NVL(HD.TongTien, 0)
+                - NVL((SELECT SUM(NVL(CT.SoTienGiam, 0))
+                       FROM CHITIETAPDUNGPGG CT
+                       WHERE CT.MaHoaDon = HD.MaHoaDon
+                          OR (PLV.MaDatCho IS NOT NULL AND CT.MaDatCho = PLV.MaDatCho)), 0)
+              ) * NVL(HTV.PhanTramTienGiam, 0) / 100, 0)
+        )), 0),
         COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Đã thanh toán thành công' THEN 1 END),
         COUNT(CASE WHEN HD.TrangThaiThanhToan = 'Thanh toán không thành công' THEN 1 END),
         NVL(SUM(CASE WHEN HD.PhuongThucThanhToan = 'Tiền mặt'
                       AND HD.TrangThaiThanhToan = 'Đã thanh toán thành công'
-                     THEN (HD.ThanhTien + NVL(HD.DaTraTruoc, 0)) ELSE 0 END), 0),
+                     THEN HD.TongTien ELSE 0 END), 0),
         NVL(SUM(CASE WHEN HD.PhuongThucThanhToan = 'Chuyển khoản'
                       AND HD.TrangThaiThanhToan = 'Đã thanh toán thành công'
-                     THEN (HD.ThanhTien + NVL(HD.DaTraTruoc, 0)) ELSE 0 END), 0)
+                     THEN HD.TongTien ELSE 0 END), 0)
     INTO
         p_outTongThanhTien, p_outTongTruocGiam, p_outTongChietKhau,
         p_outSoHDThanhCong, p_outSoHDKhongTT,
@@ -36,6 +62,8 @@ BEGIN
     FROM HOADON HD
     JOIN PHIENLAMVIEC PLV ON HD.MaPhien = PLV.MaPhien
     JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
+    LEFT JOIN KHACHHANG KH ON KH.MaKH = PLV.MaKH
+    LEFT JOIN HANGTHANHVIEN HTV ON HTV.MaHangThanhVien = KH.MaHangThanhVien
     WHERE HD.NgayLapHoaDon BETWEEN p_TuNgay AND p_DenNgay
       AND (p_MaCN IS NULL OR KG.MaCN = p_MaCN)
       AND (

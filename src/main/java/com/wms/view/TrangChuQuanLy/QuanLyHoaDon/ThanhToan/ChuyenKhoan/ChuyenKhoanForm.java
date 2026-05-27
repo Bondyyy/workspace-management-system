@@ -6,8 +6,6 @@ import com.wms.util.MaQRUtil;
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.text.NumberFormat;
-import java.util.Locale;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -17,14 +15,13 @@ public class ChuyenKhoanForm extends JDialog {
     private final double tongTien;
     private final String maHoaDon;
     private boolean daThanhToan = false;
-    private final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
     public ChuyenKhoanForm(Frame parent, boolean modal, double tongTien, String maHoaDon) {
         super(parent, modal);
         this.tongTien = tongTien;
         this.maHoaDon = maHoaDon;
         initComponents();
-        txtTongTien.setText(formatTien.format(tongTien));
+        txtTongTien.setText(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tongTien));
         txtNganHang.setText(ChuyenKhoanQrUtil.TEN_NGAN_HANG_NHAN);
         txtSoTK.setText(ChuyenKhoanQrUtil.SO_TAI_KHOAN_NHAN);
         txtChuTK.setText(ChuyenKhoanQrUtil.CHU_TAI_KHOAN_NHAN);

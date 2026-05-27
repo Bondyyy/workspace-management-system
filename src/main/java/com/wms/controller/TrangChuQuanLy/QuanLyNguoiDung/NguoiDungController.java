@@ -1,6 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyNguoiDung;
 
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.service.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungService;
 import com.wms.view.TrangChuQuanLy.QuanLyNguoiDung.QuanLyNguoiDungForm;
 
@@ -63,6 +64,10 @@ public class NguoiDungController {
         }
     }
 
+    public void refreshCurrentView() {
+        search(view.getTxtTimKiem().getText().trim());
+    }
+
     private void fillTable(List<NguoiDungDTO> list) {
         DefaultTableModel model = (DefaultTableModel) view.getTblNguoiDung().getModel();
         model.setRowCount(0);
@@ -77,6 +82,9 @@ public class NguoiDungController {
                     user.getTrangThaiND()
             });
         }
+        view.getTblNguoiDung().clearSelection();
+        view.getTblNguoiDung().revalidate();
+        view.getTblNguoiDung().repaint();
     }
 
     public void displaySelectedUser() {
@@ -84,7 +92,8 @@ public class NguoiDungController {
         if (row < 0)
             return;
 
-        NguoiDungDTO user = currentList.get(row);
+        int modelRow = view.getTblNguoiDung().convertRowIndexToModel(row);
+        NguoiDungDTO user = currentList.get(modelRow);
         view.getTxtMaND().setText(user.getMaND());
         view.getTxtTaiKhoan().setText(user.getTenTaiKhoan());
         view.getTxtHoTen().setText(user.getHoTen());
@@ -157,8 +166,8 @@ public class NguoiDungController {
             service.addUser(user);
             com.wms.util.MessageUtil.showInfo(view, "Thêm người dùng mới thành công!");
             invalidateNhanVienCache();
-            loadData();
             clearForm();
+            refreshCurrentView();
         } catch (Exception e) {
             showError(e.getMessage(), e);
         }
@@ -177,10 +186,11 @@ public class NguoiDungController {
                 return;
             user.setMaND(maND);
 
-            service.updateUser(user);
+            service.updateUser(user, DangNhapController.getCurrentUser());
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật thông tin người dùng thành công!");
             invalidateNhanVienCache();
-            loadData();
+            clearForm();
+            refreshCurrentView();
         } catch (Exception e) {
             showError(e.getMessage(), e);
         }
@@ -226,7 +236,7 @@ public class NguoiDungController {
         user.setEmail(view.getTxtEmail().getText().trim());
 
         String uiTrangThai = view.getCbxTrangThai().getSelectedItem().toString();
-        user.setTrangThaiND("Hoạt động".equals(uiTrangThai) ? "Đang hoạt động" : "Không hoạt động");
+        user.setTrangThaiND("Hoạt động".equals(uiTrangThai) ? "Đang hoạt động" : "Bị khóa");
 
         user.setAnhDaiDien(selectedImageData);
 

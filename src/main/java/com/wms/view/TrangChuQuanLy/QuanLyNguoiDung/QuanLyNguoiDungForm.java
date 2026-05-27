@@ -36,7 +36,10 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
     private void setupEvents() {
         btnThem.addActionListener(e -> controller.handleAdd());
         btnCapNhat.addActionListener(e -> controller.handleUpdate());
-        btnLamMoi.addActionListener(e -> controller.clearForm());
+        btnLamMoi.addActionListener(e -> {
+            controller.clearForm();
+            controller.search(txtTimKiem.getText().trim());
+        });
         btnTimKiem.addActionListener(e -> controller.search(txtTimKiem.getText()));
         txtTimKiem.addActionListener(e -> controller.search(txtTimKiem.getText()));
 
@@ -411,5 +414,9 @@ public class QuanLyNguoiDungForm extends javax.swing.JPanel {
 
     public javax.swing.JTextField getTxtMatKhau() {
         return txtMatKhau;
+    }
+
+    public javax.swing.JTextField getTxtTimKiem() {
+        return txtTimKiem;
     }
 }

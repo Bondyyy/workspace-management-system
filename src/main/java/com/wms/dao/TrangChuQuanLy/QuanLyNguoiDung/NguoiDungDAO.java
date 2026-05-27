@@ -4,8 +4,11 @@ import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
 
 import java.sql.*;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NguoiDungDAO {
 
@@ -14,10 +17,13 @@ public class NguoiDungDAO {
                     SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.AnhDaiDien,
                            n.GioiTinh, n.Email, n.SDT, n.NgaySinh,
                            n.ThoiGianTao, n.CapNhatLanCuoi, n.LanCuoiDangNhap, n.TrangThaiND,
-                           v.TenVaiTro, v.MaVaiTro, nv_table.MaNV, nv_table.MaCN, cn.TenCN
+                           NVL(v.TenVaiTro, CASE WHEN kh_auth.MaKH IS NOT NULL THEN 'Hội viên' END) AS TenVaiTro,
+                           NVL(v.MaVaiTro, CASE WHEN kh_auth.MaKH IS NOT NULL THEN 'VT00' END) AS MaVaiTro,
+                           nv_table.MaNV, nv_table.MaCN, cn.TenCN
                     FROM NGUOIDUNG n
                     LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND
                     LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro
+                    LEFT JOIN KHACHHANG kh_auth ON kh_auth.MaND = n.MaND
                     LEFT JOIN NHANVIEN nv_table ON n.MaND = nv_table.MaND
                     LEFT JOIN CHINHANH cn ON cn.MaCN = nv_table.MaCN
                     WHERE n.TenTaiKhoan = ? OR n.Email = ? OR n.SDT = ?
@@ -157,7 +163,8 @@ public class NguoiDungDAO {
                     cs.setString(6, user.getGioiTinh());
                     cs.setDate(7, user.getNgaySinh());
                     cs.setBytes(8, user.getAnhDaiDien());
-                    cs.setString(9, user.getTrangThaiND() != null ? user.getTrangThaiND() : "Đang hoạt động");
+                    cs.setString(9, trangThaiNguoiDungDb(conn,
+                            user.getTrangThaiND() != null ? user.getTrangThaiND() : "Đang hoạt động"));
                     cs.registerOutParameter(10, Types.VARCHAR);
                     cs.execute();
                     maND = cs.getString(10);
@@ -231,10 +238,16 @@ public class NguoiDungDAO {
     }
 
     public List<NguoiDungDTO> getAllNguoiDung() throws SQLException {
-        String sql = "SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.GioiTinh, n.Email, n.SDT, n.NgaySinh, n.TrangThaiND, n.AnhDaiDien, cvt.MaVaiTro, v.TenVaiTro " +
+        String sql = "SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.GioiTinh, n.Email, n.SDT, n.NgaySinh, n.TrangThaiND, n.AnhDaiDien, " +
+                     "NVL(cvt.MaVaiTro, CASE WHEN kh.MaKH IS NOT NULL THEN 'VT00' END) AS MaVaiTro, " +
+                     "NVL(v.TenVaiTro, CASE WHEN kh.MaKH IS NOT NULL THEN 'Hội viên' END) AS TenVaiTro, " +
+                     "nv_table.MaNV, nv_table.MaCN, cn.TenCN " +
                      "FROM NGUOIDUNG n " +
                      "LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND " +
                      "LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro " +
+                     "LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND " +
+                     "LEFT JOIN NHANVIEN nv_table ON n.MaND = nv_table.MaND " +
+                     "LEFT JOIN CHINHANH cn ON cn.MaCN = nv_table.MaCN " +
                      "ORDER BY n.ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -248,10 +261,16 @@ public class NguoiDungDAO {
     }
 
     public List<NguoiDungDTO> searchNguoiDung(String keyword) throws SQLException {
-        String sql = "SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.GioiTinh, n.Email, n.SDT, n.NgaySinh, n.TrangThaiND, n.AnhDaiDien, cvt.MaVaiTro, v.TenVaiTro " +
+        String sql = "SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.GioiTinh, n.Email, n.SDT, n.NgaySinh, n.TrangThaiND, n.AnhDaiDien, " +
+                     "NVL(cvt.MaVaiTro, CASE WHEN kh.MaKH IS NOT NULL THEN 'VT00' END) AS MaVaiTro, " +
+                     "NVL(v.TenVaiTro, CASE WHEN kh.MaKH IS NOT NULL THEN 'Hội viên' END) AS TenVaiTro, " +
+                     "nv_table.MaNV, nv_table.MaCN, cn.TenCN " +
                      "FROM NGUOIDUNG n " +
                      "LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND " +
                      "LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro " +
+                     "LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND " +
+                     "LEFT JOIN NHANVIEN nv_table ON n.MaND = nv_table.MaND " +
+                     "LEFT JOIN CHINHANH cn ON cn.MaCN = nv_table.MaCN " +
                      "WHERE LOWER(n.HoTen) LIKE ? OR LOWER(n.TenTaiKhoan) LIKE ? OR n.SDT LIKE ? OR LOWER(n.Email) LIKE ? " +
                      "ORDER BY n.ThoiGianTao DESC";
         List<NguoiDungDTO> list = new ArrayList<>();
@@ -269,6 +288,51 @@ public class NguoiDungDAO {
             }
         }
         return list;
+    }
+
+    public NguoiDungDTO layNguoiDungTheoMa(String maND) throws SQLException {
+        String sql = """
+                    SELECT n.MaND, n.HoTen, n.TenTaiKhoan, n.MatKhauMaHoa, n.AnhDaiDien,
+                           n.GioiTinh, n.Email, n.SDT, n.NgaySinh,
+                           n.ThoiGianTao, n.CapNhatLanCuoi, n.LanCuoiDangNhap, n.TrangThaiND,
+                           NVL(v.TenVaiTro, CASE WHEN kh.MaKH IS NOT NULL THEN 'Hội viên' END) AS TenVaiTro,
+                           NVL(v.MaVaiTro, CASE WHEN kh.MaKH IS NOT NULL THEN 'VT00' END) AS MaVaiTro,
+                           nv_table.MaNV, nv_table.MaCN, cn.TenCN
+                    FROM NGUOIDUNG n
+                    LEFT JOIN CHITIETVAITRO cvt ON n.MaND = cvt.MaND
+                    LEFT JOIN VAITRO v ON cvt.MaVaiTro = v.MaVaiTro
+                    LEFT JOIN KHACHHANG kh ON kh.MaND = n.MaND
+                    LEFT JOIN NHANVIEN nv_table ON n.MaND = nv_table.MaND
+                    LEFT JOIN CHINHANH cn ON cn.MaCN = nv_table.MaCN
+                    WHERE n.MaND = ?
+                """;
+
+        NguoiDungDTO user = null;
+        List<String> vaiTros = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maND);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    if (user == null) {
+                        user = mapResultSetToDTO(rs);
+                        user.setVaiTro(new ArrayList<>());
+                    }
+                    String tenVaiTro = rs.getString("TenVaiTro");
+                    String maVaiTro = rs.getString("MaVaiTro");
+                    if (maVaiTro != null) {
+                        vaiTros.add(maVaiTro);
+                    }
+                    if (tenVaiTro != null) {
+                        vaiTros.add(tenVaiTro);
+                    }
+                }
+            }
+        }
+        if (user != null) {
+            user.setVaiTro(vaiTros);
+        }
+        return user;
     }
 
     public void updateNguoiDung(NguoiDungDTO user) throws SQLException {
@@ -299,7 +363,7 @@ public class NguoiDungDAO {
                     ps.setString(idx++, user.getEmail());
                     ps.setString(idx++, user.getSdt());
                     ps.setDate(idx++, user.getNgaySinh());
-                    ps.setString(idx++, user.getTrangThaiND());
+                    ps.setString(idx++, trangThaiNguoiDungDb(conn, user.getTrangThaiND()));
                     ps.setBytes(idx++, user.getAnhDaiDien());
                     if (updatePassword) {
                         ps.setString(idx++, user.getMatKhauMaHoa());
@@ -352,6 +416,9 @@ public class NguoiDungDAO {
         user.setNgaySinh(rs.getDate("NgaySinh"));
         user.setTrangThaiND(rs.getString("TrangThaiND"));
         user.setAnhDaiDien(rs.getBytes("AnhDaiDien"));
+        user.setMaNV(getNullableColumn(rs, "MaNV"));
+        user.setMaCN(getNullableColumn(rs, "MaCN"));
+        user.setTenCN(getNullableColumn(rs, "TenCN"));
         
         String maVaiTro = rs.getString("MaVaiTro");
         String tenVaiTro = rs.getString("TenVaiTro");
@@ -364,6 +431,82 @@ public class NguoiDungDAO {
             user.setVaiTro(vtList);
         }
         return user;
+    }
+
+    private String getNullableColumn(ResultSet rs, String columnName) {
+        try {
+            return rs.getString(columnName);
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+
+    private String trangThaiNguoiDungDb(Connection conn, String requestedStatus) {
+        boolean locked = laTrangThaiKhoa(requestedStatus);
+        String needle = locked ? "khoa" : "dang hoat dong";
+        List<String> values = layGiaTriRangBuoc(conn, "CHK_ND_TRANGTHAI");
+        for (String value : values) {
+            String normalized = chuanHoa(value);
+            if (!locked && normalized.contains(needle)) {
+                return value;
+            }
+            if (locked && (normalized.contains("khoa")
+                    || normalized.contains("khong hoat dong")
+                    || normalized.contains("ngung hoat dong"))) {
+                return value;
+            }
+        }
+        if (locked) {
+            for (String value : values) {
+                if (!chuanHoa(value).contains("dang hoat dong")) {
+                    return value;
+                }
+            }
+            return "Không hoạt động";
+        }
+        return "Đang hoạt động";
+    }
+
+    private List<String> layGiaTriRangBuoc(Connection conn, String constraintName) {
+        List<String> values = new ArrayList<>();
+        String sql = "SELECT search_condition_vc FROM user_constraints WHERE UPPER(constraint_name) = UPPER(?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, constraintName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String condition = rs.getString(1);
+                    if (condition != null) {
+                        Matcher matcher = Pattern.compile("'([^']*)'").matcher(condition);
+                        while (matcher.find()) {
+                            values.add(matcher.group(1));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ignored) {
+            // Fallback values keep the form usable on older schemas.
+        }
+        return values;
+    }
+
+    private boolean laTrangThaiKhoa(String status) {
+        String normalized = chuanHoa(status);
+        return normalized.contains("khoa")
+                || normalized.contains("khong hoat dong")
+                || normalized.contains("ngung hoat dong");
+    }
+
+    private String chuanHoa(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replace('đ', 'd')
+                .replaceAll("[^a-z0-9 ]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     public String generateNextMaND() throws SQLException {

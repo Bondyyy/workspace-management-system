@@ -34,6 +34,13 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
             String trangThai = dto.getTrangThai() != null ? dto.getTrangThai() : "Đang hoạt động";
             model.addRow(new Object[]{dto.getMaLoaiKG(), dto.getTenLoaiKG(), sucChua, donGia, trangThai});
         }
+        tblLoaiKhongGian.clearSelection();
+        tblLoaiKhongGian.revalidate();
+        tblLoaiKhongGian.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        taiDanhSach(txtTimKiem.getText().trim());
     }
 
     private void laMoiForm() {
@@ -41,7 +48,6 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
         txtTenLoaiKG.setText("");
         txtSucChua.setText("");
         txtDonGia.setText("");
-        txtTimKiem.setText("");
         cbxTrangThai.setSelectedIndex(0);
         tblLoaiKhongGian.clearSelection();
     }
@@ -259,8 +265,8 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
             if (controller.themLoai(dto)) {
                 JOptionPane.showMessageDialog(this, "Thêm thành công!");
-                taiDanhSach(null);
                 laMoiForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -282,8 +288,8 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
             if (controller.capNhatLoai(dto)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                taiDanhSach(null);
                 laMoiForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -344,6 +350,7 @@ public class QuanLyLoaiKhongGianForm extends javax.swing.JDialog {
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         laMoiForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

@@ -150,7 +150,8 @@ public class CongThongTinService {
         try {
             return sapXepKhongGian(khoDuLieu.timKhongGian(chuanHoaMaCN(branchId)));
         } catch (DataAccessException ex) {
-            System.err.println("[CongThongTinService] Loi tai khong gian maCN=" + branchId + ": " + ex.getMessage());
+            System.err.println("[CongThongTinService] Lỗi tải không gian maCN=" + branchId
+                    + ", requestStart=<none>, requestEnd=<none>, params=0, lỗi=" + ex.getMessage());
             throw new IllegalStateException("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.");
         }
     }
@@ -160,7 +161,10 @@ public class CongThongTinService {
             hetHanDatChoChoThanhToan();
             return sapXepKhongGian(khoDuLieu.timKhongGian(chuanHoaMaCN(branchId), selectedStart, selectedEnd));
         } catch (DataAccessException ex) {
-            System.err.println("[CongThongTinService] Loi tai khong gian maCN=" + branchId + ": " + ex.getMessage());
+            System.err.println("[CongThongTinService] Lỗi tải không gian maCN=" + branchId
+                    + ", requestStart=" + selectedStart
+                    + ", requestEnd=" + selectedEnd
+                    + ", params=named, lỗi=" + ex.getMessage());
             throw new IllegalStateException("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.");
         }
     }
@@ -183,16 +187,13 @@ public class CongThongTinService {
         LocalTime openTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(branch == null ? null : branch.getThoiGianDongCua(), LocalTime.of(22, 0));
         LocalDateTime hienTai = layThoiGianHienTaiVietNam();
-        BusinessHoursUtil.TimeWindow window = BusinessHoursUtil.nextWindowFrom(hienTai, openTime, closeTime);
-        LocalDateTime start = window.start().isAfter(hienTai) ? window.start() : lamTronLenGioKeTiep(hienTai);
-        if (!start.isBefore(window.end()) || start.plusHours(1).isAfter(window.end())) {
-            window = BusinessHoursUtil.nextWindowFrom(window.end().plusSeconds(1), openTime, closeTime);
-            start = window.start();
+        LocalDateTime[] window = BusinessHoursUtil.nextWindowFrom(hienTai, openTime, closeTime);
+        LocalDateTime start = window[0].isAfter(hienTai) ? window[0] : lamTronLenGioKeTiep(hienTai);
+        if (!BusinessHoursUtil.isStartWithinBusinessHours(start, openTime, closeTime)) {
+            window = BusinessHoursUtil.nextWindowFrom(window[1].plusSeconds(1), openTime, closeTime);
+            start = window[0];
         }
         LocalDateTime end = start.plusHours(SO_GIO_DAT_CHO_MAC_DINH);
-        if (end.isAfter(window.end())) {
-            end = start.plusHours(1);
-        }
         return new KhungGioDatCho(start.toLocalDate(), start.toLocalTime(), end.toLocalTime());
     }
 
@@ -228,17 +229,17 @@ public class CongThongTinService {
     @Transactional
     public String taoDatCho(NguoiDungPhien user, DatChoForm form) {
         if (user.getMaKH() == null || user.getMaKH().isBlank()) {
-            throw new IllegalArgumentException("Tai khoan nay khong co ho so hoi vien de dat cho.");
+            throw new IllegalArgumentException("Tài khoản này không có hồ sơ hội viên để đặt chỗ.");
         }
 
         KhongGianView space = khoDuLieu.timKhongGianTheoMa(form.getMaKG());
         if (space == null) {
-            throw new IllegalArgumentException("Khong tim thay khong gian da chon.");
+            throw new IllegalArgumentException("Không tìm thấy không gian đã chọn.");
         }
 
         String normalizedStatus = chuanHoa(space.getTrangThaiKG());
         if (normalizedStatus.contains("bao tri")) {
-            throw new IllegalArgumentException("Khong gian nay dang bao tri.");
+            throw new IllegalArgumentException("Không gian này đang bảo trì.");
         }
         kiemTraThoiGianDatCho(form.getThoiGianDen(), form.getSoGioSuDung());
         kiemTraKhungGioChiNhanh(space, form.getThoiGianDen(), form.getSoGioSuDung());
@@ -247,7 +248,7 @@ public class CongThongTinService {
                 form.getMaKG(),
                 form.getThoiGianDen(),
                 form.getThoiGianDen().plusHours(form.getSoGioSuDung()))) {
-            throw new IllegalArgumentException("Khung gio nay da co nguoi dat. Vui long chon gio khac.");
+            throw new IllegalArgumentException("Khung giờ này đã có người đặt. Vui lòng chọn giờ khác.");
         }
 
         BigDecimal tongTienGocDatTruoc = lamTronTienVnd(tinhTien(space, form.getSoGioSuDung()));
@@ -358,7 +359,7 @@ public class CongThongTinService {
         KhongGianView space = khoDuLieu.timKhongGianTheoMa(maKG);
         kiemTraKhungGioChiNhanh(space, arrivalTime, durationHours);
         if (khoDuLieu.coTrungLich(maKG, arrivalTime, arrivalTime.plusHours(durationHours))) {
-            throw new IllegalArgumentException("Khong gian nay da duoc dat trong khung gio ban chon.");
+            throw new IllegalArgumentException("Không gian này đã được đặt trong khung giờ bạn chọn.");
         }
     }
 
@@ -803,13 +804,12 @@ public class CongThongTinService {
         }
         LocalTime openTime = docGioChiNhanh(space.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(space.getThoiGianDongCua(), LocalTime.of(22, 0));
-        LocalDateTime end = arrivalTime.plusHours(durationHours);
 
         String openStr = BusinessHoursUtil.format(openTime);
         String closeStr = BusinessHoursUtil.format(closeTime);
 
-        if (!BusinessHoursUtil.fitsInBranchHours(arrivalTime, end, openTime, closeTime)) {
-            throw new IllegalArgumentException("Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
+        if (!BusinessHoursUtil.isStartWithinBusinessHours(arrivalTime, openTime, closeTime)) {
+            throw new IllegalArgumentException("Thời điểm bắt đầu đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".");
         }
     }
 

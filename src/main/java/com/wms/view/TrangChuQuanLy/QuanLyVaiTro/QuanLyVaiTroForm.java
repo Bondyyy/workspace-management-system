@@ -52,6 +52,9 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
         for (VaiTroDTO vt : list) {
             model.addRow(new Object[] { vt.getMaVaiTro(), vt.getTenVaiTro(), vt.getMoTa() });
         }
+        tblNhomQuyen.clearSelection();
+        tblNhomQuyen.revalidate();
+        tblNhomQuyen.repaint();
     }
 
     private void loadCbxChucNang() {
@@ -191,6 +194,7 @@ public class QuanLyVaiTroForm extends javax.swing.JPanel {
 
     private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
         lamMoiPanel();
+        loadDanhSachVaiTro();
     }
 
     @SuppressWarnings("unchecked")

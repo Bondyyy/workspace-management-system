@@ -18,7 +18,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
     public QuanLyThongTinDichVuForm() {
         initComponents();
         loadLoaiDV();
-        loadData(null);
+        refreshTableTheoDieuKienHienTai();
         txtMaDV.setText("");
         com.wms.util.InputFormatUtil.attachThousandsFormatter(txtDonGia);
         com.wms.util.TienIchFormQuanLy.apDung(this);
@@ -37,7 +37,8 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
     private void loadData(String tuKhoa) {
         DefaultTableModel model = (DefaultTableModel) tblDichVu.getModel();
         model.setRowCount(0);
-        dsDichVu = controller.layDanhSach(null, null, tuKhoa);
+        String keyword = tuKhoa == null || tuKhoa.isBlank() ? null : tuKhoa.trim();
+        dsDichVu = controller.layDanhSach(null, null, keyword);
         for (DichVuDTO dv : dsDichVu) {
             model.addRow(new Object[]{
                 dv.getMaDV(),
@@ -47,6 +48,14 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
                 dv.getTrangThaiDV()
             });
         }
+        tblDichVu.clearSelection();
+        tblDichVu.revalidate();
+        tblDichVu.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadLoaiDV();
+        loadData(txtTimKiem.getText().trim());
     }
 
     private String getTenLoai(String maLoai) {
@@ -275,7 +284,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
             if (controller.themMoi(dv)) {
                 JOptionPane.showMessageDialog(this, "Thêm dịch vụ thành công!");
                 lamMoiForm();
-                loadData(null);
+                refreshTableTheoDieuKienHienTai();
             } else {
                 com.wms.util.MessageUtil.showError(this, "Thêm thất bại. Vui lòng kiểm tra lại thông tin.");
             }
@@ -296,7 +305,8 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
             
             if (controller.capNhat(dv)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadData(null);
+                lamMoiForm();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 com.wms.util.MessageUtil.showError(this, "Cập nhật thất bại. Vui lòng kiểm tra lại thông tin.");
             }
@@ -312,7 +322,7 @@ public class QuanLyThongTinDichVuForm extends javax.swing.JPanel {
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         lamMoiForm();
-        loadData(null);
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

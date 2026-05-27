@@ -163,8 +163,8 @@
                             </small>
                             <em class="space-node-status" th:text="${khongGian.trangThaiHienThi}">Trạng thái</em>
                             <button type="button"
-                                    th:disabled="${!khongGian.coTheDat}"
-                                    th:text="${khongGian.coTheDat ? (daDangNhap ? 'Đặt chỗ' : 'Đăng nhập để đặt chỗ') : 'Không thể đặt'}">
+                                    th:disabled="${daChonDuThoiGian != true or !khongGian.coTheDat}"
+                                    th:text="${daChonDuThoiGian != true ? 'Chọn thời gian' : (khongGian.coTheDat ? (daDangNhap ? 'Đặt chỗ' : 'Đăng nhập để đặt chỗ') : 'Không thể đặt')}">
                                 Đặt chỗ
                             </button>
                         </article>
@@ -173,14 +173,16 @@
 
                 <aside class="space-detail-panel">
                     <h3>Đặt chỗ</h3>
-                    <p id="thongBaoDatCho" class="form-hint warning" style="display:none;"></p>
+                    <p id="thongBaoDatCho" class="form-hint warning"
+                       th:style="${thongBaoLoi != null} ? 'display:block;' : 'display:none;'"
+                       th:text="${thongBaoLoi != null ? thongBaoLoi : ''}"></p>
                     <form th:action="${daDangNhap == true} ? @{/portal/checkout} : @{/dangNhap}"
                           method="get"
                           id="mapBookingForm"
                           class="form-grid">
                         <input type="hidden" name="maKG" id="maKG">
                         <input type="hidden" name="arrivalTime" id="arrivalTime">
-                        <input type="hidden" name="durationHours" id="durationHours" th:value="${selectedDuration}">
+                        <input type="hidden" name="durationHours" id="durationHours" th:value="${daChonDuThoiGian == true ? selectedDuration : ''}">
                         <input th:if="${daDangNhap != true}" type="hidden" name="returnUrl"
                                th:value="@{/so-do-khong-gian(maCN=${chiNhanhDangChon.maCN})}">
                         <label>

@@ -26,33 +26,43 @@ BEGIN
         SELECT
             HD.MaHoaDon,
             HD.SoHD,
-            NVL(NULLIF(HD.TongTienGoc, 0), NVL(HD.TongTien, FN_TinhTongTien(PLV.MaPhien))) AS TongTienGoc,
-            NVL(HD.TongTien, FN_TinhTongTien(PLV.MaPhien)) AS TongTien,
-            NVL(HD.ThanhTien, FN_TinhThanhTien(PLV.MaPhien, HD.MaPGG)) AS ThanhTien,
+            FN_TinhTongTien(PLV.MaPhien) AS TongTien,
+            GREATEST(0,
+                FN_TinhTongTien(PLV.MaPhien)
+                - NVL((
+                    SELECT SUM(NVL(CT.SoTienGiam, 0))
+                    FROM CHITIETAPDUNGPGG CT
+                    WHERE CT.MaHoaDon = HD.MaHoaDon
+                       OR (PLV.MaDatCho IS NOT NULL AND CT.MaDatCho = PLV.MaDatCho)
+                ), 0)
+            ) AS SoTienConLai,
+            GREATEST(0,
+                FN_TinhTongTien(PLV.MaPhien)
+                - NVL((
+                    SELECT SUM(NVL(CT.SoTienGiam, 0))
+                    FROM CHITIETAPDUNGPGG CT
+                    WHERE CT.MaHoaDon = HD.MaHoaDon
+                       OR (PLV.MaDatCho IS NOT NULL AND CT.MaDatCho = PLV.MaDatCho)
+                ), 0)
+                - ROUND(GREATEST(0,
+                    FN_TinhTongTien(PLV.MaPhien)
+                    - NVL((
+                        SELECT SUM(NVL(CT.SoTienGiam, 0))
+                        FROM CHITIETAPDUNGPGG CT
+                        WHERE CT.MaHoaDon = HD.MaHoaDon
+                           OR (PLV.MaDatCho IS NOT NULL AND CT.MaDatCho = PLV.MaDatCho)
+                    ), 0)
+                ) * NVL(HTV.PhanTramTienGiam, 0) / 100, 0)
+            ) AS ThanhTien,
+            HD.ThanhTien AS SoTienCanThuTaiQuay,
             HD.NgayLapHoaDon,
             HD.TrangThaiThanhToan,
             HD.PhuongThucThanhToan,
             HD.MaPGG,
-            HD.MaPGGDatTruoc,
-            PGGDT.MaChuSoPGG AS MaChuSoPGGDatTruoc,
-            HD.MaPGGTaiQuay,
-            PGGTQ.MaChuSoPGG AS MaChuSoPGGTaiQuay,
             PGG.MaChuSoPGG,
-            PGG.GiaTriGiamGia AS GiaTriGiamGiaPGG,
-            NVL(HD.DaTraTruoc, 0) AS DaTraTruoc,
-            NVL(HD.TienGocDatTruoc, 0) AS TienGocDatTruoc,
-            NVL(HD.TienGocPhatSinh, 0) AS TienGocPhatSinh,
-            NVL(HD.TienGiamVoucherDatTruoc, 0) AS TienGiamVoucherDatTruoc,
-            NVL(HD.PhanTramGiamHangTVDatTruoc, 0) AS PhanTramGiamHangTVDatTruoc,
-            NVL(HD.TienGiamHangTVDatTruoc, 0) AS TienGiamHangTVDatTruoc,
-            NVL(HD.TienGiamVoucherTaiQuay, 0) AS TienGiamVoucherTaiQuay,
-            NVL(HD.PhanTramGiamHangTVTaiQuay, 0) AS PhanTramGiamHangTVTaiQuay,
-            NVL(HD.TienGiamHangTVTaiQuay, 0) AS TienGiamHangTVTaiQuay,
-            NVL(HD.TongTienGiam, 0) AS TongTienGiam,
-            NVL(HD.SoTienThanhToanTaiQuay, 0) AS SoTienThanhToanTaiQuay,
             NVL(ND.HoTen, 'Khách vãng lai') AS TenKhachHang,
             HTV.TenHangThanhVien,
-            HTV.PhanTramTienGiam AS PhanTramGiamHangTV,
+            NVL(HTV.PhanTramTienGiam, 0) AS PhanTramGiamHangTV,
             PLV.ThoiGianBatDau,
             PLV.ThoiGianKetThuc,
             KG.TenKG AS TenKhongGian,
@@ -63,8 +73,6 @@ BEGIN
         LEFT JOIN NGUOIDUNG ND ON KH.MaND = ND.MaND
         LEFT JOIN HANGTHANHVIEN HTV ON KH.MaHangThanhVien = HTV.MaHangThanhVien
         LEFT JOIN PHIEUGIAMGIA PGG ON HD.MaPGG = PGG.MaPGG
-        LEFT JOIN PHIEUGIAMGIA PGGDT ON HD.MaPGGDatTruoc = PGGDT.MaPGG
-        LEFT JOIN PHIEUGIAMGIA PGGTQ ON HD.MaPGGTaiQuay = PGGTQ.MaPGG
         LEFT JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
         LEFT JOIN CHINHANH CN ON KG.MaCN = CN.MaCN
         WHERE HD.MaPhien = p_MaPhien;
@@ -72,8 +80,8 @@ BEGIN
     OPEN p_RS_ChiTietKhongGian FOR
         SELECT
             CASE
-                WHEN PLV.MaDatCho IS NOT NULL THEN 'Thuê ' || KG.TenKG || ' (đã đặt trước)'
-                ELSE KG.TenKG
+                WHEN PLV.MaDatCho IS NOT NULL THEN 'Thuê ' || KG.TenKG || ' (đặt trước)'
+                ELSE 'Thuê ' || KG.TenKG
             END AS TenKG,
             LKG.TenLoaiKG,
             LKG.DonGiaTheoGio AS DonGiaTheoGio,
@@ -86,14 +94,7 @@ BEGIN
                     2
                 )
             END AS SoGioSuDung,
-            CASE
-                WHEN PLV.MaDatCho IS NOT NULL THEN
-                    CASE
-                        WHEN NVL(DC.TongTienGoc, 0) > 0 THEN ROUND(DC.TongTienGoc, 2)
-                        ELSE ROUND(NVL(LKG.DonGiaTheoGio, 0) * NVL(DC.KhoangThoiGianSuDung, 0), 2)
-                    END
-                ELSE FN_TinhTienKhongGian(p_MaPhien)
-            END AS ThanhTien
+            FN_TinhTienKhongGian(p_MaPhien) AS ThanhTien
         FROM PHIENLAMVIEC PLV
         JOIN KHONGGIAN KG ON PLV.MaKG = KG.MaKG
         JOIN LOAIKHONGGIAN LKG ON KG.MaLoaiKG = LKG.MaLoaiKG

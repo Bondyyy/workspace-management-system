@@ -5,7 +5,8 @@ import com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.TienMat.TienMatForm;
 import com.wms.view.TrangChuQuanLy.QuanLyHoaDon.ThanhToan.ChuyenKhoan.ChuyenKhoanForm;
 import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
-import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DichVuDaDungDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DiscountLine;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.InvoiceLine;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaDTO;
 import com.wms.util.HoaDonGiamGiaUtil;
 import java.awt.*;
@@ -104,14 +105,15 @@ public class ThanhToanHoaDonForm extends JPanel {
     private void khoiTaoGiaoDien() {
         setLayout(new BorderLayout(0, 20));
         setBackground(mauNenChinh);
-        setBorder(new EmptyBorder(30, 40, 30, 40));
+        setPreferredSize(new Dimension(980, 600));
+        setBorder(new EmptyBorder(20, 28, 20, 28));
 
         initializeLabels();
 
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(mauNenChinh);
         JLabel lblTieuDe = new JLabel("THANH TOÁN HÓA ĐƠN", SwingConstants.CENTER);
-        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblTieuDe.setForeground(mauHongChinh);
         panelHeader.add(lblTieuDe, BorderLayout.CENTER);
         add(panelHeader, BorderLayout.NORTH);
@@ -232,7 +234,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelThanhTien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         panelThanhTien.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-        JLabel lblTextThanhTien = new JLabel("<html>CÒN PHẢI<br>THANH TOÁN:</html>");
+        JLabel lblTextThanhTien = new JLabel("TỔNG TIỀN:");
         lblTextThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblTextThanhTien.setForeground(mauXamDam);
 
@@ -435,22 +437,14 @@ public class ThanhToanHoaDonForm extends JPanel {
         double tienCoTheApVoucher = layTienCoTheApVoucherTaiQuay();
         if (maGiamGiaDangAp != null) {
             tienGiamGia = Math.min(Math.max(0, maGiamGiaDangAp.getGiaTriGiamGia()), tienCoTheApVoucher);
-            double phanTramHang = hoaDonHienTai != null
-                    ? Math.max(0, hoaDonHienTai.getPhanTramGiamHangTVTaiQuay())
-                    : 0;
-            if (phanTramHang <= 0 && hoaDonHienTai != null) {
-                phanTramHang = Math.max(0, hoaDonHienTai.getPhanTramGiamHangThanhVien());
-            }
-            double tienGiamHang = Math.round(Math.max(0, tienCoTheApVoucher - tienGiamGia)
-                    * Math.min(100, phanTramHang) / 100.0);
-            thanhTien = Math.max(0, tienCoTheApVoucher - tienGiamGia - tienGiamHang);
+            thanhTien = Math.max(0, tienCoTheApVoucher - tienGiamGia);
             JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
             if (lblGiaTriGG != null)
                 lblGiaTriGG.setText(HoaDonGiamGiaUtil.formatTienGiamVnd(tienGiamGia));
         } else {
             tienGiamGia = 0;
             thanhTien = hoaDonHienTai != null
-                    ? Math.max(0, hoaDonHienTai.getThanhTien())
+                    ? Math.max(0, hoaDonHienTai.getSoTienCanThanhToan())
                     : Math.max(0, tongTienGoc);
         }
         lblTongTien.setText(formatTienVnd(tongTienGoc));
@@ -462,11 +456,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         if (hoaDonHienTai == null) {
             return Math.max(0, tongTienGoc);
         }
-        double tienPhatSinh = Math.max(0, hoaDonHienTai.getTienGocPhatSinh());
-        if (hoaDonHienTai.getSoTienDaTraTruoc() > 0 || hoaDonHienTai.getTienGocDatTruoc() > 0) {
-            return tienPhatSinh;
-        }
-        return Math.max(0, tongTienGoc);
+        return Math.max(0, hoaDonHienTai.getSoTienCanThanhToan());
     }
 
     private JPanel taoContainerPhuongThuc(String type, String text, String moTa) {
@@ -577,8 +567,8 @@ public class ThanhToanHoaDonForm extends JPanel {
         }
 
         this.hoaDonHienTai = hoaDon;
-        this.tongTienGoc = hoaDon.getTongTienGoc() > 0 ? hoaDon.getTongTienGoc() : hoaDon.getTongTien();
-        this.thanhTien = Math.max(0, hoaDon.getThanhTien());
+        this.tongTienGoc = Math.max(0, hoaDon.getTongTien());
+        this.thanhTien = Math.max(0, hoaDon.getSoTienCanThanhToan());
         if (this.tongTienGoc <= 0 && this.thanhTien > 0)
             this.tongTienGoc = this.thanhTien;
         this.daThanhToanThanhCong = "Đã thanh toán thành công".equals(hoaDon.getTrangThaiThanhToan());
@@ -610,10 +600,10 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelChiTietHD.add(lblDichVu);
         panelChiTietHD.add(taoKhoangCach(15));
 
-        if (hoaDon.getDanhSachDichVu() != null && !hoaDon.getDanhSachDichVu().isEmpty()) {
-            for (DichVuDaDungDTO dv : hoaDon.getDanhSachDichVu()) {
-                String hienThiSL = dv.getTenDichVu().startsWith("Thuê") ? dv.getSoLuong() + " giờ" : "x" + dv.getSoLuong();
-                panelChiTietHD.add(taoDichVuRow(dv.getTenDichVu(), hienThiSL, dv.getThanhTien()));
+        if (hoaDon.getDongChiPhi() != null && !hoaDon.getDongChiPhi().isEmpty()) {
+            for (InvoiceLine dong : hoaDon.getDongChiPhi()) {
+                String hienThiSL = dong.getNoiDung().startsWith("Thuê") ? dong.getSoLuong() + " giờ" : "x" + dong.getSoLuong();
+                panelChiTietHD.add(taoDichVuRow(dong.getNoiDung(), hienThiSL, dong.getThanhTien()));
                 panelChiTietHD.add(taoKhoangCach(8));
             }
         } else {
@@ -632,55 +622,18 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void themDongTongKetHoaDon(ThongTinHoaDonDTO hoaDon) {
-        HoaDonGiamGiaUtil.ThongTinGiamGia giamGia = HoaDonGiamGiaUtil.taoThongTinGiamGia(hoaDon, tienGiamGia);
         panelChiTietHD.add(taoKhoangCach(15));
         panelChiTietHD.add(taoDuongPhanCach());
         panelChiTietHD.add(taoKhoangCach(15));
-        panelChiTietHD.add(taoThongTinRow("Tổng tiền gốc:", formatTienVnd(tongTienGoc), true));
-
-        if (hoaDon.getTienGocDatTruoc() > 0 || hoaDon.getSoTienDaTraTruoc() > 0) {
-            panelChiTietHD.add(taoKhoangCach(8));
-            panelChiTietHD.add(taoThongTinRow("Gốc đặt trước:", formatTienVnd(hoaDon.getTienGocDatTruoc()), false));
-            if (giamGia.getTienGiamVoucherDatTruoc() > 0) {
-                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanVoucherDatTruoc() + ":",
-                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherDatTruoc()), false));
-            }
-            if (giamGia.getTienGiamHangDatTruoc() > 0) {
-                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanHangDatTruoc() + ":",
-                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangDatTruoc()), false));
-            }
-            if (giamGia.getTongGiamDatTruoc() > 0) {
-                panelChiTietHD.add(taoThongTinRow("Tổng giảm đặt trước:",
-                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongGiamDatTruoc()), true));
-            }
-            JPanel pnlTraTruoc = taoThongTinRow("Đã trả trước:", formatTienVnd(hoaDon.getSoTienDaTraTruoc()), true);
-            JLabel lblTraTruoc = (JLabel) pnlTraTruoc.getComponent(1);
-            if (lblTraTruoc != null) {
-                lblTraTruoc.setForeground(mauXanhLa);
-            }
-            panelChiTietHD.add(pnlTraTruoc);
+        for (DiscountLine dong : hoaDon.getDongVoucher()) {
+            panelChiTietHD.add(taoThongTinRow(dong.getNoiDung() + ":",
+                    HoaDonGiamGiaUtil.formatTienGiamVnd(dong.getSoTienGiam()), false));
         }
-
-        if (hoaDon.getTienGocDatTruoc() > 0 || hoaDon.getTienGocPhatSinh() > 0) {
-            panelChiTietHD.add(taoKhoangCach(8));
-            panelChiTietHD.add(taoThongTinRow("Phát sinh tại quán:", formatTienVnd(hoaDon.getTienGocPhatSinh()), false));
-            if (giamGia.getTienGiamVoucherTaiQuay() > 0) {
-                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanVoucherTaiQuay() + ":",
-                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamVoucherTaiQuay()), false));
-            }
-            if (giamGia.getTienGiamHangTaiQuay() > 0) {
-                panelChiTietHD.add(taoThongTinRow(giamGia.getNhanHangTaiQuay() + ":",
-                        HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTienGiamHangTaiQuay()), false));
-            }
-        }
-
-        if (giamGia.coTongGiam()) {
-            panelChiTietHD.add(taoThongTinRow("Tổng giảm:", HoaDonGiamGiaUtil.formatTienGiamVnd(giamGia.getTongTienGiam()), true));
-        }
-        if (hoaDon.getSoTienThanhToanTaiQuay() > 0) {
-            panelChiTietHD.add(taoThongTinRow("Đã thanh toán tại quầy:",
-                    formatTienVnd(hoaDon.getSoTienThanhToanTaiQuay()), true));
-        }
+        panelChiTietHD.add(taoThongTinRow("Số tiền còn lại:", formatTienVnd(hoaDon.getSoTienConLai()), true));
+        panelChiTietHD.add(taoThongTinRow("Hạng thành viên (" + (hoaDon.getTenHangThanhVien() == null ? "" : hoaDon.getTenHangThanhVien()) + "):",
+                HoaDonGiamGiaUtil.formatTienGiamVnd(hoaDon.getTienGiamHang()), false));
+        panelChiTietHD.add(taoThongTinRow("Thành tiền:", formatTienVnd(hoaDon.getThanhTien()), true));
+        panelChiTietHD.add(taoThongTinRow("Cần thu:", formatTienVnd(hoaDon.getSoTienCanThanhToan()), true));
     }
 
     private void capNhatKhaNangThanhToan() {
@@ -689,7 +642,6 @@ public class ThanhToanHoaDonForm extends JPanel {
                 && !"Đã thanh toán thành công".equals(hoaDonHienTai.getTrangThaiThanhToan());
         boolean coTheHoanTatTraTruoc = hoaDonHienTai != null
                 && thanhTien <= 0
-                && hoaDonHienTai.getSoTienDaTraTruoc() > 0
                 && !"Đã thanh toán thành công".equals(hoaDonHienTai.getTrangThaiThanhToan());
         if (containerTienMat != null) {
             containerTienMat.setEnabled(coTheThuTien && !dangXuLyThanhToan);

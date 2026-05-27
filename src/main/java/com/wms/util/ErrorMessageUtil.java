@@ -220,7 +220,10 @@ public final class ErrorMessageUtil {
         if (upper.contains("LUONG")) {
             return "Tiền lương không được âm.";
         }
-        if (upper.contains("DONGIA") || upper.contains("GIA")) {
+        if (upper.contains("THOIGIAN")) {
+            return "Thời gian không hợp lệ. Vui lòng kiểm tra giờ bắt đầu và giờ kết thúc.";
+        }
+        if (upper.contains("DONGIA") || upper.contains("DON_GIA")) {
             return "Đơn giá không được âm.";
         }
         if (upper.contains("SOLUONG") || upper.contains("SL")) {

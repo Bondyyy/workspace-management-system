@@ -19,7 +19,7 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         napComboBoxChiNhanh();
         napComboBoxLoaiKhongGian();
         apDungPhanQuyen();
-        taiDanhSach(null);
+        refreshTableTheoDieuKienHienTai();
         txtMaKhongGian.setText("");
         com.wms.util.TienIchFormQuanLy.apDung(this);
     }
@@ -96,6 +96,9 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
                     dto.getTrangThaiKG()
             });
         }
+        tblKhongGian.clearSelection();
+        tblKhongGian.revalidate();
+        tblKhongGian.repaint();
     }
 
     private String getMaFromCombo(javax.swing.JComboBox<String> cbx) {
@@ -108,15 +111,28 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         return str.split(" - ")[0].trim();
     }
 
+    private void refreshTableTheoDieuKienHienTai() {
+        String keyword = txtTimKiem.getText().trim();
+        taiDanhSach(keyword.isEmpty() ? null : keyword);
+    }
+
+    private void selectComboByMa(javax.swing.JComboBox<String> cbx, String ma) {
+        if (ma == null || ma.isBlank()) {
+            return;
+        }
+        for (int i = 0; i < cbx.getItemCount(); i++) {
+            String item = cbx.getItemAt(i);
+            if (item != null && item.startsWith(ma + " - ")) {
+                cbx.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
     private void laMoiForm() {
         txtMaKhongGian.setText("");
         txtTenKhongGian.setText("");
-        txtTimKiem.setText("");
         cbxTrangThai.setSelectedIndex(0);
-        if (cbxChiNhanh.isEnabled() && cbxChiNhanh.getItemCount() > 0)
-            cbxChiNhanh.setSelectedIndex(0);
-        if (cbxLoaiKhongGian.getItemCount() > 0)
-            cbxLoaiKhongGian.setSelectedIndex(0);
         tblKhongGian.clearSelection();
     }
 
@@ -374,8 +390,8 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         if (controller.themKhongGian(dto)) {
             JOptionPane.showMessageDialog(this, "Thêm không gian thành công!", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
-            taiDanhSach(null);
             laMoiForm();
+            refreshTableTheoDieuKienHienTai();
         } else {
             JOptionPane.showMessageDialog(this, "Thêm không gian thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -423,8 +439,8 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
 
         if (controller.capNhatKhongGian(dto)) {
             JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-            taiDanhSach(null);
             laMoiForm();
+            refreshTableTheoDieuKienHienTai();
         } else {
             JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -435,12 +451,15 @@ public class QuanLyKhongGianForm extends javax.swing.JPanel {
         QuanLyLoaiKhongGianForm dialog = new QuanLyLoaiKhongGianForm(
                 parentWindow instanceof java.awt.Frame ? (java.awt.Frame) parentWindow : null, true);
         dialog.setVisible(true);
+        String maLoaiDangChon = getMaFromCombo(cbxLoaiKhongGian);
         napComboBoxLoaiKhongGian();
-        taiDanhSach(null);
+        selectComboByMa(cbxLoaiKhongGian, maLoaiDangChon);
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         laMoiForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

@@ -11,7 +11,6 @@ public class TienMatForm extends JDialog {
 
     private final double tongTien;
     private boolean daThanhToan = false;
-    private final NumberFormat formatTien = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
     public TienMatForm(Frame parent, boolean modal, double tongTien) {
         super(parent, modal);
@@ -23,7 +22,7 @@ public class TienMatForm extends JDialog {
     }
 
     private void setupLogic() {
-        txtTongTien.setText(formatTien.format(tongTien));
+        txtTongTien.setText(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tongTien));
         com.wms.util.InputFormatUtil.attachThousandsFormatter(txtSoTienKhachDua);
         txtSoTienKhachDua.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { tinhTienThua(); }
@@ -75,11 +74,11 @@ public class TienMatForm extends JDialog {
             double khachDua = value.doubleValue();
             double thua = khachDua - tongTien;
             if (thua >= 0) {
-                lblTienThua.setText(formatTien.format(thua));
+                lblTienThua.setText(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(thua));
                 lblTienThua.setForeground(new Color(0, 153, 51));
                 btnXacNhan.setEnabled(true);
             } else {
-                lblTienThua.setText("Thiếu " + formatTien.format(Math.abs(thua)));
+                lblTienThua.setText("Thiếu " + com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(Math.abs(thua)));
                 lblTienThua.setForeground(new Color(220, 53, 69));
                 btnXacNhan.setEnabled(false);
             }

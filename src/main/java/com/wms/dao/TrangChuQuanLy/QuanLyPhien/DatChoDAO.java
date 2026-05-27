@@ -14,7 +14,8 @@ public class DatChoDAO {
                 BEGIN
                     INSERT INTO DATCHO (
                         ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung,
-                        TrangThaiDatTruoc, ThanhTien, GhiChu, MaKH, MaKG, CapNhatLanCuoi
+                        TrangThaiDatTruoc, ThanhTien,
+                        GhiChu, MaKH, MaKG, CapNhatLanCuoi
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
                     )

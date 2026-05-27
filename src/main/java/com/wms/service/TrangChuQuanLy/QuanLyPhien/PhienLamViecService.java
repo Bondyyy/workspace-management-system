@@ -129,6 +129,9 @@ public class PhienLamViecService {
     }
 
     public boolean taoPhienMoi(String maKH, String maKG, int soGioSuDung, double donGiaTheoGio) {
+        if (soGioSuDung <= 0) {
+            throw new IllegalArgumentException("Thoi gian su dung phai lon hon 0.");
+        }
         String[] gioHoatDong = phienDAO.layGioHoatDongTheoKhongGian(maKG);
         if (gioHoatDong == null) {
             throw new IllegalArgumentException("Loi: Khong tim thay khong gian hoac chi nhanh lien ket.");
@@ -140,24 +143,17 @@ public class PhienLamViecService {
         java.time.ZoneId zoneId = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
         java.time.ZonedDateTime nowHcm = java.time.ZonedDateTime.now(zoneId);
 
-        java.time.LocalTime openLocalTime = com.wms.util.DateInputUtil.parseTime(gioMoCua.trim(), "Giờ mở cửa");
-        java.time.LocalTime closeLocalTime = com.wms.util.DateInputUtil.parseTime(gioDongCua.trim(), "Giờ đóng cửa");
+        java.time.LocalTime openLocalTime = com.wms.util.BusinessHoursUtil.parseBranchTime(
+                gioMoCua, java.time.LocalTime.of(7, 0));
+        java.time.LocalTime closeLocalTime = com.wms.util.BusinessHoursUtil.parseBranchTime(
+                gioDongCua, java.time.LocalTime.of(22, 0));
+        java.time.LocalDateTime startLocal = nowHcm.toLocalDateTime();
 
-        java.time.ZonedDateTime todayOpen = nowHcm.with(openLocalTime).withSecond(0).withNano(0);
-        java.time.ZonedDateTime todayClose = nowHcm.with(closeLocalTime).withSecond(0).withNano(0);
-        
-        if (gioDongCua.trim().equals("24:00") || !todayClose.isAfter(todayOpen)) {
-            todayClose = todayClose.plusDays(1);
-        }
-
-        java.time.ZonedDateTime yesterdayOpen = todayOpen.minusDays(1);
-        java.time.ZonedDateTime yesterdayClose = todayClose.minusDays(1);
-
-        boolean inTodayShift = !nowHcm.isBefore(todayOpen) && nowHcm.isBefore(todayClose);
-        boolean inYesterdayShift = !nowHcm.isBefore(yesterdayOpen) && nowHcm.isBefore(yesterdayClose);
-
-        if (!inTodayShift && !inYesterdayShift) {
-            if (nowHcm.isBefore(todayOpen) && !nowHcm.isBefore(yesterdayClose)) {
+        if (!com.wms.util.BusinessHoursUtil.isStartWithinBusinessHours(startLocal, openLocalTime, closeLocalTime)) {
+            boolean chuaMoCua = !com.wms.util.BusinessHoursUtil.isOpen24h(openLocalTime, closeLocalTime)
+                    && !com.wms.util.BusinessHoursUtil.isOvernight(openLocalTime, closeLocalTime)
+                    && startLocal.toLocalTime().isBefore(openLocalTime);
+            if (chuaMoCua) {
                 throw new IllegalArgumentException("Loi: Chi nhanh chua den gio mo cua. Gio mo cua: " + gioMoCua + ".");
             } else {
                 throw new IllegalArgumentException("Loi: Chi nhanh da qua gio hoat dong. Khong the mo phien moi.");
@@ -165,10 +161,6 @@ public class PhienLamViecService {
         }
 
         java.time.ZonedDateTime expectedEnd = nowHcm.plusHours(soGioSuDung);
-        java.time.ZonedDateTime activeCloseTime = inTodayShift ? todayClose : yesterdayClose;
-        if (expectedEnd.isAfter(activeCloseTime)) {
-            throw new IllegalArgumentException("Loi: Thoi gian su dung vuot qua gio dong cua cua chi nhanh. Chi nhanh dong cua luc " + gioDongCua + ".");
-        }
 
         PhienLamViecDTO phien = new PhienLamViecDTO();
         phien.setMaKH(maKH);

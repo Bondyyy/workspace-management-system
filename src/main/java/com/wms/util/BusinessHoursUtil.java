@@ -15,18 +15,33 @@ public final class BusinessHoursUtil {
         if (value == null || value.isBlank()) {
             return fallback;
         }
-        String normalized = value.trim();
-        if ("24:00".equals(normalized)) {
-            normalized = "00:00";
-        }
-        if (normalized.length() > 5) {
-            normalized = normalized.substring(0, 5);
-        }
+        String normalized = normalizeBranchTimeText(value);
         try {
             return LocalTime.parse(normalized);
         } catch (RuntimeException ex) {
             return fallback;
         }
+    }
+
+    public static String normalizeBranchTimeText(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String normalized = value.trim();
+        if (normalized.length() > 5) {
+            normalized = normalized.substring(0, 5);
+        }
+        return "24:00".equals(normalized) ? "00:00" : normalized;
+    }
+
+    public static boolean isOpen24h(String openTimeText, String closeTimeText) {
+        String open = normalizeBranchTimeText(openTimeText);
+        String close = normalizeBranchTimeText(closeTimeText);
+        return !open.isBlank() && open.equals(close);
+    }
+
+    public static boolean isOpen24h(LocalTime openTime, LocalTime closeTime) {
+        return isTwentyFourHours(openTime, closeTime);
     }
 
     public static boolean isTwentyFourHours(LocalTime openTime, LocalTime closeTime) {
@@ -50,26 +65,32 @@ public final class BusinessHoursUtil {
         return !time.isBefore(openTime) || time.isBefore(closeTime);
     }
 
-    public static TimeWindow activeWindowFor(LocalDateTime reference, LocalTime openTime, LocalTime closeTime) {
+    public static boolean isStartWithinBusinessHours(LocalDateTime startDateTime,
+                                                     LocalTime openTime,
+                                                     LocalTime closeTime) {
+        return startDateTime != null && isActiveAt(openTime, closeTime, startDateTime.toLocalTime());
+    }
+
+    public static LocalDateTime[] activeWindowFor(LocalDateTime reference, LocalTime openTime, LocalTime closeTime) {
         if (reference == null) {
             throw new IllegalArgumentException("Reference time is required.");
         }
         LocalDate date = reference.toLocalDate();
         if (isTwentyFourHours(openTime, closeTime)) {
-            return new TimeWindow(date.atTime(openTime), date.plusDays(1).atTime(closeTime));
+            return new LocalDateTime[] { date.atTime(openTime), date.plusDays(1).atTime(closeTime) };
         }
         if (openTime.isBefore(closeTime)) {
-            return new TimeWindow(date.atTime(openTime), date.atTime(closeTime));
+            return new LocalDateTime[] { date.atTime(openTime), date.atTime(closeTime) };
         }
         if (reference.toLocalTime().isBefore(closeTime)) {
-            return new TimeWindow(date.minusDays(1).atTime(openTime), date.atTime(closeTime));
+            return new LocalDateTime[] { date.minusDays(1).atTime(openTime), date.atTime(closeTime) };
         }
-        return new TimeWindow(date.atTime(openTime), date.plusDays(1).atTime(closeTime));
+        return new LocalDateTime[] { date.atTime(openTime), date.plusDays(1).atTime(closeTime) };
     }
 
-    public static TimeWindow nextWindowFrom(LocalDateTime reference, LocalTime openTime, LocalTime closeTime) {
-        TimeWindow currentWindow = activeWindowFor(reference, openTime, closeTime);
-        if (!reference.isBefore(currentWindow.start()) && reference.isBefore(currentWindow.end())) {
+    public static LocalDateTime[] nextWindowFrom(LocalDateTime reference, LocalTime openTime, LocalTime closeTime) {
+        LocalDateTime[] currentWindow = activeWindowFor(reference, openTime, closeTime);
+        if (!reference.isBefore(currentWindow[0]) && reference.isBefore(currentWindow[1])) {
             return currentWindow;
         }
         LocalDate date = reference.toLocalDate();
@@ -80,7 +101,7 @@ public final class BusinessHoursUtil {
         LocalDateTime nextEnd = isTwentyFourHours(openTime, closeTime) || isOvernight(openTime, closeTime)
                 ? nextStart.toLocalDate().plusDays(1).atTime(closeTime)
                 : nextStart.toLocalDate().atTime(closeTime);
-        return new TimeWindow(nextStart, nextEnd);
+        return new LocalDateTime[] { nextStart, nextEnd };
     }
 
     public static LocalDateTime resolveEnd(LocalDate date, LocalTime startTime, LocalTime endTime) {
@@ -97,8 +118,8 @@ public final class BusinessHoursUtil {
         if (start == null || end == null || !end.isAfter(start)) {
             return false;
         }
-        TimeWindow window = activeWindowFor(start, openTime, closeTime);
-        return !start.isBefore(window.start()) && !end.isAfter(window.end());
+        LocalDateTime[] window = activeWindowFor(start, openTime, closeTime);
+        return !start.isBefore(window[0]) && !end.isAfter(window[1]);
     }
 
     public static List<String> hourlyOptions(LocalTime openTime, LocalTime closeTime, boolean includeClose) {
@@ -138,8 +159,5 @@ public final class BusinessHoursUtil {
     private static String formatMinutes(int totalMinutes) {
         int normalized = ((totalMinutes % (24 * 60)) + (24 * 60)) % (24 * 60);
         return String.format("%02d:%02d", normalized / 60, normalized % 60);
-    }
-
-    public record TimeWindow(LocalDateTime start, LocalDateTime end) {
     }
 }

@@ -16,8 +16,14 @@ BEGIN
     END;
 
     SELECT COUNT(*) INTO v_SoHDLienQuan
-    FROM HOADON
-    WHERE MaPGG = p_MaPGG AND TrangThaiThanhToan = 'Đang chờ thanh toán';
+    FROM CHITIETAPDUNGPGG ct
+    LEFT JOIN HOADON hd ON hd.MaHoaDon = ct.MaHoaDon
+    LEFT JOIN DATCHO dc ON dc.MaDatCho = ct.MaDatCho
+    WHERE ct.MaPGG = p_MaPGG
+      AND (
+          hd.TrangThaiThanhToan = 'Đang chờ thanh toán'
+          OR dc.TrangThaiDatTruoc = 'Đang chờ thanh toán'
+      );
 
     IF v_SoHDLienQuan > 0 THEN
         RAISE_APPLICATION_ERROR(-20161,

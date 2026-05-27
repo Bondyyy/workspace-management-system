@@ -163,7 +163,7 @@
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
-				<text><![CDATA[Tổng gốc:]]></text>
+				<text><![CDATA[Số tiền còn lại:]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="105" y="10" width="101" height="15" uuid="70a1cfc8-ecbb-447a-af08-72e7f847ff8e"/>
@@ -254,7 +254,7 @@
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true" pdfEncoding="Identity-H"/>
 				</textElement>
-				<text><![CDATA[Còn phải trả:]]></text>
+				<text><![CDATA[Thành tiền:]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="105" y="88" width="101" height="15" uuid="7d19e075-87bb-411a-8bb7-f4e1f7d10d65"/>

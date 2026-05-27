@@ -24,6 +24,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
 
     public QuanLyPhienForm() {
         initComponents();
+        apDungStyleKhachHang(false);
         setupTable();
         controller = new com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController(this);
         loadChiNhanhData();
@@ -230,6 +231,13 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                     p.getMaDatCho() != null ? "Đặt trước" : "Trực tiếp"
             });
         }
+        tblPhienLamViec.clearSelection();
+        tblPhienLamViec.revalidate();
+        tblPhienLamViec.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        loadData(txtTimKiem.getText().trim());
     }
 
     public void hienThiDichVuTrongPhien(
@@ -662,13 +670,22 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         return laDaKetThuc(phien) ? LABEL_DA_KET_THUC : hienTrangThai(phien.getTrangThaiPhien());
     }
 
+    private void apDungStyleKhachHang(boolean choPhepSua) {
+        txtKhachHang.setEditable(choPhepSua);
+        txtKhachHang.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        txtKhachHang.setForeground(new java.awt.Color(48, 30, 35));
+        txtKhachHang.setBackground(new java.awt.Color(255, 255, 255));
+        txtKhachHang.setBorder(null);
+        txtKhachHang.setCaretColor(new java.awt.Color(48, 30, 35));
+    }
+
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         loadData(txtTimKiem.getText().trim());
     }
 
     private void btnTaiLaiActionPerformed(java.awt.event.ActionEvent evt) {
-        txtTimKiem.setText("");
-        loadData("");
+        btnHuyActionPerformed();
+        refreshTableTheoDieuKienHienTai();
     }
 
     // removed btnCapNhatActionPerformed
@@ -676,8 +693,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         txtMaPhien.setText("");
         txtKhongGian.setText("");
         txtKhachHang.setText("");
-        txtKhachHang.setEditable(false);
-        txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+        apDungStyleKhachHang(false);
         btnKetThucPhien.setEnabled(false);
         txtTrangThai.setText("");
         if (txtTrangThaiThanhToan != null) txtTrangThaiThanhToan.setText("");
@@ -721,15 +737,34 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
                         if (get()) {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Đã kết thúc phiên thành công!");
                             if (!chuyenSangHoaDonTheoPhien(maPhien)) {
-                                loadData("");
                                 btnHuyActionPerformed();
+                                refreshTableTheoDieuKienHienTai();
                             }
                         } else {
                             javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên!");
                             btnKetThucPhien.setEnabled(true);
                         }
+                    } catch (java.util.concurrent.ExecutionException exWrapper) {
+                        Throwable cause = exWrapper.getCause();
+                        String msg = cause != null ? cause.getMessage() : exWrapper.getMessage();
+                        if (msg != null && (msg.contains("không ở trạng thái") || msg.contains("khong o trang thai"))) {
+                            javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                                    "Phiên " + maPhien + " đã được kết thúc trước đó.\nDanh sách sẽ được tải lại.",
+                                    "Phiên đã kết thúc", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                            btnHuyActionPerformed();
+                            refreshTableTheoDieuKienHienTai();
+                        } else {
+                            // Hiển thị message thực từ SP/exception, không dùng chuỗi cứng
+                            String userMsg = (msg != null && !msg.isBlank()) ? msg : "Không thể kết thúc phiên, vui lòng thử lại.";
+                            javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                                    userMsg, "Lỗi kết thúc phiên", javax.swing.JOptionPane.ERROR_MESSAGE);
+                            btnKetThucPhien.setEnabled(true);
+                        }
                     } catch (Exception ex) {
-                        com.wms.util.MessageUtil.showError(QuanLyPhienForm.this, "Lỗi khi kết thúc phiên.", ex);
+                        String msg = ex.getMessage();
+                        String userMsg = (msg != null && !msg.isBlank()) ? msg : "Không thể kết thúc phiên, vui lòng thử lại.";
+                        javax.swing.JOptionPane.showMessageDialog(QuanLyPhienForm.this,
+                                userMsg, "Lỗi kết thúc phiên", javax.swing.JOptionPane.ERROR_MESSAGE);
                         btnKetThucPhien.setEnabled(true);
                     }
                 }
@@ -758,7 +793,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-        loadData("");
+        refreshTableTheoDieuKienHienTai();
     }
 
     private boolean chuyenSangHoaDonTheoPhien(String maPhien) {
@@ -800,18 +835,15 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             boolean khoaThaoTac = laDaKetThuc(selected);
             if (khoaThaoTac) {
                 khoaThaoTacPhien(true);
-                txtKhachHang.setEditable(false);
-                txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+                apDungStyleKhachHang(false);
             } else {
                 khoaThaoTacPhien(false);
 
                 // Logic sửa tên khách hàng cho phiên trực tiếp
                 if (selected.getMaDatCho() == null) {
-                    txtKhachHang.setEditable(true);
-                    txtKhachHang.setBackground(new java.awt.Color(255, 255, 255));
+                    apDungStyleKhachHang(true);
                 } else {
-                    txtKhachHang.setEditable(false);
-                    txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+                    apDungStyleKhachHang(false);
                 }
             }
 

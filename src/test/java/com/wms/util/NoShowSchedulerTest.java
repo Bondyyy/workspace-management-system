@@ -79,15 +79,21 @@ public class NoShowSchedulerTest {
         // 2. Tạo đặt chỗ mẫu quá hạn (Đã thanh toán thành công)
         jdbcTemplate.update(
             "INSERT INTO DATCHO (ThoiGianDat, ThoiGianDuKienToi, KhoangThoiGianSuDung, TrangThaiDatTruoc, ThanhTien, GhiChu, CapNhatLanCuoi, MaKH, MaKG, MaQR) " +
-            "VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '3' HOUR, 2, 'Đã thanh toán thành công', 100000, 'Test no show', CURRENT_TIMESTAMP, ?, ?, 'MOCK_QR_CODE')",
+            "VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1' HOUR, 2, 'Đã thanh toán thành công', 100000, 'Test no show', CURRENT_TIMESTAMP, ?, ?, 'MOCK_QR_CODE')",
             maKH, maKG
         );
 
         // Tìm mã đặt chỗ vừa tạo
         String maDatCho = jdbcTemplate.queryForObject(
-            "SELECT MaDatCho FROM (SELECT MaDatCho FROM DATCHO WHERE MaKH = ? ORDER BY ThoiGianDat DESC) WHERE ROWNUM = 1",
-            String.class, maKH
+            "SELECT MaDatCho FROM DATCHO WHERE MaQR = 'MOCK_QR_CODE'",
+            String.class
         );
+        jdbcTemplate.update("""
+                UPDATE DATCHO
+                SET ThoiGianDat = CURRENT_TIMESTAMP - INTERVAL '4' HOUR,
+                    ThoiGianDuKienToi = CURRENT_TIMESTAMP - INTERVAL '3' HOUR
+                WHERE MaDatCho = ?
+                """, maDatCho);
 
         System.out.println("[Test Setup] Đã tạo thành công đặt chỗ giả lập: MaDatCho=" + maDatCho);
 

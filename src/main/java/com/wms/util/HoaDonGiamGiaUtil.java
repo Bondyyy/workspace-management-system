@@ -1,6 +1,7 @@
 package com.wms.util;
 
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DiscountLine;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
@@ -17,69 +18,40 @@ public final class HoaDonGiamGiaUtil {
             return ThongTinGiamGia.rong();
         }
 
-        double tongTienGoc = Math.max(0, hoaDon.getTongTienGoc() > 0 ? hoaDon.getTongTienGoc() : hoaDon.getTongTien());
-        double tienGocPhatSinh = Math.max(0, hoaDon.getTienGocPhatSinh());
-        if (tienGocPhatSinh <= 0) {
-            tienGocPhatSinh = Math.max(0, tongTienGoc - hoaDon.getTienGocDatTruoc());
-        }
-
-        boolean coSnapshotDatTruoc = hoaDon.getSoTienDaTraTruoc() > 0
-                || hoaDon.getTienGocDatTruoc() > 0
-                || coGiaTri(hoaDon.getMaPGGDatTruoc());
-
-        double tienGiamVoucherDatTruoc = Math.max(0, hoaDon.getTienGiamVoucherDatTruoc());
-        double tienGiamVoucherTaiQuay = Math.max(0, hoaDon.getTienGiamVoucherTaiQuay());
-        double tongVoucherCu = Math.max(0, hoaDon.getSoTienGiamVoucher());
-        if (tienGiamVoucherDatTruoc <= 0 && tienGiamVoucherTaiQuay <= 0 && tongVoucherCu > 0) {
-            if (coSnapshotDatTruoc && coGiaTri(hoaDon.getMaPGGDatTruoc())) {
-                tienGiamVoucherDatTruoc = tongVoucherCu;
+        double tienGiamVoucherDatTruoc = 0;
+        double tienGiamVoucherTaiQuay = 0;
+        String maPGGDatTruoc = null;
+        String maChuSoPGGDatTruoc = null;
+        String maPGGTaiQuay = null;
+        String maChuSoPGGTaiQuay = null;
+        for (DiscountLine line : hoaDon.getDongVoucher()) {
+            if (line.isDatTruoc()) {
+                tienGiamVoucherDatTruoc += Math.max(0, line.getSoTienGiam());
+                maPGGDatTruoc = layGiaTriDauTien(maPGGDatTruoc, line.getMaPGG());
+                maChuSoPGGDatTruoc = layGiaTriDauTien(maChuSoPGGDatTruoc, line.getMaChuSoPGG());
             } else {
-                tienGiamVoucherTaiQuay = Math.min(tongVoucherCu,
-                        tienGocPhatSinh > 0 ? tienGocPhatSinh : tongTienGoc);
+                tienGiamVoucherTaiQuay += Math.max(0, line.getSoTienGiam());
+                maPGGTaiQuay = layGiaTriDauTien(maPGGTaiQuay, line.getMaPGG());
+                maChuSoPGGTaiQuay = layGiaTriDauTien(maChuSoPGGTaiQuay, line.getMaChuSoPGG());
             }
         }
         if (tienGiamVoucherTaiQuay <= 0 && tienGiamVoucherFallback > 0) {
-            double nenApVoucher = tienGocPhatSinh > 0 ? tienGocPhatSinh : tongTienGoc;
-            tienGiamVoucherTaiQuay = Math.min(Math.max(0, tienGiamVoucherFallback), nenApVoucher);
+            tienGiamVoucherTaiQuay = Math.max(0, tienGiamVoucherFallback);
         }
 
-        double phanTramDatTruoc = Math.min(100, Math.max(0, hoaDon.getPhanTramGiamHangTVDatTruoc()));
-        double phanTramTaiQuay = Math.min(100, Math.max(0, hoaDon.getPhanTramGiamHangTVTaiQuay()));
-        if (phanTramTaiQuay <= 0) {
-            phanTramTaiQuay = Math.min(100, Math.max(0, hoaDon.getPhanTramGiamHangThanhVien()));
-        }
-
-        double tienGiamHangDatTruoc = Math.max(0, hoaDon.getTienGiamHangTVDatTruoc());
-        double tienGiamHangTaiQuay = Math.max(0, hoaDon.getTienGiamHangTVTaiQuay());
-        double tongHangCu = Math.max(0, hoaDon.getSoTienGiamHangThanhVien());
-        if (tienGiamHangDatTruoc <= 0 && tienGiamHangTaiQuay <= 0 && tongHangCu > 0) {
-            if (coSnapshotDatTruoc && hoaDon.getTienGocDatTruoc() > 0) {
-                tienGiamHangDatTruoc = tongHangCu;
-            } else {
-                tienGiamHangTaiQuay = tongHangCu;
-            }
-        }
-        if (tienGiamVoucherFallback > 0 && tienGocPhatSinh > 0 && phanTramTaiQuay > 0) {
-            tienGiamHangTaiQuay = Math.round(Math.max(0, tienGocPhatSinh - tienGiamVoucherTaiQuay)
-                    * phanTramTaiQuay / 100.0);
-        }
-
-        double tongTienGiam = Math.max(0, hoaDon.getTongTienGiam());
-        double tongTuSnapshot = tienGiamVoucherDatTruoc + tienGiamHangDatTruoc
-                + tienGiamVoucherTaiQuay + tienGiamHangTaiQuay;
-        if (tongTienGiam <= 0 || tienGiamVoucherFallback > 0) {
-            tongTienGiam = tongTuSnapshot;
-        }
-        tongTienGiam = Math.min(tongTienGoc, Math.max(0, tongTienGiam));
+        double phanTramTaiQuay = Math.min(100, Math.max(0, hoaDon.getPhanTramGiamHangThanhVien()));
+        double tienGiamHangTaiQuay = Math.max(0, hoaDon.getTienGiamHang());
+        double tongTienGiam = Math.max(0,
+                tienGiamVoucherDatTruoc + tienGiamVoucherTaiQuay + tienGiamHangTaiQuay);
 
         return new ThongTinGiamGia(
-                hoaDon.getMaPGGDatTruoc(),
-                hoaDon.getMaChuSoPGGDatTruoc(),
+                maPGGDatTruoc,
+                maChuSoPGGDatTruoc,
                 tienGiamVoucherDatTruoc,
-                phanTramDatTruoc,
-                tienGiamHangDatTruoc,
-                hoaDon.getMaPGGTaiQuay(),
-                hoaDon.getMaChuSoPGGTaiQuay(),
+                0,
+                0,
+                maPGGTaiQuay,
+                maChuSoPGGTaiQuay,
                 tienGiamVoucherTaiQuay,
                 phanTramTaiQuay,
                 tienGiamHangTaiQuay,
@@ -92,9 +64,8 @@ public final class HoaDonGiamGiaUtil {
         if (hoaDon == null) {
             return 0;
         }
-        if (tienGiamVoucherFallback > 0 && giamGia != null) {
-            double tongTienGoc = hoaDon.getTongTienGoc() > 0 ? hoaDon.getTongTienGoc() : hoaDon.getTongTien();
-            return Math.max(0, tongTienGoc - giamGia.getTongTienGiam() - hoaDon.getSoTienDaTraTruoc());
+        if (hoaDon.getSoTienCanThanhToan() > 0) {
+            return Math.max(0, hoaDon.getSoTienCanThanhToan());
         }
         return Math.max(0, hoaDon.getThanhTien());
     }
@@ -116,8 +87,13 @@ public final class HoaDonGiamGiaUtil {
         }
     }
 
-    private static boolean coGiaTri(String value) {
-        return value != null && !value.isBlank();
+    private static String layGiaTriDauTien(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 
     public static final class ThongTinGiamGia {

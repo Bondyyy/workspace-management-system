@@ -3,12 +3,12 @@ AFTER INSERT ON PHIENLAMVIEC
 FOR EACH ROW
 WHEN (NEW.TrangThaiPhien = 'Đang hoạt động')
 DECLARE
-    v_DaTraTruoc NUMBER(18, 2) := 0;
-    v_TrangThaiThanhToan HOADON.TrangThaiThanhToan%TYPE := 'Đang chờ thanh toán';
-    v_PhuongThucThanhToan HOADON.PhuongThucThanhToan%TYPE := NULL;
     v_TongTien NUMBER(18, 2) := 0;
     v_ThanhTien NUMBER(18, 2) := 0;
+    v_TrangThaiThanhToan HOADON.TrangThaiThanhToan%TYPE := 'Đang chờ thanh toán';
+    v_PhuongThucThanhToan HOADON.PhuongThucThanhToan%TYPE := NULL;
     v_TrangThaiDatTruoc DATCHO.TrangThaiDatTruoc%TYPE;
+    v_TienDatChoDaTra NUMBER(18, 2) := 0;
     v_SoHoaDon NUMBER;
 BEGIN
     SELECT COUNT(*)
@@ -22,21 +22,17 @@ BEGIN
 
     IF :NEW.MaDatCho IS NOT NULL THEN
         BEGIN
-            SELECT TrangThaiDatTruoc,
-                   NVL(ThanhTien, 0)
-            INTO v_TrangThaiDatTruoc,
-                 v_DaTraTruoc
+            SELECT TrangThaiDatTruoc, NVL(ThanhTien, 0)
+            INTO v_TrangThaiDatTruoc, v_TienDatChoDaTra
             FROM DATCHO
             WHERE MaDatCho = :NEW.MaDatCho;
 
-            v_TongTien := v_DaTraTruoc;
+            v_TongTien := GREATEST(0, FN_TinhTienKhongGian(:NEW.MaPhien));
+            v_ThanhTien := GREATEST(0, v_TongTien - v_TienDatChoDaTra);
 
             IF v_TrangThaiDatTruoc = 'Đã thanh toán thành công' THEN
-                v_TrangThaiThanhToan := 'Đã trả trước';
+                v_TrangThaiThanhToan := CASE WHEN v_ThanhTien = 0 THEN 'Đã trả trước' ELSE 'Đang chờ thanh toán' END;
                 v_PhuongThucThanhToan := 'Đặt trước';
-                v_ThanhTien := 0;
-            ELSE
-                v_ThanhTien := v_DaTraTruoc;
             END IF;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
@@ -45,7 +41,6 @@ BEGIN
     END IF;
 
     INSERT INTO HOADON (
-        DaTraTruoc,
         TongTien,
         ThanhTien,
         NgayLapHoaDon,
@@ -54,7 +49,6 @@ BEGIN
         MaPhien,
         MaNV
     ) VALUES (
-        v_DaTraTruoc,
         v_TongTien,
         v_ThanhTien,
         CURRENT_TIMESTAMP,

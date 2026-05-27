@@ -9,6 +9,7 @@ CREATE OR REPLACE PROCEDURE SP_DangKy(
     p_outMessage OUT VARCHAR2
 ) AS
     v_Count NUMBER;
+    v_MaND NGUOIDUNG.MaND%TYPE;
 BEGIN
     IF p_GioiTinh NOT IN ('Nam', 'Nữ', 'Khác') THEN
         RAISE_APPLICATION_ERROR(-20023, 'Giới tính phải là Nam, Nữ hoặc Khác!');
@@ -45,7 +46,28 @@ BEGIN
         NULLIF(TRIM(p_MaND), ''), p_TenTaiKhoan, p_MatKhauMaHoa,
         p_Email, p_SDT, p_GioiTinh, p_NgaySinh,
         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Đang hoạt động'
+    )
+    RETURNING MaND INTO v_MaND;
+
+    INSERT INTO KHACHHANG (
+        MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND, LoaiKH
+    ) VALUES (
+        'HTV01', 0, CURRENT_TIMESTAMP, v_MaND, 'Hội viên'
     );
+
+    MERGE INTO VAITRO v
+    USING (SELECT 'VT00' AS MaVaiTro, 'Hội viên' AS TenVaiTro FROM DUAL) src
+    ON (v.MaVaiTro = src.MaVaiTro)
+    WHEN NOT MATCHED THEN
+        INSERT (MaVaiTro, TenVaiTro, MoTa)
+        VALUES (src.MaVaiTro, src.TenVaiTro, 'Quyền hạn mặc định cho hội viên');
+
+    MERGE INTO CHITIETVAITRO ctv
+    USING (SELECT v_MaND AS MaND, 'VT00' AS MaVaiTro FROM DUAL) src
+    ON (ctv.MaND = src.MaND AND ctv.MaVaiTro = src.MaVaiTro)
+    WHEN NOT MATCHED THEN
+        INSERT (MaND, MaVaiTro)
+        VALUES (src.MaND, src.MaVaiTro);
 
     COMMIT;
     p_outMessage := 'Đăng ký tài khoản thành công!';

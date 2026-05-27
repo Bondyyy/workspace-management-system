@@ -247,10 +247,11 @@ public class CongThongTinController {
         model.addAttribute("danhSachKhongGian", List.of());
         model.addAttribute("khongGianList", List.of());
         model.addAttribute("dungGridFallback", true);
-        model.addAttribute("selectedDate", LocalDate.now());
-        model.addAttribute("selectedStart", LocalTime.of(7, 0));
-        model.addAttribute("selectedEnd", LocalTime.of(9, 0));
-        model.addAttribute("selectedDuration", 2);
+        model.addAttribute("selectedDate", null);
+        model.addAttribute("selectedStart", null);
+        model.addAttribute("selectedEnd", null);
+        model.addAttribute("selectedDuration", null);
+        model.addAttribute("daChonDuThoiGian", false);
         model.addAttribute("overnightBranch", false);
         model.addAttribute("twentyFourHoursBranch", false);
         model.addAttribute("mapColumns", 12);
@@ -286,41 +287,39 @@ public class CongThongTinController {
                                          String canhBao,
                                          List<ChiNhanhView> danhSachChiNhanh,
                                          Model model) {
-        var defaultWindow = congThongTinService.khungGioDatChoMacDinh(branch);
-        
         LocalTime openTime = docGioChiNhanh(branch.getThoiGianMoCua(), LocalTime.of(7, 0));
         LocalTime closeTime = docGioChiNhanh(branch.getThoiGianDongCua(), LocalTime.of(22, 0));
 
-        LocalDate selectedDate = bookingDate == null ? defaultWindow.date() : bookingDate;
-        LocalTime selectedStart = startTime == null ? defaultWindow.startTime() : startTime;
-        int defaultDuration = Math.max(1, (int) Math.ceil(
-                java.time.Duration.between(
-                        LocalDateTime.of(defaultWindow.date(), defaultWindow.startTime()),
-                        BusinessHoursUtil.resolveEnd(defaultWindow.date(), defaultWindow.startTime(), defaultWindow.endTime())
-                ).toMinutes() / 60.0));
-        int selectedDuration = durationHours == null ? defaultDuration : durationHours;
-        if (selectedDuration < 1) {
-            thongBaoLoi = "Vui lòng chọn thời gian bắt đầu và số giờ sử dụng hợp lệ.";
-            selectedDuration = defaultDuration;
-        }
-
-        LocalDateTime selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
-        LocalDateTime selectedEndDateTime = selectedStartDateTime.plusHours(selectedDuration);
-        LocalTime selectedEnd = selectedEndDateTime.toLocalTime();
-
         String openStr = BusinessHoursUtil.format(openTime);
         String closeStr = BusinessHoursUtil.format(closeTime);
-        if (!BusinessHoursUtil.fitsInBranchHours(selectedStartDateTime, selectedEndDateTime, openTime, closeTime)) {
-            thongBaoLoi = "Khung giờ đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
-            selectedStart = defaultWindow.startTime();
-            selectedDate = defaultWindow.date();
-            selectedDuration = defaultDuration;
+
+        LocalDate selectedDate = bookingDate;
+        LocalTime selectedStart = startTime;
+        Integer selectedDuration = durationHours;
+        LocalDateTime selectedStartDateTime = null;
+        LocalDateTime selectedEndDateTime = null;
+        LocalTime selectedEnd = null;
+        boolean daChonDuThoiGian = selectedDate != null
+                && selectedStart != null
+                && selectedDuration != null
+                && selectedDuration >= 1;
+
+        if (!daChonDuThoiGian) {
+            if (thongBaoLoi == null) {
+                thongBaoLoi = "Vui lòng chọn ngày, giờ bắt đầu và thời gian sử dụng để xem trạng thái đặt chỗ.";
+            }
+            if (selectedDuration != null && selectedDuration < 1) {
+                selectedDuration = null;
+            }
+        } else {
             selectedStartDateTime = LocalDateTime.of(selectedDate, selectedStart);
             selectedEndDateTime = selectedStartDateTime.plusHours(selectedDuration);
             selectedEnd = selectedEndDateTime.toLocalTime();
-        }
-        if (thongBaoLoi == null && !congThongTinService.laThoiGianDatChoTrongTuongLai(selectedStartDateTime)) {
-            thongBaoLoi = "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
+
+            if (!BusinessHoursUtil.isStartWithinBusinessHours(selectedStartDateTime, openTime, closeTime)) {
+                thongBaoLoi = "Thời điểm bắt đầu đặt chỗ phải nằm trong giờ hoạt động của chi nhánh: " + openStr + " - " + closeStr + ".";
+                daChonDuThoiGian = false;
+            }
         }
 
         List<String> layLuaChonGioBatDau = BusinessHoursUtil.hourlyOptions(openTime, closeTime, false);
@@ -328,7 +327,11 @@ public class CongThongTinController {
 
         List<KhongGianView> spaces = List.of();
         try {
-            spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
+            if (daChonDuThoiGian) {
+                spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
+            } else {
+                spaces = congThongTinService.layKhongGian(branch.getMaCN(), null, null);
+            }
         } catch (IllegalStateException ex) {
             System.err.println("[Web] Khong the tai so do maCN=" + branch.getMaCN() + ": " + ex.getMessage());
             thongBaoLoi = WebErrorMessages.thanThien("Không thể tải sơ đồ không gian lúc này. Vui lòng thử lại sau.", ex);
@@ -360,6 +363,7 @@ public class CongThongTinController {
         model.addAttribute("selectedStart", selectedStart);
         model.addAttribute("selectedEnd", selectedEnd);
         model.addAttribute("selectedDuration", selectedDuration);
+        model.addAttribute("daChonDuThoiGian", daChonDuThoiGian);
         model.addAttribute("overnightBranch", BusinessHoursUtil.isOvernight(openTime, closeTime));
         model.addAttribute("twentyFourHoursBranch", BusinessHoursUtil.isTwentyFourHours(openTime, closeTime));
         model.addAttribute("mapColumns", mapColumns);

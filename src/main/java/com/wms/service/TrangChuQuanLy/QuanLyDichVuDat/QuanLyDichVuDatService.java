@@ -3,6 +3,8 @@ package com.wms.service.TrangChuQuanLy.QuanLyDichVuDat;
 import com.wms.dao.TrangChuQuanLy.QuanLyDichVuDat.ChiTietDichVuDAO;
 import com.wms.model.TrangChuQuanLy.QuanLyDichVuDat.DichVuDaDatDTO;
 
+import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 
 public class QuanLyDichVuDatService {
@@ -10,11 +12,15 @@ public class QuanLyDichVuDatService {
     private final ChiTietDichVuDAO dao = new ChiTietDichVuDAO();
 
     public List<DichVuDaDatDTO> timKiem(String keyword) {
-        return dao.layDanhSachDichVuTheoPhien(keyword == null || keyword.trim().isEmpty() ? null : keyword.trim());
+        return Collections.emptyList();
     }
 
     public List<Object[]> layDanhSachPhienHoatDong(String keyword) {
         return dao.layDanhSachPhienHoatDong(keyword);
+    }
+
+    public List<Object[]> layDanhSachPhien(String keyword, boolean daKetThuc) {
+        return dao.layDanhSachPhien(keyword, daKetThuc);
     }
 
     public List<DichVuDaDatDTO> layDSDichVuTheoPhien(String maPhien) {
@@ -22,11 +28,16 @@ public class QuanLyDichVuDatService {
     }
 
     public String themDichVu(String maPhien, String tenDV, int soLuong, String ghiChu) {
-        if (!dao.kiemTraPhienTonTai(maPhien)) {
-            return "Mã phiên không tồn tại trong hệ thống!";
+        String loi = validateDichVu(maPhien, tenDV, soLuong);
+        if (loi != null) {
+            return loi;
         }
-        boolean ok = dao.themDichVuMoi(maPhien, tenDV, soLuong, ghiChu);
-        return ok ? null : "Thêm dịch vụ thất bại. Vui lòng kiểm tra lại thông tin.";
+        try {
+            dao.themDichVuMoi(maPhien.trim(), tenDV.trim(), soLuong, ghiChu);
+            return null;
+        } catch (SQLException e) {
+            return e.getMessage();
+        }
     }
 
     public List<String> layDanhSachLoaiDichVu() {
@@ -37,12 +48,47 @@ public class QuanLyDichVuDatService {
         return dao.getDanhSachTenDichVu(tenLoaiDV);
     }
     public String xoaDichVu(String maPhien, String tenDV) {
-        boolean ok = dao.xoaDichVu(maPhien, tenDV);
-        return ok ? null : "Xóa dịch vụ thất bại!";
+        if (isBlank(maPhien)) {
+            return "Vui lòng chọn một phiên làm việc.";
+        }
+        if (isBlank(tenDV) || tenDV.contains("---")) {
+            return "Vui lòng chọn dịch vụ cần xóa.";
+        }
+        try {
+            dao.xoaDichVu(maPhien.trim(), tenDV.trim());
+            return null;
+        } catch (SQLException e) {
+            return e.getMessage();
+        }
     }
 
     public String capNhatDichVu(String maPhien, String tenDV, int soLuong, String ghiChu) {
-        boolean ok = dao.capNhatDichVu(maPhien, tenDV, soLuong, ghiChu);
-        return ok ? null : "Cập nhật dịch vụ thất bại!";
+        String loi = validateDichVu(maPhien, tenDV, soLuong);
+        if (loi != null) {
+            return loi;
+        }
+        try {
+            dao.capNhatDichVu(maPhien.trim(), tenDV.trim(), soLuong, ghiChu);
+            return null;
+        } catch (SQLException e) {
+            return e.getMessage();
+        }
+    }
+
+    private String validateDichVu(String maPhien, String tenDV, int soLuong) {
+        if (isBlank(maPhien)) {
+            return "Vui lòng chọn một phiên làm việc.";
+        }
+        if (isBlank(tenDV) || tenDV.contains("---")) {
+            return "Vui lòng chọn dịch vụ.";
+        }
+        if (soLuong <= 0) {
+            return "Số lượng phải lớn hơn 0.";
+        }
+        return null;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }

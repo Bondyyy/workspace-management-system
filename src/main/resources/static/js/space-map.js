@@ -7,7 +7,26 @@
     const branchForm = document.querySelector("[data-branch-form]");
     const branchSelect = document.querySelector("[data-branch-select]");
     if (branchForm && branchSelect) {
-        branchSelect.addEventListener("change", () => branchForm.submit());
+        branchSelect.addEventListener("change", () => {
+            [
+                ["date", document.getElementById("bookingDate")],
+                ["start", document.getElementById("startHour")],
+                ["durationHours", document.getElementById("durationHoursPicker")]
+            ].forEach(([name, source]) => {
+                if (!source || !source.value) {
+                    return;
+                }
+                let hidden = branchForm.querySelector('input[type="hidden"][name="' + name + '"]');
+                if (!hidden) {
+                    hidden = document.createElement("input");
+                    hidden.type = "hidden";
+                    hidden.name = name;
+                    branchForm.appendChild(hidden);
+                }
+                hidden.value = source.value;
+            });
+            branchForm.submit();
+        });
     }
 
     const nodes = Array.from(document.querySelectorAll("[data-space-node]"));
@@ -43,8 +62,9 @@
             return;
         }
         const duration = parseInt(durationPicker.value, 10);
-        durationInput.value = Number.isInteger(duration) && duration >= 1 ? duration : "";
-        arrivalInput.value = dateInput.value && startInput.value ? dateInput.value + "T" + startInput.value : "";
+        const completeTime = Boolean(dateInput.value && startInput.value && Number.isInteger(duration) && duration >= 1);
+        durationInput.value = completeTime ? duration : "";
+        arrivalInput.value = completeTime ? dateInput.value + "T" + startInput.value : "";
         totalLabel.textContent = formatMoney(selectedPrice * (Number.isInteger(duration) && duration >= 1 ? duration : 0));
     }
 
@@ -82,11 +102,11 @@
             return "";
         }
         if (!dateInput.value || !startInput.value) {
-            return "Vui lòng chọn đầy đủ ngày giờ đặt chỗ.";
+            return "Vui lòng chọn ngày, giờ bắt đầu và thời gian sử dụng để xem trạng thái đặt chỗ.";
         }
         const duration = parseInt(durationPicker.value, 10);
         if (!Number.isInteger(duration) || duration < 1) {
-            return "Vui lòng chọn thời gian sử dụng hợp lệ.";
+            return "Vui lòng chọn ngày, giờ bắt đầu và thời gian sử dụng để xem trạng thái đặt chỗ.";
         }
 
         const openValue = page.dataset.open || "07:00";
@@ -112,8 +132,8 @@
         }
 
         const startDate = new Date(dateInput.value + "T" + startInput.value + ":00");
-        if (Number.isNaN(startDate.getTime()) || startDate <= new Date()) {
-            return "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn thời gian lớn hơn thời điểm hiện tại.";
+        if (Number.isNaN(startDate.getTime())) {
+            return "Thời gian đặt chỗ không hợp lệ. Vui lòng chọn lại ngày và giờ bắt đầu.";
         }
         return "";
     }

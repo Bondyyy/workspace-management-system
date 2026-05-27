@@ -69,10 +69,10 @@ public class MoPhienBusinessHoursTest {
         // Dọn dẹp trước phòng hờ
         cleanupData();
 
-        // 2. Tạo Chi nhánh kiểm thử mặc định: mở 08:00, đóng 21:00
+        // 2. Tạo Chi nhánh kiểm thử mặc định: mở 07:00, đóng 22:00
         jdbcTemplate.update(
             "INSERT INTO CHINHANH (MaCN, TenCN, DiaChi, ThoiGianMoCua, ThoiGianDongCua, DuongDayNong, TrangThai) " +
-            "VALUES (?, 'Chi nhanh Kiem thu Gio Hoat Dong', 'Test Address', '08:00', '21:00', '19001000', 'Đang hoạt động')",
+            "VALUES (?, 'Chi nhanh Kiem thu Gio Hoat Dong', 'Test Address', '07:00', '22:00', '19001000', 'Đang hoạt động')",
             testBranchId
         );
 
@@ -109,7 +109,7 @@ public class MoPhienBusinessHoursTest {
             testCustomerId, testUserId
         );
 
-        System.out.println("[Test Setup] Đã tạo thành công dữ liệu mock: Chi nhánh mở 08:00 - đóng 21:00.");
+        System.out.println("[Test Setup] Đã tạo thành công dữ liệu mock: Chi nhánh mở 07:00 - đóng 22:00.");
     }
 
     @AfterEach
@@ -174,103 +174,67 @@ public class MoPhienBusinessHoursTest {
     }
 
     @Test
-    public void testCase3_MoPhienThanhCongTrongKhungGio() {
-        System.out.println("\n--- RUNNING TEST CASE 3: Mở phiên thành công trong khung giờ hoạt động ---");
-        
-        PhienLamViecService service = new PhienLamViecService();
-        
-        // Mock thời gian hiện tại nằm trong khoảng [08:00, 21:00], ví dụ: 12:00 trưa
-        // Để kiểm tra trực tiếp ở mức Service/SP, ta sẽ giả lập qua các biến hoặc test logic
-        // Ta cũng có thể gọi trực tiếp SP qua JDBC để đảm bảo logic chạy tốt.
-        
-        // Gọi Service mở phiên: sử dụng 2 giờ (ví dụ hiện tại là 12:00, kết thúc 14:00, trước 21:00)
-        // Lưu ý: service.taoPhienMoi sử dụng thời gian thực tế chạy test. 
-        // Nếu hiện tại lúc chạy test đang ngoài khung giờ 08:00 - 21:00, hàm Service sẽ ném ra IllegalArgumentException, điều này hoàn toàn đúng theo nghiệp vụ!
-        // Để test hoạt động độc lập bất kể thời gian chạy test thực tế, ta kiểm thử trực tiếp SP bằng cách truyền các tham số giả lập thời gian tùy ý!
-        
+    public void case1_NormalHoursAllowsEndAfterClose() {
+        System.out.println("\n--- CASE 1: 07:00 -> 22:00, mở 20:00 dùng 4 giờ phải thành công ---");
+
         ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        ZonedDateTime batDau = nowHcm.withHour(12).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime ketThuc = batDau.plusHours(2); // 12:00 -> 14:00 (Hợp lệ)
+        ZonedDateTime batDau = nowHcm.withHour(20).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime ketThuc = batDau.plusHours(4);
 
         String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_01", null);
         System.out.println("[Result] " + result);
-        assertTrue(result.contains("thanh cong"), "Mở phiên phải thành công khi khung giờ hợp lệ.");
+        assertTrue(result.contains("thanh cong"), "Mở phiên 20:00 -> 00:00 phải thành công.");
+        assertFalse(result.toLowerCase().contains("vuot qua gio dong cua"),
+                "Không được báo lỗi vượt quá giờ đóng cửa.");
     }
 
     @Test
-    public void testCase4_BlockKhiVuotGioDongCua() {
-        System.out.println("\n--- RUNNING TEST CASE 4: Chặn khi thời gian kết thúc vượt quá giờ đóng cửa ---");
+    public void case2_NormalHoursBlocksStartAfterClose() {
+        System.out.println("\n--- CASE 2: 07:00 -> 22:00, mở 23:00 phải bị chặn ---");
         
         ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        ZonedDateTime batDau = nowHcm.withHour(20).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime ketThuc = batDau.plusHours(2); // 20:00 -> 22:00 (Vượt đóng cửa 21:00)
+        ZonedDateTime batDau = nowHcm.withHour(23).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime ketThuc = batDau.plusHours(1);
 
         String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_02", null);
         System.out.println("[Result] " + result);
-        assertTrue(result.contains("Loi: Thoi gian su dung vuot qua gio dong cua cua chi nhanh"), 
-                "Phải báo lỗi vượt quá giờ đóng cửa.");
-        assertTrue(result.contains("21:00"), "Thông báo phải hiển thị đúng giờ đóng cửa chi nhánh.");
-    }
-
-    @Test
-    public void testCase5_BlockKhiSauGioDongCua() {
-        System.out.println("\n--- RUNNING TEST CASE 5: Chặn khi thời gian bắt đầu sau giờ đóng cửa ---");
-        
-        ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        ZonedDateTime batDau = nowHcm.withHour(22).withMinute(0).withSecond(0).withNano(0); // Sau 21:00
-        ZonedDateTime ketThuc = batDau.plusHours(1);
-
-        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_03", null);
-        System.out.println("[Result] " + result);
         assertTrue(result.contains("Loi: Chi nhanh da qua gio hoat dong"), 
-                "Phải báo lỗi chi nhánh đã quá giờ hoạt động.");
+                "Mở phiên 23:00 phải bị chặn vì bắt đầu ngoài giờ hoạt động.");
     }
 
     @Test
-    public void testCase6_BlockKhiTruocGioMoCua() {
-        System.out.println("\n--- RUNNING TEST CASE 6: Chặn khi thời gian bắt đầu trước giờ mở cửa ---");
-        
-        ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        ZonedDateTime batDau = nowHcm.withHour(6).withMinute(0).withSecond(0).withNano(0); // Trước 08:00
-        ZonedDateTime ketThuc = batDau.plusHours(1);
-
-        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_04", null);
-        System.out.println("[Result] " + result);
-        assertTrue(result.contains("Loi: Chi nhanh chua den gio mo cua"), 
-                "Phải báo lỗi chi nhánh chưa đến giờ mở cửa.");
-        assertTrue(result.contains("08:00"), "Thông báo phải hiển thị đúng giờ mở cửa chi nhánh.");
-    }
-
-    @Test
-    public void testCase7_OvernightChoPhepMoPhienLuc23h() {
+    public void case3_OvernightAllowsStartAt23h() {
+        System.out.println("\n--- CASE 3: 22:00 -> 06:00, mở 23:00 dùng 4 giờ phải thành công ---");
         jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '22:00', ThoiGianDongCua = '06:00' WHERE MaCN = ?",
                 testBranchId);
 
         ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         ZonedDateTime batDau = nowHcm.withHour(23).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime ketThuc = batDau.plusHours(2);
+        ZonedDateTime ketThuc = batDau.plusHours(4);
 
-        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_07", null);
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_03", null);
         System.out.println("[Result] " + result);
-        assertTrue(result.contains("thanh cong"), "Mở phiên 23:00 -> 01:00 phải hợp lệ cho chi nhánh 22:00 -> 06:00.");
+        assertTrue(result.contains("thanh cong"), "Mở phiên 23:00 trong ca qua đêm phải thành công.");
     }
 
     @Test
-    public void testCase8_OvernightChoPhepMoPhienLuc01h() {
+    public void case4_OvernightAllowsStartAt01h() {
+        System.out.println("\n--- CASE 4: 22:00 -> 06:00, mở 01:00 dùng 4 giờ phải thành công ---");
         jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '22:00', ThoiGianDongCua = '06:00' WHERE MaCN = ?",
                 testBranchId);
 
         ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         ZonedDateTime batDau = nowHcm.withHour(1).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime ketThuc = batDau.plusHours(2);
+        ZonedDateTime ketThuc = batDau.plusHours(4);
 
-        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_08", null);
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_04", null);
         System.out.println("[Result] " + result);
-        assertTrue(result.contains("thanh cong"), "Mở phiên 01:00 -> 03:00 phải hợp lệ trong ca qua đêm.");
+        assertTrue(result.contains("thanh cong"), "Mở phiên 01:00 trong ca qua đêm phải thành công.");
     }
 
     @Test
-    public void testCase9_OvernightChanMoPhienLuc12h() {
+    public void case5_OvernightBlocksMidday() {
+        System.out.println("\n--- CASE 5: 22:00 -> 06:00, mở 12:00 phải bị chặn ---");
         jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '22:00', ThoiGianDongCua = '06:00' WHERE MaCN = ?",
                 testBranchId);
 
@@ -278,11 +242,54 @@ public class MoPhienBusinessHoursTest {
         ZonedDateTime batDau = nowHcm.withHour(12).withMinute(0).withSecond(0).withNano(0);
         ZonedDateTime ketThuc = batDau.plusHours(1);
 
-        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_09", null);
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_05", null);
         System.out.println("[Result] " + result);
         assertTrue(result.contains("Loi: Chi nhanh da qua gio hoat dong")
                         || result.contains("Loi: Chi nhanh chua den gio mo cua"),
                 "Mở phiên lúc 12:00 phải bị chặn cho chi nhánh 22:00 -> 06:00.");
+    }
+
+    @Test
+    public void case6_EqualMidnightMeansOpen24h() {
+        System.out.println("\n--- CASE 6: 00:00 -> 00:00, mở 10:00 dùng 20 giờ phải thành công ---");
+        jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '00:00', ThoiGianDongCua = '00:00' WHERE MaCN = ?",
+                testBranchId);
+
+        ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        ZonedDateTime batDau = nowHcm.withHour(10).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime ketThuc = batDau.plusHours(20);
+
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_06", null);
+        System.out.println("[Result] " + result);
+        assertTrue(result.contains("thanh cong"), "00:00 -> 00:00 phải được hiểu là 24/24.");
+    }
+
+    @Test
+    public void case7_MidnightTo24hMeansOpen24h() {
+        System.out.println("\n--- CASE 7: 00:00 -> 24:00, mở 23:00 dùng 4 giờ phải thành công ---");
+        assertTrue(BusinessHoursUtil.isOpen24h("00:00", "24:00"),
+                "Helper phải hiểu 00:00 -> 24:00 là 24/24.");
+        assertTrue(BusinessHoursUtil.isStartWithinBusinessHours(
+                ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).withHour(23).withMinute(0).withSecond(0).withNano(0)
+                        .toLocalDateTime(),
+                BusinessHoursUtil.parseBranchTime("00:00", java.time.LocalTime.MIDNIGHT),
+                BusinessHoursUtil.parseBranchTime("24:00", java.time.LocalTime.MIDNIGHT)));
+
+        try {
+            jdbcTemplate.update("UPDATE CHINHANH SET ThoiGianMoCua = '00:00', ThoiGianDongCua = '24:00' WHERE MaCN = ?",
+                    testBranchId);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false,
+                    "DB hiện tại có CHK_CN_DONGCUA không cho lưu 24:00; không ALTER TABLE theo yêu cầu.");
+        }
+
+        ZonedDateTime nowHcm = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        ZonedDateTime batDau = nowHcm.withHour(23).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime ketThuc = batDau.plusHours(4);
+
+        String result = callStoredProcedure(testSpaceId, testCustomerId, batDau, ketThuc, "TEST_PH_07", null);
+        System.out.println("[Result] " + result);
+        assertTrue(result.contains("thanh cong"), "00:00 -> 24:00 phải được hiểu là 24/24.");
     }
 
     private String callStoredProcedure(String maKG, String maKH, ZonedDateTime batDau, ZonedDateTime ketThuc, String maPhien, String maDatCho) {

@@ -87,8 +87,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
     }
 
     private void loadData() {
-        List<Object[]> ds = controller.layDanhSachNhanVien(maCNFilter);
-        hienThiLenBang(ds);
+        refreshTableTheoDieuKienHienTai();
     }
 
     public void refreshData() {
@@ -132,6 +131,14 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             tblNhanVien.putClientProperty("tenTaiKhoan_" + key, r[16]); // r[16] là TenTaiKhoan
             row++;
         }
+        tblNhanVien.clearSelection();
+        tblNhanVien.revalidate();
+        tblNhanVien.repaint();
+    }
+
+    private void refreshTableTheoDieuKienHienTai() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        hienThiLenBang(controller.timKiemNhanVien(tuKhoa, maCNFilter));
     }
 
     private void loadComboBoxData() {
@@ -160,7 +167,6 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
         txtLuong.setText("");
         txtMatKhau.setText("");
         txtNgaySinh.setText("");
-        txtTimKiem.setText("");
         cbxGioiTinh.setSelectedIndex(0);
         cbxCaLam.setSelectedIndex(0);
         cbxTrangThai.setSelectedIndex(0);
@@ -538,7 +544,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
                     txtMatKhau.getText().trim())) {
                 JOptionPane.showMessageDialog(this, "Thêm nhân viên thành công!");
                 lamMoiForm();
-                loadData();
+                refreshTableTheoDieuKienHienTai();
             } else {
                 JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -563,7 +569,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
             if (controller.capNhatNhanVien(nv, nd, hoTen, getMaVaiTroDangChon(), matKhau)) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                 lamMoiForm();
-                loadData();
+                refreshTableTheoDieuKienHienTai();
             }
         } catch (Exception e) {
             com.wms.util.MessageUtil.showError(this, e.getMessage(), e);
@@ -572,6 +578,7 @@ public class QuanLyNhanVienForm extends javax.swing.JPanel {
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
         lamMoiForm();
+        refreshTableTheoDieuKienHienTai();
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
