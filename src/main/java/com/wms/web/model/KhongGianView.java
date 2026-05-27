@@ -204,7 +204,7 @@ public class KhongGianView {
         if (normalized.contains("tam khoa")) {
             return "locked";
         }
-        if (normalized.contains("dat truoc") || normalized.equals("da dat") || !available) {
+        if (normalized.contains("dat truoc") || normalized.equals("da dat")) {
             return "booked";
         }
         if ("trong".equals(normalized)) {
@@ -226,7 +226,7 @@ public class KhongGianView {
         if (normalized.contains("tam khoa")) {
             return "Tạm khóa";
         }
-        if (normalized.contains("dat truoc") || normalized.equals("da dat") || !available) {
+        if (normalized.contains("dat truoc") || normalized.equals("da dat")) {
             return "Đã đặt trước";
         }
         if ("trong".equals(normalized)) {

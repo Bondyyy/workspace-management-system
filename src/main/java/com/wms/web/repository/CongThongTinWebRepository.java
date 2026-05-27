@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 public class CongThongTinWebRepository {
 
     private static final ZoneId MUI_GIO_VIET_NAM = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final int SO_PHUT_GIU_CHO_THANH_TOAN = 10;
 
     private final JdbcTemplate mauJdbc;
     private final NamedParameterJdbcTemplate namedJdbc;
@@ -313,12 +314,28 @@ public class CongThongTinWebRepository {
 
     public List<KhongGianView> timKhongGian(String branchId) {
         String baseSql = """
-                SELECT kg.MaKG, kg.TenKG, kg.ViTri, kg.TrangThaiKG,
+                SELECT kg.MaKG, kg.TenKG, kg.ViTri,
+                       CASE
+                           WHEN kg.TrangThaiKG = :maintenanceStatus THEN :maintenanceDisplay
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM PHIENLAMVIEC p
+                               WHERE p.MaKG = kg.MaKG
+                                 AND p.TrangThaiPhien = :activeSessionStatus
+                                 AND p.ThoiGianKetThuc IS NULL
+                           ) THEN :busyDisplay
+                           ELSE :emptyDisplay
+                       END AS TrangThaiKG,
                        kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
                        lkg.MaLoaiKG, lkg.TenLoaiKG, lkg.SucChua,
                        NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
-                       NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong
+                       NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong,
+                       (SELECT MAX(NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + NUMTODSINTERVAL(1, 'HOUR')))
+                        FROM PHIENLAMVIEC p
+                        WHERE p.MaKG = kg.MaKG
+                          AND p.TrangThaiPhien = :activeSessionStatus
+                          AND p.ThoiGianKetThuc IS NULL) AS PhienBusyUntil
                 FROM KHONGGIAN kg
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
@@ -335,7 +352,8 @@ public class CongThongTinWebRepository {
                     kg.TenKG,
                     kg.MaKG
                 """;
-        Object[] params = { branchId };
+        MapSqlParameterSource params = taoThamSoTrangThaiKhongGian();
+        params.addValue("maCN", branchId);
         if (branchId == null || branchId.isBlank()) {
             sql = baseSql + """
                     ORDER BY
@@ -348,9 +366,10 @@ public class CongThongTinWebRepository {
                         kg.TenKG,
                         kg.MaKG
                     """;
-            params = new Object[0];
         }
-        return mauJdbc.query(sql, (rs, rowNum) -> {
+        return namedJdbc.query(sql, params, (rs, rowNum) -> {
+            String trangThai = rs.getString("TrangThaiKG");
+            Timestamp busyUntil = rs.getTimestamp("PhienBusyUntil");
             int sucChua = rs.getInt("SucChua");
             boolean sucChuaNull = rs.wasNull();
             return new KhongGianView(
@@ -358,7 +377,7 @@ public class CongThongTinWebRepository {
                     rs.getString("TenKG"),
                     rs.getString("TenLoaiKG"),
                     rs.getString("ViTri"),
-                    rs.getString("TrangThaiKG"),
+                    trangThai,
                     rs.getString("MaCN"),
                     rs.getString("TenCN"),
                     rs.getString("ThoiGianMoCua"),
@@ -369,10 +388,10 @@ public class CongThongTinWebRepository {
                     rs.getInt("ToaDoY"),
                     rs.getInt("ChieuDai"),
                     rs.getInt("ChieuRong"),
-                    true,
-                    null
+                    "Trống".equals(trangThai),
+                    busyUntil == null ? null : busyUntil.toLocalDateTime()
             );
-        }, params);
+        });
     }
 
     public List<KhongGianView> timKhongGian(String branchId, LocalDateTime selectedStart, LocalDateTime selectedEnd) {
@@ -384,23 +403,31 @@ public class CongThongTinWebRepository {
                 SELECT kg.MaKG, kg.TenKG, kg.ViTri,
                        CASE
                            WHEN kg.TrangThaiKG = :maintenanceStatus THEN :maintenanceDisplay
-                           WHEN kg.TrangThaiKG = :busySpaceStatus
-                                OR EXISTS (
-                                    SELECT 1
-                                    FROM PHIENLAMVIEC p
-                                    WHERE p.MaKG = kg.MaKG
-                                      AND p.TrangThaiPhien = :activeSessionStatus
-                                      AND p.ThoiGianBatDau < :requestEnd
-                                      AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > :requestStart
-                                ) THEN :busyDisplay
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM PHIENLAMVIEC p
+                               WHERE p.MaKG = kg.MaKG
+                                 AND p.TrangThaiPhien = :activeSessionStatus
+                                 AND p.ThoiGianBatDau < :requestEnd
+                                 AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + NUMTODSINTERVAL(1, 'HOUR')) > :requestStart
+                           ) THEN :busyDisplay
                            WHEN EXISTS (
                                SELECT 1
                                FROM DATCHO dc
                                WHERE dc.MaKG = kg.MaKG
-                                 AND dc.TrangThaiDatTruoc IN (:busyBookingStatuses)
+                                 AND dc.TrangThaiDatTruoc IN (:confirmedBookingStatuses)
                                  AND dc.ThoiGianDuKienToi < :requestEnd
                                  AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > :requestStart
                            ) THEN :bookedDisplay
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM DATCHO dc
+                               WHERE dc.MaKG = kg.MaKG
+                                 AND dc.TrangThaiDatTruoc = :pendingBookingStatus
+                                 AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - NUMTODSINTERVAL(:paymentHoldMinutes, 'MINUTE')
+                                 AND dc.ThoiGianDuKienToi < :requestEnd
+                                 AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > :requestStart
+                           ) THEN :lockedDisplay
                            ELSE :emptyDisplay
                        END AS TrangThaiKG,
                        kg.MaCN, cn.TenCN, cn.ThoiGianMoCua, cn.ThoiGianDongCua,
@@ -408,24 +435,30 @@ public class CongThongTinWebRepository {
                        NVL(lkg.DonGiaTheoGio, 0) AS DonGiaTheoGio,
                        NVL(kg.ToaDoX, 0) AS ToaDoX, NVL(kg.ToaDoY, 0) AS ToaDoY,
                        NVL(kg.ChieuDai, 1) AS ChieuDai, NVL(kg.ChieuRong, 1) AS ChieuRong,
-                       (SELECT MAX(NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR'))
+                       (SELECT MAX(NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + NUMTODSINTERVAL(1, 'HOUR')))
                         FROM PHIENLAMVIEC p
                         WHERE p.MaKG = kg.MaKG
                           AND p.TrangThaiPhien = :activeSessionStatus
                           AND p.ThoiGianBatDau < :requestEnd
-                          AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + INTERVAL '1' HOUR') > :requestStart) AS PhienBusyUntil,
+                          AND NVL(p.ThoiGianDuKienKetThuc, p.ThoiGianBatDau + NUMTODSINTERVAL(1, 'HOUR')) > :requestStart) AS PhienBusyUntil,
                        (SELECT MAX(dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR'))
                         FROM DATCHO dc
                         WHERE dc.MaKG = kg.MaKG
                           AND dc.ThoiGianDuKienToi < :requestEnd
                           AND (dc.ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(dc.KhoangThoiGianSuDung, 1), 'HOUR')) > :requestStart
-                          AND dc.TrangThaiDatTruoc IN (:busyBookingStatuses)) AS DatChoBusyUntil
+                          AND (
+                              dc.TrangThaiDatTruoc IN (:confirmedBookingStatuses)
+                              OR (
+                                  dc.TrangThaiDatTruoc = :pendingBookingStatus
+                                  AND dc.ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - NUMTODSINTERVAL(:paymentHoldMinutes, 'MINUTE')
+                              )
+                          )) AS DatChoBusyUntil
                 FROM KHONGGIAN kg
                 JOIN CHINHANH cn ON cn.MaCN = kg.MaCN
                 LEFT JOIN LOAIKHONGGIAN lkg ON lkg.MaLoaiKG = kg.MaLoaiKG
                 """;
         String sql = baseSql + """
-                WHERE kg.MaCN = ?
+                WHERE kg.MaCN = :maCN
                 ORDER BY
                     CASE
                         WHEN REGEXP_LIKE(kg.MaCN, '^CN[0-9]+$')
@@ -459,6 +492,7 @@ public class CongThongTinWebRepository {
                 + ", namedParams=" + params.getValues().size());
 
         return namedJdbc.query(sql, params, (rs, rowNum) -> {
+            String trangThai = rs.getString("TrangThaiKG");
             Timestamp busyUntil = thoiGianBanRonLonHon(rs.getTimestamp("PhienBusyUntil"), rs.getTimestamp("DatChoBusyUntil"));
             int sucChua = rs.getInt("SucChua");
             boolean sucChuaNull = rs.wasNull();
@@ -467,7 +501,7 @@ public class CongThongTinWebRepository {
                     rs.getString("TenKG"),
                     rs.getString("TenLoaiKG"),
                     rs.getString("ViTri"),
-                    rs.getString("TrangThaiKG"),
+                    trangThai,
                     rs.getString("MaCN"),
                     rs.getString("TenCN"),
                     rs.getString("ThoiGianMoCua"),
@@ -478,7 +512,7 @@ public class CongThongTinWebRepository {
                     rs.getInt("ToaDoY"),
                     rs.getInt("ChieuDai"),
                     rs.getInt("ChieuRong"),
-                    busyUntil == null,
+                    "Trống".equals(trangThai),
                     busyUntil == null ? null : busyUntil.toLocalDateTime()
             );
         });
@@ -535,7 +569,9 @@ public class CongThongTinWebRepository {
                 .addValue("activeSessionStatus", giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"))
                 .addValue("requestStart", Timestamp.valueOf(selectedStart))
                 .addValue("requestEnd", Timestamp.valueOf(selectedEnd))
-                .addValue("busyBookingStatuses", trangThaiDatChoDangGiuCho());
+                .addValue("confirmedBookingStatuses", trangThaiDatChoDaXacNhan())
+                .addValue("pendingBookingStatus", trangThaiDatChoDb("Dang cho thanh toan"))
+                .addValue("paymentHoldMinutes", SO_PHUT_GIU_CHO_THANH_TOAN);
         Integer count = namedJdbc.queryForObject(
                 """
                 SELECT
@@ -544,14 +580,20 @@ public class CongThongTinWebRepository {
                      WHERE MaKG = :maKG
                        AND TrangThaiPhien = :activeSessionStatus
                        AND ThoiGianBatDau < :requestEnd
-                       AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + INTERVAL '1' HOUR') > :requestStart)
+                       AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + NUMTODSINTERVAL(1, 'HOUR')) > :requestStart)
                     +
                     (SELECT COUNT(*)
                      FROM DATCHO
                      WHERE MaKG = :maKG
                        AND ThoiGianDuKienToi < :requestEnd
                        AND (ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')) > :requestStart
-                       AND TrangThaiDatTruoc IN (:busyBookingStatuses))
+                       AND (
+                           TrangThaiDatTruoc IN (:confirmedBookingStatuses)
+                           OR (
+                               TrangThaiDatTruoc = :pendingBookingStatus
+                               AND ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - NUMTODSINTERVAL(:paymentHoldMinutes, 'MINUTE')
+                           )
+                       ))
                 FROM DUAL
                 """,
                 params,
@@ -794,12 +836,18 @@ public class CongThongTinWebRepository {
                          WHERE MaKG = ?
                            AND TrangThaiPhien = ?
                            AND ThoiGianBatDau < ?
-                           AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + INTERVAL '1' HOUR') > ?)
+                           AND NVL(ThoiGianDuKienKetThuc, ThoiGianBatDau + NUMTODSINTERVAL(1, 'HOUR')) > ?)
                         +
                         (SELECT COUNT(*)
                          FROM DATCHO
                          WHERE MaKG = ?
-                           AND TrangThaiDatTruoc IN (?, ?)
+                           AND (
+                               TrangThaiDatTruoc IN (?, ?)
+                               OR (
+                                   TrangThaiDatTruoc = ?
+                                   AND ThoiGianDat >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - NUMTODSINTERVAL(?, 'MINUTE')
+                               )
+                           )
                            AND ThoiGianDuKienToi < ?
                            AND (ThoiGianDuKienToi + NUMTODSINTERVAL(NVL(KhoangThoiGianSuDung, 1), 'HOUR')) > ?)
                     FROM DUAL
@@ -810,9 +858,11 @@ public class CongThongTinWebRepository {
                 overlapStmt.setTimestamp(4, Timestamp.valueOf(arrivalTime));
                 overlapStmt.setString(5, maKG);
                 overlapStmt.setString(6, trangThaiDatChoDb("Da thanh toan thanh cong"));
-                overlapStmt.setString(7, trangThaiDatChoDb("Dang cho thanh toan"));
-                overlapStmt.setTimestamp(8, Timestamp.valueOf(ketThucDuKien));
-                overlapStmt.setTimestamp(9, Timestamp.valueOf(arrivalTime));
+                overlapStmt.setString(7, "Đã đặt trước");
+                overlapStmt.setString(8, trangThaiDatChoDb("Dang cho thanh toan"));
+                overlapStmt.setInt(9, SO_PHUT_GIU_CHO_THANH_TOAN);
+                overlapStmt.setTimestamp(10, Timestamp.valueOf(ketThucDuKien));
+                overlapStmt.setTimestamp(11, Timestamp.valueOf(arrivalTime));
                 try (var rs = overlapStmt.executeQuery()) {
                     if (rs.next() && rs.getInt(1) > 0) {
                         throw new IllegalArgumentException("Khung giờ này đã có người đặt. Vui lòng chọn giờ khác.");
@@ -1535,23 +1585,30 @@ public class CongThongTinWebRepository {
     }
 
     private MapSqlParameterSource taoThamSoTaiKhongGian(LocalDateTime requestStart, LocalDateTime requestEnd) {
-        return new MapSqlParameterSource()
-                .addValue("maintenanceStatus", trangThaiKhongGianDb("Bao tri"))
-                .addValue("maintenanceDisplay", "Bảo trì")
-                .addValue("busySpaceStatus", trangThaiKhongGianDb("Dang hoat dong"))
-                .addValue("activeSessionStatus", giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"))
+        return taoThamSoTrangThaiKhongGian()
                 .addValue("requestStart", Timestamp.valueOf(requestStart))
                 .addValue("requestEnd", Timestamp.valueOf(requestEnd))
-                .addValue("busyDisplay", "Đang hoạt động")
-                .addValue("busyBookingStatuses", trangThaiDatChoDangGiuCho())
+                .addValue("confirmedBookingStatuses", trangThaiDatChoDaXacNhan())
+                .addValue("pendingBookingStatus", trangThaiDatChoDb("Dang cho thanh toan"))
+                .addValue("paymentHoldMinutes", SO_PHUT_GIU_CHO_THANH_TOAN)
                 .addValue("bookedDisplay", "Đã đặt trước")
+                .addValue("lockedDisplay", "Tạm khóa")
                 .addValue("emptyDisplay", "Trống");
     }
 
-    private List<String> trangThaiDatChoDangGiuCho() {
+    private MapSqlParameterSource taoThamSoTrangThaiKhongGian() {
+        return new MapSqlParameterSource()
+                .addValue("maintenanceStatus", trangThaiKhongGianDb("Bao tri"))
+                .addValue("maintenanceDisplay", "Bảo trì")
+                .addValue("activeSessionStatus", giaTriDb("CHK_PLV_TRANGTHAI", "dang hoat dong", 0, "Đang hoạt động"))
+                .addValue("busyDisplay", "Đang hoạt động")
+                .addValue("emptyDisplay", "Trống");
+    }
+
+    private List<String> trangThaiDatChoDaXacNhan() {
         return List.of(
                 trangThaiDatChoDb("Da thanh toan thanh cong"),
-                trangThaiDatChoDb("Dang cho thanh toan")
+                "Đã đặt trước"
         );
     }
 

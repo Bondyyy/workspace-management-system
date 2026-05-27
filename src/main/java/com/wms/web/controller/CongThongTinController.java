@@ -330,10 +330,7 @@ public class CongThongTinController {
             if (daChonDuThoiGian) {
                 spaces = congThongTinService.layKhongGian(branch.getMaCN(), selectedStartDateTime, selectedEndDateTime);
             } else {
-                spaces = congThongTinService.layKhongGian(branch.getMaCN(), null, null)
-                        .stream()
-                        .map(this::khoaDatChoKhongGian)
-                        .toList();
+                spaces = congThongTinService.layKhongGian(branch.getMaCN(), null, null);
             }
         } catch (IllegalStateException ex) {
             System.err.println("[Web] Khong the tai so do maCN=" + branch.getMaCN() + ": " + ex.getMessage());
@@ -375,28 +372,6 @@ public class CongThongTinController {
         model.addAttribute("thongBaoLoi", thongBaoLoi);
         model.addAttribute("canhBao", canhBao);
         return "web/so-do-khong-gian";
-    }
-
-    private KhongGianView khoaDatChoKhongGian(KhongGianView space) {
-        return new KhongGianView(
-                space.getMaKG(),
-                space.getTenKG(),
-                space.getTenLoaiKG(),
-                space.getViTri(),
-                space.getTrangThaiKG(),
-                space.getMaCN(),
-                space.getTenCN(),
-                space.getThoiGianMoCua(),
-                space.getThoiGianDongCua(),
-                space.getSucChua(),
-                space.getDonGiaTheoGio(),
-                space.getToaDoX(),
-                space.getToaDoY(),
-                space.getChieuDai(),
-                space.getChieuRong(),
-                false,
-                space.getBusyUntil()
-        );
     }
 
     @GetMapping("/portal/checkout")
