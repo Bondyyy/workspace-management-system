@@ -1,6 +1,7 @@
 package com.wms.controller.TrangChuQuanLy.QuanLyNguoiDung;
 
 import com.wms.model.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungDTO;
+import com.wms.controller.TrangChuGioiThieu.DangNhapController;
 import com.wms.service.TrangChuQuanLy.QuanLyNguoiDung.NguoiDungService;
 import com.wms.view.TrangChuQuanLy.QuanLyNguoiDung.QuanLyNguoiDungForm;
 
@@ -91,7 +92,8 @@ public class NguoiDungController {
         if (row < 0)
             return;
 
-        NguoiDungDTO user = currentList.get(row);
+        int modelRow = view.getTblNguoiDung().convertRowIndexToModel(row);
+        NguoiDungDTO user = currentList.get(modelRow);
         view.getTxtMaND().setText(user.getMaND());
         view.getTxtTaiKhoan().setText(user.getTenTaiKhoan());
         view.getTxtHoTen().setText(user.getHoTen());
@@ -184,7 +186,7 @@ public class NguoiDungController {
                 return;
             user.setMaND(maND);
 
-            service.updateUser(user);
+            service.updateUser(user, DangNhapController.getCurrentUser());
             com.wms.util.MessageUtil.showInfo(view, "Cập nhật thông tin người dùng thành công!");
             invalidateNhanVienCache();
             clearForm();
@@ -234,7 +236,7 @@ public class NguoiDungController {
         user.setEmail(view.getTxtEmail().getText().trim());
 
         String uiTrangThai = view.getCbxTrangThai().getSelectedItem().toString();
-        user.setTrangThaiND("Hoạt động".equals(uiTrangThai) ? "Đang hoạt động" : "Không hoạt động");
+        user.setTrangThaiND("Hoạt động".equals(uiTrangThai) ? "Đang hoạt động" : "Bị khóa");
 
         user.setAnhDaiDien(selectedImageData);
 

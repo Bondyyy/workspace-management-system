@@ -39,6 +39,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
     public QuanLyHoaDonForm(String maPhienCanChon) {
         initComponents();
+        com.wms.util.TienIchFormQuanLy.apDung(this);
         tableModel = (DefaultTableModel) tblHoaDon.getModel();
         setupHoaDonTable();
         if (maPhienCanChon == null || maPhienCanChon.isBlank()) {
@@ -50,7 +51,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
     }
 
     private void setupHoaDonTable() {
-        int[] widths = {80, 90, 120, 150, 105, 145, 110};
+        int[] widths = {80, 90, 120, 145, 105, 205, 100};
         for (int i = 0; i < widths.length && i < tblHoaDon.getColumnModel().getColumnCount(); i++) {
             tblHoaDon.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
@@ -229,13 +230,15 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
             
             // Xử lý tiền trả trước và hiển thị
             double soTienDaTraTruoc = hd.getSoTienDaTraTruoc();
+            double tongTienValue = Math.max(0, giaTriTien(hd.getTongTien()));
             double conPhaiThuValue = Math.max(0, giaTriTien(hd.getThanhTien()));
-            txtTruocGiamGia.setText(df.format(conPhaiThuValue));
-            txtTruocGiamGia.setToolTipText("Tổng cộng: " + df.format(giaTriTien(hd.getTongTien()))
+            txtTruocGiamGia.setText(df.format(tongTienValue));
+            txtTruocGiamGia.setToolTipText("Tổng tiền: " + df.format(tongTienValue)
                     + " | Đã trả trước: " + df.format(soTienDaTraTruoc)
-                    + " | Còn phải thu: " + df.format(conPhaiThuValue));
+                    + " | Phần thu còn lại: " + df.format(conPhaiThuValue));
 
             txtTrangThai.setText(hienThiTrangThaiThanhToan(hd));
+            txtTrangThai.setToolTipText(txtTrangThai.getText());
             if (txtHinhThuc != null) {
                 txtHinhThuc.setText(hienThiHinhThuc(hd));
                 txtHinhThuc.setToolTipText(hd.isDaTraTruoc()
@@ -520,7 +523,7 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
 
         lblTongTien.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTongTien.setForeground(new java.awt.Color(136, 136, 136));
-        lblTongTien.setText("Còn phải thu");
+        lblTongTien.setText("Tổng tiền");
         pnRight.add(lblTongTien);
         lblTongTien.setBounds(10, 300, 200, 18);
 
@@ -538,10 +541,10 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         lblTrangThai.setBounds(10, 370, 140, 18);
 
         txtTrangThai.setEditable(false);
-        txtTrangThai.setFont(new java.awt.Font("Segoe UI", 3, 16)); // NOI18N
+        txtTrangThai.setFont(new java.awt.Font("Segoe UI", 3, 14)); // NOI18N
         txtTrangThai.setBorder(null);
         pnRight.add(txtTrangThai);
-        txtTrangThai.setBounds(10, 390, 180, 40);
+        txtTrangThai.setBounds(10, 390, 200, 40);
 
         btnXacNhan.setBackground(new java.awt.Color(0, 153, 51));
         btnXacNhan.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
@@ -865,9 +868,8 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
                     .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tt.getSoTienThanhToanTaiQuay()))
                     .append("\n");
         }
-        sb.append("CÒN PHẢI THANH TOÁN: ")
-                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(
-                        com.wms.util.HoaDonGiamGiaUtil.layConPhaiThanhToan(tt, giamGia, 0)))
+        sb.append("TỔNG TIỀN: ")
+                .append(com.wms.util.HoaDonGiamGiaUtil.formatTienVnd(tongTienGoc))
                 .append("\n\n");
         sb.append("      --- CẢM ƠN QUÝ KHÁCH ---");
 
@@ -962,7 +964,9 @@ public class QuanLyHoaDonForm extends javax.swing.JPanel {
         txtNgayTao.setText("");
         txtThanhToan.setText("");
         txtTruocGiamGia.setText("");
+        txtTruocGiamGia.setToolTipText(null);
         txtTrangThai.setText("");
+        txtTrangThai.setToolTipText(null);
         txtHinhThuc.setText("");
         txtTrangThaiPhien.setText("");
         txtThoiGianBatDau.setText("");

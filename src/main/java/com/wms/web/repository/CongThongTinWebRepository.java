@@ -1,5 +1,6 @@
 package com.wms.web.repository;
 
+import com.wms.config.AppConstants;
 import com.wms.web.model.DatChoView;
 import com.wms.web.model.ThongTinTaiKhoanView;
 import com.wms.web.model.LichSuDatChoView;
@@ -118,6 +119,30 @@ public class CongThongTinWebRepository {
         mauJdbc.update(
                 "INSERT INTO KHACHHANG (MaHangThanhVien, TongChiTieu, CapNhatLanCuoi, MaND) VALUES ('HTV01', 0, CURRENT_TIMESTAMP, ?)",
                 maND
+        );
+        mauJdbc.update(
+                """
+                MERGE INTO VAITRO v
+                USING (SELECT ? AS MaVaiTro, ? AS TenVaiTro FROM DUAL) src
+                ON (v.MaVaiTro = src.MaVaiTro)
+                WHEN NOT MATCHED THEN
+                    INSERT (MaVaiTro, TenVaiTro, MoTa)
+                    VALUES (src.MaVaiTro, src.TenVaiTro, 'Quyền hạn mặc định cho hội viên')
+                """,
+                AppConstants.ROLE_CUSTOMER_CODE,
+                AppConstants.ROLE_CUSTOMER_NAME
+        );
+        mauJdbc.update(
+                """
+                MERGE INTO CHITIETVAITRO ctv
+                USING (SELECT ? AS MaND, ? AS MaVaiTro FROM DUAL) src
+                ON (ctv.MaND = src.MaND AND ctv.MaVaiTro = src.MaVaiTro)
+                WHEN NOT MATCHED THEN
+                    INSERT (MaND, MaVaiTro)
+                    VALUES (src.MaND, src.MaVaiTro)
+                """,
+                maND,
+                AppConstants.ROLE_CUSTOMER_CODE
         );
     }
 

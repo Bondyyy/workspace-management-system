@@ -104,14 +104,15 @@ public class ThanhToanHoaDonForm extends JPanel {
     private void khoiTaoGiaoDien() {
         setLayout(new BorderLayout(0, 20));
         setBackground(mauNenChinh);
-        setBorder(new EmptyBorder(30, 40, 30, 40));
+        setPreferredSize(new Dimension(980, 600));
+        setBorder(new EmptyBorder(20, 28, 20, 28));
 
         initializeLabels();
 
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(mauNenChinh);
         JLabel lblTieuDe = new JLabel("THANH TOÁN HÓA ĐƠN", SwingConstants.CENTER);
-        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblTieuDe.setForeground(mauHongChinh);
         panelHeader.add(lblTieuDe, BorderLayout.CENTER);
         add(panelHeader, BorderLayout.NORTH);
@@ -232,7 +233,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelThanhTien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         panelThanhTien.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-        JLabel lblTextThanhTien = new JLabel("<html>CÒN PHẢI<br>THANH TOÁN:</html>");
+        JLabel lblTextThanhTien = new JLabel("TỔNG TIỀN:");
         lblTextThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblTextThanhTien.setForeground(mauXamDam);
 
@@ -454,7 +455,7 @@ public class ThanhToanHoaDonForm extends JPanel {
                     : Math.max(0, tongTienGoc);
         }
         lblTongTien.setText(formatTienVnd(tongTienGoc));
-        lblThanhTien.setText(formatTienVnd(thanhTien));
+        lblThanhTien.setText(formatTienVnd(tongTienGoc));
         capNhatKhaNangThanhToan();
     }
 

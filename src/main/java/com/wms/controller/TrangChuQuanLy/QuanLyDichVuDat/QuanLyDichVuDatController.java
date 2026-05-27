@@ -17,6 +17,10 @@ public class QuanLyDichVuDatController {
         return service.layDanhSachPhienHoatDong(keyword);
     }
 
+    public List<Object[]> layDanhSachPhien(String keyword, boolean daKetThuc) {
+        return service.layDanhSachPhien(keyword, daKetThuc);
+    }
+
     public List<DichVuDaDatDTO> layDSDichVuTheoPhien(String maPhien) {
         return service.layDSDichVuTheoPhien(maPhien);
     }

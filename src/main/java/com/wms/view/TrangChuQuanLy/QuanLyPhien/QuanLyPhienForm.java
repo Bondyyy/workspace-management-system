@@ -24,6 +24,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
 
     public QuanLyPhienForm() {
         initComponents();
+        apDungStyleKhachHang(false);
         setupTable();
         controller = new com.wms.controller.TrangChuQuanLy.QuanLyPhien.QuanLyPhienController(this);
         loadChiNhanhData();
@@ -669,6 +670,15 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         return laDaKetThuc(phien) ? LABEL_DA_KET_THUC : hienTrangThai(phien.getTrangThaiPhien());
     }
 
+    private void apDungStyleKhachHang(boolean choPhepSua) {
+        txtKhachHang.setEditable(choPhepSua);
+        txtKhachHang.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        txtKhachHang.setForeground(new java.awt.Color(48, 30, 35));
+        txtKhachHang.setBackground(new java.awt.Color(255, 255, 255));
+        txtKhachHang.setBorder(null);
+        txtKhachHang.setCaretColor(new java.awt.Color(48, 30, 35));
+    }
+
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {
         loadData(txtTimKiem.getText().trim());
     }
@@ -683,8 +693,7 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
         txtMaPhien.setText("");
         txtKhongGian.setText("");
         txtKhachHang.setText("");
-        txtKhachHang.setEditable(false);
-        txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+        apDungStyleKhachHang(false);
         btnKetThucPhien.setEnabled(false);
         txtTrangThai.setText("");
         if (txtTrangThaiThanhToan != null) txtTrangThaiThanhToan.setText("");
@@ -826,18 +835,15 @@ public class QuanLyPhienForm extends javax.swing.JPanel {
             boolean khoaThaoTac = laDaKetThuc(selected);
             if (khoaThaoTac) {
                 khoaThaoTacPhien(true);
-                txtKhachHang.setEditable(false);
-                txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+                apDungStyleKhachHang(false);
             } else {
                 khoaThaoTacPhien(false);
 
                 // Logic sửa tên khách hàng cho phiên trực tiếp
                 if (selected.getMaDatCho() == null) {
-                    txtKhachHang.setEditable(true);
-                    txtKhachHang.setBackground(new java.awt.Color(255, 255, 255));
+                    apDungStyleKhachHang(true);
                 } else {
-                    txtKhachHang.setEditable(false);
-                    txtKhachHang.setBackground(new java.awt.Color(240, 240, 240));
+                    apDungStyleKhachHang(false);
                 }
             }
 

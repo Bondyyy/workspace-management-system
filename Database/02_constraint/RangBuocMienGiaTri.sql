@@ -9,7 +9,7 @@ ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_Email
     CHECK (Email LIKE '%@%.%');
 
 ALTER TABLE NGUOIDUNG ADD CONSTRAINT CHK_ND_TrangThai
-    CHECK (TrangThaiND IN ('Đang hoạt động', 'Không hoạt động'));
+    CHECK (TrangThaiND IN ('Đang hoạt động', 'Bị khóa'));
 
 -- 2. Bảng KHACHHANG (Hội viên)
 ALTER TABLE KHACHHANG ADD CONSTRAINT CHK_KH_TongChiTieu 

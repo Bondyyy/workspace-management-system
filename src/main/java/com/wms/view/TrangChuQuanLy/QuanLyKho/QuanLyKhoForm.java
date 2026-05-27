@@ -83,6 +83,9 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
         cbNhanVien.setEditable(false);
         cbLoaiDichVu.setEditable(false);
+        txtTenDichVu.setEditable(false);
+        txtTenDichVu.setFocusable(false);
+        txtTenDichVu.setBackground(new java.awt.Color(240, 240, 240));
         txtNiemYet.setEditable(false);
         txtNiemYet.setBackground(new java.awt.Color(240, 240, 240));
 
@@ -437,11 +440,11 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
 
             },
             new String [] {
-                "STT", "Mã DV", "Tên Dịch Vụ", "Loại DV", "Đơn Giá (VNĐ)", "Số Lượng Tồn", "Trạng thái"
+                "STT", "Mã DV", "Tên Dịch Vụ", "Loại DV", "Đơn Giá (VNĐ)", "Giá Nhập (VNĐ)", "Số Lượng Tồn", "Trạng thái"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -632,8 +635,15 @@ public class QuanLyKhoForm extends javax.swing.JPanel {
                 loaiDichVu.isEmpty() || loaiDichVu.startsWith("--") ||
                 tenDichVu.isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this,
-                    "Vui lòng chọn nhân viên, loại dịch vụ và nhập tên dịch vụ!", "Cảnh báo",
+                    "Vui lòng chọn nhân viên, loại dịch vụ và chọn dịch vụ có sẵn trong bảng!", "Cảnh báo",
                     javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (currentMaDV == null || currentMaDV.isBlank()) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Kho dịch vụ chỉ nhập tồn cho dịch vụ đã có. Vui lòng chọn một dịch vụ trong bảng.",
+                    "Cảnh báo", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
