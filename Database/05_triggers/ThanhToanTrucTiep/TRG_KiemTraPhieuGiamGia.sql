@@ -29,6 +29,7 @@ BEGIN
             v_MaChuSoPGG
         FROM PHIEUGIAMGIA
         WHERE MaPGG = :NEW.MaPGG;
+        FOR UPDATE
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
             RAISE_APPLICATION_ERROR(
