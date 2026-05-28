@@ -4,6 +4,7 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import oracle.jdbc.OracleTypes;
 
 
 public class PhieuGiamGiaDAO {
@@ -60,35 +61,36 @@ public class PhieuGiamGiaDAO {
     }
 
     public List<PhieuGiamGiaDTO> layDanhSach() {
-        List<PhieuGiamGiaDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM PHIEUGIAMGIA ORDER BY NgayTaoPGG DESC";
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapRow(rs));
-            }
-        } catch (SQLException e) {
-            System.err.println("[PhieuGiamGiaDAO] Lỗi lấy danh sách: " + e.getMessage());
-        }
-        return list;
+        return traCuu(null, null, "lấy danh sách");
     }
 
     public List<PhieuGiamGiaDTO> timKiem(String keyword) {
+        return traCuu(keyword, null, "tìm kiếm");
+    }
+
+    private List<PhieuGiamGiaDTO> traCuu(String keyword, String trangThai, String thaoTac) {
         List<PhieuGiamGiaDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM PHIEUGIAMGIA WHERE UPPER(MaPGG) LIKE UPPER(?) OR UPPER(MaChuSoPGG) LIKE UPPER(?) ORDER BY NgayTaoPGG DESC";
+        String sql = "{call SP_TraCuuPhieuGiamGia(?, ?, ?, ?)}";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            String k = "%" + keyword.trim() + "%";
-            ps.setString(1, k);
-            ps.setString(2, k);
-            try (ResultSet rs = ps.executeQuery()) {
+             CallableStatement cs = conn.prepareCall(sql)) {
+            cs.setString(1, keyword);
+            cs.setString(2, trangThai);
+            cs.registerOutParameter(3, OracleTypes.CURSOR);
+            cs.registerOutParameter(4, Types.VARCHAR);
+            cs.execute();
+
+            String message = cs.getString(4);
+            if (message != null && message.startsWith("Lỗi")) {
+                throw new SQLException(message);
+            }
+
+            try (ResultSet rs = (ResultSet) cs.getObject(3)) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[PhieuGiamGiaDAO] Lỗi tìm kiếm: " + e.getMessage());
+            System.err.println("[PhieuGiamGiaDAO] Lỗi " + thaoTac + ": " + e.getMessage());
         }
         return list;
     }

@@ -7,8 +7,7 @@ CREATE OR REPLACE PROCEDURE SP_TraCuuDichVu (
 ) AS
     v_Keyword VARCHAR2(100);
 BEGIN
-    -- Xử lý từ khóa tìm kiếm
-    IF p_Keyword IS NOT NULL AND TRIM(p_Keyword) != '' THEN
+    IF p_Keyword IS NOT NULL AND TRIM(p_Keyword) IS NOT NULL THEN
         v_Keyword := '%' || LOWER(TRIM(p_Keyword)) || '%';
     ELSE
         v_Keyword := '%';
@@ -26,5 +25,6 @@ BEGIN
 EXCEPTION
     WHEN OTHERS THEN
         p_Message := 'Lỗi tra cứu: ' || SQLERRM;
-END;
+        RAISE;
+END SP_TraCuuDichVu;
 /

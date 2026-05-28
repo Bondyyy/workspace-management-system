@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import oracle.jdbc.OracleTypes;
 
 public class DichVuDAO {
 
@@ -19,10 +20,15 @@ public class DichVuDAO {
             cs.setString(1, maLoai);
             cs.setString(2, trangThai);
             cs.setString(3, tuKhoa);
-            cs.registerOutParameter(4, -10); // OracleTypes.CURSOR
+            cs.registerOutParameter(4, OracleTypes.CURSOR);
             cs.registerOutParameter(5, java.sql.Types.VARCHAR);
             
             cs.execute();
+
+            String message = cs.getString(5);
+            if (message != null && message.startsWith("Lỗi")) {
+                throw new SQLException(message);
+            }
             
             try (ResultSet rs = (ResultSet) cs.getObject(4)) {
                 while (rs.next()) {
