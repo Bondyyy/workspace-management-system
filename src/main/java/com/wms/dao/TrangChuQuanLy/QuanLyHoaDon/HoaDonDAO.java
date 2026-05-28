@@ -181,6 +181,15 @@ public class HoaDonDAO {
     }
 
     public ThongTinHoaDonDTO layThongTinChiTietHoaDon(String maHoaDon) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            return layThongTinChiTietHoaDon(conn, maHoaDon);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public ThongTinHoaDonDTO layThongTinChiTietHoaDon(Connection conn, String maHoaDon) throws SQLException {
         long start = System.currentTimeMillis();
         String sqlChung = """
                 SELECT h.MaHoaDon, h.NgayLapHoaDon, h.PhuongThucThanhToan,
@@ -225,8 +234,7 @@ public class HoaDonDAO {
                 ORDER BY CASE WHEN ct.NguonApDung = 'DAT_TRUOC' THEN 0 ELSE 1 END, ct.MaPGG
                 """;
 
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement psChung = conn.prepareStatement(sqlChung)) {
+        try (PreparedStatement psChung = conn.prepareStatement(sqlChung)) {
             psChung.setString(1, maHoaDon);
             try (ResultSet rsChung = psChung.executeQuery()) {
                 if (!rsChung.next()) {
@@ -365,37 +373,20 @@ public class HoaDonDAO {
 
                 return thongTin;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             logElapsed("load chi tiet hoa don", start);
         }
-        return null;
     }
 
     public boolean xacNhanThanhToan(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG,
             double thanhTien) {
-        String sqlUpdate = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, ThanhTien = 0, "
-                + "TrangThaiThanhToan = 'Đã thanh toán thành công', NgayLapHoaDon = CURRENT_TIMESTAMP "
-                + "WHERE MaHoaDon = ?";
-
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             boolean oldAutoCommit = conn.getAutoCommit();
             try {
                 conn.setAutoCommit(false);
-                boolean canTangVoucher = luuVoucherTaiQuayNeuCo(conn, maHoaDon, maPGG);
-                try (PreparedStatement pstmt = conn.prepareStatement(sqlUpdate)) {
-                    pstmt.setString(1, phuongThucThanhToan);
-                    pstmt.setString(2, maNV);
-                    pstmt.setString(3, maPGG == null || maPGG.isBlank() ? null : maPGG.trim());
-                    pstmt.setString(4, maHoaDon);
-                    int updated = pstmt.executeUpdate();
-                    if (updated > 0 && canTangVoucher) {
-                        tangSoLanDungVoucher(conn, maPGG);
-                    }
-                    conn.commit();
-                    return updated > 0;
-                }
+                boolean success = xacNhanThanhToan(conn, maHoaDon, phuongThucThanhToan, maNV, maPGG, thanhTien);
+                conn.commit();
+                return success;
             } catch (Exception e) {
                 conn.rollback();
                 throw e;
@@ -405,6 +396,26 @@ public class HoaDonDAO {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public boolean xacNhanThanhToan(Connection conn, String maHoaDon, String phuongThucThanhToan,
+            String maNV, String maPGG, double thanhTien) throws SQLException {
+        String sqlUpdate = "UPDATE HOADON SET PhuongThucThanhToan = ?, MaNV = ?, MaPGG = ?, ThanhTien = 0, "
+                + "TrangThaiThanhToan = 'Đã thanh toán thành công', NgayLapHoaDon = CURRENT_TIMESTAMP "
+                + "WHERE MaHoaDon = ?";
+
+        boolean canTangVoucher = luuVoucherTaiQuayNeuCo(conn, maHoaDon, maPGG);
+        try (PreparedStatement pstmt = conn.prepareStatement(sqlUpdate)) {
+            pstmt.setString(1, phuongThucThanhToan);
+            pstmt.setString(2, maNV);
+            pstmt.setString(3, maPGG == null || maPGG.isBlank() ? null : maPGG.trim());
+            pstmt.setString(4, maHoaDon);
+            int updated = pstmt.executeUpdate();
+            if (updated > 0 && canTangVoucher) {
+                tangSoLanDungVoucher(conn, maPGG);
+            }
+            return updated > 0;
         }
     }
 
@@ -457,10 +468,19 @@ public class HoaDonDAO {
     }
 
     public KetQuaThanhToanDTO thanhToanVoiPhieuGiamGiaMoi(String maPhien, String maNV, String maPGG, String phuongThucThanhToan) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            return thanhToanVoiPhieuGiamGiaMoi(conn, maPhien, maNV, maPGG, phuongThucThanhToan);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new KetQuaThanhToanDTO(false, "Lỗi khi cập nhật thanh toán: " + e.getMessage());
+        }
+    }
+
+    public KetQuaThanhToanDTO thanhToanVoiPhieuGiamGiaMoi(Connection conn, String maPhien,
+            String maNV, String maPGG, String phuongThucThanhToan) throws SQLException {
         long start = System.currentTimeMillis();
         String sql = "{call SP_ThanhToanVoiPhieuGiamGia(?, ?, ?, ?, ?)}";
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             CallableStatement cstmt = conn.prepareCall(sql)) {
+        try (CallableStatement cstmt = conn.prepareCall(sql)) {
             cstmt.setString(1, maPhien);
             cstmt.setString(2, maNV);
             if (maPGG == null || maPGG.trim().isEmpty()) {
@@ -480,9 +500,6 @@ public class HoaDonDAO {
             }
 
             return new KetQuaThanhToanDTO(true, message != null ? message : "Thanh toán thành công");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new KetQuaThanhToanDTO(false, "Lỗi khi cập nhật thanh toán: " + e.getMessage());
         } finally {
             logElapsed("thanh toan SP", start);
         }
@@ -490,6 +507,15 @@ public class HoaDonDAO {
 
     public KetQuaThanhToanDTO thanhToanTrucTiepMoi(String maHoaDon, String phuongThucThanhToan, String maNV, String maPGG, double thanhTien) {
         boolean success = xacNhanThanhToan(maHoaDon, phuongThucThanhToan, maNV, maPGG, thanhTien);
+        if (success) {
+            return new KetQuaThanhToanDTO(true, "Thanh toán thành công");
+        }
+        return new KetQuaThanhToanDTO(false, "Lỗi khi cập nhật thanh toán");
+    }
+
+    public KetQuaThanhToanDTO thanhToanTrucTiepMoi(Connection conn, String maHoaDon,
+            String phuongThucThanhToan, String maNV, String maPGG, double thanhTien) throws SQLException {
+        boolean success = xacNhanThanhToan(conn, maHoaDon, phuongThucThanhToan, maNV, maPGG, thanhTien);
         if (success) {
             return new KetQuaThanhToanDTO(true, "Thanh toán thành công");
         }

@@ -7,6 +7,7 @@ import com.wms.model.TrangChuQuanLy.QuanLyPhieuGiamGia.PhieuGiamGiaDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.DiscountLine;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.InvoiceLine;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.PhienGiaoDichThanhToan;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaDTO;
 import com.wms.util.HoaDonGiamGiaUtil;
 import java.awt.*;
@@ -19,6 +20,8 @@ import javax.swing.event.DocumentListener;
 import java.io.File;
 
 public class ThanhToanHoaDonForm extends JPanel {
+
+    private static final boolean DEMO_SERIALIZABLE = false;
 
     private final Color mauNenChinh = Color.decode("#FAFAFA");
     private final Color mauHongChinh = new java.awt.Color(235, 94, 141);
@@ -45,6 +48,7 @@ public class ThanhToanHoaDonForm extends JPanel {
     private JLabel lblMaHD, lblTenKhachHang, lblTenPhong, lblThoiGian, lblTongGio;
 
     private ThongTinHoaDonDTO hoaDonHienTai;
+    private PhienGiaoDichThanhToan giaoDichThanhToan;
     private PhieuGiamGiaDTO maGiamGiaDangAp = null;
     private double tongTienGoc = 0, tienGiamGia = 0, thanhTien = 0;
     private boolean daDongTienMat = false, daDongChuyenKhoan = false;
@@ -68,13 +72,16 @@ public class ThanhToanHoaDonForm extends JPanel {
     }
 
     private void loadDuLieuHoaDon(String maHoaDon) {
+        huyGiaoDichThanhToanDangMo();
         lblTrangThaiMaGG.setText("Đang tải hóa đơn...");
         lblTrangThaiMaGG.setForeground(mauXamNhat);
         long start = System.currentTimeMillis();
         new SwingWorker<ThongTinHoaDonDTO, Void>() {
             @Override
             protected ThongTinHoaDonDTO doInBackground() {
-                return thanhToanController.loadDuLieuHoaDon(maHoaDon);
+                PhienGiaoDichThanhToan gd = thanhToanController.batDauGiaoDichThanhToan(maHoaDon, DEMO_SERIALIZABLE);
+                giaoDichThanhToan = gd;
+                return gd.getHoaDonLan1();
             }
 
             @Override
@@ -93,6 +100,27 @@ public class ThanhToanHoaDonForm extends JPanel {
                 } catch (Exception ex) {
                     lblTrangThaiMaGG.setText("");
                     com.wms.util.MessageUtil.showError(ThanhToanHoaDonForm.this, "Lỗi tải hóa đơn.", ex);
+                }
+            }
+        }.execute();
+    }
+
+    private void loadDuLieuHoaDonSauThanhToan(String maHoaDon) {
+        new SwingWorker<ThongTinHoaDonDTO, Void>() {
+            @Override
+            protected ThongTinHoaDonDTO doInBackground() {
+                return thanhToanController.loadDuLieuHoaDon(maHoaDon);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ThongTinHoaDonDTO hoaDon = get();
+                    if (hoaDon != null) {
+                        hienThiHoaDon(hoaDon);
+                    }
+                } catch (Exception ex) {
+                    com.wms.util.MessageUtil.showError(ThanhToanHoaDonForm.this, "Lỗi tải lại hóa đơn.", ex);
                 }
             }
         }.execute();
@@ -797,7 +825,8 @@ public class ThanhToanHoaDonForm extends JPanel {
         new SwingWorker<com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO, Void>() {
             @Override
             protected com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO doInBackground() {
-                return thanhToanController.thucHienThanhToanMoi(maHoaDon, phuongThuc, maPGG, thanhTien);
+                return thanhToanController.xacNhanThanhToanTrongGiaoDich(
+                        giaoDichThanhToan, phuongThuc, maPGG, thanhTien);
             }
 
             @Override
@@ -810,27 +839,47 @@ public class ThanhToanHoaDonForm extends JPanel {
                             + (System.currentTimeMillis() - start) + " ms");
 
                     if (result.isSuccess()) {
+                        giaoDichThanhToan = null;
                         daThanhToanThanhCong = true;
                         if ("Tiền mặt".equals(phuongThuc)) daDongTienMat = true;
                         if ("Chuyển khoản".equals(phuongThuc)) daDongChuyenKhoan = true;
 
                         lblTrangThaiMaGG.setText("");
                         capNhatTrangThaiThanhToan();
-                        loadDuLieuHoaDon(maHoaDon);
+                        loadDuLieuHoaDonSauThanhToan(maHoaDon);
 
                         JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                     } else {
+                        giaoDichThanhToan = null;
                         capNhatKhaNangThanhToan();
                         lblTrangThaiMaGG.setText("");
                         JOptionPane.showMessageDialog(ThanhToanHoaDonForm.this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        loadDuLieuHoaDon(maHoaDon);
                     }
                 } catch (Exception ex) {
+                    giaoDichThanhToan = null;
                     capNhatKhaNangThanhToan();
                     lblTrangThaiMaGG.setText("");
                     com.wms.util.MessageUtil.showError(ThanhToanHoaDonForm.this, "Lỗi thanh toán.", ex);
+                    loadDuLieuHoaDon(maHoaDon);
                 }
             }
         }.execute();
+    }
+
+    @Override
+    public void removeNotify() {
+        if (!dangXuLyThanhToan) {
+            huyGiaoDichThanhToanDangMo();
+        }
+        super.removeNotify();
+    }
+
+    private void huyGiaoDichThanhToanDangMo() {
+        if (giaoDichThanhToan != null) {
+            thanhToanController.huyGiaoDichThanhToan(giaoDichThanhToan);
+            giaoDichThanhToan = null;
+        }
     }
 
     private void capNhatTrangThaiThanhToan() {

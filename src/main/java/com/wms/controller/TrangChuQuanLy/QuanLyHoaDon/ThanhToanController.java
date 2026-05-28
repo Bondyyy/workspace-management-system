@@ -3,6 +3,7 @@ package com.wms.controller.TrangChuQuanLy.QuanLyHoaDon;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.ThongTinHoaDonDTO;
 import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.KetQuaThanhToanDTO;
+import com.wms.model.TrangChuQuanLy.QuanLyHoaDon.PhienGiaoDichThanhToan;
 import com.wms.service.TrangChuQuanLy.QuanLyHoaDon.ThanhToanService;
 import com.wms.service.TrangChuQuanLy.QuanLyHoaDon.XacNhanPhieuGiamGiaService;
 
@@ -27,6 +28,19 @@ public class ThanhToanController {
 
     public KetQuaThanhToanDTO thucHienThanhToanMoi(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
         return thanhToanService.thucHienThanhToanMoi(maHoaDon, phuongThuc, maPGG, thanhTien);
+    }
+
+    public PhienGiaoDichThanhToan batDauGiaoDichThanhToan(String maHoaDon, boolean serializable) {
+        return thanhToanService.batDauGiaoDichThanhToan(maHoaDon, serializable);
+    }
+
+    public KetQuaThanhToanDTO xacNhanThanhToanTrongGiaoDich(PhienGiaoDichThanhToan gd,
+            String phuongThuc, String maPGG, double thanhTien) {
+        return thanhToanService.xacNhanThanhToanTrongGiaoDich(gd, phuongThuc, maPGG, thanhTien);
+    }
+
+    public void huyGiaoDichThanhToan(PhienGiaoDichThanhToan gd) {
+        thanhToanService.huyGiaoDichThanhToan(gd);
     }
 
     public String thucHienThanhToanCoThongBao(String maHoaDon, String phuongThuc, String maPGG, double thanhTien) {
