@@ -58,7 +58,7 @@ BEGIN
        DBMS_OUTPUT.PUT_LINE('- Mã chữ số PGG: ' || r.MaChuSoPGG ||
                              ' | Giá trị giảm: ' || r.GiaTriGiamGia ||
                              ' | Số lượng tối đa: ' || r.SLToiDa);
-    END LOOP; -- Kết thúc vòng lặp
+    END LOOP; 
 
     SELECT COUNT(*) INTO v_SoPhieu
 FROM PHIEUGIAMGIA

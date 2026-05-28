@@ -8,6 +8,11 @@ import oracle.jdbc.OracleTypes;
 
 
 public class PhieuGiamGiaDAO {
+    private static final String SQL_DEMO_PHANTOM_READ =
+            "SELECT MaPGG, MaChuSoPGG, GiaTriGiamGia, SLToiDa, TrangThai " +
+            "FROM PHIEUGIAMGIA " +
+            "WHERE TrangThai = 'Đang có hiệu lực' " +
+            "ORDER BY NgayTaoPGG DESC";
     
     // Gộp layThongTinVoucher vào timTheoMa để tránh trùng lặp code
     public PhieuGiamGiaDTO timTheoMa(String maPGG) {
@@ -66,6 +71,85 @@ public class PhieuGiamGiaDAO {
 
     public List<PhieuGiamGiaDTO> timKiem(String keyword) {
         return traCuu(keyword, null, "tìm kiếm");
+    }
+
+    public String demoPhantomRead(boolean serializable) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getInstance().getConnection();
+            conn.setAutoCommit(false);
+            if (serializable) {
+                conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            } else {
+                conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            }
+
+            List<String> lan1 = docDanhSachPhieuGiamGiaDangHieuLuc(conn);
+            Thread.sleep(15000);
+            List<String> lan2 = docDanhSachPhieuGiamGiaDangHieuLuc(conn);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Isolation: ")
+                    .append(serializable ? "SERIALIZABLE" : "READ_COMMITTED")
+                    .append("\n\n");
+            appendDanhSachDemo(sb, "lần 1", lan1);
+            sb.append("\n");
+            appendDanhSachDemo(sb, "lần 2", lan2);
+            sb.append("\n");
+            if (lan2.size() > lan1.size()) {
+                sb.append("Kết quả: Phát sinh Phantom Read vì lần đọc 2 xuất hiện thêm phiếu giảm giá mới.");
+            } else {
+                sb.append("Kết quả: Không phát sinh Phantom Read.");
+            }
+            return sb.toString();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "Lỗi demo Phantom Read: Luồng demo bị gián đoạn.";
+        } catch (SQLException | RuntimeException e) {
+            return "Lỗi demo Phantom Read: " + e.getMessage();
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException e) {
+                    System.err.println("[PhieuGiamGiaDAO] Lỗi rollback demo Phantom Read: " + e.getMessage());
+                }
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    System.err.println("[PhieuGiamGiaDAO] Lỗi đóng connection demo Phantom Read: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private List<String> docDanhSachPhieuGiamGiaDangHieuLuc(Connection conn) throws SQLException {
+        List<String> list = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(SQL_DEMO_PHANTOM_READ);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(rs.getString("MaPGG") + " | " +
+                        rs.getString("MaChuSoPGG") + " | Giảm: " +
+                        dinhDangSoDemo(rs.getBigDecimal("GiaTriGiamGia")) + " | SL tối đa: " +
+                        rs.getInt("SLToiDa"));
+            }
+        }
+        return list;
+    }
+
+    private void appendDanhSachDemo(StringBuilder sb, String tenLanDoc, List<String> danhSach) {
+        sb.append("--- Danh sách ").append(tenLanDoc).append(" ---\n");
+        sb.append("Số phiếu: ").append(danhSach.size()).append("\n");
+        for (int i = 0; i < danhSach.size(); i++) {
+            sb.append(i + 1).append(". ").append(danhSach.get(i)).append("\n");
+        }
+    }
+
+    private String dinhDangSoDemo(java.math.BigDecimal value) {
+        if (value == null) {
+            return "0";
+        }
+        return value.stripTrailingZeros().toPlainString();
     }
 
     private List<PhieuGiamGiaDTO> traCuu(String keyword, String trangThai, String thaoTac) {

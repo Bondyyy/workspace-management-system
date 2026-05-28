@@ -35,6 +35,10 @@ public class PhieuGiamGiaController {
         return service.timKiem(keyword);
     }
 
+    public String demoPhantomRead(boolean serializable) {
+        return service.demoPhantomRead(serializable);
+    }
+
     public String sinhMaMoi() {
         return service.sinhMaMoi();
     }

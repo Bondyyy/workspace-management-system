@@ -10,6 +10,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
+    private static final boolean DEMO_PHANTOM_READ = true;
+    
+    
+    private static final boolean DEMO_SERIALIZABLE = true;
 
     private final PhieuGiamGiaController controller = new PhieuGiamGiaController();
 
@@ -436,8 +440,45 @@ public class QuanLyPhieuGiamGiaForm extends javax.swing.JPanel {
     }
 
     private void btnLamMoiActionPerformed(java.awt.event.ActionEvent evt) {
+        if (DEMO_PHANTOM_READ) {
+            chayDemoPhantomRead();
+            return;
+        }
         laMoiForm();
         refreshTableTheoDieuKienHienTai();
+    }
+
+    private void chayDemoPhantomRead() {
+        btnLamMoi.setEnabled(false);
+        btnLamMoi.setText("Đang demo...");
+        new javax.swing.SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() {
+                return controller.demoPhantomRead(DEMO_SERIALIZABLE);
+            }
+
+            @Override
+            protected void done() {
+                btnLamMoi.setEnabled(true);
+                btnLamMoi.setText("Làm mới");
+                try {
+                    hienThiKetQuaDemo(get());
+                    laMoiForm();
+                    refreshTableTheoDieuKienHienTai();
+                } catch (Exception e) {
+                    com.wms.util.MessageUtil.showError(QuanLyPhieuGiamGiaForm.this, e.getMessage(), e);
+                }
+            }
+        }.execute();
+    }
+
+    private void hienThiKetQuaDemo(String ketQua) {
+        javax.swing.JTextArea textArea = new javax.swing.JTextArea(ketQua, 22, 72);
+        textArea.setEditable(false);
+        textArea.setLineWrap(false);
+        textArea.setFont(new java.awt.Font("Consolas", java.awt.Font.PLAIN, 13));
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+        JOptionPane.showMessageDialog(this, scrollPane, "Demo Phantom Read", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

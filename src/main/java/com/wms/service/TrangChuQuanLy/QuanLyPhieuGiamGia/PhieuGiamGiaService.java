@@ -36,6 +36,10 @@ public class PhieuGiamGiaService {
         return dao.timKiem(keyword);
     }
 
+    public String demoPhantomRead(boolean serializable) {
+        return dao.demoPhantomRead(serializable);
+    }
+
     private void kiemTraHopLe(PhieuGiamGiaDTO dto) {
         if (dto == null) {
             throw new IllegalArgumentException("Vui lòng nhập thông tin phiếu giảm giá.");
