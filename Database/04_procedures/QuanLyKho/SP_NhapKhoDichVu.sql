@@ -16,14 +16,13 @@ CREATE OR REPLACE PROCEDURE SP_NhapKhoDichVu (
     v_MaNV NHANVIEN.MaNV%TYPE;
     v_MaCN NHANVIEN.MaCN%TYPE;
     v_DaTaoDichVuMoi NUMBER(1) := 0;
-    ex_resource_busy EXCEPTION;
-    PRAGMA EXCEPTION_INIT(ex_resource_busy, -54);
 
     FUNCTION co_gia_tri(p_value VARCHAR2) RETURN BOOLEAN IS
     BEGIN
         RETURN p_value IS NOT NULL AND LENGTH(TRIM(p_value)) > 0;
     END;
 BEGIN
+    -- SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     IF p_SoLuong IS NULL OR p_SoLuong <= 0 THEN
         RAISE_APPLICATION_ERROR(-20400, 'Số lượng nhập kho phải lớn hơn 0.');
     END IF;
@@ -59,23 +58,12 @@ BEGIN
         INTO v_MaLoaiDV
         FROM LOAIDICHVU
         WHERE LOWER(TRIM(TenLoaiDV)) = LOWER(TRIM(p_TenLoaiDV))
-          AND ROWNUM = 1
-        FOR UPDATE NOWAIT;
+          AND ROWNUM = 1;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            LOCK TABLE LOAIDICHVU IN SHARE ROW EXCLUSIVE MODE NOWAIT;
-            BEGIN
-                SELECT MaLoaiDV
-                INTO v_MaLoaiDV
-                FROM LOAIDICHVU
-                WHERE LOWER(TRIM(TenLoaiDV)) = LOWER(TRIM(p_TenLoaiDV))
-                  AND ROWNUM = 1;
-            EXCEPTION
-                WHEN NO_DATA_FOUND THEN
-                    INSERT INTO LOAIDICHVU (TenLoaiDV, TrangThaiLDV)
-                    VALUES (TRIM(p_TenLoaiDV), 'Đang hoạt động')
-                    RETURNING MaLoaiDV INTO v_MaLoaiDV;
-            END;
+            INSERT INTO LOAIDICHVU (TenLoaiDV, TrangThaiLDV)
+            VALUES (TRIM(p_TenLoaiDV), 'Đang hoạt động')
+            RETURNING MaLoaiDV INTO v_MaLoaiDV;
     END;
 
     IF co_gia_tri(p_MaDV) THEN
@@ -84,7 +72,7 @@ BEGIN
             INTO v_MaDV, v_SoLuongHienTai
             FROM DICHVU
             WHERE MaDV = TRIM(p_MaDV)
-            FOR UPDATE NOWAIT;
+            FOR UPDATE;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
                 v_MaDV := NULL;
@@ -95,27 +83,26 @@ BEGIN
             INTO v_MaDV, v_SoLuongHienTai
             FROM DICHVU
             WHERE LOWER(TRIM(TenDV)) = LOWER(TRIM(p_TenDV))
-              AND ROWNUM = 1
-            FOR UPDATE NOWAIT;
+              AND ROWNUM = 1;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
                 v_MaDV := NULL;
         END;
     END IF;
 
-    IF v_MaDV IS NULL THEN
-        LOCK TABLE DICHVU IN SHARE ROW EXCLUSIVE MODE NOWAIT;
+    DBMS_SESSION.SLEEP(10);
 
+    IF v_MaDV IS NULL THEN
         BEGIN
             SELECT MaDV, NVL(SoLuong, 0)
             INTO v_MaDV, v_SoLuongHienTai
             FROM DICHVU
             WHERE LOWER(TRIM(TenDV)) = LOWER(TRIM(p_TenDV))
-              AND ROWNUM = 1
-            FOR UPDATE NOWAIT;
+              AND ROWNUM = 1;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
                 v_DaTaoDichVuMoi := 1;
+
                 INSERT INTO DICHVU (
                     TenDV,
                     HinhAnh,
@@ -138,14 +125,16 @@ BEGIN
     END IF;
 
     IF v_MaDV IS NOT NULL AND v_DaTaoDichVuMoi = 0 THEN
+
         UPDATE DICHVU
         SET SoLuong = CASE
                 WHEN v_SoLuongLuu IS NULL THEN NULL
-                ELSE NVL(SoLuong, 0) + v_SoLuongLuu
+                ELSE v_SoLuongHienTai + v_SoLuongLuu
             END,
             MaLoaiDV = v_MaLoaiDV,
             GiaNhap = p_GiaNhap
         WHERE MaDV = v_MaDV;
+
     END IF;
 
     IF co_gia_tri(p_TenFile) THEN
@@ -173,10 +162,8 @@ BEGIN
     );
 
     COMMIT;
+
 EXCEPTION
-    WHEN ex_resource_busy THEN
-        ROLLBACK;
-        RAISE_APPLICATION_ERROR(-20410, 'Dịch vụ hoặc loại dịch vụ đang được nhân viên khác nhập kho. Vui lòng thử lại sau.');
     WHEN OTHERS THEN
         ROLLBACK;
         RAISE;
