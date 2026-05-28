@@ -157,7 +157,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelTong.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         panelTong.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-        JLabel lblTextTong = new JLabel("Tổng cộng:");
+        JLabel lblTextTong = new JLabel("Thành tiền:");
         lblTextTong.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         lblTextTong.setForeground(mauXamDam);
         panelTong.add(lblTextTong, BorderLayout.WEST);
@@ -234,7 +234,7 @@ public class ThanhToanHoaDonForm extends JPanel {
         panelThanhTien.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         panelThanhTien.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
-        JLabel lblTextThanhTien = new JLabel("TỔNG TIỀN:");
+        JLabel lblTextThanhTien = new JLabel("THÀNH TIỀN:");
         lblTextThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblTextThanhTien.setForeground(mauXamDam);
 
@@ -437,17 +437,18 @@ public class ThanhToanHoaDonForm extends JPanel {
         double tienCoTheApVoucher = layTienCoTheApVoucherTaiQuay();
         if (maGiamGiaDangAp != null) {
             tienGiamGia = Math.min(Math.max(0, maGiamGiaDangAp.getGiaTriGiamGia()), tienCoTheApVoucher);
-            thanhTien = Math.max(0, tienCoTheApVoucher - tienGiamGia);
+            double soTienConLaiSauVoucher = Math.max(0, tienCoTheApVoucher - tienGiamGia);
+            thanhTien = tinhThanhTienSauGiamHang(soTienConLaiSauVoucher);
             JLabel lblGiaTriGG = (JLabel) panelHienThiGiamGia.getClientProperty("lblGiaTriGG");
             if (lblGiaTriGG != null)
                 lblGiaTriGG.setText(HoaDonGiamGiaUtil.formatTienGiamVnd(tienGiamGia));
         } else {
             tienGiamGia = 0;
             thanhTien = hoaDonHienTai != null
-                    ? Math.max(0, hoaDonHienTai.getSoTienCanThanhToan())
+                    ? Math.max(0, hoaDonHienTai.getThanhTien())
                     : Math.max(0, tongTienGoc);
         }
-        lblTongTien.setText(formatTienVnd(tongTienGoc));
+        lblTongTien.setText(formatTienVnd(thanhTien));
         lblThanhTien.setText(formatTienVnd(thanhTien));
         capNhatKhaNangThanhToan();
     }
@@ -456,7 +457,17 @@ public class ThanhToanHoaDonForm extends JPanel {
         if (hoaDonHienTai == null) {
             return Math.max(0, tongTienGoc);
         }
-        return Math.max(0, hoaDonHienTai.getSoTienCanThanhToan());
+        double soTienConLai = Math.max(0, hoaDonHienTai.getSoTienConLai());
+        return soTienConLai > 0 ? soTienConLai : Math.max(0, hoaDonHienTai.getThanhTien());
+    }
+
+    private double tinhThanhTienSauGiamHang(double soTienConLaiSauVoucher) {
+        if (hoaDonHienTai == null) {
+            return Math.max(0, soTienConLaiSauVoucher);
+        }
+        double phanTramHang = Math.max(0, Math.min(100, hoaDonHienTai.getPhanTramGiamHangThanhVien()));
+        double tienGiamHang = Math.round(Math.max(0, soTienConLaiSauVoucher) * phanTramHang / 100.0);
+        return Math.max(0, soTienConLaiSauVoucher - tienGiamHang);
     }
 
     private JPanel taoContainerPhuongThuc(String type, String text, String moTa) {
@@ -568,7 +579,7 @@ public class ThanhToanHoaDonForm extends JPanel {
 
         this.hoaDonHienTai = hoaDon;
         this.tongTienGoc = Math.max(0, hoaDon.getTongTien());
-        this.thanhTien = Math.max(0, hoaDon.getSoTienCanThanhToan());
+        this.thanhTien = Math.max(0, hoaDon.getThanhTien());
         if (this.tongTienGoc <= 0 && this.thanhTien > 0)
             this.tongTienGoc = this.thanhTien;
         this.daThanhToanThanhCong = "Đã thanh toán thành công".equals(hoaDon.getTrangThaiThanhToan());

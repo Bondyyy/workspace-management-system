@@ -256,13 +256,14 @@ public class HoaDonDAO {
                 String maDatCho = rsChung.getString("MaDatCho");
                 boolean laDatTruoc = maDatCho != null && !maDatCho.isBlank();
                 double soGioDatTruoc = Math.max(0, rsChung.getDouble("KhoangThoiGianSuDung"));
-                double soGioTinhTien = laDatTruoc && soGioDatTruoc > 0
-                        ? soGioDatTruoc
-                        : Math.max(1, thongTin.getTongSoGio());
-                double donGiaTheoGio = Math.max(0, rsChung.getDouble("DonGiaTheoGio"));
+                double soGioTinhTien = laDatTruoc
+                        ? (soGioDatTruoc > 0 ? soGioDatTruoc : Math.max(1, thongTin.getTongSoGio()))
+                        : Math.max(0, thongTin.getTongSoGio());
                 double tienKhongGian = Math.max(0, rsChung.getDouble("TienKhongGianTinh"));
-                if (tienKhongGian <= 0 && donGiaTheoGio > 0) {
-                    tienKhongGian = donGiaTheoGio * soGioTinhTien;
+                double tongTienLuu = Math.max(0, rsChung.getDouble("TongTienLuu"));
+                double tienDichVuTinh = Math.max(0, rsChung.getDouble("TienDichVuTinh"));
+                if (tienKhongGian <= 0 && tongTienLuu > 0) {
+                    tienKhongGian = Math.max(0, tongTienLuu - tienDichVuTinh);
                 }
 
                 if (rsChung.getString("TenKG") != null || tienKhongGian > 0) {
@@ -270,7 +271,7 @@ public class HoaDonDAO {
                     if (laDatTruoc) {
                         tenDong += " (đặt trước)";
                     }
-                    themDongChiPhi(thongTin, tenDong, (int) Math.max(1, Math.round(soGioTinhTien)),
+                    themDongChiPhi(thongTin, tenDong, (int) Math.max(0, Math.round(soGioTinhTien)),
                             soGioTinhTien > 0 ? tienKhongGian / soGioTinhTien : tienKhongGian,
                             tienKhongGian, laDatTruoc);
                 }
@@ -340,14 +341,13 @@ public class HoaDonDAO {
                 double soTienConLai = Math.max(0, tongChiPhi - tongVoucher);
                 double tienGiamHang = lamTronTien(soTienConLai * Math.min(100, phanTramHang) / 100.0);
                 double thanhTienSauGiam = Math.max(0, soTienConLai - tienGiamHang);
-                double soTienCanThuTaiQuay = Math.max(0, rsChung.getDouble("SoTienCanThuTaiQuay"));
                 double tienDatChoDaTra = laDatTruoc ? Math.max(0, rsChung.getDouble("TienDatChoDaTra")) : 0;
 
                 thongTin.setTongTien(tongChiPhi);
                 thongTin.setTongTienGoc(tongChiPhi);
                 thongTin.setSoTienConLai(soTienConLai);
                 thongTin.setThanhTien(thanhTienSauGiam);
-                thongTin.setSoTienCanThanhToan(soTienCanThuTaiQuay);
+                thongTin.setSoTienCanThanhToan(thanhTienSauGiam);
                 thongTin.setSoTienDaTraTruoc(tienDatChoDaTra);
                 thongTin.setDaTraTruoc(tienDatChoDaTra > 0);
                 thongTin.setTenHangThanhVien(tenHangThanhVien);
@@ -556,7 +556,8 @@ public class HoaDonDAO {
 
     private void themDongChiPhi(ThongTinHoaDonDTO thongTin, String noiDung, int soLuong,
                                 double donGia, double thanhTien, boolean datTruoc) {
-        int soLuongAnToan = Math.max(1, soLuong);
+        boolean laDongThueKhongGian = noiDung != null && noiDung.startsWith("Thuê");
+        int soLuongAnToan = laDongThueKhongGian ? Math.max(0, soLuong) : Math.max(1, soLuong);
         double thanhTienAnToan = Math.max(0, thanhTien);
         double donGiaAnToan = Math.max(0, donGia);
         thongTin.getDongChiPhi().add(new InvoiceLine(noiDung, soLuongAnToan, donGiaAnToan, thanhTienAnToan, datTruoc));
