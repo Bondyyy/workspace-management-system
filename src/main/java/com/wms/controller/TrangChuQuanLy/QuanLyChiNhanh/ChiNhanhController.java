@@ -29,6 +29,10 @@ public class ChiNhanhController {
         return service.voHieuHoa(maCN);
     }
 
+    public String demoNonRepeatableRead(String maCN, boolean serializable) {
+        return service.demoNonRepeatableRead(maCN, serializable);
+    }
+
     public String layMaCNTiepTheo() {
         return service.layMaCNTiepTheo();
     }

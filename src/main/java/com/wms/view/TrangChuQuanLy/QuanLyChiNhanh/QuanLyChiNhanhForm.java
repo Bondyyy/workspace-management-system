@@ -10,6 +10,8 @@ import java.time.LocalTime;
 import java.util.List;
 
 public class QuanLyChiNhanhForm extends javax.swing.JPanel {
+    private static final boolean DEMO_NON_REPEATABLE_READ = true;
+    private static final boolean DEMO_SERIALIZABLE = false;
 
     private final ChiNhanhController controller = new ChiNhanhController();
     private DefaultTableModel tableModel;
@@ -141,8 +143,62 @@ public class QuanLyChiNhanhForm extends javax.swing.JPanel {
     }
 
     private void btnHuyActionPerformed(java.awt.event.ActionEvent evt) {
+        if (DEMO_NON_REPEATABLE_READ) {
+            chayDemoNonRepeatableRead();
+            return;
+        }
         clearForm();
         refreshTableTheoDieuKienHienTai();
+    }
+
+    private void chayDemoNonRepeatableRead() {
+        String maCN = layMaChiNhanhDangChon();
+        if (maCN == null || maCN.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một chi nhánh trước!");
+            return;
+        }
+
+        btnHuy.setEnabled(false);
+        btnHuy.setText("Đang...");
+        new javax.swing.SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() {
+                return controller.demoNonRepeatableRead(maCN, DEMO_SERIALIZABLE);
+            }
+
+            @Override
+            protected void done() {
+                btnHuy.setEnabled(true);
+                btnHuy.setText("Làm mới");
+                try {
+                    hienThiKetQuaDemo(get());
+                } catch (Exception e) {
+                    com.wms.util.MessageUtil.showError(QuanLyChiNhanhForm.this, e.getMessage(), e);
+                } finally {
+                    clearForm();
+                    refreshTableTheoDieuKienHienTai();
+                }
+            }
+        }.execute();
+    }
+
+    private String layMaChiNhanhDangChon() {
+        int row = tblChiNhanh.getSelectedRow();
+        if (row < 0) {
+            return null;
+        }
+        Object value = tblChiNhanh.getValueAt(row, 0);
+        return value != null ? value.toString() : null;
+    }
+
+    private void hienThiKetQuaDemo(String ketQua) {
+        javax.swing.JTextArea textArea = new javax.swing.JTextArea(ketQua, 12, 72);
+        textArea.setEditable(false);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setFont(new java.awt.Font("Consolas", java.awt.Font.PLAIN, 13));
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+        JOptionPane.showMessageDialog(this, scrollPane, "Demo Non-repeatable Read", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

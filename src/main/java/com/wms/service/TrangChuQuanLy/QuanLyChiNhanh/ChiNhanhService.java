@@ -46,6 +46,10 @@ public class ChiNhanhService {
         return chiNhanhDAO.voHieuHoaChiNhanh(maCN) ? null : "Vô hiệu hóa thất bại, vui lòng thử lại.";
     }
 
+    public String demoNonRepeatableRead(String maCN, boolean serializable) {
+        return chiNhanhDAO.demoNonRepeatableRead(maCN, serializable);
+    }
+
     public String layMaCNTiepTheo() {
         return chiNhanhDAO.taoMaMoi();
     }

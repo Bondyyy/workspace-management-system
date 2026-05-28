@@ -4,9 +4,12 @@ import com.wms.config.DatabaseConnection;
 import com.wms.model.TrangChuQuanLy.QuanLyChiNhanh.ChiNhanhDTO;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ChiNhanhDAO {
 
@@ -91,6 +94,73 @@ public class ChiNhanhDAO {
             System.err.println("Lỗi tìm kiếm chi nhánh: " + e.getMessage());
         }
         return list;
+    }
+
+    public String demoNonRepeatableRead(String maCN, boolean serializable) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getInstance().getConnection();
+            conn.setAutoCommit(false);
+            if (serializable) {
+                conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            } else {
+                conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            }
+
+            String hotlineLan1 = docHotlineChiNhanh(conn, maCN);
+            Thread.sleep(15000);
+            String hotlineLan2 = docHotlineChiNhanh(conn, maCN);
+
+            boolean phatSinh = !Objects.equals(hotlineLan1, hotlineLan2);
+            StringBuilder sb = new StringBuilder();
+            sb.append("Isolation: ")
+                    .append(serializable ? "SERIALIZABLE" : "READ_COMMITTED")
+                    .append("\n\n");
+            sb.append("Mã chi nhánh: ").append(maCN).append("\n");
+            sb.append("Hotline lần 1: ").append(formatDemoValue(hotlineLan1)).append("\n");
+            sb.append("Hotline lần 2: ").append(formatDemoValue(hotlineLan2)).append("\n\n");
+            if (phatSinh) {
+                sb.append("Kết quả: Phát sinh Non-repeatable Read vì cùng một transaction đọc cùng một dòng dữ liệu hai lần nhưng nhận được hai giá trị khác nhau.");
+            } else {
+                sb.append("Kết quả: Không phát sinh Non-repeatable Read.");
+            }
+            return sb.toString();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "Lỗi demo Non-repeatable Read: Luồng demo bị gián đoạn.";
+        } catch (SQLException | RuntimeException e) {
+            return "Lỗi demo Non-repeatable Read: " + e.getMessage();
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException e) {
+                    System.err.println("[ChiNhanhDAO] Lỗi rollback demo Non-repeatable Read: " + e.getMessage());
+                }
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    System.err.println("[ChiNhanhDAO] Lỗi đóng connection demo Non-repeatable Read: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private String docHotlineChiNhanh(Connection conn, String maCN) throws SQLException {
+        String sql = "SELECT DuongDayNong FROM CHINHANH WHERE MaCN = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, maCN);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("DuongDayNong");
+                }
+            }
+        }
+        return null;
+    }
+
+    private String formatDemoValue(String value) {
+        return value != null ? value : "(null)";
     }
 
     public boolean voHieuHoaChiNhanh(String maCN) {
