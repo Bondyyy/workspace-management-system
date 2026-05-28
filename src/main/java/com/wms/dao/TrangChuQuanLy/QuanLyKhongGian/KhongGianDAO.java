@@ -238,20 +238,23 @@ public class KhongGianDAO {
     }
 
     public boolean capNhat(KhongGianDTO dto) {
-        String sql = "UPDATE KHONGGIAN SET TenKG = ?, ViTri = ?, MaLoaiKG = ?, TrangThaiKG = ?, " +
-                "ToaDoX = ?, ToaDoY = ?, ChieuDai = ?, ChieuRong = ? WHERE MaKG = ?";
+        String sql = "{call SP_CapNhatKhongGian(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (Connection conn = getConn();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, dto.getTenKG());
-            ps.setString(2, dto.getViTri());
-            ps.setString(3, dto.getMaLoaiKG());
-            ps.setString(4, dto.getTrangThaiKG());
-            if (dto.getToaDoX() != null) ps.setInt(5, dto.getToaDoX()); else ps.setNull(5, Types.NUMERIC);
-            if (dto.getToaDoY() != null) ps.setInt(6, dto.getToaDoY()); else ps.setNull(6, Types.NUMERIC);
-            ps.setInt(7, dto.getChieuDai());
-            ps.setInt(8, dto.getChieuRong());
-            ps.setString(9, dto.getMaKG().trim());
-            return ps.executeUpdate() > 0;
+             CallableStatement cs = conn.prepareCall(sql)) {
+            cs.setString(1, dto.getMaKG().trim());
+            cs.setString(2, dto.getTenKG());
+            cs.setString(3, dto.getViTri());
+            cs.setString(4, dto.getMaLoaiKG());
+            cs.setString(5, dto.getTrangThaiKG());
+            if (dto.getToaDoX() != null) cs.setInt(6, dto.getToaDoX()); else cs.setNull(6, Types.NUMERIC);
+            if (dto.getToaDoY() != null) cs.setInt(7, dto.getToaDoY()); else cs.setNull(7, Types.NUMERIC);
+            cs.setInt(8, dto.getChieuDai());
+            cs.setInt(9, dto.getChieuRong());
+            cs.registerOutParameter(10, Types.VARCHAR);
+            cs.execute();
+
+            String message = cs.getString(10);
+            return message != null && message.startsWith("Cập nhật không gian");
         } catch (SQLException e) {
             System.err.println("[KhongGianDAO] Lỗi cập nhật: " + e.getMessage());
             return false;
