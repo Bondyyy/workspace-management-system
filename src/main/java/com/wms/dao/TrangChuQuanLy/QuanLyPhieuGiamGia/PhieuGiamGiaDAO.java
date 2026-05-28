@@ -96,23 +96,31 @@ public class PhieuGiamGiaDAO {
     }
 
     public boolean themMoi(PhieuGiamGiaDTO dto) {
-        String sql = "INSERT INTO PHIEUGIAMGIA (MaChuSoPGG, GiaTriGiamGia, GiaTriApDungToiThieu, " +
-                     "NgayBatDauApDung, NgayKetThucApDung, SLDaDung, SLToiDa, NgayTaoPGG, MaNV, TrangThai) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
+        String sql = "{call SP_ThemPhieuGiamGia(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, dto.getMaChuSoPGG());
-            ps.setDouble(2, dto.getGiaTriGiamGia());
-            ps.setDouble(3, dto.getGiaTriApDungToiThieu());
-            ps.setTimestamp(4, new Timestamp(dto.getNgayBatDauApDung().getTime()));
-            ps.setTimestamp(5, new Timestamp(dto.getNgayKetThucApDung().getTime()));
-            ps.setInt(6, 0);
-            ps.setInt(7, dto.getSlToiDa());
-            ps.setString(8, dto.getMaNV());
-            ps.setString(9, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");
-            return ps.executeUpdate() > 0;
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setString(1, dto.getMaChuSoPGG());
+            cs.setDouble(2, dto.getGiaTriGiamGia());
+            cs.setDouble(3, dto.getGiaTriApDungToiThieu());
+            cs.setTimestamp(4, new Timestamp(dto.getNgayBatDauApDung().getTime()));
+            cs.setTimestamp(5, new Timestamp(dto.getNgayKetThucApDung().getTime()));
+            cs.setInt(6, dto.getSlToiDa());
+            cs.setString(7, dto.getMaNV());
+            cs.setString(8, dto.getTrangThai() != null ? dto.getTrangThai() : "Đang có hiệu lực");
+            cs.registerOutParameter(9, Types.VARCHAR);
+
+            cs.execute();
+
+            String message = cs.getString(9);
+            if (message != null && message.startsWith("Lỗi")) {
+                System.err.println("[PhieuGiamGiaDAO] " + message);
+                return false;
+            }
+
+            return true;
         } catch (SQLException e) {
-            System.err.println("[PhieuGiamGiaDAO] Lỗi thêm mới: " + e.getMessage());
+            System.err.println("[PhieuGiamGiaDAO] Lỗi thêm mới bằng SP: " + e.getMessage());
             return false;
         }
     }
