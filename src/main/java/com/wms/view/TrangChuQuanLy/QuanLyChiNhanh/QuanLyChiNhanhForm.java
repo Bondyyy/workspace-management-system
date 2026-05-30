@@ -11,7 +11,7 @@ import java.util.List;
 
 public class QuanLyChiNhanhForm extends javax.swing.JPanel {
     private static final boolean DEMO_NON_REPEATABLE_READ = true;
-    private static final boolean DEMO_SERIALIZABLE = false;
+    private static final boolean DEMO_SERIALIZABLE = true;
 
     private final ChiNhanhController controller = new ChiNhanhController();
     private DefaultTableModel tableModel;
