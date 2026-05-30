@@ -21,7 +21,7 @@ CREATE OR REPLACE PROCEDURE SP_ThanhToanVoiPhieuGiamGia(
     v_ConPhaiThu NUMBER(18, 2) := 0;
     v_CoSoVoucherTaiQuay NUMBER(18, 2) := 0;
     v_PhuongThucThanhToan VARCHAR2(50);
-    v_CoPGG BOOLEAN := FALSE;
+    v_CoPGG CHAR(1) := 'N';
     v_SoLuongDaDung NUMBER;
     v_SoLuongToiDa NUMBER;
     v_KetQuaPGG VARCHAR2(4000);
@@ -86,7 +86,7 @@ BEGIN
     v_CoSoVoucherTaiQuay := GREATEST(0, v_TongTien - v_TienVoucherCu - NVL(v_TienDatChoDaTra, 0));
 
     IF p_MaPGG IS NOT NULL AND LENGTH(TRIM(p_MaPGG)) > 0 AND v_CoSoVoucherTaiQuay > 0 THEN
-        v_CoPGG := TRUE;
+        v_CoPGG := 'Y';
 
         SELECT NVL(SLDaDung, 0), NVL(SLToiDa, 0)
         INTO v_SoLuongDaDung, v_SoLuongToiDa
@@ -174,14 +174,14 @@ BEGIN
     UPDATE HOADON
     SET TongTien = v_TongTien,
         ThanhTien = 0,
-        MaPGG = CASE WHEN v_CoPGG THEN TRIM(p_MaPGG) ELSE NULL END,
+        MaPGG = CASE WHEN v_CoPGG = 'Y' THEN TRIM(p_MaPGG) ELSE NULL END,
         TrangThaiThanhToan = 'Đã thanh toán thành công',
         PhuongThucThanhToan = v_PhuongThucThanhToan,
         NgayLapHoaDon = CURRENT_TIMESTAMP,
         MaNV = p_MaNV
     WHERE MaHoaDon = v_MaHoaDon;
 
-    IF v_CoPGG AND v_TienVoucherMoi > 0 THEN
+    IF v_CoPGG = 'Y' AND v_TienVoucherMoi > 0 THEN
         UPDATE PHIEUGIAMGIA
         SET SLDaDung = NVL(SLDaDung, 0) + 1
         WHERE MaPGG = TRIM(p_MaPGG);
